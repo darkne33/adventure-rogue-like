@@ -219,8 +219,8 @@
     <Compile Include="Assets\Features\Global\UI\Scripts\Data\StoragePanelData.cs" />
     <Compile Include="Assets\Features\Global\Effects\SimpleEffects\ISimpleEffectsService.cs" />
     <Compile Include="Assets\CustomPackages\Package.Extensions\Animations\AnimationMonoComponent.cs" />
-    <Compile Include="Assets\Features\Global\UI\Scripts\Presenters\IPanelPresenterLogic.cs" />
     <Compile Include="Assets\Features\Global\Effects\FlyingEffects\FlyingElementsMonoComponent.cs" />
+    <Compile Include="Assets\Features\Global\UI\Scripts\Presenters\IPanelPresenterLogic.cs" />
     <Compile Include="Assets\Features\Global\UI\Scripts\MonoComponents\PanelAnimationsMonoComponent.cs" />
     <Compile Include="Assets\CustomPackages\Package.StateMachine\Transitions\Transition.cs" />
     <Compile Include="Assets\Features\Global\Camera\Scripts\Services\ICameraService.cs" />
@@ -873,13 +873,13 @@
       <Project>{7c4c0688-dd7a-e95f-e583-8b987d2e9103}</Project>
       <Name>Assembly-CSharp-firstpass.Player</Name>
     </ProjectReference>
-    <ProjectReference Include="UniTask.TextMeshPro.Player.csproj">
-      <Project>{4da3f7dd-8ff1-0606-011f-00b373e63308}</Project>
-      <Name>UniTask.TextMeshPro.Player</Name>
-    </ProjectReference>
     <ProjectReference Include="NaughtyAttributes.Test.Player.csproj">
       <Project>{91864223-5cae-2162-d4e4-264f6b244ce5}</Project>
       <Name>NaughtyAttributes.Test.Player</Name>
+    </ProjectReference>
+    <ProjectReference Include="UniTask.TextMeshPro.Player.csproj">
+      <Project>{4da3f7dd-8ff1-0606-011f-00b373e63308}</Project>
+      <Name>UniTask.TextMeshPro.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.TextMeshPro.Player.csproj">
       <Project>{d0758cda-8ff1-e664-55cb-b6b4dffa23eb}</Project>
