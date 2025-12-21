@@ -9,9 +9,8 @@ public class CharacterFacade : MonoBehaviour
 {
     [Header("Configurations")]
     
-    [SerializeField] private CharacterSettingsConfiguration _characterSettingsConfiguration;
-
-    [SerializeField] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
+    [Inject] private CharacterSettingsConfiguration _characterSettingsConfiguration;
+    [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
 
     [HorizontalLine]
     
