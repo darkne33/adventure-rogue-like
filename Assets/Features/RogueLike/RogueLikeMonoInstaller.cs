@@ -7,14 +7,15 @@ public class RogueLikeMonoInstaller : MonoInstaller
 {
     [SerializeField] private CharacterConfiguration _characterConfiguration;
     [SerializeField] private CharacterCameraSettingsConfiguration _cameraSettingsConfiguration;
+    [SerializeField] private CharacterSettingsConfiguration _characterSettingsConfiguration;
 
     [SerializeField] private SceneNames.SceneNameType _sceneNameType;
     
     public override void InstallBindings()
     {
         BindProviders();
-        BindFactories();
         BindConfigurations();
+        BindFactories();
     }
 
     private void BindFactories()
@@ -32,5 +33,6 @@ public class RogueLikeMonoInstaller : MonoInstaller
     {
         Container.Bind<CharacterConfiguration>().FromInstance(_characterConfiguration).AsSingle();
         Container.Bind<CharacterCameraSettingsConfiguration>().FromInstance(_cameraSettingsConfiguration).AsSingle();
+        Container.Bind<CharacterSettingsConfiguration>().FromInstance(_characterSettingsConfiguration).AsSingle();
     }
 }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(menuName = "Create CharacterCameraSettingsConfiguration", fileName = "CharacterCameraSettingsConfiguration", order = 0)]
+[CreateAssetMenu(menuName = "Create CharacterCameraSettingsConfiguration", fileName = "Configs/Character/CharacterCameraSettingsConfiguration", order = 0)]
 public class CharacterCameraSettingsConfiguration : ScriptableObject
 {
     [field: SerializeField] public Vector3 LocalOffset = new(2.5f, 4.4f, 5.4f);

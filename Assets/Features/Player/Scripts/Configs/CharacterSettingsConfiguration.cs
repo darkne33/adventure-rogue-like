@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(menuName = "Create CharacterSettingsConfiguration", fileName = "CharacterSettingsConfiguration", order = 0)]
+[CreateAssetMenu(menuName = "Create CharacterSettingsConfiguration", fileName = "Configs/Character/CharacterSettingsConfiguration", order = 0)]
 public class CharacterSettingsConfiguration : ScriptableObject
 {
     [field: Header("Movement Settings")]
