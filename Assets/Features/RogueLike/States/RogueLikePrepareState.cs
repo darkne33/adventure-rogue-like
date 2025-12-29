@@ -9,17 +9,19 @@ namespace Core
     {
         private readonly ICharacterFactory _characterFactory;
         private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
+        private readonly ICharacterProvider _characterProvider;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
-            ISceneService<RogueLikeSceneProvider> sceneService)
+            ISceneService<RogueLikeSceneProvider> sceneService, ICharacterProvider characterProvider)
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
+            _characterProvider = characterProvider;
         }
 
         public override async UniTask Enter(CancellationToken cts)
         {
-            await _characterFactory.CreatePlayer(_sceneService.GameSceneComponentsService.CharacterSpawnPoint, cts);
+            _characterProvider.CharacterFacade = await _characterFactory.CreatePlayer(_sceneService.GameSceneComponentsService.CharacterSpawnPoint, cts);
             
             Log.Gameplay.Info("RogueLike Prepare State Completed");
         }

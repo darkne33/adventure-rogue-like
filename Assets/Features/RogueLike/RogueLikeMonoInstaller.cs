@@ -27,6 +27,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
     {
         Container.Bind<ISceneService<RogueLikeSceneProvider>>().To<SceneService<RogueLikeSceneProvider>>().AsSingle()
             .WithArguments(SceneNames.GetSceneNameByType(_sceneNameType));
+        Container.Bind<ICharacterProvider>().To<CharacterProvider>().AsSingle();
     }
 
     private void BindConfigurations()
