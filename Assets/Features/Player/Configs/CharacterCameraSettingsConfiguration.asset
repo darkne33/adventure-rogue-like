@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdb4968e4b6245289f1d9cc0b4dc2de3, type: 3}
   m_Name: CharacterCameraSettingsConfiguration
   m_EditorClassIdentifier: Assembly-CSharp::CharacterCameraSettingsConfiguration
-  LocalOffset: {x: 2.5, y: 4.4, z: 5.4}
-  LocalRotation: {x: 25, y: -135, z: 0}
-  SmoothTime: 0.1
+  <DistanceToTarget>k__BackingField: 7
+  <Height>k__BackingField: 3
+  <MouseSensitivity>k__BackingField: 0.1
+  <MinVerticalAngle>k__BackingField: -30
+  <MaxVerticalAngle>k__BackingField: 50
