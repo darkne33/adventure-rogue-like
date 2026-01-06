@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 181494500233041586}
   - component: {fileID: 6710227195518650304}
   - component: {fileID: 80977553395196488}
+  - component: {fileID: 7931159883512342752}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -127,3 +128,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 719288e7ee3d450f9453c2e34738f494, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyFacade
+  _configuration: {fileID: 11400000, guid: 526077a63e653dc4fb3817e6da631530, type: 2}
+--- !u!195 &7931159883512342752
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2706834636654241046}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 1
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
