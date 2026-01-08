@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 6827892775045761742}
   - component: {fileID: 3153827290735259168}
   - component: {fileID: 4739031384901304419}
+  - component: {fileID: 8239115131283728408}
   m_Layer: 0
   m_Name: Obstacle
   m_TagString: Untagged
@@ -125,6 +126,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed55ea43ed90afc4e84a85ea5d9adda7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Ground
+--- !u!114 &8239115131283728408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 496591322236765745}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e904e2ea6fe9c204c9ee4869c5708ad1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Obstalce
 --- !u!1 &566746397142371371
 GameObject:
   m_ObjectHideFlags: 0
@@ -138,6 +151,7 @@ GameObject:
   - component: {fileID: 1422680399462754921}
   - component: {fileID: 4867942505494914317}
   - component: {fileID: 3697502629826772780}
+  - component: {fileID: 3806052963123035404}
   m_Layer: 0
   m_Name: Obstacle
   m_TagString: Untagged
@@ -250,6 +264,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed55ea43ed90afc4e84a85ea5d9adda7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Ground
+--- !u!114 &3806052963123035404
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 566746397142371371}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e904e2ea6fe9c204c9ee4869c5708ad1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Obstalce
 --- !u!1 &3070237576316441490
 GameObject:
   m_ObjectHideFlags: 0

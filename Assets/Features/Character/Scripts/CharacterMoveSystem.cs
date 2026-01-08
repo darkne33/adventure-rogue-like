@@ -50,7 +50,19 @@ public class CharacterMoveSystem
                 _characterSettingsConfiguration.Deceleration * Time.fixedDeltaTime);
         }
 
-        _rigidbody.linearVelocity = new Vector3(_currentVelocity.x, _rigidbody.linearVelocity.y, _currentVelocity.z);
+        if (Physics.Raycast(_rigidbody.transform.position, _direction, out var raycastHit, 1))
+        {
+            var obstacle = raycastHit.collider.GetComponent<Obstalce>();
+            
+            if (obstacle != null)
+            {
+                _currentVelocity = Vector3.zero;
+            }
+        }
+        else
+        {
+            _rigidbody.linearVelocity = new Vector3(_currentVelocity.x, _rigidbody.linearVelocity.y, _currentVelocity.z);
+        }
     }
 
     public void Jump()

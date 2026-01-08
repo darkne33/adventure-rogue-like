@@ -47,7 +47,8 @@ public class CharacterCameraMoveSystem
     
     public void Move()
     {
-        if (_target == null) return;
+        if (_target == null) 
+            return;
         
         Vector2 mouseDelta = _inputActions.Player.Look.ReadValue<Vector2>();
 
