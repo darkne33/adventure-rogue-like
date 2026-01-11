@@ -6,7 +6,7 @@ namespace UI
     {
         public T Panel { get; private set; }
 
-        public void Construct(PanelBase panelBase) =>
+        public void Construct(PanelBase panelBase) => 
             Panel = (T)panelBase;
 
         public PanelBase GetPanel() =>

@@ -38,7 +38,7 @@ namespace UI
                 CleanPanel(panelData.PanelName);
                 Remove(panelData.PanelName);
             }
-
+            
             _storagePanels.Add(panelData.PanelName, storagePanelData);
             _panelPresentersService.Add(panelData.PanelName, container);
 

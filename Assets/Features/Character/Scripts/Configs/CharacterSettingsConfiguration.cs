@@ -3,6 +3,9 @@
 [CreateAssetMenu(menuName = "Create CharacterSettingsConfiguration", fileName = "Configs/Character/CharacterSettingsConfiguration", order = 0)]
 public class CharacterSettingsConfiguration : ScriptableObject
 {
+    [Header("Stats Settings")]
+    [field:SerializeField] public int StartHealth { get; private set; } 
+    
     [field: Header("Movement Settings")]
     [field: SerializeField] public float MoveSpeed { get; private set; }
     [field: SerializeField] public float RotationSpeed { get; private set; }

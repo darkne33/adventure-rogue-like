@@ -14,6 +14,7 @@ namespace UI
         {
             switch (panelName)
             {
+                case PanelName.CharacterPanel: return typeof(CharacterPanelPresenter);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(panelName), panelName, null);
             }

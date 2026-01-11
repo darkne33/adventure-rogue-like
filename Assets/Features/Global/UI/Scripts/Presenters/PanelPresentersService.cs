@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 using Zenject;
 
 namespace UI
@@ -10,8 +11,11 @@ namespace UI
 
         private readonly Dictionary<PanelName, IPanelPresenterLogic> _presenters = new();
 
-        public void Add(PanelName panelName, DiContainer container) => 
+        public void Add(PanelName panelName, DiContainer container)
+        {
+            Debug.Log(panelName);
             CreatePanelPresenter(panelName, container);
+        }
 
         public T Get<T>(PanelName panelName) where T : IPanelPresenterLogic
         {
@@ -22,8 +26,11 @@ namespace UI
             return (T)_presenters[panelName];
         }
         
-        private void CreatePanelPresenter(PanelName panelName, DiContainer container) => 
+        private void CreatePanelPresenter(PanelName panelName, DiContainer container)
+        {
             _presenters[panelName] = _factory.Create(panelName, container);
+        }
+
         public void Remove(PanelName panelName) => 
             _presenters.Remove(panelName);
     }

@@ -1,15 +1,19 @@
 using Core;
 using NaughtyAttributes;
+using UI;
 using UnityEngine;
 using Zenject;
 
 [RequireComponent(typeof(Rigidbody))]
 public class CharacterFacade : MonoBehaviour
 {
+    public CharacterHealthSystem CharacterHealthSystem => _characterHealthSystem;
+    
     [Inject] private CharacterSettingsConfiguration _characterSettingsConfiguration;
     [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
     
     [Inject] private ICameraService _cameraService;
+    [Inject] private IPanelService _panelService;
 
     [HorizontalLine]
 
@@ -26,7 +30,9 @@ public class CharacterFacade : MonoBehaviour
             new CharacterMoveSystem(_rigidbody, _cameraService, _characterSettingsConfiguration);
         _cameraSystem = new CharacterCameraMoveSystem(_cameraService.MainCamera, transform, _characterCameraSettingsConfiguration);
 
-        _characterHealthSystem = new CharacterHealthSystem();
+
+        CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
+        _characterHealthSystem = new CharacterHealthSystem(_characterSettingsConfiguration, characterPanel.CharacterHealthView);
         _characterHealthSystem.Initialize();
     }
 

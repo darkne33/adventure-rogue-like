@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Core;
+using UnityEngine;
 using UnityEngine.Scripting;
 using Zenject;
 
@@ -23,6 +24,9 @@ namespace UI
             }
 
             var panel = await _panelsFactory.CreatePanel<TPanel>(panelName);
+            
+            Debug.Log(panel);
+            
             presenter.Construct(panel);
             presenter.ForceHide();
             await AddOpenedPanel(panel);
