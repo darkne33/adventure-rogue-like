@@ -8,6 +8,7 @@ using Zenject;
 public class CharacterFacade : MonoBehaviour
 {
     public CharacterHealthSystem CharacterHealthSystem => _characterHealthSystem;
+    public Rigidbody Rigidbody => _rigidbody;
     
     [Inject] private CharacterSettingsConfiguration _characterSettingsConfiguration;
     [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;

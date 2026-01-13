@@ -12,7 +12,7 @@ public class CharacterMoveSystem
     private Vector3 _currentVelocity;
 
     private bool _canJump = true;
-    
+
     public CharacterMoveSystem(Rigidbody rigidbody,
         ICameraService cameraService, CharacterSettingsConfiguration characterSettingsConfiguration)
     {
@@ -25,43 +25,79 @@ public class CharacterMoveSystem
     public void Move()
     {
         Vector2 input = _inputActions.Player.Move.ReadValue<Vector2>();
-        
+
         Vector3 forward = _cameraService.MainCamera.transform.forward;
         Vector3 right = _cameraService.MainCamera.transform.right;
-
         forward.y = 0f;
         right.y = 0f;
-
         forward.Normalize();
         right.Normalize();
 
-        _direction = (forward * input.y + right * input.x).normalized;
-
-        Vector3 targetVelocity = _direction * _characterSettingsConfiguration.MoveSpeed;
-
+        Vector3 moveDirection = Vector3.zero;
         if (input.magnitude > 0.1f)
         {
-            _currentVelocity = Vector3.Lerp(_currentVelocity, targetVelocity,
-                _characterSettingsConfiguration.Acceleration * Time.fixedDeltaTime);
-        }
-        else
-        {
-            _currentVelocity = Vector3.Lerp(_currentVelocity, Vector3.zero,
-                _characterSettingsConfiguration.Deceleration * Time.fixedDeltaTime);
+            moveDirection = (forward * input.y + right * input.x).normalized;
         }
 
-        if (Physics.Raycast(_rigidbody.transform.position, _direction, out var raycastHit, 1))
+        bool isGrounded = _canJump;
+
+        if (!isGrounded)
         {
-            var obstacle = raycastHit.collider.GetComponent<Obstalce>();
-            
-            if (obstacle != null)
+            ApplyEnhancedGravity();
+
+            Vector3 currentHorizontal = new Vector3(_rigidbody.linearVelocity.x, 0f, _rigidbody.linearVelocity.z);
+            float currentSpeed = currentHorizontal.magnitude;
+
+            if (currentSpeed > 0.01f && moveDirection != Vector3.zero)
             {
-                _currentVelocity = Vector3.zero;
+                float dot = Vector3.Dot(currentHorizontal.normalized, moveDirection);
+
+                if (dot < 0f)
+                {
+                    float airBrakeForce = _characterSettingsConfiguration.Acceleration * 0.8f;
+                    _rigidbody.AddForce(-currentHorizontal.normalized * airBrakeForce, ForceMode.Acceleration);
+                }
+                else
+                {
+                    float airControlSpeed = _characterSettingsConfiguration.MoveSpeed * 1;
+                    Vector3 desiredAirVelocity = moveDirection * airControlSpeed;
+                    Vector3 velocityDiff = desiredAirVelocity - currentHorizontal;
+
+                    float airAcceleration = _characterSettingsConfiguration.Acceleration * 1f;
+                    if (velocityDiff.magnitude > 0.01f)
+                    {
+                        _rigidbody.AddForce(velocityDiff * airAcceleration, ForceMode.Acceleration);
+                    }
+                }
+            }
+
+            _direction = moveDirection;
+
+            return;
+        }
+
+        _direction = moveDirection;
+
+        bool blocked = false;
+        if (input.magnitude > 0.1f && Physics.Raycast(_rigidbody.transform.position, _direction, out var hit, 1f))
+        {
+            if (hit.collider.GetComponent<Obstacle>() != null)
+            {
+                blocked = true;
             }
         }
-        else
+
+        Vector3 desiredHorizontalVelocity = blocked
+            ? Vector3.zero
+            : _direction * _characterSettingsConfiguration.MoveSpeed;
+
+        Vector3 currentHorizontalVelocity = new Vector3(_rigidbody.linearVelocity.x, 0f, _rigidbody.linearVelocity.z);
+        Vector3 velocityDifference = desiredHorizontalVelocity - currentHorizontalVelocity;
+
+        if (velocityDifference.magnitude > 0.01f)
         {
-            _rigidbody.linearVelocity = new Vector3(_currentVelocity.x, _rigidbody.linearVelocity.y, _currentVelocity.z);
+            _rigidbody.AddForce(velocityDifference * _characterSettingsConfiguration.Acceleration,
+                ForceMode.Acceleration);
         }
     }
 
@@ -74,12 +110,24 @@ public class CharacterMoveSystem
         }
     }
 
-    public void ResetCanJump() 
+    public void ResetCanJump()
         => _canJump = true;
 
     public void Rotate()
     {
-        if (_direction.magnitude > 0.1f) 
+        if (_direction.magnitude > 0.1f)
             _rigidbody.transform.rotation = Quaternion.LookRotation(_direction);
+    }
+
+    private void ApplyEnhancedGravity()
+    {
+        float enhancedGravity = Physics.gravity.y * _characterSettingsConfiguration.GravityMultiplier;
+
+        Vector3 currentVelocity = _rigidbody.linearVelocity;
+
+        float gravityDelta = (enhancedGravity - Physics.gravity.y) * Time.fixedDeltaTime;
+        currentVelocity.y += gravityDelta;
+
+        _rigidbody.linearVelocity = currentVelocity;
     }
 }

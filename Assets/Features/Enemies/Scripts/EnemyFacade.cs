@@ -1,6 +1,8 @@
 ﻿using System;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Serialization;
 using Zenject;
 
 namespace Features.Enemies.Scripts
@@ -9,22 +11,44 @@ namespace Features.Enemies.Scripts
     {
         [Inject] private ICharacterProvider _characterProvider;
 
-        [SerializeField] private EnemyConfiguration _configuration;
-        
+        [SerializeField] private EnemyConfiguration _enemyConfiguration;
+
         private NavMeshAgent _navMeshAgent;
-        
-        private float _currentSpeed = 0f;
-        
+        private IEnemyDamageSystem _enemyDamageSystem;
+
+        private float _currentSpeed;
+        private bool _canMove = true;
+
         private void Start()
         {
             _navMeshAgent = GetComponent<NavMeshAgent>();
+
+            switch (_enemyConfiguration.EnemyDamageType)
+            {
+                case EnemyDamageType.Melee:
+                    _enemyDamageSystem = new EnemyDamageMeleeSystem(this, _characterProvider.CharacterFacade,
+                        _enemyConfiguration, transform);
+                    break;
+                default:
+                    throw new Exception("Enemy Damage Type not supported");
+            }
+
+            _enemyDamageSystem.Initialize();
+        }
+
+        private void Update()
+        {
+            _enemyDamageSystem.Tick();
         }
 
         private void FixedUpdate()
         {
+            if (_canMove == false)
+                return;
+
             MoveTowardsPlayerNonPhysics();
         }
-        
+
         private void MoveTowardsPlayerNonPhysics()
         {
             if (_characterProvider.CharacterFacade == null)
@@ -33,25 +57,26 @@ namespace Features.Enemies.Scripts
             Vector3 direction = _characterProvider.CharacterFacade.transform.position - transform.position;
             direction.y = 0f;
             float distance = direction.magnitude;
-            
+
             float desiredSpeed = 0f;
 
-            if (distance > _configuration.DistanceToStop)
+            if (distance > _enemyConfiguration.DistanceToStop)
             {
-                float effectiveDistance = distance - _configuration.DistanceToStop;
-                if (effectiveDistance < _configuration.SmoothStopRange)
+                float effectiveDistance = distance - _enemyConfiguration.DistanceToStop;
+                if (effectiveDistance < _enemyConfiguration.SmoothStopRange)
                 {
-                    desiredSpeed = _configuration.Speed * (effectiveDistance / _configuration.SmoothStopRange);
+                    desiredSpeed = _enemyConfiguration.Speed * (effectiveDistance / _enemyConfiguration.SmoothStopRange);
                 }
                 else
                 {
-                    desiredSpeed = _configuration.Speed;
+                    desiredSpeed = _enemyConfiguration.Speed;
                 }
             }
-            
-            _currentSpeed = Mathf.MoveTowards(_currentSpeed, desiredSpeed, _configuration.Acceleration * Time.deltaTime);
 
-            if (_currentSpeed > 0.01f && distance > 0.01f)
+            _currentSpeed =
+                Mathf.MoveTowards(_currentSpeed, desiredSpeed, _enemyConfiguration.Acceleration * Time.deltaTime);
+
+            if (_currentSpeed > 0.01f && distance > _enemyConfiguration.DistanceToStop)
             {
                 _navMeshAgent.SetDestination(_characterProvider.CharacterFacade.transform.position);
                 Rotation();
@@ -61,11 +86,25 @@ namespace Features.Enemies.Scripts
         private void Rotation()
         {
             Vector3 direction = _characterProvider.CharacterFacade.transform.position - transform.position;
-            
+
             if (direction.magnitude > 0.01f)
             {
-                transform.forward = Vector3.Slerp(transform.forward, direction.normalized, _configuration.RotationSpeed * Time.deltaTime);
+                transform.forward = Vector3.Slerp(transform.forward, direction.normalized,
+                    _enemyConfiguration.RotationSpeed * Time.deltaTime);
             }
+        }
+
+        public async UniTask StartDelayMovementTimer(float delay)
+        {
+            if (_canMove == false)
+                return;
+
+            _navMeshAgent.isStopped = true;
+            _canMove = false;
+            await UniTask.Delay(TimeSpan.FromSeconds(delay),
+                cancellationToken: this.GetCancellationTokenOnDestroy());
+            _canMove = true;
+            _navMeshAgent.isStopped = false;
         }
     }
 }

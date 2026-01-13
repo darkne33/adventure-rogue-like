@@ -12,4 +12,5 @@ public class CharacterSettingsConfiguration : ScriptableObject
     [field: SerializeField]  public float Acceleration { get; private set; }
     [field: SerializeField]  public float Deceleration { get; private set; }
     [field: SerializeField]  public float JumpForce { get; private set; }
+    [field: SerializeField]  public float GravityMultiplier { get; private set; }
 }

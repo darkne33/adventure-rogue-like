@@ -12,8 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 899ec8a9cc4f4db5a9175f6241dad499, type: 3}
   m_Name: EnemyConfiguration_Easy
   m_EditorClassIdentifier: Assembly-CSharp::EnemyConfiguration
-  <DistanceToStop>k__BackingField: 1
+  <Damage>k__BackingField: 1
+  <DamageRange>k__BackingField: 1.2
+  <DamageCooldown>k__BackingField: 1
+  <EnemyDamageType>k__BackingField: 1
+  <DistanceToStop>k__BackingField: 1.2
   <Speed>k__BackingField: 5
   <RotationSpeed>k__BackingField: 40
   <Acceleration>k__BackingField: 4
-  <SmoothStopRange>k__BackingField: 1.5
+  <SmoothStopRange>k__BackingField: 1
