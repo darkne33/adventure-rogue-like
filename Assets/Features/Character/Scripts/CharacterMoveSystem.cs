@@ -1,5 +1,6 @@
 ﻿using Core;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class CharacterMoveSystem
 {
@@ -12,6 +13,12 @@ public class CharacterMoveSystem
     private Vector3 _currentVelocity;
 
     private bool _canJump = true;
+    
+    private readonly InputAction _dashAction;
+    private float _dashCooldownTimer = 0f;
+    
+    private readonly float _dashForce = 15f;
+    private readonly float _dashCooldown = 1f;
 
     public CharacterMoveSystem(Rigidbody rigidbody,
         ICameraService cameraService, CharacterSettingsConfiguration characterSettingsConfiguration)
@@ -19,6 +26,10 @@ public class CharacterMoveSystem
         _rigidbody = rigidbody;
         _cameraService = cameraService;
         _characterSettingsConfiguration = characterSettingsConfiguration;
+        
+        _dashAction = _inputActions.Player.Dash;
+        _dashAction.started += OnDashStarted;
+        
         _inputActions.Enable();
     }
 
@@ -129,5 +140,28 @@ public class CharacterMoveSystem
         currentVelocity.y += gravityDelta;
 
         _rigidbody.linearVelocity = currentVelocity;
+    }
+    
+    private void OnDashStarted(InputAction.CallbackContext context)
+    {
+        TryDash();
+    }
+
+    private void TryDash()
+    {
+        if (_dashCooldownTimer > 0f || _direction == Vector3.zero) return;
+        
+        Vector3 dashImpulse = _direction * _dashForce;
+        _rigidbody.AddForce(dashImpulse, ForceMode.Impulse);
+
+        _dashCooldownTimer = _dashCooldown;
+    }
+    
+    public void UpdateDash(float deltaTime)
+    {
+        if (_dashCooldownTimer > 0f)
+        {
+            _dashCooldownTimer -= deltaTime;
+        }
     }
 }

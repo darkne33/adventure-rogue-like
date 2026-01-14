@@ -1,3 +1,4 @@
+using System;
 using Core;
 using NaughtyAttributes;
 using UI;
@@ -35,6 +36,11 @@ public class CharacterFacade : MonoBehaviour
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         _characterHealthSystem = new CharacterHealthSystem(_characterSettingsConfiguration, characterPanel.CharacterHealthView);
         _characterHealthSystem.Initialize();
+    }
+
+    private void Update()
+    {
+        _moveSystem.UpdateDash(Time.deltaTime);
     }
 
     private void FixedUpdate()
