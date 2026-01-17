@@ -8,6 +8,7 @@ public class EnemyConfiguration : ScriptableObject
     [field: SerializeField] public float DamageRange  { get; private set; }
     [field: SerializeField] public float DamageCooldown  { get; private set; }
     [field: SerializeField] public EnemyDamageType EnemyDamageType  { get; private set; }
+    [field: SerializeField] public EnemyAnimationType EnemyAnimationType  { get; private set; }
     
     [field: Header("Movement Settings")]
     [field: SerializeField] public float DistanceToStop { get; private set; }

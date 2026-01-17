@@ -12,9 +12,11 @@ namespace Features.Enemies.Scripts
         [Inject] private ICharacterProvider _characterProvider;
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
+        [SerializeField] private Transform _modelTarget;
 
         private NavMeshAgent _navMeshAgent;
         private IEnemyDamageSystem _enemyDamageSystem;
+        private IEnemyAnimationSystem _animationSystem;
 
         private float _currentSpeed;
         private bool _canMove = true;
@@ -33,11 +35,21 @@ namespace Features.Enemies.Scripts
                     throw new Exception("Enemy Damage Type not supported");
             }
 
+            switch (_enemyConfiguration.EnemyAnimationType)
+            {
+                case EnemyAnimationType.Bun:
+                    _animationSystem = new BunEnemyAnimation(_modelTarget);
+                    break;
+                default:
+                    throw new Exception("Enemy Animation Type not supported");
+            }
+
             _enemyDamageSystem.Initialize();
         }
 
         private void Update()
         {
+            _animationSystem.RunAnimation();
             _enemyDamageSystem.Tick();
         }
 
