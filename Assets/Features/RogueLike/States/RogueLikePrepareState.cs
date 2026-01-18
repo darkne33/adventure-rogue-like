@@ -31,6 +31,7 @@ namespace Core
             _characterProvider.CharacterFacade = await _characterFactory.CreatePlayer(_sceneService.GameSceneComponentsService.CharacterSpawnPoint, cts);
 
             _sceneService.GameSceneComponentsService.CurrentLevel = _levelFactory.CreateLevelView(1, _sceneService.GameSceneComponentsService.LevelSpawnPoint);
+            //_sceneService.GameSceneComponentsService.CurrentLevel.BakeNavMeshSurface();
             
             Log.Gameplay.Info("RogueLike Prepare State Completed");
         }
