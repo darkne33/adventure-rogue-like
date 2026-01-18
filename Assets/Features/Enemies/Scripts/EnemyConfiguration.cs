@@ -15,5 +15,4 @@ public class EnemyConfiguration : ScriptableObject
     [field: SerializeField] public float Speed { get; private set; }
     [field: SerializeField] public float RotationSpeed { get; private set; }
     [field: SerializeField] public float Acceleration { get; private set; }
-    [field: SerializeField] public float SmoothStopRange { get; private set; }
 }

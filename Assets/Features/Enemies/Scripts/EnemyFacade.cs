@@ -55,9 +55,6 @@ namespace Features.Enemies.Scripts
 
         private void FixedUpdate()
         {
-            if (_canMove == false)
-                return;
-
             MoveTowardsPlayerNonPhysics();
         }
 
@@ -70,34 +67,16 @@ namespace Features.Enemies.Scripts
             direction.y = 0f;
             float distance = direction.magnitude;
 
-            float desiredSpeed = 0f;
-
             if (distance > _enemyConfiguration.DistanceToStop)
             {
-                float effectiveDistance = distance - _enemyConfiguration.DistanceToStop;
-                if (effectiveDistance < _enemyConfiguration.SmoothStopRange)
-                {
-                    desiredSpeed = _enemyConfiguration.Speed * (effectiveDistance / _enemyConfiguration.SmoothStopRange);
-                }
-                else
-                {
-                    desiredSpeed = _enemyConfiguration.Speed;
-                }
-            }
-
-            _currentSpeed =
-                Mathf.MoveTowards(_currentSpeed, desiredSpeed, _enemyConfiguration.Acceleration * Time.deltaTime);
-
-            if (_currentSpeed > 0.01f && distance > _enemyConfiguration.DistanceToStop)
-            {
-                _navMeshAgent.SetDestination(_characterProvider.CharacterFacade.transform.position);
+                _navMeshAgent.SetDestination(new Vector3(_characterProvider.CharacterFacade.transform.position.x, transform.position.y, _characterProvider.CharacterFacade.transform.position.z));
                 Rotation();
             }
         }
 
         private void Rotation()
         {
-            Vector3 direction = _characterProvider.CharacterFacade.transform.position - transform.position;
+            var direction = transform.forward;
 
             if (direction.magnitude > 0.01f)
             {
