@@ -1,5 +1,6 @@
 ﻿using Core;
 using Core.Services;
+using Features.Enemies.Scripts;
 using UnityEngine;
 using Zenject;
 
@@ -31,6 +32,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<ISceneService<RogueLikeSceneProvider>>().To<SceneService<RogueLikeSceneProvider>>().AsSingle()
             .WithArguments(SceneNames.GetSceneNameByType(_sceneNameType));
         Container.Bind<ICharacterProvider>().To<CharacterProvider>().AsSingle();
+        Container.Bind<IEnemiesProvider>().To<EnemiesProvider>().AsSingle();
     }
 
     private void BindConfigurations()

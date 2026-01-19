@@ -7,6 +7,8 @@ public class CharacterMoveSystem
     private readonly Rigidbody _rigidbody;
     private readonly ICameraService _cameraService;
     private readonly CharacterSettingsConfiguration _characterSettingsConfiguration;
+    private readonly CharacterFxSystem _characterFxSystem;
+    
     private readonly InputSystem_Actions _inputActions = new();
 
     private Vector3 _direction;
@@ -21,11 +23,12 @@ public class CharacterMoveSystem
     private readonly float _dashCooldown = 1f;
 
     public CharacterMoveSystem(Rigidbody rigidbody,
-        ICameraService cameraService, CharacterSettingsConfiguration characterSettingsConfiguration)
+        ICameraService cameraService, CharacterSettingsConfiguration characterSettingsConfiguration, CharacterFxSystem characterFxSystem)
     {
         _rigidbody = rigidbody;
         _cameraService = cameraService;
         _characterSettingsConfiguration = characterSettingsConfiguration;
+        _characterFxSystem = characterFxSystem;
         
         _dashAction = _inputActions.Player.Dash;
         _dashAction.started += OnDashStarted;
@@ -51,6 +54,8 @@ public class CharacterMoveSystem
         }
 
         bool isGrounded = _canJump;
+        
+        _characterFxSystem.ActivateMovementTrail(isGrounded);
 
         if (!isGrounded)
         {
@@ -118,6 +123,7 @@ public class CharacterMoveSystem
         {
             _rigidbody.AddForce(Vector3.up * _characterSettingsConfiguration.JumpForce, ForceMode.Force);
             _canJump = false;
+            _characterFxSystem.ActivateJump();
         }
     }
 
@@ -151,6 +157,7 @@ public class CharacterMoveSystem
     {
         if (_dashCooldownTimer > 0f || _direction == Vector3.zero) return;
         
+        _characterFxSystem.ActivateDash();
         Vector3 dashImpulse = _direction * _dashForce;
         _rigidbody.AddForce(dashImpulse, ForceMode.Impulse);
 

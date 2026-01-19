@@ -1,4 +1,3 @@
-using System;
 using Core;
 using NaughtyAttributes;
 using UI;
@@ -22,17 +21,20 @@ public class CharacterFacade : MonoBehaviour
     private CharacterMoveSystem _moveSystem;
     private CharacterCameraMoveSystem _cameraSystem;
     private CharacterHealthSystem  _characterHealthSystem;
+    private CharacterFxSystem _characterFxSystem;
 
     private Rigidbody _rigidbody;
 
     private void Start()
     {
         _rigidbody = GetComponent<Rigidbody>();
+        _characterFxSystem = GetComponent<CharacterFxSystem>();
+        
         _moveSystem =
-            new CharacterMoveSystem(_rigidbody, _cameraService, _characterSettingsConfiguration);
+            new CharacterMoveSystem(_rigidbody, _cameraService, _characterSettingsConfiguration, _characterFxSystem);
+        
         _cameraSystem = new CharacterCameraMoveSystem(_cameraService.MainCamera, transform, _characterCameraSettingsConfiguration);
-
-
+        
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         _characterHealthSystem = new CharacterHealthSystem(_characterSettingsConfiguration, characterPanel.CharacterHealthView);
         _characterHealthSystem.Initialize();
