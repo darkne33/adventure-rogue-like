@@ -1,24 +1,20 @@
-﻿using System.Threading;
-using Cysharp.Threading.Tasks;
+﻿using Features.Enemies.Scripts;
 using UnityEngine;
 using Zenject;
 
 public class EnemyFactory : IEnemyFactory
 {
     private readonly DiContainer _container;
-    private readonly CharacterConfiguration _characterConfiguration;
     
-    public EnemyFactory(DiContainer container, CharacterConfiguration characterConfiguration)
+    public EnemyFactory(DiContainer container)
     {
         _container = container;
-        _characterConfiguration = characterConfiguration;
     }
     
-    public async UniTask<CharacterFacade> CreatePlayer(Transform spawnPoint, CancellationToken cancellationToken)
+    public EnemyFacade Create(GameObject enemy, Transform spawnPoint)
     {
-        await _characterConfiguration.CharacterContainer.Load(cancellationToken);
-        var character =
-            _container.InstantiatePrefabForComponent<CharacterFacade>(_characterConfiguration.CharacterContainer.Get(), spawnPoint);
-        return character;
+        var enemyFacade =
+            _container.InstantiatePrefabForComponent<EnemyFacade>(enemy, spawnPoint);
+        return enemyFacade;
     }
 }

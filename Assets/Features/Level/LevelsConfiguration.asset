@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f458b05ba71b45268cb8c81843db9f59, type: 3}
+  m_Name: LevelsConfiguration
+  m_EditorClassIdentifier: Assembly-CSharp::LevelsConfiguration
+  <GroundLayer>k__BackingField:
+    serializedVersion: 2
+    m_Bits: 64
+  <ObstacleLayer>k__BackingField:
+    serializedVersion: 2
+    m_Bits: 0
+  <Levels>k__BackingField:
+  - <EnemyFactoryConfiguration>k__BackingField: {fileID: 11400000, guid: fb19e7270ba2f1248a4ad5c3d99fd81c, type: 2}
+    <LevelView>k__BackingField: {fileID: 5716263380797961638, guid: 19fb5b68d7c0c7141808cb37a5efe87e, type: 3}
+    <EnemyWavesConfiguration>k__BackingField:
+    - {fileID: 11400000, guid: 8e21255e44fb68a4ea6103092d44b704, type: 2}
+    - {fileID: 11400000, guid: 8e21255e44fb68a4ea6103092d44b704, type: 2}
+    - {fileID: 11400000, guid: 8e21255e44fb68a4ea6103092d44b704, type: 2}
+  - <EnemyFactoryConfiguration>k__BackingField: {fileID: 11400000, guid: fb19e7270ba2f1248a4ad5c3d99fd81c, type: 2}
+    <LevelView>k__BackingField: {fileID: 5716263380797961638, guid: 19fb5b68d7c0c7141808cb37a5efe87e, type: 3}
+    <EnemyWavesConfiguration>k__BackingField:
+    - {fileID: 11400000, guid: 8e21255e44fb68a4ea6103092d44b704, type: 2}
+    - {fileID: 11400000, guid: 8e21255e44fb68a4ea6103092d44b704, type: 2}
+    - {fileID: 11400000, guid: 8e21255e44fb68a4ea6103092d44b704, type: 2}
+  - <EnemyFactoryConfiguration>k__BackingField: {fileID: 11400000, guid: fb19e7270ba2f1248a4ad5c3d99fd81c, type: 2}
+    <LevelView>k__BackingField: {fileID: 5716263380797961638, guid: 19fb5b68d7c0c7141808cb37a5efe87e, type: 3}
+    <EnemyWavesConfiguration>k__BackingField:
+    - {fileID: 11400000, guid: 8e21255e44fb68a4ea6103092d44b704, type: 2}
+    - {fileID: 11400000, guid: 8e21255e44fb68a4ea6103092d44b704, type: 2}
+    - {fileID: 11400000, guid: 8e21255e44fb68a4ea6103092d44b704, type: 2}

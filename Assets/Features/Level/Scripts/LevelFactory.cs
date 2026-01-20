@@ -14,7 +14,7 @@ public class LevelFactory : ILevelFactory
 
     public LevelView CreateLevelView(int levelNumber, Transform parent)
     {
-        var level = _container.InstantiatePrefabForComponent<LevelView>(_levelsConfiguration.Levels[levelNumber], parent);
+        var level = _container.InstantiatePrefabForComponent<LevelView>(_levelsConfiguration.Levels[levelNumber].LevelView, parent);
         return level;
     }
 }

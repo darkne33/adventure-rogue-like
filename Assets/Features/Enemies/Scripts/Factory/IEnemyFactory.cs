@@ -1,8 +1,7 @@
-﻿using System.Threading;
-using Cysharp.Threading.Tasks;
+﻿using Features.Enemies.Scripts;
 using UnityEngine;
 
 public interface IEnemyFactory
 {
-    public UniTask<CharacterFacade> CreatePlayer(Transform spawnPoint, CancellationToken cancellationToke);
+    public EnemyFacade Create(GameObject enemy, Transform spawnPoint);
 }

@@ -19,12 +19,15 @@ public class RogueLikeMonoInstaller : MonoInstaller
         BindProviders();
         BindConfigurations();
         BindFactories();
+        BindServices();
+        BindSpawners();
     }
 
     private void BindFactories()
     {
         Container.Bind<ICharacterFactory>().To<CharacterFactory>().AsSingle();
         Container.Bind<ILevelFactory>().To<LevelFactory>().AsSingle();
+        Container.Bind<IEnemyFactory>().To<EnemyFactory>().AsSingle();
     }
 
     private void BindProviders()
@@ -42,5 +45,15 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<CharacterSettingsConfiguration>().FromInstance(_characterSettingsConfiguration).AsSingle();
         
         Container.Bind<LevelsConfiguration>().FromInstance(_levelsConfiguration).AsSingle();
+    }
+
+    private void BindServices()
+    {
+        Container.Bind<IRogueLikeRuntimeDataService>().To<RogueLikeRuntimeDataService>().AsSingle();
+    }
+
+    private void BindSpawners()
+    {
+        Container.Bind<EnemySpawner>().AsSingle();
     }
 }
