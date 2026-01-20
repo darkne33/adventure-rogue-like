@@ -9,6 +9,8 @@ public class CharacterCameraSettingsConfiguration : ScriptableObject
 
     [field: SerializeField] public float Height { get; private set; } = 2f;
     [field: SerializeField] public float MouseSensitivity { get; private set; } = 0.1f;
+    [field: SerializeField]  public float MinDistanceToTarget  { get; private set; } = 0.7f; 
+    [field: SerializeField]  public LayerMask CameraCollisionLayers { get; private set; } = Physics.AllLayers;
     
     [Header("Vertical Limits")] 
     [field: SerializeField] public float MinVerticalAngle { get; private set; } = -30f;

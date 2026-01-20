@@ -30,8 +30,6 @@ public class EnemySpawner
     {
         var wave = _levelsConfiguration.Levels[_rogueLikeRuntimeDataService.CurrentIndexLevel]
             .EnemyWavesConfiguration[_currentWave];
-        
-        Debug.Log(wave.EnemyTypes.Length);
 
         for (int attempt = 0; attempt < wave.EnemyTypes.Length; attempt++)
         {
@@ -67,14 +65,11 @@ public class EnemySpawner
         if (!Physics.Raycast(position + Vector3.up * 10f, Vector3.down, out RaycastHit hit, 20f,
                 _levelsConfiguration.GroundLayer))
         {
-            
-            Debug.Log("TEST");
             return false;
         }
 
         if (Mathf.Abs(hit.point.y - position.y) > _maxHeightDifference)
         {
-            Debug.Log("TEST");
             return false;
         }
 
@@ -83,14 +78,8 @@ public class EnemySpawner
         var colliders = Physics.OverlapSphere(finalPosition, 0.5f, _levelsConfiguration.ObstacleLayer);
         if (colliders.Length > 0)
         {
-            Debug.Log("TEST");
             return false;
         }
-
-        /*if (!UnityEngine.AI.NavMesh.SamplePosition(finalPosition, out _, 1f, UnityEngine.AI.NavMesh.AllAreas))
-        {
-            return false;
-        }*/
 
         return true;
     }
