@@ -7,21 +7,20 @@ using Zenject;
 [RequireComponent(typeof(Rigidbody))]
 public class CharacterFacade : MonoBehaviour
 {
-    public CharacterHealthSystem CharacterHealthSystem => _characterHealthSystem;
+    public HealthSystem HealthSystem => _healthSystem;
     public Rigidbody Rigidbody => _rigidbody;
-    
+
     [Inject] private CharacterSettingsConfiguration _characterSettingsConfiguration;
     [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
-    
+
     [Inject] private ICameraService _cameraService;
     [Inject] private IPanelService _panelService;
 
-    [HorizontalLine]
-
-    private CharacterMoveSystem _moveSystem;
+    [HorizontalLine] private CharacterMoveSystem _moveSystem;
     private CharacterCameraMoveSystem _cameraSystem;
-    private CharacterHealthSystem  _characterHealthSystem;
+    private HealthSystem _healthSystem;
     private CharacterFxSystem _characterFxSystem;
+    private IHealthView _healthView;
 
     private Rigidbody _rigidbody;
 
@@ -29,15 +28,19 @@ public class CharacterFacade : MonoBehaviour
     {
         _rigidbody = GetComponent<Rigidbody>();
         _characterFxSystem = GetComponent<CharacterFxSystem>();
-        
+        _healthView = GetComponent<HealthView>();
+
         _moveSystem =
             new CharacterMoveSystem(_rigidbody, _cameraService, _characterSettingsConfiguration, _characterFxSystem);
-        
-        _cameraSystem = new CharacterCameraMoveSystem(_cameraService.MainCamera, transform, _characterCameraSettingsConfiguration);
-        
+
+        _cameraSystem =
+            new CharacterCameraMoveSystem(_cameraService.MainCamera, transform, _characterCameraSettingsConfiguration);
+
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
-        _characterHealthSystem = new CharacterHealthSystem(_characterSettingsConfiguration, characterPanel.CharacterHealthView);
-        _characterHealthSystem.Initialize();
+        _healthSystem = new HealthSystem(_characterSettingsConfiguration.StartHealth,
+            new[] { characterPanel.CharacterHealthView, _healthView }
+        );
+        _healthSystem.Initialize();
     }
 
     private void Update()
@@ -60,7 +63,7 @@ public class CharacterFacade : MonoBehaviour
     private void OnCollisionEnter(Collision other)
     {
         var ground = other.gameObject.GetComponent<Ground>();
-        if (ground != null) 
+        if (ground != null)
             _moveSystem.ResetCanJump();
     }
 }

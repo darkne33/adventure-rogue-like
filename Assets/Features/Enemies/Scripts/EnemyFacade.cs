@@ -17,6 +17,8 @@ namespace Features.Enemies.Scripts
         private NavMeshAgent _navMeshAgent;
         private IEnemyDamageSystem _enemyDamageSystem;
         private IEnemyAnimationSystem _animationSystem;
+        private HealthSystem _healthSystem;
+        private IHealthView _healthView;
 
         private float _currentSpeed;
         private bool _canMove = true;
@@ -45,6 +47,10 @@ namespace Features.Enemies.Scripts
             }
 
             _enemyDamageSystem.Initialize();
+            
+            _healthView = GetComponent<HealthView>();
+            _healthSystem = new HealthSystem(100, new[] { _healthView });
+            _healthSystem.Initialize();
         }
 
         private void Update()

@@ -26,7 +26,7 @@ namespace Features.Enemies.Scripts
 
         public void Execute()
         {
-            _characterFacade.CharacterHealthSystem.GetDamage(_enemyConfiguration.Damage);
+            _characterFacade.HealthSystem.GetDamage(_enemyConfiguration.Damage);
 
             Vector3 pushDirection = _characterFacade.transform.position - _enemyTarget.position;
             pushDirection.y = 0f;
