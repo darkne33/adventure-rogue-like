@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d952b0ca60341f18ec555cc82d21b91, type: 3}
+  m_Name: FireballAbilityConfiguration
+  m_EditorClassIdentifier: Assembly-CSharp::FireballAbilityConfiguration
+  <AbilityName>k__BackingField: 0
+  DisplayName: Fireball
+  Description: Shoots a fireball!:)
+  <Icon>k__BackingField: {fileID: 21300000, guid: 005888ede18a58e4db8d069cfa3007cb, type: 3}
+  StartDamage: 2
+  Cooldown: 2
+  Prefab: {fileID: 2367334733768428185, guid: 28378e3861530d24183eac23e2e95bfa, type: 3}

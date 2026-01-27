@@ -9,6 +9,8 @@ namespace Features.Enemies.Scripts
 {
     public class EnemyFacade : MonoBehaviour
     {
+        public HealthSystem HealthSystem => _healthSystem;
+
         [Inject] private ICharacterProvider _characterProvider;
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
@@ -47,7 +49,7 @@ namespace Features.Enemies.Scripts
             }
 
             _enemyDamageSystem.Initialize();
-            
+
             _healthView = GetComponent<HealthView>();
             _healthSystem = new HealthSystem(100, new[] { _healthView });
             _healthSystem.Initialize();
@@ -75,7 +77,8 @@ namespace Features.Enemies.Scripts
 
             if (distance > _enemyConfiguration.DistanceToStop)
             {
-                _navMeshAgent.SetDestination(new Vector3(_characterProvider.CharacterFacade.transform.position.x, transform.position.y, _characterProvider.CharacterFacade.transform.position.z));
+                _navMeshAgent.SetDestination(new Vector3(_characterProvider.CharacterFacade.transform.position.x,
+                    transform.position.y, _characterProvider.CharacterFacade.transform.position.z));
                 Rotation();
             }
         }

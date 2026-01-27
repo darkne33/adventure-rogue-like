@@ -9,18 +9,21 @@ public class CharacterFacade : MonoBehaviour
 {
     public HealthSystem HealthSystem => _healthSystem;
     public Rigidbody Rigidbody => _rigidbody;
+    public CharacterCombatSystem CharacterCombatSystem => _characterCombatSystem;
 
     [Inject] private CharacterSettingsConfiguration _characterSettingsConfiguration;
     [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
 
     [Inject] private ICameraService _cameraService;
     [Inject] private IPanelService _panelService;
+    [Inject] private IAbilityChoiceProvider _abilityChoiceProvider;
 
     [HorizontalLine] private CharacterMoveSystem _moveSystem;
     private CharacterCameraMoveSystem _cameraSystem;
     private HealthSystem _healthSystem;
     private CharacterFxSystem _characterFxSystem;
     private IHealthView _healthView;
+    private CharacterCombatSystem _characterCombatSystem;
 
     private Rigidbody _rigidbody;
 
@@ -36,6 +39,9 @@ public class CharacterFacade : MonoBehaviour
         _cameraSystem =
             new CharacterCameraMoveSystem(_cameraService.MainCamera, transform, _characterCameraSettingsConfiguration);
 
+        _characterCombatSystem = new CharacterCombatSystem();
+        _characterCombatSystem.AddAbility(_abilityChoiceProvider.GetAbility(AbilityName.FireBall), this);
+
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         _healthSystem = new HealthSystem(_characterSettingsConfiguration.StartHealth,
             new[] { characterPanel.CharacterHealthView, _healthView }
@@ -46,6 +52,7 @@ public class CharacterFacade : MonoBehaviour
     private void Update()
     {
         _moveSystem.UpdateDash(Time.deltaTime);
+        _characterCombatSystem.TickAbilities(this);
     }
 
     private void FixedUpdate()

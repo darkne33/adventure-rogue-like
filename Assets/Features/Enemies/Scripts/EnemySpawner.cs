@@ -10,13 +10,12 @@ public class EnemySpawner
 
     private int _currentWave = 0;
 
-    private Vector2 _spawnRadius = new Vector2(5f, 10f);
+    private readonly Vector2 _spawnRadius = new Vector2(5f, 10f);
 
     private LayerMask _groundLayer;
     private LayerMask _obstacleLayer;
-    private float _maxHeightDifference = 1f;
-
-
+    private readonly float _maxHeightDifference = 1f;
+    
     public EnemySpawner(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IEnemyFactory enemyFactory,
         LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider)
     {
@@ -35,8 +34,6 @@ public class EnemySpawner
         {
             Vector3 spawnPosition =
                 GetRandomPointInAnnulus(characterFacade.transform.position, _spawnRadius.x, _spawnRadius.y);
-            
-            Debug.Log(spawnPosition);
 
             if (IsPositionValid(spawnPosition, out Vector3 finalPosition))
             {

@@ -12,6 +12,8 @@ public class RogueLikeMonoInstaller : MonoInstaller
     
     [SerializeField] private LevelsConfiguration _levelsConfiguration;
 
+    [SerializeField] private AllAbilitiesConfiguration _abilitiesConfiguration;
+
     [SerializeField] private SceneNames.SceneNameType _sceneNameType;
     
     public override void InstallBindings()
@@ -36,6 +38,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
             .WithArguments(SceneNames.GetSceneNameByType(_sceneNameType));
         Container.Bind<ICharacterProvider>().To<CharacterProvider>().AsSingle();
         Container.Bind<IEnemiesProvider>().To<EnemiesProvider>().AsSingle();
+        Container.Bind<IAbilityChoiceProvider>().To<AbilityChoiceProvider>().AsSingle();
     }
 
     private void BindConfigurations()
@@ -45,6 +48,8 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<CharacterSettingsConfiguration>().FromInstance(_characterSettingsConfiguration).AsSingle();
         
         Container.Bind<LevelsConfiguration>().FromInstance(_levelsConfiguration).AsSingle();
+
+        Container.Bind<AllAbilitiesConfiguration>().FromInstance(_abilitiesConfiguration).AsSingle();
     }
 
     private void BindServices()
