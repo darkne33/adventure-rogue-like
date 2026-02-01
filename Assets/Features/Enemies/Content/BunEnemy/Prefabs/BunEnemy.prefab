@@ -48,7 +48,7 @@ GameObject:
   - component: {fileID: 6914217021343055076}
   - component: {fileID: 499110268862815574}
   m_Layer: 0
-  m_Name: hand_1.001
+  m_Name: RightHand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -102,7 +102,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 6391682739543971470, guid: 58af1916a6ec8ff4495a006a7b33f59e, type: 3}
+  - {fileID: 2100000, guid: 764ad10fccbb1144da9d039606aa82e8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -404,7 +404,7 @@ GameObject:
   - component: {fileID: 1331644044892019761}
   - component: {fileID: 6521105075609317507}
   m_Layer: 0
-  m_Name: hand_1.002
+  m_Name: LeftHand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -458,7 +458,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 6391682739543971470, guid: 58af1916a6ec8ff4495a006a7b33f59e, type: 3}
+  - {fileID: 2100000, guid: 764ad10fccbb1144da9d039606aa82e8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -562,7 +562,7 @@ SphereCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Radius: 1.54
-  m_Center: {x: 0.06, y: 0.21, z: -0.05}
+  m_Center: {x: 0.06, y: 0, z: -0.05}
 --- !u!195 &2841528611562344274
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -699,7 +699,7 @@ GameObject:
   - component: {fileID: 2511060469550352770}
   - component: {fileID: 6331808027788662109}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: BunModel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

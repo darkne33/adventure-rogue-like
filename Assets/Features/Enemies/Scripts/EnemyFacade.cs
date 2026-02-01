@@ -44,7 +44,7 @@ namespace Features.Enemies.Scripts
             switch (_enemyConfiguration.EnemyAnimationType)
             {
                 case EnemyAnimationType.Bun:
-                    _animationSystem = new BunEnemyAnimation(_modelTarget, _animator);
+                    _animationSystem = new BunEnemyAnimation(_animator);
                     break;
                 default:
                     throw new Exception("Enemy Animation Type not supported");

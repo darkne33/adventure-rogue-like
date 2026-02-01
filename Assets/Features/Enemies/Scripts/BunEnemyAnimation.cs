@@ -5,12 +5,10 @@ public class BunEnemyAnimation : IEnemyAnimationSystem
     private static readonly int IsRunning = Animator.StringToHash("IsRunning");
     private static readonly int Attack = Animator.StringToHash("Attack");
     
-    private readonly Transform _bunTarget;
     private readonly Animator _animator;
     
-    public BunEnemyAnimation(Transform bunTarget, Animator animator)
+    public BunEnemyAnimation( Animator animator)
     {
-        _bunTarget = bunTarget;
         _animator = animator;
     }
     
