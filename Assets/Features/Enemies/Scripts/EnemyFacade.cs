@@ -9,9 +9,10 @@ namespace Features.Enemies.Scripts
     public class EnemyFacade : MonoBehaviour
     {
         public HealthSystem HealthSystem => _healthSystem;
-        public EnemyDamageEffectsSystem DamageEffectsSystem => _effectsSystem;
+        public EnemyEffectsSystem EffectsSystem => _effectsSystem;
 
         [Inject] private ICharacterProvider _characterProvider;
+        [Inject] private IEnemiesProvider _enemiesProvider;
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
         [SerializeField] private MeshRenderer[] _meshRenderers;
@@ -22,7 +23,8 @@ namespace Features.Enemies.Scripts
         private HealthSystem _healthSystem;
         private IHealthView _healthView;
         private Animator _animator;
-        private EnemyDamageEffectsSystem _effectsSystem;
+        private EnemyEffectsSystem _effectsSystem;
+        private IDeathSystem _deathSystem;
 
         private float _currentSpeed;
         private bool _canMove = true;
@@ -55,11 +57,12 @@ namespace Features.Enemies.Scripts
             _navMeshAgent.angularSpeed = _enemyConfiguration.RotationSpeed;
             _enemyDamageSystem.Initialize();
 
+            _deathSystem = new EnemyDeathSystem(_enemiesProvider, this);
             _healthView = GetComponent<HealthView>();
-            _healthSystem = new HealthSystem(100, new[] { _healthView });
+            _healthSystem = new HealthSystem(100, new[] { _healthView }, _deathSystem);
             _healthSystem.Initialize();
 
-            _effectsSystem = new EnemyDamageEffectsSystem(_meshRenderers);
+            _effectsSystem = new EnemyEffectsSystem(_meshRenderers);
         }
 
         private void Update()

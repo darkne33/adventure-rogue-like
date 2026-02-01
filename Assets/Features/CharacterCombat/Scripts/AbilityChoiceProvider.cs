@@ -35,9 +35,3 @@ public class AbilityChoiceProvider : IAbilityChoiceProvider
     public CharacterAbility GetAbility(AbilityName abilityName) =>
         _characterAbilities.GetValueOrDefault(abilityName);
 }
-
-public interface IAbilityChoiceProvider
-{
-    void CreateAllAbilities();
-    CharacterAbility GetAbility(AbilityName abilityName);
-}

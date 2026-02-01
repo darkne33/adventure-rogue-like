@@ -35,7 +35,7 @@ public class FireballAbility : CharacterActiveAbility
         fireball.transform.rotation =
             Quaternion.LookRotation(fireball.transform.position - randomEnemyPosition);
 
-        fireball.transform.DOMove(randomEnemyPosition, 50).SetSpeedBased();
+        fireball.transform.DOMove(randomEnemyPosition, 50).SetSpeedBased().SetLink(fireball).SetId("Fireball Ability");
         
         CollisionDetector collisionDetector = fireball.GetComponent<CollisionDetector>();
         collisionDetector.OnCollisionEnter = enemyFacade => DamageDeal(fireball, enemyFacade);
@@ -43,7 +43,7 @@ public class FireballAbility : CharacterActiveAbility
     private void DamageDeal(GameObject fireball, EnemyFacade enemyFacade)
     {
         enemyFacade.HealthSystem.GetDamage(_damage);
-        enemyFacade.DamageEffectsSystem.DealDamage();
+        enemyFacade.EffectsSystem.DealDamage();
         Object.Destroy(fireball);
     }
 }

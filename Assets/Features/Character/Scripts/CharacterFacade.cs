@@ -24,6 +24,7 @@ public class CharacterFacade : MonoBehaviour
     private CharacterFxSystem _characterFxSystem;
     private IHealthView _healthView;
     private CharacterCombatSystem _characterCombatSystem;
+    private IDeathSystem _deathSystem;
 
     private Rigidbody _rigidbody;
 
@@ -44,8 +45,9 @@ public class CharacterFacade : MonoBehaviour
 
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         _healthSystem = new HealthSystem(_characterSettingsConfiguration.StartHealth,
-            new[] { characterPanel.CharacterHealthView, _healthView }
+            new[] { characterPanel.CharacterHealthView, _healthView}, _deathSystem
         );
+        
         _healthSystem.Initialize();
     }
 
