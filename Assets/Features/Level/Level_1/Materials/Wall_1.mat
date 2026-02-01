@@ -20,7 +20,6 @@ Material:
   - _LIGHTMODEL_CLASSIC
   - _MATCAPBLENDMODE_MULTIPLY
   - _OUTLINETYPE_NONE
-  - _POSTERIZE_ON
   - _RECEIVEDSHADOWSTYPE_CLASSIC
   - _RECEIVE_SHADOWS_ON
   - _REFLECTIONS_NONE
@@ -41,7 +40,7 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 2000
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
@@ -338,7 +337,7 @@ Material:
     - _Parallax: 0.02
     - _Pixelate: 0
     - _PixelateSize: 69
-    - _Posterize: 1
+    - _Posterize: 0
     - _PosterizeGamma: 0.75
     - _PosterizeNumColors: 8
     - _QueueOffset: 0
