@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.Serialization;
 using Zenject;
 
 namespace Features.Enemies.Scripts
@@ -10,11 +9,12 @@ namespace Features.Enemies.Scripts
     public class EnemyFacade : MonoBehaviour
     {
         public HealthSystem HealthSystem => _healthSystem;
+        public EnemyDamageEffectsSystem DamageEffectsSystem => _effectsSystem;
 
         [Inject] private ICharacterProvider _characterProvider;
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
-        [SerializeField] private Transform _modelTarget;
+        [SerializeField] private MeshRenderer[] _meshRenderers;
 
         private NavMeshAgent _navMeshAgent;
         private IEnemyDamageSystem _enemyDamageSystem;
@@ -22,6 +22,7 @@ namespace Features.Enemies.Scripts
         private HealthSystem _healthSystem;
         private IHealthView _healthView;
         private Animator _animator;
+        private EnemyDamageEffectsSystem _effectsSystem;
 
         private float _currentSpeed;
         private bool _canMove = true;
@@ -57,6 +58,8 @@ namespace Features.Enemies.Scripts
             _healthView = GetComponent<HealthView>();
             _healthSystem = new HealthSystem(100, new[] { _healthView });
             _healthSystem.Initialize();
+
+            _effectsSystem = new EnemyDamageEffectsSystem(_meshRenderers);
         }
 
         private void Update()

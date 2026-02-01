@@ -598,7 +598,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyFacade
   _enemyConfiguration: {fileID: 11400000, guid: 526077a63e653dc4fb3817e6da631530, type: 2}
-  _modelTarget: {fileID: 0}
+  _meshRenderers:
+  - {fileID: 6331808027788662109}
+  - {fileID: 499110268862815574}
+  - {fileID: 6521105075609317507}
 --- !u!114 &226054964259705086
 MonoBehaviour:
   m_ObjectHideFlags: 0
