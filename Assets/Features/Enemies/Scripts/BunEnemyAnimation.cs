@@ -1,13 +1,17 @@
-﻿using DG.Tweening;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class BunEnemyAnimation : IEnemyAnimationSystem
 {
-    private readonly Transform _bunTarget;
+    private static readonly int IsRunning = Animator.StringToHash("IsRunning");
+    private static readonly int Attack = Animator.StringToHash("Attack");
     
-    public BunEnemyAnimation(Transform bunTarget)
+    private readonly Transform _bunTarget;
+    private readonly Animator _animator;
+    
+    public BunEnemyAnimation(Transform bunTarget, Animator animator)
     {
         _bunTarget = bunTarget;
+        _animator = animator;
     }
     
     public void IdleAnimation()
@@ -17,11 +21,11 @@ public class BunEnemyAnimation : IEnemyAnimationSystem
 
     public void RunAnimation()
     {
-        
+        _animator.SetBool(IsRunning, true);
     }
 
     public void AttackAnimation()
     {
-        
+        _animator.SetTrigger(Attack);
     }
 }

@@ -21,6 +21,7 @@ namespace Features.Enemies.Scripts
         private IEnemyAnimationSystem _animationSystem;
         private HealthSystem _healthSystem;
         private IHealthView _healthView;
+        private Animator _animator;
 
         private float _currentSpeed;
         private bool _canMove = true;
@@ -28,6 +29,7 @@ namespace Features.Enemies.Scripts
         private void Start()
         {
             _navMeshAgent = GetComponent<NavMeshAgent>();
+            _animator = GetComponent<Animator>();
 
             switch (_enemyConfiguration.EnemyDamageType)
             {
@@ -42,12 +44,14 @@ namespace Features.Enemies.Scripts
             switch (_enemyConfiguration.EnemyAnimationType)
             {
                 case EnemyAnimationType.Bun:
-                    _animationSystem = new BunEnemyAnimation(_modelTarget);
+                    _animationSystem = new BunEnemyAnimation(_modelTarget, _animator);
                     break;
                 default:
                     throw new Exception("Enemy Animation Type not supported");
             }
 
+            _navMeshAgent.speed = _enemyConfiguration.Speed;
+            _navMeshAgent.angularSpeed = _enemyConfiguration.RotationSpeed;
             _enemyDamageSystem.Initialize();
 
             _healthView = GetComponent<HealthView>();
