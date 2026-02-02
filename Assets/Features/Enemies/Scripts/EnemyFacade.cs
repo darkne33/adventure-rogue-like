@@ -27,7 +27,6 @@ namespace Features.Enemies.Scripts
         private IDeathSystem _deathSystem;
 
         private float _currentSpeed;
-        private bool _canMove = true;
 
         private void Start()
         {
@@ -63,18 +62,33 @@ namespace Features.Enemies.Scripts
             _healthSystem.Initialize();
 
             _effectsSystem = new EnemyEffectsSystem(_meshRenderers);
+            
+            _enemyDamageSystem.Tick(gameObject.GetCancellationTokenOnDestroy()).Forget();
         }
 
         private void Update()
         {
             _animationSystem.RunAnimation();
-            _enemyDamageSystem.Tick();
         }
 
         private void FixedUpdate()
         {
             MoveTowardsPlayerNonPhysics();
         }
+        
+        public async UniTask StartDelayMovementTimer(float delay)
+        {
+            if (_navMeshAgent.isStopped)
+                return;
+
+            SetStop(true);
+            await UniTask.Delay(TimeSpan.FromSeconds(delay),
+                cancellationToken: this.GetCancellationTokenOnDestroy());
+            SetStop(false);
+        }
+
+        public void SetStop(bool state) => 
+            _navMeshAgent.isStopped = state;
 
         private void MoveTowardsPlayerNonPhysics()
         {
@@ -102,19 +116,6 @@ namespace Features.Enemies.Scripts
                 transform.forward = Vector3.Slerp(transform.forward, direction.normalized,
                     _enemyConfiguration.RotationSpeed * Time.deltaTime);
             }
-        }
-
-        public async UniTask StartDelayMovementTimer(float delay)
-        {
-            if (_canMove == false)
-                return;
-
-            _navMeshAgent.isStopped = true;
-            _canMove = false;
-            await UniTask.Delay(TimeSpan.FromSeconds(delay),
-                cancellationToken: this.GetCancellationTokenOnDestroy());
-            _canMove = true;
-            _navMeshAgent.isStopped = false;
         }
     }
 }

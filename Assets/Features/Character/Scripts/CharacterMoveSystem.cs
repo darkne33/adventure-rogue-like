@@ -19,7 +19,7 @@ public class CharacterMoveSystem
     private readonly InputAction _dashAction;
     private float _dashCooldownTimer = 0f;
     
-    private readonly float _dashForce = 15f;
+    private readonly float _dashForce = 25f;
     private readonly float _dashCooldown = 1f;
 
     public CharacterMoveSystem(Rigidbody rigidbody,

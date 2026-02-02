@@ -4,39 +4,37 @@ using UnityEngine;
 
 namespace Features.Enemies.Scripts
 {
-    public class EnemyDamageMeleeSystem : IEnemyDamageSystem
+    public class EnemyDashAttackSystem : IEnemyDamageSystem
     {
         private readonly CharacterFacade _characterFacade;
         private readonly EnemyConfiguration _enemyConfiguration;
         private readonly Transform _enemyTarget;
         private readonly EnemyFacade _enemyFacade;
-
+        
         private float _cooldown;
-        private readonly float _distanceExecuteDamage;
+        private float _distanceExecuteDamage;
 
-        public EnemyDamageMeleeSystem(EnemyFacade enemyFacade, CharacterFacade characterFacade,
-            EnemyConfiguration enemyConfiguration, Transform enemyTarget)
+        public EnemyDashAttackSystem(CharacterFacade characterFacade, EnemyConfiguration enemyConfiguration, Transform enemyTarget, EnemyFacade enemyFacade)
         {
-            _enemyFacade = enemyFacade;
             _characterFacade = characterFacade;
             _enemyConfiguration = enemyConfiguration;
             _enemyTarget = enemyTarget;
-
-            _distanceExecuteDamage = _enemyConfiguration.DamageRange;
+            _enemyFacade = enemyFacade;
         }
 
+        public void Initialize()
+        {
+            _distanceExecuteDamage = _enemyConfiguration.DamageRange;
+            _cooldown = _enemyConfiguration.DamageCooldown;
+        }
+        
         public UniTask Execute(CancellationToken cancellationToken)
         {
-            _characterFacade.HealthSystem.GetDamage(_enemyConfiguration.Damage);
-
-            Vector3 pushDirection = _characterFacade.transform.position - _enemyTarget.position;
-            pushDirection.y = 0f;
-            pushDirection.Normalize();
-            Vector3 force = pushDirection;
-            _characterFacade.Rigidbody.AddForce(force * 10f, ForceMode.Impulse);
-
-            _enemyFacade.StartDelayMovementTimer(1).Forget();
-
+            _enemyFacade.SetStop(true);
+            
+            
+            
+            _enemyFacade.SetStop(false);
             return UniTask.CompletedTask;
         }
 
@@ -55,8 +53,5 @@ namespace Features.Enemies.Scripts
                 await UniTask.Yield(cancellationToken);
             }
         }
-
-        public void Initialize() =>
-            _cooldown = _enemyConfiguration.DamageCooldown;
     }
 }

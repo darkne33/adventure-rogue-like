@@ -1,9 +1,12 @@
-﻿namespace Features.Enemies.Scripts
+﻿using System.Threading;
+using Cysharp.Threading.Tasks;
+
+namespace Features.Enemies.Scripts
 {
     public interface IEnemyDamageSystem
     {
-        void Execute();
         void Initialize();
-        void Tick();
+        UniTask Execute(CancellationToken cancellationToken);
+        UniTask Tick(CancellationToken cancellationToken);
     }
 }

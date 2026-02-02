@@ -35,7 +35,11 @@ public class FireballAbility : CharacterActiveAbility
         fireball.transform.rotation =
             Quaternion.LookRotation(fireball.transform.position - randomEnemyPosition);
 
-        fireball.transform.DOMove(randomEnemyPosition, 50).SetSpeedBased().SetLink(fireball).SetId("Fireball Ability");
+        fireball.transform.DOMove(randomEnemyPosition, 50).SetSpeedBased().SetLink(fireball).SetId("Fireball Ability").OnComplete(() =>
+        {
+            if (fireball != null)
+                Object.Destroy(fireball);
+        });
         
         CollisionDetector collisionDetector = fireball.GetComponent<CollisionDetector>();
         collisionDetector.OnCollisionEnter = enemyFacade => DamageDeal(fireball, enemyFacade);
