@@ -10,7 +10,7 @@ public class EnemySpawner
 
     private int _currentWave = 0;
 
-    private readonly Vector2 _spawnRadius = new Vector2(5f, 10f);
+    private readonly Vector2 _spawnRadius = new Vector2(40f, 40f);
 
     private LayerMask _groundLayer;
     private LayerMask _obstacleLayer;

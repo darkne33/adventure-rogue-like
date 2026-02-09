@@ -22,6 +22,8 @@ public class CharacterMoveSystem
     private readonly float _dashForce = 25f;
     private readonly float _dashCooldown = 1f;
 
+    private bool _canMove = true;
+
     public CharacterMoveSystem(Rigidbody rigidbody,
         ICameraService cameraService, CharacterSettingsConfiguration characterSettingsConfiguration, CharacterFxSystem characterFxSystem)
     {
@@ -38,6 +40,9 @@ public class CharacterMoveSystem
 
     public void Move()
     {
+        if (_canMove == false)
+            return;
+        
         Vector2 input = _inputActions.Player.Move.ReadValue<Vector2>();
 
         Vector3 forward = _cameraService.MainCamera.transform.forward;
@@ -97,10 +102,8 @@ public class CharacterMoveSystem
         bool blocked = false;
         if (input.magnitude > 0.1f && Physics.Raycast(_rigidbody.transform.position, _direction, out var hit, 1f))
         {
-            if (hit.collider.GetComponent<Obstacle>() != null)
-            {
+            if (hit.collider.GetComponent<Obstacle>() != null) 
                 blocked = true;
-            }
         }
 
         Vector3 desiredHorizontalVelocity = blocked
@@ -117,6 +120,9 @@ public class CharacterMoveSystem
         }
     }
 
+    public void CanMove(bool state) => 
+        _canMove = state;
+
     public void Jump()
     {
         if (_inputActions.Player.Jump.triggered && _canJump)
@@ -127,8 +133,8 @@ public class CharacterMoveSystem
         }
     }
 
-    public void ResetCanJump()
-        => _canJump = true;
+    public void ResetCanJump() => 
+        _canJump = true;
 
     public void Rotate()
     {
@@ -148,14 +154,13 @@ public class CharacterMoveSystem
         _rigidbody.linearVelocity = currentVelocity;
     }
     
-    private void OnDashStarted(InputAction.CallbackContext context)
-    {
+    private void OnDashStarted(InputAction.CallbackContext context) => 
         TryDash();
-    }
 
     private void TryDash()
     {
-        if (_dashCooldownTimer > 0f || _direction == Vector3.zero) return;
+        if (_dashCooldownTimer > 0f || _direction == Vector3.zero) 
+            return;
         
         _characterFxSystem.ActivateDash();
         Vector3 dashImpulse = _direction * _dashForce;
@@ -166,9 +171,7 @@ public class CharacterMoveSystem
     
     public void UpdateDash(float deltaTime)
     {
-        if (_dashCooldownTimer > 0f)
-        {
+        if (_dashCooldownTimer > 0f) 
             _dashCooldownTimer -= deltaTime;
-        }
     }
 }

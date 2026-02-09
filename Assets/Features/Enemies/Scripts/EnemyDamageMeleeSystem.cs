@@ -8,28 +8,27 @@ namespace Features.Enemies.Scripts
     {
         private readonly CharacterFacade _characterFacade;
         private readonly EnemyConfiguration _enemyConfiguration;
-        private readonly Transform _enemyTarget;
         private readonly EnemyFacade _enemyFacade;
 
         private float _cooldown;
         private readonly float _distanceExecuteDamage;
 
         public EnemyDamageMeleeSystem(EnemyFacade enemyFacade, CharacterFacade characterFacade,
-            EnemyConfiguration enemyConfiguration, Transform enemyTarget)
+            EnemyConfiguration enemyConfiguration)
         {
             _enemyFacade = enemyFacade;
             _characterFacade = characterFacade;
             _enemyConfiguration = enemyConfiguration;
-            _enemyTarget = enemyTarget;
-
+            
             _distanceExecuteDamage = _enemyConfiguration.DamageRange;
         }
 
         public UniTask Execute(CancellationToken cancellationToken)
         {
+            var enemyTransform = _enemyFacade.transform;
             _characterFacade.HealthSystem.GetDamage(_enemyConfiguration.Damage);
 
-            Vector3 pushDirection = _characterFacade.transform.position - _enemyTarget.position;
+            Vector3 pushDirection = _characterFacade.transform.position - enemyTransform.position;
             pushDirection.y = 0f;
             pushDirection.Normalize();
             Vector3 force = pushDirection;
@@ -44,7 +43,7 @@ namespace Features.Enemies.Scripts
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var distanceToCharacter = Vector3.Distance(_characterFacade.transform.position, _enemyTarget.position);
+                var distanceToCharacter = Vector3.Distance(_characterFacade.transform.position, _enemyFacade.transform.position);
                 _cooldown -= Time.deltaTime;
                 if (_cooldown <= 0 && distanceToCharacter <= _distanceExecuteDamage)
                 {

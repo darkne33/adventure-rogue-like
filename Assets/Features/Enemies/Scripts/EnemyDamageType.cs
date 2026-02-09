@@ -2,6 +2,7 @@
 {
     None, 
     Melee,
+    Dash,
     RangeArea,
     RangeDirection
 }

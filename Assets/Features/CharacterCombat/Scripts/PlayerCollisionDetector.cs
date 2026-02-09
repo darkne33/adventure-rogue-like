@@ -2,7 +2,7 @@ using System;
 using Features.Enemies.Scripts;
 using UnityEngine;
 
-public class CollisionDetector : MonoBehaviour
+public class PlayerCollisionDetector : MonoBehaviour
 {
     public Action<EnemyFacade> OnCollisionEnter;
         

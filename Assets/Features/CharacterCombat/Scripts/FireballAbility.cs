@@ -41,8 +41,8 @@ public class FireballAbility : CharacterActiveAbility
                 Object.Destroy(fireball);
         });
         
-        CollisionDetector collisionDetector = fireball.GetComponent<CollisionDetector>();
-        collisionDetector.OnCollisionEnter = enemyFacade => DamageDeal(fireball, enemyFacade);
+        PlayerCollisionDetector playerCollisionDetector = fireball.GetComponent<PlayerCollisionDetector>();
+        playerCollisionDetector.OnCollisionEnter = enemyFacade => DamageDeal(fireball, enemyFacade);
     }
     private void DamageDeal(GameObject fireball, EnemyFacade enemyFacade)
     {

@@ -10,6 +10,7 @@ public class CharacterFacade : MonoBehaviour
     public HealthSystem HealthSystem => _healthSystem;
     public Rigidbody Rigidbody => _rigidbody;
     public CharacterCombatSystem CharacterCombatSystem => _characterCombatSystem;
+    public CharacterMoveSystem MoveSystem => _moveSystem;
 
     [Inject] private CharacterSettingsConfiguration _characterSettingsConfiguration;
     [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
@@ -45,9 +46,9 @@ public class CharacterFacade : MonoBehaviour
 
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         _healthSystem = new HealthSystem(_characterSettingsConfiguration.StartHealth,
-            new[] { characterPanel.CharacterHealthView, _healthView}, _deathSystem
+            new[] { characterPanel.CharacterHealthView, _healthView }, _deathSystem
         );
-        
+
         _healthSystem.Initialize();
     }
 
@@ -64,15 +65,24 @@ public class CharacterFacade : MonoBehaviour
         _moveSystem.Jump();
     }
 
-    private void LateUpdate()
-    {
+    private void LateUpdate() =>
         _cameraSystem.Move();
-    }
 
     private void OnCollisionEnter(Collision other)
     {
         var ground = other.gameObject.GetComponent<Ground>();
         if (ground != null)
+        {
             _moveSystem.ResetCanJump();
+            _moveSystem.CanMove(true);
+        }
+
+        var wall = other.gameObject.GetComponent<Wall>();
+        if (wall != null)
+            _moveSystem.CanMove(true);
+        
+        var obstacle = other.gameObject.GetComponent<Obstacle>();
+        if (obstacle != null)
+            _moveSystem.CanMove(true);
     }
 }

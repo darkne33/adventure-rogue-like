@@ -10,6 +10,8 @@ namespace Features.Enemies.Scripts
     {
         public HealthSystem HealthSystem => _healthSystem;
         public EnemyEffectsSystem EffectsSystem => _effectsSystem;
+        public Rigidbody Rigidbody => _rigidbody;
+        public EnemyCollisionDetector EnemyCollisionDetector => _enemyCollisionDetector;
 
         [Inject] private ICharacterProvider _characterProvider;
         [Inject] private IEnemiesProvider _enemiesProvider;
@@ -17,12 +19,15 @@ namespace Features.Enemies.Scripts
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
         [SerializeField] private MeshRenderer[] _meshRenderers;
 
+        private Rigidbody _rigidbody;
         private NavMeshAgent _navMeshAgent;
+        private Animator _animator;
+        private EnemyCollisionDetector _enemyCollisionDetector;
+        
         private IEnemyDamageSystem _enemyDamageSystem;
         private IEnemyAnimationSystem _animationSystem;
         private HealthSystem _healthSystem;
         private IHealthView _healthView;
-        private Animator _animator;
         private EnemyEffectsSystem _effectsSystem;
         private IDeathSystem _deathSystem;
 
@@ -30,14 +35,20 @@ namespace Features.Enemies.Scripts
 
         private void Start()
         {
+            _rigidbody = GetComponent<Rigidbody>();
             _navMeshAgent = GetComponent<NavMeshAgent>();
             _animator = GetComponent<Animator>();
+            _enemyCollisionDetector = GetComponent<EnemyCollisionDetector>();
 
             switch (_enemyConfiguration.EnemyDamageType)
             {
                 case EnemyDamageType.Melee:
                     _enemyDamageSystem = new EnemyDamageMeleeSystem(this, _characterProvider.CharacterFacade,
-                        _enemyConfiguration, transform);
+                        _enemyConfiguration);
+                    break;
+                case EnemyDamageType.Dash:
+                    _enemyDamageSystem = new EnemyDashAttackSystem( _characterProvider.CharacterFacade,
+                        _enemyConfiguration, this);
                     break;
                 default:
                     throw new Exception("Enemy Damage Type not supported");
@@ -103,7 +114,7 @@ namespace Features.Enemies.Scripts
             {
                 _navMeshAgent.SetDestination(new Vector3(_characterProvider.CharacterFacade.transform.position.x,
                     transform.position.y, _characterProvider.CharacterFacade.transform.position.z));
-                Rotation();
+                //Rotation();
             }
         }
 
