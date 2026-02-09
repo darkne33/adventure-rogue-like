@@ -8,33 +8,36 @@ public class CharacterMoveSystem
     private readonly ICameraService _cameraService;
     private readonly CharacterSettingsConfiguration _characterSettingsConfiguration;
     private readonly CharacterFxSystem _characterFxSystem;
-    
+    private readonly GameObject _characterModel;
+
     private readonly InputSystem_Actions _inputActions = new();
 
     private Vector3 _direction;
     private Vector3 _currentVelocity;
 
     private bool _canJump = true;
-    
+
     private readonly InputAction _dashAction;
     private float _dashCooldownTimer = 0f;
-    
+
     private readonly float _dashForce = 25f;
     private readonly float _dashCooldown = 1f;
 
     private bool _canMove = true;
 
     public CharacterMoveSystem(Rigidbody rigidbody,
-        ICameraService cameraService, CharacterSettingsConfiguration characterSettingsConfiguration, CharacterFxSystem characterFxSystem)
+        ICameraService cameraService, CharacterSettingsConfiguration characterSettingsConfiguration,
+        CharacterFxSystem characterFxSystem, GameObject characterModel)
     {
         _rigidbody = rigidbody;
         _cameraService = cameraService;
         _characterSettingsConfiguration = characterSettingsConfiguration;
         _characterFxSystem = characterFxSystem;
-        
+        _characterModel = characterModel;
+
         _dashAction = _inputActions.Player.Dash;
         _dashAction.started += OnDashStarted;
-        
+
         _inputActions.Enable();
     }
 
@@ -42,7 +45,7 @@ public class CharacterMoveSystem
     {
         if (_canMove == false)
             return;
-        
+
         Vector2 input = _inputActions.Player.Move.ReadValue<Vector2>();
 
         Vector3 forward = _cameraService.MainCamera.transform.forward;
@@ -59,7 +62,7 @@ public class CharacterMoveSystem
         }
 
         bool isGrounded = _canJump;
-        
+
         _characterFxSystem.ActivateMovementTrail(isGrounded);
 
         if (!isGrounded)
@@ -102,7 +105,7 @@ public class CharacterMoveSystem
         bool blocked = false;
         if (input.magnitude > 0.1f && Physics.Raycast(_rigidbody.transform.position, _direction, out var hit, 1f))
         {
-            if (hit.collider.GetComponent<Obstacle>() != null) 
+            if (hit.collider.GetComponent<Obstacle>() != null)
                 blocked = true;
         }
 
@@ -120,7 +123,7 @@ public class CharacterMoveSystem
         }
     }
 
-    public void CanMove(bool state) => 
+    public void CanMove(bool state) =>
         _canMove = state;
 
     public void Jump()
@@ -133,13 +136,13 @@ public class CharacterMoveSystem
         }
     }
 
-    public void ResetCanJump() => 
+    public void ResetCanJump() =>
         _canJump = true;
 
     public void Rotate()
     {
         if (_direction.magnitude > 0.1f)
-            _rigidbody.transform.rotation = Quaternion.LookRotation(_direction);
+            _characterModel.transform.rotation = Quaternion.LookRotation(_direction);
     }
 
     private void ApplyEnhancedGravity()
@@ -153,25 +156,25 @@ public class CharacterMoveSystem
 
         _rigidbody.linearVelocity = currentVelocity;
     }
-    
-    private void OnDashStarted(InputAction.CallbackContext context) => 
+
+    private void OnDashStarted(InputAction.CallbackContext context) =>
         TryDash();
 
     private void TryDash()
     {
-        if (_dashCooldownTimer > 0f || _direction == Vector3.zero) 
+        if (_dashCooldownTimer > 0f || _direction == Vector3.zero)
             return;
-        
+
         _characterFxSystem.ActivateDash();
         Vector3 dashImpulse = _direction * _dashForce;
         _rigidbody.AddForce(dashImpulse, ForceMode.Impulse);
 
         _dashCooldownTimer = _dashCooldown;
     }
-    
+
     public void UpdateDash(float deltaTime)
     {
-        if (_dashCooldownTimer > 0f) 
+        if (_dashCooldownTimer > 0f)
             _dashCooldownTimer -= deltaTime;
     }
 }

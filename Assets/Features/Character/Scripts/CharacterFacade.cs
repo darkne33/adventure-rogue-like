@@ -1,5 +1,4 @@
 using Core;
-using NaughtyAttributes;
 using UI;
 using UnityEngine;
 using Zenject;
@@ -12,6 +11,8 @@ public class CharacterFacade : MonoBehaviour
     public CharacterCombatSystem CharacterCombatSystem => _characterCombatSystem;
     public CharacterMoveSystem MoveSystem => _moveSystem;
 
+    [SerializeField] private GameObject _characterModel;
+
     [Inject] private CharacterSettingsConfiguration _characterSettingsConfiguration;
     [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
 
@@ -19,7 +20,7 @@ public class CharacterFacade : MonoBehaviour
     [Inject] private IPanelService _panelService;
     [Inject] private IAbilityChoiceProvider _abilityChoiceProvider;
 
-    [HorizontalLine] private CharacterMoveSystem _moveSystem;
+    private CharacterMoveSystem _moveSystem;
     private CharacterCameraMoveSystem _cameraSystem;
     private HealthSystem _healthSystem;
     private CharacterFxSystem _characterFxSystem;
@@ -36,7 +37,8 @@ public class CharacterFacade : MonoBehaviour
         _healthView = GetComponent<HealthView>();
 
         _moveSystem =
-            new CharacterMoveSystem(_rigidbody, _cameraService, _characterSettingsConfiguration, _characterFxSystem);
+            new CharacterMoveSystem(_rigidbody, _cameraService, _characterSettingsConfiguration, _characterFxSystem,
+                _characterModel);
 
         _cameraSystem =
             new CharacterCameraMoveSystem(_cameraService.MainCamera, transform, _characterCameraSettingsConfiguration);
@@ -80,7 +82,7 @@ public class CharacterFacade : MonoBehaviour
         var wall = other.gameObject.GetComponent<Wall>();
         if (wall != null)
             _moveSystem.CanMove(true);
-        
+
         var obstacle = other.gameObject.GetComponent<Obstacle>();
         if (obstacle != null)
             _moveSystem.CanMove(true);
