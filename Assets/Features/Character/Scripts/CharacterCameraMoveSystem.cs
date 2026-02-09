@@ -1,9 +1,8 @@
 ﻿using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class CharacterCameraMoveSystem
 {
-   private readonly Camera _camera;
+    private readonly Camera _camera;
     private readonly Transform _target;
     private readonly CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
     private readonly InputSystem_Actions _inputActions;
@@ -41,50 +40,41 @@ public class CharacterCameraMoveSystem
     public void Move()
     {
         if (_target == null || _camera == null) return;
-        
-        Vector2 mouseDelta = _inputActions.Player.Look.ReadValue<Vector2>();
 
+        // === 1. Ввод мыши ===
+        Vector2 mouseDelta = _inputActions.Player.Look.ReadValue<Vector2>();
         _yaw += mouseDelta.x * _characterCameraSettingsConfiguration.MouseSensitivity;
         _pitch -= mouseDelta.y * _characterCameraSettingsConfiguration.MouseSensitivity;
+    
+        // ОГРАНИЧИВАЕМ УГОЛ: только сверху!
         _pitch = Mathf.Clamp(_pitch,
-            _characterCameraSettingsConfiguration.MinVerticalAngle,
+            _characterCameraSettingsConfiguration.MinVerticalAngle,  // >= 10f
             _characterCameraSettingsConfiguration.MaxVerticalAngle);
 
+        // === 2. Желаемая позиция ===
         Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
-        
-        Vector3 cameraOffset = new Vector3(
+        Vector3 desiredPosition = _target.position + rotation * new Vector3(
             0f,
             _characterCameraSettingsConfiguration.Height,
             -_characterCameraSettingsConfiguration.DistanceToTarget
         );
-        Vector3 desiredPosition = _target.position + rotation * cameraOffset;
-        
-        Vector3 directionToCamera = desiredPosition - _target.position;
-        float distanceToCamera = directionToCamera.magnitude;
 
-        float minSafeDistance = Mathf.Max(_characterCameraSettingsConfiguration.MinDistanceToTarget, 0.1f);
+        // === 3. Проверка коллизии (с запасом!) ===
+        Vector3 dir = desiredPosition - _target.position;
+        float rayLength = dir.magnitude + 0.3f; // ← ключ: +0.3f для раннего обнаружения
+
+        if (Physics.Raycast(_target.position, dir.normalized, out RaycastHit hit, rayLength, _characterCameraSettingsConfiguration.CameraCollisionLayers))
+        {
+            // Сдвигаемся ближе, но НЕ меняем высоту
+            float safeDistance = Mathf.Max(hit.distance - 0.15f, _characterCameraSettingsConfiguration.MinDistanceToTarget);
+            desiredPosition = _target.position + dir.normalized * safeDistance;
         
-        if (Physics.Raycast(
-                _target.position,
-                directionToCamera.normalized,
-                out RaycastHit hit,
-                distanceToCamera,
-                _characterCameraSettingsConfiguration.CameraCollisionLayers))
-        {
-            float safeDistance = Mathf.Max(hit.distance - 0.1f, minSafeDistance);
-            desiredPosition = _target.position + directionToCamera.normalized * safeDistance;
-        }
-        else
-        {
-            if (distanceToCamera < minSafeDistance)
-            {
-                desiredPosition = _target.position + directionToCamera.normalized * minSafeDistance;
-            }
+            // 🔥 ФИКСИРУЕМ ВЫСОТУ: всегда на уровне игрока + Height
+            desiredPosition.y = _target.position.y + _characterCameraSettingsConfiguration.Height;
         }
 
+        // === 4. Применяем позицию ===
         _camera.transform.position = desiredPosition;
-
-        Vector3 lookAtPoint = _target.position + Vector3.up * (_characterCameraSettingsConfiguration.Height * 0.5f);
-        _camera.transform.LookAt(lookAtPoint);
+        _camera.transform.LookAt(_target.position + Vector3.up * _characterCameraSettingsConfiguration.Height * 0.5f);
     }
 }
