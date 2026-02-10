@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
 
 namespace Features.Enemies.Scripts
@@ -39,14 +40,18 @@ namespace Features.Enemies.Scripts
             var enemyTransform = _enemyFacade.transform;
 
             _enemyFacade.SetStop(true);
-
-            Vector3 dashDirection = _characterFacade.transform.position - enemyTransform.position;
-            dashDirection.y = 0f;
-
-            dashDirection.Normalize();
-
-            enemyTransform.forward = Vector3.Slerp(enemyTransform.forward, dashDirection, 0.8f);
-            _enemyFacade.Rigidbody.AddForce(dashDirection * 20, ForceMode.Impulse);
+            
+            _enemyFacade.Rigidbody.linearVelocity = Vector3.zero;
+            
+             await enemyTransform.DOLookAt(_characterFacade.transform.position, 0.2f,
+                axisConstraint: AxisConstraint.Y).ToUniTask(cancellationToken:  cancellationToken);
+            
+            await UniTask.Delay(
+                TimeSpan.FromSeconds(1f),
+                cancellationToken: cancellationToken
+            );
+            
+            _enemyFacade.Rigidbody.AddForce(enemyTransform.forward * 20, ForceMode.Impulse);
 
             await UniTask.Delay(
                 TimeSpan.FromSeconds(1f),
