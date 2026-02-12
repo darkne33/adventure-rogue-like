@@ -11,7 +11,7 @@ namespace Features.Enemies.Scripts
         private readonly Material[] _materials;
         private Tweener _hitTweener;
 
-        public EnemyEffectsSystem(MeshRenderer[] meshRenderers)
+        public EnemyEffectsSystem(Renderer[] meshRenderers)
         {
             _materials = new Material[meshRenderers.Length];
             _materials = meshRenderers.Select(x  => x.material).ToArray();

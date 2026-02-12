@@ -17,7 +17,7 @@ namespace Features.Enemies.Scripts
         [Inject] private IEnemiesProvider _enemiesProvider;
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
-        [SerializeField] private MeshRenderer[] _meshRenderers;
+        [SerializeField] private Renderer[] _meshRenderers;
 
         private Rigidbody _rigidbody;
         private NavMeshAgent _navMeshAgent;

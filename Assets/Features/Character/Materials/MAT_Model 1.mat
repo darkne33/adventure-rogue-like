@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Hands
+  m_Name: MAT_Model 1
   m_Shader: {fileID: 4800000, guid: a4c8f68acf7c9844e97a36914026acb1, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -22,7 +22,7 @@ Material:
   - _LIGHTMODEL_CLASSIC
   - _MATCAPBLENDMODE_MULTIPLY
   - _OUTLINETYPE_SIMPLE
-  - _RECEIVEDSHADOWSTYPE_CLASSIC
+  - _RECEIVEDSHADOWSTYPE_STYLIZED
   - _RECEIVE_SHADOWS_ON
   - _REFLECTIONS_NONE
   - _RIMLIGHTINGSTAGE_BEFORELIGHTINGLAST
@@ -97,7 +97,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 562a964be480e914fadd88544bbb21d2, type: 3}
+        m_Texture: {fileID: 2800000, guid: 127410e15467500409a5bcc52d01893b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MatcapTex:
@@ -189,7 +189,7 @@ Material:
     - _DitherOn: 0
     - _DitherScale: 0.97
     - _EmissionEnabled: 0
-    - _EmissionSelfGlow: 1
+    - _EmissionSelfGlow: 4.3
     - _FaceDownCutoff: 0.25
     - _FadeAmount: 0
     - _FadeBurnOn: 0
@@ -211,8 +211,8 @@ Material:
     - _GreyscaleLuminosity: 0
     - _HalfLambertWrap: 0.66
     - _HandDrawn: 0
-    - _HandDrawnAmount: 10
-    - _HandDrawnSpeed: 5
+    - _HandDrawnAmount: 5.7
+    - _HandDrawnSpeed: 4.89
     - _HardnessFakeGI: 0.734
     - _HeightGradientOn: 0
     - _HeightGradientPositionSpace: 0
@@ -248,9 +248,9 @@ Material:
     - _LightModel: 1
     - _LightmapColorCorrection: 0
     - _Matcap: 0
-    - _MatcapBlend: 1
+    - _MatcapBlend: 0.748
     - _MatcapBlendMode: 0
-    - _MatcapIntensity: 1
+    - _MatcapIntensity: 4.57
     - _MaxCameraDistance: 1000
     - _MaxDistanceToFade: 100
     - _MaxFadeDistance: 250
@@ -267,17 +267,17 @@ Material:
     - _NormalInfluence: 0.5
     - _NormalMapEnabled: 0
     - _NormalStrength: 1
-    - _OutlineMode: 8
-    - _OutlineThickness: 3
+    - _OutlineMode: 6
+    - _OutlineThickness: 1.25
     - _OutlineType: 1
     - _Pixelate: 0
-    - _PixelateSize: 73
+    - _PixelateSize: 512
     - _Posterize: 0
     - _PosterizeGamma: 0.75
     - _PosterizeNumColors: 8
     - _RecalculateNormals: 0
     - _ReceiveShadows: 1
-    - _ReceivedShadowsType: 0
+    - _ReceivedShadowsType: 1
     - _Reflections: 0
     - _ReflectionsAtten: 1
     - _RenderPreset: 1
@@ -294,7 +294,7 @@ Material:
     - _ScrollTextureX: 1
     - _ScrollTextureY: 1
     - _ShadingModel: 1
-    - _ShadowCutoff: 0.2
+    - _ShadowCutoff: 0.261
     - _ShakeBlend: 0.078
     - _ShakeSpeedMult: 1
     - _Shininess: 6.94
@@ -306,8 +306,8 @@ Material:
     - _SpherizeNormals: 0
     - _StencilRef: 1
     - _StochasticSampling: 0
-    - _StochasticScale: 3.464
-    - _StochasticSkew: 0.57735026
+    - _StochasticScale: 0
+    - _StochasticSkew: 0.833
     - _SubsurfaceScattering: 0
     - _TextureBlending: 0
     - _TextureBlendingMode: 0
@@ -324,19 +324,19 @@ Material:
     - _UseCustomTime: 0
     - _UseVerticalMask: 1
     - _VertexColorBlending: 1
-    - _VertexDistortionAmount: 0
+    - _VertexDistortionAmount: 0.019
     - _VertexDistortionOn: 0
     - _VertexInflate: 0
     - _VertexShakeOn: 0
-    - _VoxelBlend: 0.951
-    - _VoxelSize: 16
+    - _VoxelBlend: 0.486
+    - _VoxelSize: 41
     - _Voxelize: 0
-    - _WaveAmount: 7
+    - _WaveAmount: 2.92
     - _WaveSpeed: 10
-    - _WaveStrength: 7.5
+    - _WaveStrength: 1.1
     - _WaveUVOn: 0
     - _WaveX: 0
-    - _WaveY: 0.5
+    - _WaveY: 0
     - _WindAttenuation: 1
     - _WindOn: 0
     - _WindVerticalMaskMaxY: 1
@@ -348,7 +348,7 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _CustomAmbientColor: {r: 0.65, g: 0.65, b: 0.65, a: 1}
     - _DepthGlowColor: {r: 1, g: 0.9869999, b: 0.6, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _EmissionColor: {r: 0.084905684, g: 0.084905684, b: 0.084905684, a: 1}
     - _FadeBurnColor: {r: 2.6701567, g: 0.052356016, b: 0, a: 1}
     - _GlitchOffset: {r: -0.5, g: 0, b: 0, a: 0}
     - _GradientHeightColor01: {r: 0.2, g: 0.2, b: 0.2, a: 1}
