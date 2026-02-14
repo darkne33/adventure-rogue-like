@@ -12,8 +12,6 @@ public class EnemySpawner
     private readonly IEnemiesProvider _enemiesProvider;
     private readonly IEffectsService _effectsService;
 
-    private int _currentWave = 0;
-
     private readonly Vector2 _spawnRadius = new Vector2(0, 40f);
 
     private LayerMask _groundLayer;
@@ -29,10 +27,10 @@ public class EnemySpawner
         _effectsService = effectsService;
     }
 
-    public void TrySpawnEnemies(CharacterFacade characterFacade)
+    public void TrySpawnEnemies(CharacterFacade characterFacade, int currentWave)
     {
         var wave = _levelsConfiguration.Levels[_rogueLikeRuntimeDataService.CurrentIndexLevel]
-            .EnemyWavesConfiguration[_currentWave];
+            .EnemyWavesConfiguration[currentWave];
 
         for (int i = 0; i < wave.EnemyTypes.Length; i++)
         {
@@ -60,6 +58,7 @@ public class EnemySpawner
         enemyFacade.transform.position = underGroundPosition;
 
         var portalEffect = _effectsService.GetEffect(EffectName.EnemyPortal);
+        var defaultScaleEffect = portalEffect.transform.localScale;
         portalEffect.transform.position = spawnPosition + Vector3.down * 0.9f;
         portalEffect.PlayWithoutRelease();
 
@@ -70,6 +69,7 @@ public class EnemySpawner
 
         enemyFacade.SetStop(false);
         await portalEffect.transform.DOScale(Vector3.zero, 0.3f).ToUniTask();
+        portalEffect.transform.localScale = defaultScaleEffect;
         portalEffect.Release();
         
         _enemiesProvider.AddEnemy(enemyFacade);

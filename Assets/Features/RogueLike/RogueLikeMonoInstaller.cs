@@ -23,6 +23,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         BindFactories();
         BindServices();
         BindSpawners();
+        BindObservers();
     }
 
     private void BindFactories()
@@ -60,5 +61,10 @@ public class RogueLikeMonoInstaller : MonoInstaller
     private void BindSpawners()
     {
         Container.Bind<EnemySpawner>().AsSingle();
+    }
+
+    private void BindObservers()
+    {
+        Container.Bind<EnemiesWaveObserver>().AsSingle();
     }
 }
