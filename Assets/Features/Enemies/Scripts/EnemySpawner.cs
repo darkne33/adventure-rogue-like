@@ -69,7 +69,9 @@ public class EnemySpawner
             .ToUniTask(cancellationToken: enemyFacade.GetCancellationTokenOnDestroy());
 
         enemyFacade.SetStop(false);
-
+        await portalEffect.transform.DOScale(Vector3.zero, 0.3f).ToUniTask();
+        portalEffect.Release();
+        
         _enemiesProvider.AddEnemy(enemyFacade);
     }
 
