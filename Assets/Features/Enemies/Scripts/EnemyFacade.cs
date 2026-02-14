@@ -33,13 +33,16 @@ namespace Features.Enemies.Scripts
 
         private float _currentSpeed;
 
-        private void Start()
+        private void Awake()
         {
             _rigidbody = GetComponent<Rigidbody>();
             _navMeshAgent = GetComponent<NavMeshAgent>();
             _animator = GetComponent<Animator>();
             _enemyCollisionDetector = GetComponent<EnemyCollisionDetector>();
+        }
 
+        private void Start()
+        {
             switch (_enemyConfiguration.EnemyDamageType)
             {
                 case EnemyDamageType.Melee:

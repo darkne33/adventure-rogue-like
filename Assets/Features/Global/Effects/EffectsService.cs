@@ -4,7 +4,6 @@ using System.Threading;
 using CustomPackages.Package.Extensions.ObjectPool;
 using Cysharp.Threading.Tasks;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Core;
-using UnityEngine;
 using Zenject;
 
 namespace Core.Services
@@ -12,7 +11,6 @@ namespace Core.Services
     public class EffectsService : IEffectsService, IDisposable
     {
         [Inject] private DiContainer _container;
-        [Inject] private ICameraService _cameraService;
 
         private readonly EffectsConfig _config;
         private readonly Dictionary<EffectName, IGameObjectPool<EffectPlayer>> _effectsPool = new();
@@ -27,10 +25,8 @@ namespace Core.Services
             await _config.Load(cts);
             foreach (var pair in _config.Effects)
             {
-                if (_config.Effects.TryGetValue(pair.Key, out var effect))
-                {
+                if (_config.Effects.TryGetValue(pair.Key, out var effect)) 
                     AddEffectToPool(effect.Get(), pair.Key);
-                }
             }
         }
 
@@ -73,18 +69,6 @@ namespace Core.Services
             return _config.Effects.TryGetValue(effectName, out var effect)
                 ? GetFromPool(effect.Get(), effectName)
                 : null;
-        }
-
-        public async UniTask PlayConfettiOnBordersOfScreen(CancellationToken token, bool isOnce)
-        {
-            var effect = isOnce ? GetEffect(EffectName.ConfettiOnce) : GetEffect(EffectName.Confetti);
-            var viewportToWorldPoint2 = _cameraService.MainCamera.ViewportToWorldPoint(new Vector3(0.5f, 0f));
-            viewportToWorldPoint2.z = -3f;
-            effect.transform.position = viewportToWorldPoint2;
-            effect.transform.rotation = Quaternion.identity;
-
-            await effect.PlayAsync(token);
-            effect.Release();
         }
 
         private EffectPlayer GetFromPool(EffectPlayer effect, EffectName effectName, int defaultCount = 3)

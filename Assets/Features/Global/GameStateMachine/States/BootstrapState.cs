@@ -1,4 +1,5 @@
 using System.Threading;
+using Core.Services;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Core;
@@ -13,6 +14,7 @@ namespace Core
         [Inject] private ICameraService _cameraService;
         [Inject] private IPanelStorage _panelStorage;
         [Inject] private IUIFactory _uiFactory;
+        [Inject] private IEffectsService _effectsService;
         
         public override async UniTask Enter(CancellationToken cts)
         {
@@ -22,6 +24,7 @@ namespace Core
             await _cameraService.Initialize(cts);
             await _panelStorage.WarmUp(cts);
             await _uiFactory.Initialize(cts);
+            await _effectsService.WarmUp(cts);
 
             Log.Gameplay.Info("Done Bootstrap State Initialization");
             await StateMachine.EnterState<LoadRogueLikeGameSceneState>();

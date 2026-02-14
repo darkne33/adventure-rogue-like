@@ -14,15 +14,13 @@ namespace Core
         private readonly ILevelFactory _levelFactory;
         private readonly IPanelService _panelService;
         private readonly IRogueLikeRuntimeDataService _rogueLikeRuntimeDataService;
-        private readonly LevelsConfiguration _levelsConfiguration;
-        private readonly EnemySpawner _enemySpawner;
+    
         private readonly IAbilityChoiceProvider _abilityChoiceProvider;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
             ISceneService<RogueLikeSceneProvider> sceneService, ICharacterProvider characterProvider,
             ILevelFactory levelFactory, IPanelService panelService,
-            IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, LevelsConfiguration levelsConfiguration,
-            EnemySpawner enemySpawner, IAbilityChoiceProvider abilityChoiceProvider)
+            IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IAbilityChoiceProvider abilityChoiceProvider)
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
@@ -30,8 +28,6 @@ namespace Core
             _levelFactory = levelFactory;
             _panelService = panelService;
             _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
-            _levelsConfiguration = levelsConfiguration;
-            _enemySpawner = enemySpawner;
             _abilityChoiceProvider = abilityChoiceProvider;
         }
 
@@ -51,13 +47,9 @@ namespace Core
                 _levelFactory.CreateLevelView(_rogueLikeRuntimeDataService.CurrentIndexLevel,
                     _sceneService.GameSceneComponentsService.LevelSpawnPoint);
 
-            foreach (var enemyPrefabData in _levelsConfiguration.Levels[_rogueLikeRuntimeDataService.CurrentIndexLevel]
-                         .EnemyFactoryConfiguration.EnemyPrefabs)
-                await enemyPrefabData.WavesConfigurationContainer.Load(cts);
-
-            _enemySpawner.TrySpawnEnemies(_characterProvider.CharacterFacade);
-
             Log.Gameplay.Info("RogueLike Prepare State Completed");
+            
+            await StateMachine.EnterState<RogueLikeSpawnEnemyWaveState>();
         }
     }
 }

@@ -1,12 +1,15 @@
 using Core.Services;
 using Core.Sounds;
 using Infrastructure.SaveSystem;
+using UnityEngine;
 using Zenject;
 
 namespace Core.Installer
 {
     public class ProjectInstaller : MonoInstaller
     {
+        [SerializeField] private EffectsConfig _effectsConfig;
+        
         public override void InstallBindings()
         {
             Container.Install<AddressableInstaller>();
@@ -23,6 +26,9 @@ namespace Core.Installer
             Container.Bind<IDynamicEffectsService>().To<DynamicEffectsService>().AsSingle();
             
             Container.Bind<IGameModeService>().To<GameModeService>().AsSingle();
+            
+            Container.Bind<EffectsConfig>().FromInstance(_effectsConfig).AsSingle();
+            Container.Bind<IEffectsService>().To<EffectsService>().AsSingle();
         }
     }
 }

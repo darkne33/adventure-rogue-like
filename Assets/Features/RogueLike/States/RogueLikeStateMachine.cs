@@ -8,6 +8,7 @@ namespace Core
         protected RogueLikeStateMachine(DiContainer container) : base(container)
         {
             Add<RogueLikePrepareState>();
+            Add<RogueLikeSpawnEnemyWaveState>();
             Add<RogueLikeCleanUpState>();
         }
     }
