@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(menuName = "Create CharacterCameraSettingsConfiguration",
-    fileName = "Configs/Character/CharacterCameraSettingsConfiguration", order = 0)]
+[CreateAssetMenu(menuName = "Configs/Character/CharacterCameraSettingsConfiguration",
+    fileName = "CharacterCameraSettingsConfiguration", order = 0)]
 public class CharacterCameraSettingsConfiguration : ScriptableObject
 {
     [Header("Camera Settings")]

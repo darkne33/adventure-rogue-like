@@ -4,7 +4,7 @@ using System.Linq;
 using Core;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Create EnemyFactoryConfiguration", fileName = "Configs/Enemies/EnemyFactoryConfiguration", order = 0)]
+[CreateAssetMenu(menuName = "Configs/Enemies/EnemyFactoryConfiguration", fileName = "EnemyFactoryConfiguration", order = 0)]
 public class EnemyFactoryConfiguration : ScriptableObject
 {
     [field: SerializeField] public List<EnemyPrefabData> EnemyPrefabs { get; set; }

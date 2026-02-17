@@ -24,6 +24,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         BindServices();
         BindSpawners();
         BindObservers();
+        BindCharacterWallet();
     }
 
     private void BindFactories()
@@ -67,4 +68,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
     {
         Container.Bind<EnemiesWaveObserver>().AsSingle();
     }
+
+    private void BindCharacterWallet() => 
+        Container.Bind<CharacterWallet>().AsSingle();
 }

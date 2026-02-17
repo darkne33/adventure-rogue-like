@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(menuName = "Create CharacterSettingsConfiguration", fileName = "Configs/Character/CharacterSettingsConfiguration", order = 0)]
+[CreateAssetMenu(menuName = "Configs/Character/CharacterSettingsConfiguration", fileName = "CharacterSettingsConfiguration", order = 0)]
 public class CharacterSettingsConfiguration : ScriptableObject
 {
     [Header("Stats Settings")]

@@ -9,6 +9,7 @@ namespace Core.Installer
     public class ProjectInstaller : MonoInstaller
     {
         [SerializeField] private EffectsConfig _effectsConfig;
+        [SerializeField] private CharacterExpConfig _characterExpConfig;
         
         public override void InstallBindings()
         {
@@ -29,6 +30,11 @@ namespace Core.Installer
             
             Container.Bind<EffectsConfig>().FromInstance(_effectsConfig).AsSingle();
             Container.Bind<IEffectsService>().To<EffectsService>().AsSingle();
+
+            Container.Bind<PlayerWallet>().AsSingle();
+            
+            Container.Bind<CharacterExpConfig>().FromInstance(_characterExpConfig).AsSingle();
+            Container.Bind<ICharacterLevelService>().To<CharacterLevelService>().AsSingle();
         }
     }
 }

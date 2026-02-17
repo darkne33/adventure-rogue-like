@@ -15,6 +15,7 @@ namespace Features.Enemies.Scripts
 
         [Inject] private ICharacterProvider _characterProvider;
         [Inject] private IEnemiesProvider _enemiesProvider;
+        [Inject] private ICharacterLevelService characterLevelService;
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
         [SerializeField] private Renderer[] _meshRenderers;
@@ -70,7 +71,7 @@ namespace Features.Enemies.Scripts
             _navMeshAgent.angularSpeed = _enemyConfiguration.RotationSpeed;
             _enemyDamageSystem.Initialize();
 
-            _deathSystem = new EnemyDeathSystem(_enemiesProvider, this);
+            _deathSystem = new EnemyDeathSystem(_enemiesProvider, this, characterLevelService, _enemyConfiguration);
             _healthView = GetComponent<HealthView>();
             _healthSystem = new HealthSystem(100, new[] { _healthView }, _deathSystem);
             _healthSystem.Initialize();
