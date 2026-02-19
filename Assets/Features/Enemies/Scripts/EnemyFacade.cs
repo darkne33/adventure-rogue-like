@@ -1,5 +1,6 @@
 ﻿using System;
 using Cysharp.Threading.Tasks;
+using UI;
 using UnityEngine;
 using UnityEngine.AI;
 using Zenject;
@@ -16,6 +17,7 @@ namespace Features.Enemies.Scripts
         [Inject] private ICharacterProvider _characterProvider;
         [Inject] private IEnemiesProvider _enemiesProvider;
         [Inject] private ICharacterLevelService characterLevelService;
+        [Inject] private IPanelService _panelService;
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
         [SerializeField] private Renderer[] _meshRenderers;

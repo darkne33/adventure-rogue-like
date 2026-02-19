@@ -27,6 +27,7 @@ public class CharacterFacade : MonoBehaviour
     private IHealthView _healthView;
     private CharacterCombatSystem _characterCombatSystem;
     private IDeathSystem _deathSystem;
+    private CharacterGoldView _characterGoldView;
 
     private Rigidbody _rigidbody;
 
@@ -47,6 +48,7 @@ public class CharacterFacade : MonoBehaviour
         _characterCombatSystem.AddAbility(_abilityChoiceProvider.GetAbility(AbilityName.FireBall), this);
 
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
+        _characterGoldView = characterPanel.CharacterGoldView;
         _healthSystem = new HealthSystem(_characterSettingsConfiguration.StartHealth,
             new[] { characterPanel.CharacterHealthView, _healthView }, _deathSystem
         );

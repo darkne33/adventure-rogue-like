@@ -1,8 +1,10 @@
-﻿public class HealthSystem
+﻿using System;
+
+public class HealthSystem
 {
     private int _maxHealth;
     private int _currentHealth;
-    
+
     private readonly int _startHealth;
     private readonly IHealthView[] _characterHealthViews;
     private readonly IDeathSystem _deathSystem;
@@ -26,8 +28,11 @@
     {
         _currentHealth -= damage;
         UpdateViews();
-        if (_currentHealth <= 0) 
+
+        if (_currentHealth <= 0)
+        {
             _deathSystem.HandleDeath();
+        }
     }
 
     public void IncreaseCurrentHealth(int increase)
@@ -38,7 +43,7 @@
 
     private void UpdateViews()
     {
-        foreach (var healthView in _characterHealthViews) 
+        foreach (var healthView in _characterHealthViews)
             healthView.UpdateHealth(_currentHealth, _maxHealth);
     }
 }
