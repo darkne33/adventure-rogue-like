@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UI;
+using UnityEngine;
 
 public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 {
@@ -32,6 +33,8 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     {
         float value = (float)currentExp / maxExp;
         float duration = 0.3f;
+        
+        Debug.Log(currentExp + "/" + maxExp);
         
         _tween?.Kill();
 
