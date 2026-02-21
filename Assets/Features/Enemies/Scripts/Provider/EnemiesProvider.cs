@@ -9,7 +9,7 @@ namespace Features.Enemies.Scripts
     {
         private readonly EnemiesWaveObserver _enemiesWaveObserver;
         
-        private readonly List<EnemyFacade> _enemies = new List<EnemyFacade>();
+        private readonly List<EnemyFacade> _enemies = new();
 
         public EnemiesProvider(EnemiesWaveObserver enemiesWaveObserver)
         {
