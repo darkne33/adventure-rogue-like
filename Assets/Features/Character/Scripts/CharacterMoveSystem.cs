@@ -62,8 +62,7 @@ public class CharacterMoveSystem
         }
 
         bool isGrounded = _canJump;
-
-        _characterFxSystem.ActivateMovementTrail(isGrounded);
+        
 
         if (!isGrounded)
         {

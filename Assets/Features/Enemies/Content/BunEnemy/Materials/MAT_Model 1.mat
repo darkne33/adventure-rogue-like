@@ -20,7 +20,7 @@ Material:
   - _HEIGHTGRADIENTPOSITIONSPACE_LOCAL
   - _HIT_ON
   - _LIGHTMODEL_CLASSIC
-  - _MATCAPBLENDMODE_MULTIPLY
+  - _MATCAPBLENDMODE_REPLACE
   - _OUTLINETYPE_SIMPLE
   - _RECEIVEDSHADOWSTYPE_CLASSIC
   - _RECEIVE_SHADOWS_ON
@@ -145,8 +145,9 @@ Material:
     - _AOContrast: 1
     - _AOMapEnabled: 0
     - _AOMapStrength: 1
-    - _AdvancedConfigurationEnabled: 0
+    - _AdvancedConfigurationEnabled: 1
     - _AffectedByLightmaps: 0
+    - _AffineMapIntensity: 1
     - _AlbedoVertexColorMode: 1
     - _AlbedoVertexColorOn: 0
     - _AlphaCutoffOn: 0
@@ -188,6 +189,7 @@ Material:
     - _DistortTexYSpeed: 2
     - _DitherOn: 0
     - _DitherScale: 0.97
+    - _DrawDist: 0
     - _EmissionEnabled: 0
     - _EmissionSelfGlow: 4.3
     - _FaceDownCutoff: 0.25
@@ -249,7 +251,7 @@ Material:
     - _LightmapColorCorrection: 0
     - _Matcap: 0
     - _MatcapBlend: 1
-    - _MatcapBlendMode: 0
+    - _MatcapBlendMode: 1
     - _MatcapIntensity: 1
     - _MaxCameraDistance: 1000
     - _MaxDistanceToFade: 100
@@ -275,12 +277,14 @@ Material:
     - _Posterize: 0
     - _PosterizeGamma: 0.75
     - _PosterizeNumColors: 8
+    - _RETRO: 0
     - _RecalculateNormals: 0
     - _ReceiveShadows: 1
     - _ReceivedShadowsType: 0
     - _Reflections: 0
     - _ReflectionsAtten: 1
     - _RenderPreset: 1
+    - _RetroOn: 0
     - _RimAttenuation: 1
     - _RimLighting: 0
     - _RimLightingStage: 1
@@ -323,6 +327,7 @@ Material:
     - _UVDistortion: 0
     - _UseCustomTime: 0
     - _UseVerticalMask: 1
+    - _VertJitter: 0.95
     - _VertexColorBlending: 1
     - _VertexDistortionAmount: 0
     - _VertexDistortionOn: 0

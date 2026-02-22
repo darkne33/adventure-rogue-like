@@ -13,6 +13,7 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _ALBEDOVERTEXCOLORMODE_REPLACE
+  - _ALPHA_CUTOFF_ON
   - _CAST_SHADOWS_ON
   - _COLORRAMPLIGHTINGSTAGE_BEFORELIGHTING
   - _GREYSCALESTAGE_BEFORELIGHTING
@@ -40,7 +41,7 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 2000
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
@@ -85,7 +86,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ColorRampTex:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 99b6592afee2790429156fef1dc9ba44, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -192,10 +193,11 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AdvancedConfigurationEnabled: 0
     - _AffectedByLightmaps: 0
+    - _AffineMapIntensity: 1
     - _AlbedoVertexColorMode: 1
     - _AlbedoVertexColorOn: 0
     - _AlphaClip: 0
-    - _AlphaCutoffOn: 0
+    - _AlphaCutoffOn: 1
     - _AlphaCutoffValue: 0.25
     - _AlphaRoundOn: 0
     - _AlphaToMask: 0
@@ -244,6 +246,7 @@ Material:
     - _DistortTexYSpeed: 2
     - _DitherOn: 0
     - _DitherScale: 1
+    - _DrawDist: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EmissionEnabled: 0
@@ -341,6 +344,7 @@ Material:
     - _PosterizeGamma: 0.75
     - _PosterizeNumColors: 8
     - _QueueOffset: 0
+    - _RETRO: 0
     - _RecalculateNormals: 0
     - _ReceiveShadows: 1
     - _ReceivedShadowsType: 0
@@ -395,6 +399,7 @@ Material:
     - _UVSec: 0
     - _UseCustomTime: 0
     - _UseVerticalMask: 1
+    - _VertJitter: 1
     - _VertexColorBlending: 1
     - _VertexDistortionAmount: 0
     - _VertexDistortionOn: 0
