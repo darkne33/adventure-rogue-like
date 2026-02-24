@@ -11,6 +11,12 @@ namespace Core.Installer
         [SerializeField] private EffectsConfig _effectsConfig;
         [SerializeField] private CharacterExpConfig _characterExpConfig;
         
+        private void Awake()
+        {
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = 60;
+        }
+        
         public override void InstallBindings()
         {
             Container.Install<AddressableInstaller>();

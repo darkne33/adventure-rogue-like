@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: MAT_Model 1
-  m_Shader: {fileID: 4800000, guid: e70a6b28e5b717f41820512455625611, type: 3}
+  m_Shader: {fileID: 4800000, guid: 66e2a6cb7def4a7c8c700b23317379b5, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -225,6 +225,7 @@ Material:
     - _Hit: 1
     - _HitBlend: 0
     - _HitGlow: 2
+    - _HitPower: 0
     - _Hologram: 0
     - _HologramAccentAlpha: 0.5
     - _HologramAccentFrequency: 2
@@ -325,7 +326,7 @@ Material:
     - _UVDistortion: 0
     - _UseCustomTime: 0
     - _UseVerticalMask: 1
-    - _VertJitter: 0.95
+    - _VertJitter: 0.054
     - _VertexColorBlending: 1
     - _VertexDistortionAmount: 0.019
     - _VertexDistortionOn: 0

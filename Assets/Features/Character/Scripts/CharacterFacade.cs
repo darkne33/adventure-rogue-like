@@ -67,10 +67,8 @@ public class CharacterFacade : MonoBehaviour
         _moveSystem.Move();
         _moveSystem.Rotate();
         _moveSystem.Jump();
-    }
-
-    private void LateUpdate() =>
         _cameraSystem.Move();
+    }
 
     private void OnCollisionEnter(Collision other)
     {
