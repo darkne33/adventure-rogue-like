@@ -8,11 +8,12 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Hands
-  m_Shader: {fileID: 4800000, guid: e70a6b28e5b717f41820512455625611, type: 3}
+  m_Shader: {fileID: 4800000, guid: 66e2a6cb7def4a7c8c700b23317379b5, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
+  - ENABLE_SCREENSPACE_JITTER
   - _ALBEDOVERTEXCOLORMODE_REPLACE
   - _CAST_SHADOWS_ON
   - _COLORRAMPLIGHTINGSTAGE_AFTERLIGHTING
@@ -184,6 +185,7 @@ Material:
     - _DepthGlowDist: 0.2
     - _DepthGlowGlobalIntensity: 2
     - _DepthGlowPower: 25
+    - _DepthThreshold: 0.001
     - _DistortAmount: 0.3
     - _DistortTexXSpeed: 2
     - _DistortTexYSpeed: 2
@@ -225,6 +227,7 @@ Material:
     - _Hit: 1
     - _HitBlend: 0
     - _HitGlow: 2
+    - _HitPower: 0
     - _Hologram: 0
     - _HologramAccentAlpha: 0.5
     - _HologramAccentFrequency: 2
@@ -270,8 +273,9 @@ Material:
     - _NormalMapEnabled: 0
     - _NormalStrength: 1
     - _OutlineMode: 8
-    - _OutlineThickness: 3
+    - _OutlineThickness: 1.6
     - _OutlineType: 1
+    - _OutlineWidth: -1.44
     - _Pixelate: 0
     - _PixelateSize: 73
     - _Posterize: 0
@@ -291,6 +295,7 @@ Material:
     - _SSSFrontPower: 3
     - _SSSPower: 1
     - _ScaleWithCameraDistance: 0
+    - _ScreenJitter: 1
     - _ScreenSpaceUVOn: 0
     - _ScrollTextureOn: 0
     - _ScrollTextureX: 1
@@ -325,7 +330,7 @@ Material:
     - _UVDistortion: 0
     - _UseCustomTime: 0
     - _UseVerticalMask: 1
-    - _VertJitter: 0.95
+    - _VertJitter: 0.031
     - _VertexColorBlending: 1
     - _VertexDistortionAmount: 0
     - _VertexDistortionOn: 0
@@ -351,6 +356,7 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _CustomAmbientColor: {r: 0.65, g: 0.65, b: 0.65, a: 1}
     - _DepthGlowColor: {r: 1, g: 0.9869999, b: 0.6, a: 1}
+    - _Emission: {r: 0, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _FadeBurnColor: {r: 2.6701567, g: 0.052356016, b: 0, a: 1}
     - _GlitchOffset: {r: -0.5, g: 0, b: 0, a: 0}
