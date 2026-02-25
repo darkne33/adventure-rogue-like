@@ -6,7 +6,7 @@ namespace Features.Enemies.Scripts
 {
     public class EnemyEffectsSystem
     {
-        private static readonly int HitBlend = Shader.PropertyToID("_HitBlend");
+        private static readonly int HitBlend = Shader.PropertyToID("_HitPower");
         
         private readonly Material[] _materials;
         private Tweener _hitTweener;
