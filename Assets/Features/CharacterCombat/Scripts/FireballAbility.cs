@@ -1,4 +1,6 @@
-﻿using DG.Tweening;
+﻿using CustomPackages.Package.Extensions;
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using Features.Enemies.Scripts;
 using UI;
 using UnityEngine;
@@ -11,10 +13,11 @@ public class FireballAbility : CharacterActiveAbility
     private readonly IEnemiesProvider _enemiesProvider;
     private readonly IPanelService _panelService;
     private readonly CharacterWallet _characterWallet;
-    
+
     private CharacterPanel _characterPanel;
 
-    public FireballAbility(IEnemiesProvider enemiesProvider, IPanelService panelService, CharacterWallet characterWallet)
+    public FireballAbility(IEnemiesProvider enemiesProvider, IPanelService panelService,
+        CharacterWallet characterWallet)
     {
         _enemiesProvider = enemiesProvider;
         _panelService = panelService;
@@ -27,13 +30,14 @@ public class FireballAbility : CharacterActiveAbility
         _abilityConfig = (FireballAbilityConfiguration)abilityConfig;
         _damage = _abilityConfig.StartDamage;
         Cooldown = _abilityConfig.Cooldown;
-        
+
         _characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
     }
 
     protected override void OnUse(CharacterFacade character)
     {
         EnemyFacade randomEnemy = _enemiesProvider.GetRandomClosestEnemyByCharacter(character.transform, 100);
+
         if (randomEnemy == null)
             return;
 
@@ -44,24 +48,37 @@ public class FireballAbility : CharacterActiveAbility
             Quaternion.LookRotation(fireball.transform.position - randomEnemyPosition);
 
         fireball.transform.DOMove(randomEnemyPosition, 50).SetSpeedBased().SetLink(fireball).SetId("Fireball Ability")
-            .OnComplete(() =>
-            {
-                if (fireball != null)
-                    Object.Destroy(fireball);
-            });
+            .OnComplete(() => DestroyFireball(fireball));
 
-        PlayerCollisionDetector playerCollisionDetector = fireball.GetComponent<PlayerCollisionDetector>();
+        var playerCollisionDetector = fireball.GetComponent<PlayerCollisionDetector>();
         playerCollisionDetector.OnCollisionEnter = enemyFacade => DamageDeal(fireball, enemyFacade);
     }
 
     private void DamageDeal(GameObject fireball, EnemyFacade enemyFacade)
     {
         enemyFacade.HealthSystem.GetDamage(_damage);
-        
+
         _characterPanel.CharacterGoldView.ShowGold(1);
         _characterWallet.Money.Add(1);
 
         enemyFacade.EffectsSystem.DealDamage();
-        Object.Destroy(fireball);
+        DestroyFireball(fireball);
+    }
+
+    private void DestroyFireball(GameObject fireball)
+    {
+        if (fireball != null)
+        {
+            var explosion = Object.Instantiate(_abilityConfig.ExplosionPrefab, fireball.transform.position,
+                Quaternion.identity);
+            
+            var muzzle = Object.Instantiate(_abilityConfig.MuzzlePrefab, fireball.transform.position,
+                Quaternion.identity);
+            
+            Object.Destroy(fireball);
+            
+            DestroyExtensions.DestroyAfterDelay(explosion, 1, explosion.GetCancellationTokenOnDestroy()).Forget();
+            DestroyExtensions.DestroyAfterDelay(muzzle, 1, explosion.GetCancellationTokenOnDestroy()).Forget();
+        }
     }
 }
