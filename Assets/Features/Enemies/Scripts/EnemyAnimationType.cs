@@ -1,4 +1,4 @@
 ﻿public enum EnemyAnimationType
 {
-    None, Bun
+    None, Bun, Dummy
 }

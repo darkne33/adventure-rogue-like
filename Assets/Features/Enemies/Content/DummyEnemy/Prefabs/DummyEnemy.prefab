@@ -210,7 +210,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 2}
+  m_AnchoredPosition: {x: -0.184, y: 2.63}
   m_SizeDelta: {x: 9.4479, y: 1.3079}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &6345428810085301797
@@ -407,7 +407,7 @@ GameObject:
   - component: {fileID: 3975453088899766379}
   - component: {fileID: 5129888320074903316}
   - component: {fileID: 3472925395041321543}
-  - component: {fileID: 7577784027205373530}
+  - component: {fileID: 9191821878624468111}
   - component: {fileID: 2841528611562344274}
   - component: {fileID: 358371706849013189}
   - component: {fileID: 226054964259705086}
@@ -485,8 +485,8 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 32
   m_CollisionDetection: 0
---- !u!135 &7577784027205373530
-SphereCollider:
+--- !u!136 &9191821878624468111
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -503,9 +503,11 @@ SphereCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 1.54
-  m_Center: {x: 0.06, y: 0, z: -0.05}
+  serializedVersion: 2
+  m_Radius: 0.53387386
+  m_Height: 2.016763
+  m_Direction: 1
+  m_Center: {x: 0, y: 1.1112999, z: 0.038649023}
 --- !u!195 &2841528611562344274
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -515,7 +517,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 2706834636654241046}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 1.5
+  m_Radius: 0.82
   m_Speed: 3.5
   m_Acceleration: 20
   avoidancePriority: 50
@@ -524,8 +526,8 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 4.5
-  m_BaseOffset: 2
+  m_Height: 2.08
+  m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
 --- !u!114 &358371706849013189
@@ -540,11 +542,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 719288e7ee3d450f9453c2e34738f494, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyFacade
-  _enemyConfiguration: {fileID: 11400000, guid: 526077a63e653dc4fb3817e6da631530, type: 2}
+  _enemyConfiguration: {fileID: 11400000, guid: cda223c9f54f01c43a5851e8d67bb601, type: 2}
   _meshRenderers:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 2354078946213474228}
+  - {fileID: 4649343357702555601}
+  - {fileID: 9134880393014516908}
 --- !u!114 &226054964259705086
 MonoBehaviour:
   m_ObjectHideFlags: 0

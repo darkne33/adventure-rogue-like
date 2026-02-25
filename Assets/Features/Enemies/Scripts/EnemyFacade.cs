@@ -16,7 +16,7 @@ namespace Features.Enemies.Scripts
 
         [Inject] private ICharacterProvider _characterProvider;
         [Inject] private IEnemiesProvider _enemiesProvider;
-        [Inject] private ICharacterLevelService characterLevelService;
+        [Inject] private ICharacterLevelService _characterLevelService;
         [Inject] private IPanelService _panelService;
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
@@ -26,7 +26,7 @@ namespace Features.Enemies.Scripts
         private NavMeshAgent _navMeshAgent;
         private Animator _animator;
         private EnemyCollisionDetector _enemyCollisionDetector;
-        
+
         private IEnemyDamageSystem _enemyDamageSystem;
         private IEnemyAnimationSystem _animationSystem;
         private HealthSystem _healthSystem;
@@ -53,7 +53,7 @@ namespace Features.Enemies.Scripts
                         _enemyConfiguration);
                     break;
                 case EnemyDamageType.Dash:
-                    _enemyDamageSystem = new EnemyDashAttackSystem( _characterProvider.CharacterFacade,
+                    _enemyDamageSystem = new EnemyDashAttackSystem(_characterProvider.CharacterFacade,
                         _enemyConfiguration, this);
                     break;
                 default:
@@ -65,6 +65,9 @@ namespace Features.Enemies.Scripts
                 case EnemyAnimationType.Bun:
                     _animationSystem = new BunEnemyAnimation(_animator);
                     break;
+                case EnemyAnimationType.Dummy:
+                    _animationSystem = new DummyEnemyAnimation(_animator);
+                    break;
                 default:
                     throw new Exception("Enemy Animation Type not supported");
             }
@@ -73,13 +76,13 @@ namespace Features.Enemies.Scripts
             _navMeshAgent.angularSpeed = _enemyConfiguration.RotationSpeed;
             _enemyDamageSystem.Initialize();
 
-            _deathSystem = new EnemyDeathSystem(_enemiesProvider, this, characterLevelService, _enemyConfiguration);
+            _deathSystem = new EnemyDeathSystem(_enemiesProvider, this, _characterLevelService, _enemyConfiguration);
             _healthView = GetComponent<HealthView>();
             _healthSystem = new HealthSystem(100, new[] { _healthView }, _deathSystem);
             _healthSystem.Initialize();
 
             _effectsSystem = new EnemyEffectsSystem(_meshRenderers);
-            
+
             _enemyDamageSystem.Tick(gameObject.GetCancellationTokenOnDestroy()).Forget();
         }
 
@@ -92,7 +95,7 @@ namespace Features.Enemies.Scripts
         {
             MoveTowardsPlayerNonPhysics();
         }
-        
+
         public async UniTask StartDelayMovementTimer(float delay)
         {
             if (_navMeshAgent.isStopped)
@@ -104,7 +107,7 @@ namespace Features.Enemies.Scripts
             SetStop(false);
         }
 
-        public void SetStop(bool state) => 
+        public void SetStop(bool state) =>
             _navMeshAgent.isStopped = state;
 
         private void MoveTowardsPlayerNonPhysics()
@@ -120,7 +123,6 @@ namespace Features.Enemies.Scripts
             {
                 _navMeshAgent.SetDestination(new Vector3(_characterProvider.CharacterFacade.transform.position.x,
                     transform.position.y, _characterProvider.CharacterFacade.transform.position.z));
-                //Rotation();
             }
         }
 

@@ -1,4 +1,4 @@
 ﻿public enum EnemyType
 {
-    None, Bun
+    None, Bun, Dummy
 }
