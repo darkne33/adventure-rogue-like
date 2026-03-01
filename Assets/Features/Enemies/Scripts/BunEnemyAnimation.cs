@@ -24,6 +24,6 @@ public class BunEnemyAnimation : IEnemyAnimationSystem
 
     public void AttackAnimation()
     {
-        _animator.SetTrigger(Attack);
+       
     }
 }

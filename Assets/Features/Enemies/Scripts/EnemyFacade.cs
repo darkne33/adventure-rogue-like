@@ -13,6 +13,7 @@ namespace Features.Enemies.Scripts
         public EnemyEffectsSystem EffectsSystem => _effectsSystem;
         public Rigidbody Rigidbody => _rigidbody;
         public EnemyCollisionDetector EnemyCollisionDetector => _enemyCollisionDetector;
+        public IEnemyAnimationSystem AnimationSystem => _animationSystem;
 
         [Inject] private ICharacterProvider _characterProvider;
         [Inject] private IEnemiesProvider _enemiesProvider;
@@ -88,11 +89,6 @@ namespace Features.Enemies.Scripts
             _enemyDamageSystem.Tick(gameObject.GetCancellationTokenOnDestroy()).Forget();
         }
 
-        private void Update()
-        {
-            _animationSystem.RunAnimation();
-        }
-
         private void FixedUpdate()
         {
             MoveTowardsPlayerNonPhysics();
@@ -115,8 +111,10 @@ namespace Features.Enemies.Scripts
         private void MoveTowardsPlayerNonPhysics()
         {
             var character = _characterProvider.CharacterFacade;
-            if (character == null)
+            if (character == null || _navMeshAgent.isStopped)
                 return;
+
+            _animationSystem.RunAnimation();
 
             Vector3 direction = character.transform.position - transform.position;
             direction.y = 0f;

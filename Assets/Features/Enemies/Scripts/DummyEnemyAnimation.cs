@@ -21,5 +21,7 @@ public class DummyEnemyAnimation : IEnemyAnimationSystem
 
     public void AttackAnimation()
     {
+        _animator.SetBool(IsRunning, false);
+        _animator.SetTrigger(Attack);
     }
 }
