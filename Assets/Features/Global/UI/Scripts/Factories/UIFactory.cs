@@ -32,7 +32,7 @@ namespace UI
             await _config.UIRoot.Load(cts);
             var root = _container.InstantiatePrefab(_config.UIRoot.Get(), _container.DefaultParent);
             UIRoot = root.transform;
-            UIRoot.GetComponent<Canvas>().worldCamera = _cameraService.MainCamera;
+            UIRoot.GetComponent<Canvas>().worldCamera = _cameraService.MainCamera.GetComponent<Camera>();
             _panelsProvider.ConstructPanelLocations(root.GetComponent<PanelLocationsMonoComponent>()
                 .PanelLocationRoots);
         }

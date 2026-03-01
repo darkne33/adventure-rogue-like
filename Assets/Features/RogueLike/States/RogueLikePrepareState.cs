@@ -14,13 +14,14 @@ namespace Core
         private readonly ILevelFactory _levelFactory;
         private readonly IPanelService _panelService;
         private readonly IRogueLikeRuntimeDataService _rogueLikeRuntimeDataService;
+        private readonly ICameraService _cameraService;
     
         private readonly IAbilityChoiceProvider _abilityChoiceProvider;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
             ISceneService<RogueLikeSceneProvider> sceneService, ICharacterProvider characterProvider,
             ILevelFactory levelFactory, IPanelService panelService,
-            IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IAbilityChoiceProvider abilityChoiceProvider)
+            IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IAbilityChoiceProvider abilityChoiceProvider, ICameraService cameraService)
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
@@ -29,6 +30,7 @@ namespace Core
             _panelService = panelService;
             _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
             _abilityChoiceProvider = abilityChoiceProvider;
+            _cameraService = cameraService;
         }
 
         public override async UniTask Enter(CancellationToken cts)
@@ -42,6 +44,8 @@ namespace Core
             
             _characterProvider.CharacterFacade =
                 await _characterFactory.CreatePlayer(_sceneService.GameSceneComponentsService.CharacterSpawnPoint, cts);
+
+            _cameraService.MainCamera.Follow = _characterProvider.CharacterFacade.transform;
 
             _sceneService.GameSceneComponentsService.CurrentLevel =
                 _levelFactory.CreateLevelView(_rogueLikeRuntimeDataService.CurrentIndexLevel,

@@ -41,9 +41,6 @@ public class CharacterFacade : MonoBehaviour
             new CharacterMoveSystem(_rigidbody, _cameraService, _characterSettingsConfiguration, _characterFxSystem,
                 _characterModel);
 
-        _cameraSystem =
-            new CharacterCameraMoveSystem(_cameraService.MainCamera, transform, _characterCameraSettingsConfiguration);
-
         _characterCombatSystem = new CharacterCombatSystem();
         _characterCombatSystem.AddAbility(_abilityChoiceProvider.GetAbility(AbilityName.FireBall), this);
 
@@ -54,6 +51,9 @@ public class CharacterFacade : MonoBehaviour
         );
 
         _healthSystem.Initialize();
+        
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void Update()
@@ -67,7 +67,6 @@ public class CharacterFacade : MonoBehaviour
         _moveSystem.Move();
         _moveSystem.Rotate();
         _moveSystem.Jump();
-        _cameraSystem.Move();
     }
 
     private void OnCollisionEnter(Collision other)
