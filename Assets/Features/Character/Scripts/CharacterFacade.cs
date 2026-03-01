@@ -1,3 +1,4 @@
+using System;
 using Core;
 using UI;
 using UnityEngine;
@@ -10,8 +11,10 @@ public class CharacterFacade : MonoBehaviour
     public Rigidbody Rigidbody => _rigidbody;
     public CharacterCombatSystem CharacterCombatSystem => _characterCombatSystem;
     public CharacterMoveSystem MoveSystem => _moveSystem;
+    public Transform CameraPivot => _cameraPivot.transform;
 
     [SerializeField] private GameObject _characterModel;
+    [SerializeField] private GameObject _cameraPivot;
 
     [Inject] private CharacterSettingsConfiguration _characterSettingsConfiguration;
     [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
@@ -52,6 +55,9 @@ public class CharacterFacade : MonoBehaviour
 
         _healthSystem.Initialize();
 
+        _cameraSystem = new CharacterCameraMoveSystem(_cameraPivot.transform,
+            _characterCameraSettingsConfiguration);
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -68,6 +74,11 @@ public class CharacterFacade : MonoBehaviour
         _moveSystem.Move();
 
         _moveSystem.Jump();
+    }
+
+    private void LateUpdate()
+    {
+        _cameraSystem.Move();
     }
 
     private void OnCollisionEnter(Collision other)

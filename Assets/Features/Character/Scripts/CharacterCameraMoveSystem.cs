@@ -2,36 +2,29 @@
 
 public class CharacterCameraMoveSystem
 {
-    private readonly Camera _camera;
-    private readonly Transform _target;
-    private readonly CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
+    private readonly Transform _cameraPivot;
+    private readonly CharacterCameraSettingsConfiguration _settings;
     private readonly InputSystem_Actions _inputActions;
 
     private float _yaw = 0f;
     private float _pitch = 10f;
 
-    public CharacterCameraMoveSystem(
-        Camera camera,
-        Transform target,
-        CharacterCameraSettingsConfiguration characterCameraSettingsConfiguration)
-    {
-        _camera = camera;
-        _target = target;
-        _characterCameraSettingsConfiguration = characterCameraSettingsConfiguration;
+    private readonly float _topClamp = 70f;
+    private readonly float _bottomClamp = -30f;
+    private readonly float _cameraAngleOverride = 0f;
 
-        if (_target == null)
-        {
-            Debug.LogError("CharacterCameraMoveSystem: Target is not assigned!");
-            return;
-        }
+    public CharacterCameraMoveSystem(
+        Transform cameraPivot,
+        CharacterCameraSettingsConfiguration settings)
+    {
+        _cameraPivot = cameraPivot;
+        _settings = settings;
 
         _inputActions = new InputSystem_Actions();
         _inputActions.Enable();
 
-        _yaw = _camera.transform.eulerAngles.y;
-        _pitch = Mathf.Clamp(_camera.transform.eulerAngles.x,
-            _characterCameraSettingsConfiguration.MinVerticalAngle,
-            _characterCameraSettingsConfiguration.MaxVerticalAngle);
+        _yaw = _cameraPivot.eulerAngles.y;
+        _pitch = Mathf.Clamp(_cameraPivot.eulerAngles.x, _bottomClamp, _topClamp);
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -39,37 +32,34 @@ public class CharacterCameraMoveSystem
 
     public void Move()
     {
-        if (_target == null || _camera == null) return;
+        if (_cameraPivot == null) return;
 
-        Vector2 mouseDelta = _inputActions.Player.Look.ReadValue<Vector2>();
-        _yaw += mouseDelta.x * _characterCameraSettingsConfiguration.MouseSensitivity;
-        _pitch -= mouseDelta.y * _characterCameraSettingsConfiguration.MouseSensitivity;
+        Vector2 lookInput = _inputActions.Player.Look.ReadValue<Vector2>();
+        const float threshold = 0.01f;
 
-        _pitch = Mathf.Clamp(_pitch,
-            _characterCameraSettingsConfiguration.MinVerticalAngle,
-            _characterCameraSettingsConfiguration.MaxVerticalAngle);
-
-        Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
-        Vector3 desiredPosition = _target.position + rotation * new Vector3(
-            0f,
-            _characterCameraSettingsConfiguration.Height,
-            -_characterCameraSettingsConfiguration.DistanceToTarget
-        );
-
-        Vector3 dir = desiredPosition - _target.position;
-        float rayLength = dir.magnitude + 0.3f;
-
-        if (Physics.Raycast(_target.position, dir.normalized, out RaycastHit hit, rayLength,
-                _characterCameraSettingsConfiguration.CameraCollisionLayers))
+        if (lookInput.sqrMagnitude >= threshold)
         {
-            float safeDistance = Mathf.Max(hit.distance - 0.15f,
-                _characterCameraSettingsConfiguration.MinDistanceToTarget);
-            desiredPosition = _target.position + dir.normalized * safeDistance;
+            bool isMouse = true;
+            float deltaTimeMultiplier = isMouse ? 1.0f : Time.deltaTime;
 
-            desiredPosition.y = _target.position.y + _characterCameraSettingsConfiguration.Height;
+            _yaw += lookInput.x * _settings.MouseSensitivity * deltaTimeMultiplier;
+            _pitch -= lookInput.y * _settings.MouseSensitivity * deltaTimeMultiplier;
         }
 
-        _camera.transform.position = desiredPosition;
-        _camera.transform.LookAt(_target.position + Vector3.up * _characterCameraSettingsConfiguration.Height * 0.5f);
+        _pitch = ClampAngle(_pitch, _bottomClamp, _topClamp);
+        _yaw = ClampAngle(_yaw, float.MinValue, float.MaxValue);
+
+        _cameraPivot.rotation = Quaternion.Euler(
+            _pitch + _cameraAngleOverride,
+            _yaw,
+            0f
+        );
+    }
+
+    private static float ClampAngle(float angle, float min, float max)
+    {
+        if (angle < -360f) angle += 360f;
+        if (angle > 360f) angle -= 360f;
+        return Mathf.Clamp(angle, min, max);
     }
 }

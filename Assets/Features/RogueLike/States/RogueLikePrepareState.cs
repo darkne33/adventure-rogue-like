@@ -45,7 +45,7 @@ namespace Core
             _characterProvider.CharacterFacade =
                 await _characterFactory.CreatePlayer(_sceneService.GameSceneComponentsService.CharacterSpawnPoint, cts);
 
-            _cameraService.MainCamera.Follow = _characterProvider.CharacterFacade.transform;
+            _cameraService.MainCamera.Follow = _characterProvider.CharacterFacade.CameraPivot;
 
             _sceneService.GameSceneComponentsService.CurrentLevel =
                 _levelFactory.CreateLevelView(_rogueLikeRuntimeDataService.CurrentIndexLevel,

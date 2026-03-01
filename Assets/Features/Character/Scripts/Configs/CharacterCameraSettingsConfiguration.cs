@@ -18,4 +18,5 @@ public class CharacterCameraSettingsConfiguration : ScriptableObject
     [field: SerializeField] public float MaxVerticalAngle { get; private set; } = 50f;
     
     [field: SerializeField]  public float CameraSmoothness { get; private set; } = 0.2f;
+    [field: SerializeField] public float PositionSmoothSpeed { get; } = 2f;
 }

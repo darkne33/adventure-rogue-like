@@ -141,7 +141,15 @@ public class CharacterMoveSystem
     public void Rotate()
     {
         if (_direction.magnitude > 0.1f)
+        {
             _characterModel.transform.rotation = Quaternion.LookRotation(_direction);
+        }
+    }
+
+    public void UpdateDash(float deltaTime)
+    {
+        if (_dashCooldownTimer > 0f)
+            _dashCooldownTimer -= deltaTime;
     }
 
     private void ApplyEnhancedGravity()
@@ -169,11 +177,5 @@ public class CharacterMoveSystem
         _rigidbody.AddForce(dashImpulse, ForceMode.Impulse);
 
         _dashCooldownTimer = _dashCooldown;
-    }
-
-    public void UpdateDash(float deltaTime)
-    {
-        if (_dashCooldownTimer > 0f)
-            _dashCooldownTimer -= deltaTime;
     }
 }

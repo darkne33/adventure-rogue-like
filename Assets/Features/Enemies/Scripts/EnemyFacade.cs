@@ -75,7 +75,7 @@ namespace Features.Enemies.Scripts
             _navMeshAgent.speed = _enemyConfiguration.Speed;
             _navMeshAgent.angularSpeed = _enemyConfiguration.RotationSpeed;
             _navMeshAgent.updatePosition = false;
-            
+
             _enemyDamageSystem.Initialize();
 
             _deathSystem = new EnemyDeathSystem(_enemiesProvider, this, _characterLevelService, _enemyConfiguration);
@@ -86,13 +86,15 @@ namespace Features.Enemies.Scripts
             _effectsSystem = new EnemyEffectsSystem(_meshRenderers);
 
             _enemyDamageSystem.Tick(gameObject.GetCancellationTokenOnDestroy()).Forget();
-            
-            
+        }
+
+        private void Update()
+        {
+            _animationSystem.RunAnimation();
         }
 
         private void FixedUpdate()
         {
-            _animationSystem.RunAnimation();
             MoveTowardsPlayerNonPhysics();
         }
 
@@ -124,24 +126,13 @@ namespace Features.Enemies.Scripts
             {
                 var targetToMove = new Vector3(character.transform.position.x, transform.position.y,
                     character.transform.position.z);
-                
+
                 _navMeshAgent.SetDestination(targetToMove);
 
                 transform.position = Vector3.Lerp(
                     transform.position,
                     _navMeshAgent.nextPosition,
                     Time.deltaTime * _navMeshAgent.speed);
-            }
-        }
-
-        private void Rotation()
-        {
-            var direction = transform.forward;
-
-            if (direction.magnitude > 0.01f)
-            {
-                transform.forward = Vector3.Slerp(transform.forward, direction.normalized,
-                    _enemyConfiguration.RotationSpeed * Time.deltaTime);
             }
         }
     }
