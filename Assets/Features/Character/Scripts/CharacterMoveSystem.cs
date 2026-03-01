@@ -62,7 +62,7 @@ public class CharacterMoveSystem
         }
 
         bool isGrounded = _canJump;
-        
+
 
         if (!isGrounded)
         {

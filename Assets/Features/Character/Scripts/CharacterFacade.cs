@@ -51,7 +51,7 @@ public class CharacterFacade : MonoBehaviour
         );
 
         _healthSystem.Initialize();
-        
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -60,12 +60,13 @@ public class CharacterFacade : MonoBehaviour
     {
         _moveSystem.UpdateDash(Time.deltaTime);
         _characterCombatSystem.TickAbilities(this);
+        _moveSystem.Rotate();
     }
 
     private void FixedUpdate()
     {
         _moveSystem.Move();
-        _moveSystem.Rotate();
+
         _moveSystem.Jump();
     }
 

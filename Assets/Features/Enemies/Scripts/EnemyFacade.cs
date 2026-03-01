@@ -74,6 +74,8 @@ namespace Features.Enemies.Scripts
 
             _navMeshAgent.speed = _enemyConfiguration.Speed;
             _navMeshAgent.angularSpeed = _enemyConfiguration.RotationSpeed;
+            _navMeshAgent.updatePosition = false;
+            
             _enemyDamageSystem.Initialize();
 
             _deathSystem = new EnemyDeathSystem(_enemiesProvider, this, _characterLevelService, _enemyConfiguration);
@@ -84,15 +86,13 @@ namespace Features.Enemies.Scripts
             _effectsSystem = new EnemyEffectsSystem(_meshRenderers);
 
             _enemyDamageSystem.Tick(gameObject.GetCancellationTokenOnDestroy()).Forget();
-        }
-
-        private void Update()
-        {
-            _animationSystem.RunAnimation();
+            
+            
         }
 
         private void FixedUpdate()
         {
+            _animationSystem.RunAnimation();
             MoveTowardsPlayerNonPhysics();
         }
 
@@ -112,17 +112,25 @@ namespace Features.Enemies.Scripts
 
         private void MoveTowardsPlayerNonPhysics()
         {
-            if (_characterProvider.CharacterFacade == null)
+            var character = _characterProvider.CharacterFacade;
+            if (character == null)
                 return;
 
-            Vector3 direction = _characterProvider.CharacterFacade.transform.position - transform.position;
+            Vector3 direction = character.transform.position - transform.position;
             direction.y = 0f;
             float distance = direction.magnitude;
 
             if (distance > _enemyConfiguration.DistanceToStop)
             {
-                _navMeshAgent.SetDestination(new Vector3(_characterProvider.CharacterFacade.transform.position.x,
-                    transform.position.y, _characterProvider.CharacterFacade.transform.position.z));
+                var targetToMove = new Vector3(character.transform.position.x, transform.position.y,
+                    character.transform.position.z);
+                
+                _navMeshAgent.SetDestination(targetToMove);
+
+                transform.position = Vector3.Lerp(
+                    transform.position,
+                    _navMeshAgent.nextPosition,
+                    Time.deltaTime * _navMeshAgent.speed);
             }
         }
 
