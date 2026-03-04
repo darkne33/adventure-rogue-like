@@ -1,4 +1,3 @@
-using System;
 using Core;
 using UI;
 using UnityEngine;
@@ -31,18 +30,23 @@ public class CharacterFacade : MonoBehaviour
     private CharacterCombatSystem _characterCombatSystem;
     private IDeathSystem _deathSystem;
     private CharacterGoldView _characterGoldView;
+    private CharacterAnimationSystem _characterAnimationSystem;
 
     private Rigidbody _rigidbody;
+    private Animator _animator;
 
     private void Start()
     {
         _rigidbody = GetComponent<Rigidbody>();
         _characterFxSystem = GetComponent<CharacterFxSystem>();
         _healthView = GetComponent<HealthView>();
+        _animator = GetComponent<Animator>();
+
+        _characterAnimationSystem = new CharacterAnimationSystem(_animator);
 
         _moveSystem =
             new CharacterMoveSystem(_rigidbody, _cameraService, _characterSettingsConfiguration, _characterFxSystem,
-                _characterModel);
+                _characterModel, _characterAnimationSystem);
 
         _characterCombatSystem = new CharacterCombatSystem();
         _characterCombatSystem.AddAbility(_abilityChoiceProvider.GetAbility(AbilityName.FireBall), this);
@@ -72,7 +76,6 @@ public class CharacterFacade : MonoBehaviour
     private void FixedUpdate()
     {
         _moveSystem.Move();
-
         _moveSystem.Jump();
     }
 

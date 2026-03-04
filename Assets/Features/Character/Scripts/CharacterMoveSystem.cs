@@ -9,13 +9,12 @@ public class CharacterMoveSystem
     private readonly CharacterSettingsConfiguration _characterSettingsConfiguration;
     private readonly CharacterFxSystem _characterFxSystem;
     private readonly GameObject _characterModel;
+    private readonly CharacterAnimationSystem _characterAnimationSystem;
 
     private readonly InputSystem_Actions _inputActions = new();
 
     private Vector3 _direction;
     private Vector3 _currentVelocity;
-
-    private bool _canJump = true;
 
     private readonly InputAction _dashAction;
     private float _dashCooldownTimer = 0f;
@@ -24,16 +23,19 @@ public class CharacterMoveSystem
     private readonly float _dashCooldown = 1f;
 
     private bool _canMove = true;
+    private bool _canJump = true;
 
     public CharacterMoveSystem(Rigidbody rigidbody,
         ICameraService cameraService, CharacterSettingsConfiguration characterSettingsConfiguration,
-        CharacterFxSystem characterFxSystem, GameObject characterModel)
+        CharacterFxSystem characterFxSystem, GameObject characterModel,
+        CharacterAnimationSystem characterAnimationSystem)
     {
         _rigidbody = rigidbody;
         _cameraService = cameraService;
         _characterSettingsConfiguration = characterSettingsConfiguration;
         _characterFxSystem = characterFxSystem;
         _characterModel = characterModel;
+        _characterAnimationSystem = characterAnimationSystem;
 
         _dashAction = _inputActions.Player.Dash;
         _dashAction.started += OnDashStarted;
@@ -56,13 +58,17 @@ public class CharacterMoveSystem
         right.Normalize();
 
         Vector3 moveDirection = Vector3.zero;
-        if (input.magnitude > 0.1f)
+
+        var isMoving = input.magnitude > 0.1f;
+
+        _characterAnimationSystem.MovementPlay(isMoving);
+
+        if (isMoving)
         {
             moveDirection = (forward * input.y + right * input.x).normalized;
         }
 
         bool isGrounded = _canJump;
-
 
         if (!isGrounded)
         {
