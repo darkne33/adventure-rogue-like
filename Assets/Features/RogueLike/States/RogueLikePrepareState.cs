@@ -3,6 +3,7 @@ using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Core;
 using UI;
+using UnityEngine;
 
 namespace Core
 {
@@ -15,13 +16,14 @@ namespace Core
         private readonly IPanelService _panelService;
         private readonly IRogueLikeRuntimeDataService _rogueLikeRuntimeDataService;
         private readonly ICameraService _cameraService;
-    
+
         private readonly IAbilityChoiceProvider _abilityChoiceProvider;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
             ISceneService<RogueLikeSceneProvider> sceneService, ICharacterProvider characterProvider,
             ILevelFactory levelFactory, IPanelService panelService,
-            IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IAbilityChoiceProvider abilityChoiceProvider, ICameraService cameraService)
+            IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IAbilityChoiceProvider abilityChoiceProvider,
+            ICameraService cameraService)
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
@@ -39,9 +41,9 @@ namespace Core
                 await _panelService.OpenPanelWithPresenter<CharacterPanel, CharacterPanelPresenter>(PanelName
                     .CharacterPanel);
             panel.Show().Forget();
-            
+
             _abilityChoiceProvider.CreateAllAbilities();
-            
+
             _characterProvider.CharacterFacade =
                 await _characterFactory.CreatePlayer(_sceneService.GameSceneComponentsService.CharacterSpawnPoint, cts);
 
@@ -51,8 +53,14 @@ namespace Core
                 _levelFactory.CreateLevelView(_rogueLikeRuntimeDataService.CurrentIndexLevel,
                     _sceneService.GameSceneComponentsService.LevelSpawnPoint);
 
+            var mainDoorTarget = _sceneService.GameSceneComponentsService.CurrentLevel.MainDoor.transform;
+            const int offset = 10;
+            var characterPosition = mainDoorTarget.position + mainDoorTarget.forward * offset;
+
+            _characterProvider.CharacterFacade.transform.position = characterPosition;
+
             Log.Gameplay.Info("RogueLike Prepare State Completed");
-            
+
             await StateMachine.EnterState<RogueLikeSpawnEnemyWaveState>();
         }
     }
