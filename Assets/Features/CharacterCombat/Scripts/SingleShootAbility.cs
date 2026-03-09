@@ -5,18 +5,18 @@ using Features.Enemies.Scripts;
 using UI;
 using UnityEngine;
 
-public class FireballAbility : CharacterActiveAbility
+public class SingleShootAbility : CharacterActiveAbility
 {
     private int _damage;
 
-    private FireballAbilityConfiguration _abilityConfig;
+    private ShootableAbilityConfiguration _abilityConfig;
     private readonly IEnemiesProvider _enemiesProvider;
     private readonly IPanelService _panelService;
     private readonly CharacterWallet _characterWallet;
 
     private CharacterPanel _characterPanel;
 
-    public FireballAbility(IEnemiesProvider enemiesProvider, IPanelService panelService,
+    public SingleShootAbility(IEnemiesProvider enemiesProvider, IPanelService panelService,
         CharacterWallet characterWallet)
     {
         _enemiesProvider = enemiesProvider;
@@ -27,7 +27,7 @@ public class FireballAbility : CharacterActiveAbility
     public override void Initialize(AbilityConfiguration abilityConfig)
     {
         base.Initialize(abilityConfig);
-        _abilityConfig = (FireballAbilityConfiguration)abilityConfig;
+        _abilityConfig = (ShootableAbilityConfiguration)abilityConfig;
         _damage = _abilityConfig.StartDamage;
         Cooldown = _abilityConfig.Cooldown;
 
@@ -41,20 +41,20 @@ public class FireballAbility : CharacterActiveAbility
         if (randomEnemy == null)
             return;
 
-        var randomEnemyPosition = randomEnemy.transform.position;
+        var randomEnemyPosition = randomEnemy.TargetToShootDamage.position;
 
-        var fireball = Object.Instantiate(_abilityConfig.Prefab, character.transform.position, Quaternion.identity);
-        fireball.transform.rotation =
-            Quaternion.LookRotation(fireball.transform.position - randomEnemyPosition);
+        var shootObj = Object.Instantiate(_abilityConfig.Prefab, character.transform.position, Quaternion.identity);
+        shootObj.transform.rotation =
+            Quaternion.LookRotation(shootObj.transform.position - randomEnemyPosition);
 
-        fireball.transform.DOMove(randomEnemyPosition, 50).SetSpeedBased().SetLink(fireball).SetId("Fireball Ability")
-            .OnComplete(() => DestroyFireball(fireball));
+        shootObj.transform.DOMove(randomEnemyPosition, _abilityConfig.Speed).SetSpeedBased().SetLink(shootObj).SetId($"Shoot Ability {shootObj.name}")
+            .OnComplete(() => DestroyShoot(shootObj));
 
-        var playerCollisionDetector = fireball.GetComponent<PlayerCollisionDetector>();
-        playerCollisionDetector.OnCollisionEnter = enemyFacade => DamageDeal(fireball, enemyFacade);
+        var playerCollisionDetector = shootObj.GetComponent<PlayerCollisionDetector>();
+        playerCollisionDetector.OnCollisionEnter = enemyFacade => DamageDeal(shootObj, enemyFacade);
     }
 
-    private void DamageDeal(GameObject fireball, EnemyFacade enemyFacade)
+    private void DamageDeal(GameObject shootObj, EnemyFacade enemyFacade)
     {
         enemyFacade.HealthSystem.GetDamage(_damage);
 
@@ -62,20 +62,20 @@ public class FireballAbility : CharacterActiveAbility
         _characterWallet.Money.Add(1);
 
         enemyFacade.EffectsSystem.DealDamage();
-        DestroyFireball(fireball);
+        DestroyShoot(shootObj);
     }
 
-    private void DestroyFireball(GameObject fireball)
+    private void DestroyShoot(GameObject shootObj)
     {
-        if (fireball != null)
+        if (shootObj != null)
         {
-            var explosion = Object.Instantiate(_abilityConfig.ExplosionPrefab, fireball.transform.position,
+            var explosion = Object.Instantiate(_abilityConfig.ExplosionPrefab, shootObj.transform.position,
                 Quaternion.identity);
             
-            var muzzle = Object.Instantiate(_abilityConfig.MuzzlePrefab, fireball.transform.position,
+            var muzzle = Object.Instantiate(_abilityConfig.MuzzlePrefab, shootObj.transform.position,
                 Quaternion.identity);
             
-            Object.Destroy(fireball);
+            Object.Destroy(shootObj);
             
             DestroyExtensions.DestroyAfterDelay(explosion, 1, explosion.GetCancellationTokenOnDestroy()).Forget();
             DestroyExtensions.DestroyAfterDelay(muzzle, 1, explosion.GetCancellationTokenOnDestroy()).Forget();

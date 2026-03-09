@@ -932,6 +932,7 @@ Transform:
   - {fileID: 8022568123099210873}
   - {fileID: 7141188079042192644}
   - {fileID: 5204630627120322186}
+  - {fileID: 1736655320492919923}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &5129888320074903316
@@ -1038,6 +1039,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 719288e7ee3d450f9453c2e34738f494, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyFacade
+  <TargetToShootDamage>k__BackingField: {fileID: 1736655320492919923}
   _enemyConfiguration: {fileID: 11400000, guid: 526077a63e653dc4fb3817e6da631530, type: 2}
   _meshRenderers:
   - {fileID: 8889264642693056443}
@@ -1593,6 +1595,37 @@ Transform:
   m_Children:
   - {fileID: 7008294239760027774}
   m_Father: {fileID: 8680136809057212643}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8486812016028449334
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1736655320492919923}
+  m_Layer: 0
+  m_Name: TargetToShoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1736655320492919923
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8486812016028449334}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.01, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3975453088899766379}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8499254068328662075
 GameObject:

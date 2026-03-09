@@ -1,4 +1,5 @@
 ﻿public enum AbilityName
 {
-    FireBall
+    FireBall = 0,
+    RabbitBoomerang = 1
 }

@@ -49,7 +49,7 @@ public class CharacterFacade : MonoBehaviour
                 _characterModel, _characterAnimationSystem);
 
         _characterCombatSystem = new CharacterCombatSystem();
-        _characterCombatSystem.AddAbility(_abilityChoiceProvider.GetAbility(AbilityName.FireBall), this);
+        _characterCombatSystem.AddAbility(_abilityChoiceProvider.GetAbility(AbilityName.RabbitBoomerang), this);
 
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         _characterGoldView = characterPanel.CharacterGoldView;

@@ -9,6 +9,7 @@ namespace Features.Enemies.Scripts
 {
     public class EnemyFacade : MonoBehaviour
     {
+        [field: SerializeField] public Transform TargetToShootDamage { get; private set; }
         public HealthSystem HealthSystem => _healthSystem;
         public EnemyEffectsSystem EffectsSystem => _effectsSystem;
         public Rigidbody Rigidbody => _rigidbody;
