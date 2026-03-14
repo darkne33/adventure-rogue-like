@@ -52,6 +52,8 @@ namespace Core
             _sceneService.GameSceneComponentsService.CurrentLevel =
                 _levelFactory.CreateLevelView(_rogueLikeRuntimeDataService.CurrentIndexLevel,
                     _sceneService.GameSceneComponentsService.LevelSpawnPoint);
+            
+            _rogueLikeRuntimeDataService.SetCurrentRoomData(_sceneService.GameSceneComponentsService.CurrentLevel.StartRoom.RoomData);
 
             var mainDoorTarget = _sceneService.GameSceneComponentsService.CurrentLevel.MainDoor.transform;
             const int offset = 10;

@@ -29,8 +29,9 @@ public class EnemySpawner
 
     public void TrySpawnEnemies(CharacterFacade characterFacade, int currentWave)
     {
-        var wave = _levelsConfiguration.Levels[_rogueLikeRuntimeDataService.CurrentIndexLevel]
-            .EnemyWavesConfiguration[currentWave];
+        DefaultEnemiesRoomData currentRoomData = (DefaultEnemiesRoomData)_rogueLikeRuntimeDataService.CurrentRoomData;
+        
+        var wave = currentRoomData.EnemyWavesConfiguration[currentWave];
 
         for (int i = 0; i < wave.EnemyTypes.Length; i++)
         {

@@ -21,8 +21,9 @@ namespace Features.Enemies.Scripts
 
         public void Observe(List<EnemyFacade> enemies)
         {
-            var lastCurrentWaveIndex = _levelsConfiguration.Levels[_runtimeDataService.CurrentIndexLevel]
-                .EnemyWavesConfiguration.Length - 1;
+            DefaultEnemiesRoomData currentRoomData = (DefaultEnemiesRoomData)_runtimeDataService.CurrentRoomData;
+
+            var lastCurrentWaveIndex = currentRoomData.EnemyWavesConfiguration.Length - 1;
 
             if (enemies.Count == 0 && CurrentWave < lastCurrentWaveIndex)
             {

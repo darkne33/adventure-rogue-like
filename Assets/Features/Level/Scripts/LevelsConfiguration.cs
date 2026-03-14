@@ -15,5 +15,4 @@ public class LevelSettings
 {
     [field: SerializeField] public EnemyFactoryConfiguration EnemyFactoryConfiguration { get; private set; }
     [field: SerializeField] public LevelView LevelView { get; private set; }
-    [field: SerializeField] public EnemyWavesConfiguration[] EnemyWavesConfiguration { get; private set; }
 }
