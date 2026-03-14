@@ -84,6 +84,7 @@ namespace Features.Enemies.Scripts
             _canDamage = false;
             _characterFacade.HealthSystem.GetDamage(_enemyConfiguration.Damage);
             _characterFacade.MoveSystem.CanMove(false);
+            _characterFacade.DamageEffectSystem.DealDamage();
 
             Vector3 pushDirection = _characterFacade.transform.position - _enemyFacade.transform.position;
             pushDirection.y = 0.5f;

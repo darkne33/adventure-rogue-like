@@ -33,6 +33,7 @@ namespace Features.Enemies.Scripts
 
             var enemyTransform = _enemyFacade.transform;
             _characterFacade.HealthSystem.GetDamage(_enemyConfiguration.Damage);
+            _characterFacade.DamageEffectSystem.DealDamage();
 
             Vector3 pushDirection = _characterFacade.transform.position - enemyTransform.position;
             pushDirection.y = 0f;

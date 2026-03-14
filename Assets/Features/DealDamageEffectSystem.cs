@@ -4,14 +4,14 @@ using UnityEngine;
 
 namespace Features.Enemies.Scripts
 {
-    public class EnemyEffectsSystem
+    public class DealDamageEffectSystem
     {
         private static readonly int HitBlend = Shader.PropertyToID("_HitPower");
         
         private readonly Material[] _materials;
         private Tweener _hitTweener;
 
-        public EnemyEffectsSystem(Renderer[] meshRenderers)
+        public DealDamageEffectSystem(Renderer[] meshRenderers)
         {
             _materials = new Material[meshRenderers.Length];
             _materials = meshRenderers.Select(x  => x.material).ToArray();

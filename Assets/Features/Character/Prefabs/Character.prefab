@@ -10410,6 +10410,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterFacade
   _characterModel: {fileID: 7549958321182911098}
   _cameraPivot: {fileID: 4274541664045631459}
+  _meshRenderers:
+  - {fileID: 7366493391407738794}
+  - {fileID: 4684929970935627899}
 --- !u!114 &6489131074200145703
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22156,6 +22159,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5ab63184874cc8b4eb2130aea68bf841, type: 3}
+--- !u!23 &4684929970935627899 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5088025097578190978, guid: 5ab63184874cc8b4eb2130aea68bf841, type: 3}
+  m_PrefabInstance: {fileID: 547324943975094521}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5858930365899275028 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6257583468922037229, guid: 5ab63184874cc8b4eb2130aea68bf841, type: 3}

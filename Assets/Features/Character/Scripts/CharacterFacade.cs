@@ -1,4 +1,5 @@
 using Core;
+using Features.Enemies.Scripts;
 using UI;
 using UnityEngine;
 using Zenject;
@@ -10,10 +11,13 @@ public class CharacterFacade : MonoBehaviour
     public Rigidbody Rigidbody => _rigidbody;
     public CharacterCombatSystem CharacterCombatSystem => _characterCombatSystem;
     public CharacterMoveSystem MoveSystem => _moveSystem;
+    public DealDamageEffectSystem DamageEffectSystem => _damageEffectSystem;
     public Transform CameraPivot => _cameraPivot.transform;
 
     [SerializeField] private GameObject _characterModel;
     [SerializeField] private GameObject _cameraPivot;
+
+    [SerializeField] private Renderer[] _meshRenderers;
 
     [Inject] private CharacterSettingsConfiguration _characterSettingsConfiguration;
     [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
@@ -31,6 +35,7 @@ public class CharacterFacade : MonoBehaviour
     private IDeathSystem _deathSystem;
     private CharacterGoldView _characterGoldView;
     private CharacterAnimationSystem _characterAnimationSystem;
+    private DealDamageEffectSystem _damageEffectSystem;
 
     private Rigidbody _rigidbody;
     private Animator _animator;
@@ -62,8 +67,7 @@ public class CharacterFacade : MonoBehaviour
         _cameraSystem = new CharacterCameraMoveSystem(_cameraPivot.transform,
             _characterCameraSettingsConfiguration);
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        _damageEffectSystem = new DealDamageEffectSystem(_meshRenderers);
     }
 
     private void Update()

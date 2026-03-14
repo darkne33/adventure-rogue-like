@@ -15,6 +15,9 @@ namespace Core.Installer
         {
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = 60;
+            
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
         }
         
         public override void InstallBindings()

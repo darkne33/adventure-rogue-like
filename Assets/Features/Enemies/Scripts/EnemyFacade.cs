@@ -11,7 +11,7 @@ namespace Features.Enemies.Scripts
     {
         [field: SerializeField] public Transform TargetToShootDamage { get; private set; }
         public HealthSystem HealthSystem => _healthSystem;
-        public EnemyEffectsSystem EffectsSystem => _effectsSystem;
+        public DealDamageEffectSystem EffectsSystem => _effectsSystem;
         public Rigidbody Rigidbody => _rigidbody;
         public EnemyCollisionDetector EnemyCollisionDetector => _enemyCollisionDetector;
         public IEnemyAnimationSystem AnimationSystem => _animationSystem;
@@ -33,7 +33,7 @@ namespace Features.Enemies.Scripts
         private IEnemyAnimationSystem _animationSystem;
         private HealthSystem _healthSystem;
         private IHealthView _healthView;
-        private EnemyEffectsSystem _effectsSystem;
+        private DealDamageEffectSystem _effectsSystem;
         private IDeathSystem _deathSystem;
 
         private float _currentSpeed;
@@ -85,7 +85,7 @@ namespace Features.Enemies.Scripts
             _healthSystem = new HealthSystem(100, new[] { _healthView }, _deathSystem);
             _healthSystem.Initialize();
 
-            _effectsSystem = new EnemyEffectsSystem(_meshRenderers);
+            _effectsSystem = new DealDamageEffectSystem(_meshRenderers);
 
             _enemyDamageSystem.Tick(gameObject.GetCancellationTokenOnDestroy()).Forget();
         }
