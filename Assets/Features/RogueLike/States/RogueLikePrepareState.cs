@@ -3,7 +3,6 @@ using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Core;
 using UI;
-using UnityEngine;
 
 namespace Core
 {
@@ -55,15 +54,9 @@ namespace Core
             
             _rogueLikeRuntimeDataService.SetCurrentRoomData(_sceneService.GameSceneComponentsService.CurrentLevel.StartRoom.RoomData);
 
-            var mainDoorTarget = _sceneService.GameSceneComponentsService.CurrentLevel.MainDoor.transform;
-            const int offset = 10;
-            var characterPosition = mainDoorTarget.position + mainDoorTarget.forward * offset;
-
-            _characterProvider.CharacterFacade.transform.position = characterPosition;
-
             Log.Gameplay.Info("RogueLike Prepare State Completed");
 
-            await StateMachine.EnterState<RogueLikeSpawnEnemyWaveState>();
+            await StateMachine.EnterState<RogueLikeRoomPrepareState>();
         }
     }
 }
