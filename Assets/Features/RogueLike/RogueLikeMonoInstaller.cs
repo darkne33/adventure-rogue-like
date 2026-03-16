@@ -1,6 +1,7 @@
 ﻿using Core;
 using Core.Services;
 using Features.Enemies.Scripts;
+using Features.Enemies.Scripts.Level.Scripts;
 using UnityEngine;
 using Zenject;
 
@@ -57,6 +58,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
     private void BindServices()
     {
         Container.Bind<IRogueLikeRuntimeDataService>().To<RogueLikeRuntimeDataService>().AsSingle();
+        Container.Bind<ITransitToRoomService>().To<TransitToRoomService>().AsSingle();
     }
 
     private void BindSpawners()

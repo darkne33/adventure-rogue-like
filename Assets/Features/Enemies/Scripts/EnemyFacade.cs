@@ -77,6 +77,7 @@ namespace Features.Enemies.Scripts
             _navMeshAgent.speed = _enemyConfiguration.Speed;
             _navMeshAgent.angularSpeed = _enemyConfiguration.RotationSpeed;
             _navMeshAgent.updatePosition = false;
+            _navMeshAgent.Warp(transform.position);
 
             _enemyDamageSystem.Initialize();
 
