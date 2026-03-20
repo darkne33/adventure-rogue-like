@@ -1,6 +1,7 @@
 using Core;
 using Features.Enemies.Scripts;
 using UI;
+using Unity.VisualScripting;
 using UnityEngine;
 using Zenject;
 
@@ -18,6 +19,7 @@ public class CharacterFacade : MonoBehaviour
     [SerializeField] private GameObject _cameraPivot;
 
     [SerializeField] private Renderer[] _meshRenderers;
+    [SerializeField] private Transform _shadow;
 
     [Inject] private CharacterSettingsConfiguration _characterSettingsConfiguration;
     [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
@@ -68,6 +70,8 @@ public class CharacterFacade : MonoBehaviour
             _characterCameraSettingsConfiguration);
 
         _damageEffectSystem = new DealDamageEffectSystem(_meshRenderers);
+
+        _shadow.parent = null;
     }
 
     private void Update()
@@ -81,6 +85,7 @@ public class CharacterFacade : MonoBehaviour
         _moveSystem.Move();
         _moveSystem.Jump();
         _moveSystem.Rotate();
+        CalculateShadow();
     }
 
     private void LateUpdate()
@@ -104,5 +109,14 @@ public class CharacterFacade : MonoBehaviour
         var obstacle = other.gameObject.GetComponent<Obstacle>();
         if (obstacle != null)
             _moveSystem.CanMove(true);
+    }
+
+    private static readonly Vector3 OFFSET_SHADOW = new(0, 0.02f);
+    [SerializeField] private LayerMask _shadowLayer;
+
+    private void CalculateShadow()
+    {
+        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.down), out var hit, _shadowLayer))
+            _shadow.position = hit.point + OFFSET_SHADOW;
     }
 }
