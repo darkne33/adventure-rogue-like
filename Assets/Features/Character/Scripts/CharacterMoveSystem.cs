@@ -138,6 +138,7 @@ public class CharacterMoveSystem
             _rigidbody.AddForce(Vector3.up * _characterSettingsConfiguration.JumpForce, ForceMode.Force);
             _canJump = false;
             _characterFxSystem.ActivateJump();
+            _characterAnimationSystem.JumpPlay();
         }
     }
 
