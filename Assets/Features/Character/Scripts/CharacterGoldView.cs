@@ -12,6 +12,7 @@ public class CharacterGoldView : MonoBehaviour
     [SerializeField] private float _maxScale = 1.5f;
     [SerializeField] private Color _activeColor = new Color(1f, 0.9f, 0.3f, 1f);
     [SerializeField] private Color _fadeColor = new Color(1f, 0.9f, 0.3f, 0.3f);
+    [SerializeField] private float _durationBeforeHide = 0.8f;
 
     private int _currentAmount = 0;
     private Sequence _currentSequence;
@@ -76,7 +77,7 @@ public class CharacterGoldView : MonoBehaviour
             .AppendInterval(_pumpDuration * 0.5f)
             .Append(DOTween.Sequence()
                 .Join(_goldText.rectTransform.DOScale(1f, _duration - _pumpDuration * 1.5f))
-                .Join(_goldText.DOColor(_fadeColor, _duration - _pumpDuration * 1.5f))
+                .Join(_goldText.DOColor(_fadeColor, _duration - _pumpDuration * 1.5f).SetDelay(_durationBeforeHide))
             )
             .OnComplete(Hide);
     }

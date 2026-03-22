@@ -391,8 +391,9 @@ MonoBehaviour:
   _duration: 0.8
   _pumpDuration: 0.2
   _maxScale: 1.5
-  _activeColor: {r: 1, g: 0.9, b: 0.3, a: 1}
-  _fadeColor: {r: 1, g: 0.9, b: 0.3, a: 0.3}
+  _activeColor: {r: 0.94509804, g: 0.6784314, b: 0.08627451, a: 1}
+  _fadeColor: {r: 0.94509804, g: 0.6784314, b: 0.08627451, a: 0.03529412}
+  _durationBeforeHide: 0.8
 --- !u!1 &2874958261759547166
 GameObject:
   m_ObjectHideFlags: 0
@@ -1516,7 +1517,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -294, y: -150}
+  m_AnchoredPosition: {x: -294, y: -204}
   m_SizeDelta: {x: 200, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3526789210506559330
@@ -1574,18 +1575,18 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 106
+  m_fontSize: 78
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
   m_fontSizeMin: 0
-  m_fontSizeMax: 106
-  m_fontStyle: 2
+  m_fontSizeMax: 78
+  m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
+  m_characterHorizontalScale: 0.8
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
