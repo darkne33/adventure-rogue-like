@@ -78,6 +78,7 @@ public class CharacterFacade : MonoBehaviour
     {
         _moveSystem.UpdateDash(Time.deltaTime);
         _characterCombatSystem.TickAbilities(this);
+        _cameraSystem.Move();
     }
 
     private void FixedUpdate()
@@ -90,7 +91,7 @@ public class CharacterFacade : MonoBehaviour
 
     private void LateUpdate()
     {
-        _cameraSystem.Move();
+       
     }
 
     private void OnCollisionEnter(Collision other)

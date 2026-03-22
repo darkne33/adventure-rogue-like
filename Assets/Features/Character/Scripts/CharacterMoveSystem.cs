@@ -153,7 +153,14 @@ public class CharacterMoveSystem
     {
         if (_direction.magnitude > 0.1f)
         {
-            _characterModel.transform.rotation = Quaternion.LookRotation(_direction);
+            Quaternion targetRotation = Quaternion.LookRotation(_direction);
+        
+            float rotationSpeed = _characterSettingsConfiguration.RotationSpeed;
+            _characterModel.transform.rotation = Quaternion.Slerp(
+                _characterModel.transform.rotation,
+                targetRotation,
+                rotationSpeed * Time.fixedDeltaTime
+            );
         }
     }
 
