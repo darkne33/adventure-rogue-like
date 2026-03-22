@@ -4,6 +4,7 @@ public class CharacterAnimationSystem
 {
     private static readonly int IsMove = Animator.StringToHash("IsMove");
     private static readonly int Jump = Animator.StringToHash("Jump");
+    private static readonly int IsGround = Animator.StringToHash("IsGround");
 
     private readonly Animator _animator;
 
@@ -17,4 +18,7 @@ public class CharacterAnimationSystem
 
     public void JumpPlay() => 
         _animator.SetTrigger(Jump);
+
+    public void GroundConditionState(bool state) => 
+        _animator.SetBool(IsGround, state);
 }

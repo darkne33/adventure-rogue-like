@@ -69,6 +69,7 @@ public class CharacterMoveSystem
         }
 
         bool isGrounded = _canJump;
+        _characterAnimationSystem.GroundConditionState(isGrounded);
 
         if (!isGrounded)
         {
@@ -128,8 +129,11 @@ public class CharacterMoveSystem
         }
     }
 
-    public void CanMove(bool state) =>
+    public void CanMove(bool state)
+    {
         _canMove = state;
+        
+    }
 
     public void Jump()
     {
