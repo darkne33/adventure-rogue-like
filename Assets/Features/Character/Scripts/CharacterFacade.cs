@@ -14,6 +14,7 @@ public class CharacterFacade : MonoBehaviour
     public CharacterMoveSystem MoveSystem => _moveSystem;
     public DealDamageEffectSystem DamageEffectSystem => _damageEffectSystem;
     public Transform CameraPivot => _cameraPivot.transform;
+    public CharacterStats CharacterStats => _characterStats;
 
     [SerializeField] private GameObject _characterModel;
     [SerializeField] private GameObject _cameraPivot;
@@ -39,8 +40,13 @@ public class CharacterFacade : MonoBehaviour
     private CharacterAnimationSystem _characterAnimationSystem;
     private DealDamageEffectSystem _damageEffectSystem;
 
+    private CharacterStats _characterStats;
+    
     private Rigidbody _rigidbody;
     private Animator _animator;
+    
+    public void CreateStats() => 
+        _characterStats = new CharacterStats();
 
     private void Start()
     {
@@ -60,7 +66,7 @@ public class CharacterFacade : MonoBehaviour
 
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         _characterGoldView = characterPanel.CharacterGoldView;
-        _healthSystem = new HealthSystem(_characterSettingsConfiguration.StartHealth,
+        _healthSystem = new HealthSystem(_characterSettingsConfiguration.MaxHp,
             new[] { characterPanel.CharacterHealthView, _healthView }, _deathSystem
         );
 
@@ -87,11 +93,6 @@ public class CharacterFacade : MonoBehaviour
         _moveSystem.Jump();
         _moveSystem.Rotate();
         CalculateShadow();
-    }
-
-    private void LateUpdate()
-    {
-       
     }
 
     private void OnCollisionEnter(Collision other)

@@ -89,7 +89,7 @@ public class CharacterMoveSystem
                 }
                 else
                 {
-                    float airControlSpeed = _characterSettingsConfiguration.MoveSpeed * 1;
+                    float airControlSpeed = _characterSettingsConfiguration.MovementSpeed * 1;
                     Vector3 desiredAirVelocity = moveDirection * airControlSpeed;
                     Vector3 velocityDiff = desiredAirVelocity - currentHorizontal;
 
@@ -117,7 +117,7 @@ public class CharacterMoveSystem
 
         Vector3 desiredHorizontalVelocity = blocked
             ? Vector3.zero
-            : _direction * _characterSettingsConfiguration.MoveSpeed;
+            : _direction * _characterSettingsConfiguration.MovementSpeed;
 
         Vector3 currentHorizontalVelocity = new Vector3(_rigidbody.linearVelocity.x, 0f, _rigidbody.linearVelocity.z);
         Vector3 velocityDifference = desiredHorizontalVelocity - currentHorizontalVelocity;
