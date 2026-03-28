@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 4928020278616185225}
   - component: {fileID: 1110561580327224513}
   - component: {fileID: 5710714706516284743}
+  - component: {fileID: 3297121907627390702}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -227,3 +228,20 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &3297121907627390702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4240162585960212285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 449ef5ebbe24720439ec31d15f7b6f3d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineVolumeSettings
+  Weight: 1
+  FocusTracking: 0
+  FocusTarget: {fileID: 0}
+  FocusOffset: 0
+  Profile: {fileID: 11400000, guid: bf322887d384df049a1b01fb7be18278, type: 2}
