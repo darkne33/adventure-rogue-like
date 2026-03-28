@@ -4,7 +4,7 @@
     fileName = "CharacterSettingsConfiguration", order = 0)]
 public class CharacterSettingsConfiguration : ScriptableObject
 {
-    [Header("Damage and fight")]
+    [field: Header("Damage and fight")]
     [field: SerializeField] public float Damage { get; private set; }
     [field: SerializeField] public float AttackSpeed { get; private set; }
     [field: SerializeField] public float AbilityDuration { get; private set; }
@@ -13,13 +13,13 @@ public class CharacterSettingsConfiguration : ScriptableObject
     [field: SerializeField] public float LifeSteal { get; private set; }
     [field: SerializeField] public float ThornsDamage { get; private set; }
 
-    [Header("Survival")]
+    [field: Header("Survival")]
     [field: SerializeField] public int MaxHp { get; private set; } = 54;
     [field: SerializeField] public float RegenHp { get; private set; }
     [field: SerializeField] public float Armor { get; private set; }
     [field: SerializeField] public float Evasion { get; private set; }
 
-    [Header("Economic and progress")]
+    [field: Header("Economic and progress")]
     [field: SerializeField] public float GainHp { get; private set; }
     [field: SerializeField] public float Luck { get; private set; }
     [field: SerializeField] public float GainGold { get; private set; }
