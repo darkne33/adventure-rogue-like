@@ -1,0 +1,18 @@
+﻿public enum StatType
+{
+    Damage = 1,
+    AttackSpeed = 2,
+    AbilityDuration = 3,
+    CritChance = 4,
+    CritDamage = 5,
+    LifeSteal = 6,
+    ThornsDamage = 7,
+    MaxHp = 8,
+    RegenHp = 9,
+    Armor = 10,
+    Evasion = 11,
+    GainHp = 12,
+    Luck = 13,
+    GainGold = 14,
+    MovementSpeed = 15
+}

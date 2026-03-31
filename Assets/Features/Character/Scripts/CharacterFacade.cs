@@ -10,17 +10,19 @@ public class CharacterFacade : MonoBehaviour
 {
     public HealthSystem HealthSystem => _healthSystem;
     public Rigidbody Rigidbody => _rigidbody;
-    public CharacterCombatSystem CharacterCombatSystem => _characterCombatSystem;
+    public CharacterAbilitySystem CharacterAbilitySystem => _characterAbilitySystem;
     public CharacterMoveSystem MoveSystem => _moveSystem;
     public DealDamageEffectSystem DamageEffectSystem => _damageEffectSystem;
     public Transform CameraPivot => _cameraPivot.transform;
-    public CharacterStats CharacterStats => _characterStats;
 
     [SerializeField] private GameObject _characterModel;
     [SerializeField] private GameObject _cameraPivot;
 
     [SerializeField] private Renderer[] _meshRenderers;
     [SerializeField] private Transform _shadow;
+    
+    [SerializeField] private LayerMask _shadowLayer;
+    private static readonly Vector3 OFFSET_SHADOW = new(0, 0.02f);
 
     [Inject] private CharacterSettingsConfiguration _characterSettingsConfiguration;
     [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
@@ -28,25 +30,21 @@ public class CharacterFacade : MonoBehaviour
     [Inject] private ICameraService _cameraService;
     [Inject] private IPanelService _panelService;
     [Inject] private IAbilityChoiceProvider _abilityChoiceProvider;
+    [Inject] private CharacterStats _characterStats;
 
     private CharacterMoveSystem _moveSystem;
     private CharacterCameraMoveSystem _cameraSystem;
     private HealthSystem _healthSystem;
     private CharacterFxSystem _characterFxSystem;
     private IHealthView _healthView;
-    private CharacterCombatSystem _characterCombatSystem;
+    private CharacterAbilitySystem _characterAbilitySystem;
     private IDeathSystem _deathSystem;
     private CharacterGoldView _characterGoldView;
     private CharacterAnimationSystem _characterAnimationSystem;
     private DealDamageEffectSystem _damageEffectSystem;
-
-    private CharacterStats _characterStats;
     
     private Rigidbody _rigidbody;
     private Animator _animator;
-    
-    public void CreateStats() => 
-        _characterStats = new CharacterStats();
 
     private void Start()
     {
@@ -61,8 +59,8 @@ public class CharacterFacade : MonoBehaviour
             new CharacterMoveSystem(_rigidbody, _cameraService, _characterSettingsConfiguration, _characterFxSystem,
                 _characterModel, _characterAnimationSystem);
 
-        _characterCombatSystem = new CharacterCombatSystem();
-        _characterCombatSystem.AddAbility(_abilityChoiceProvider.GetAbility(AbilityName.RabbitBoomerang), this);
+        _characterAbilitySystem = new CharacterAbilitySystem();
+        _characterAbilitySystem.AddAbility(_abilityChoiceProvider.GetAbility(AbilityName.RabbitBoomerang), this);
 
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         _characterGoldView = characterPanel.CharacterGoldView;
@@ -83,7 +81,7 @@ public class CharacterFacade : MonoBehaviour
     private void Update()
     {
         _moveSystem.UpdateDash(Time.deltaTime);
-        _characterCombatSystem.TickAbilities(this);
+        _characterAbilitySystem.TickAbilities(this);
         _cameraSystem.Move();
     }
 
@@ -112,9 +110,7 @@ public class CharacterFacade : MonoBehaviour
         if (obstacle != null)
             _moveSystem.CanMove(true);
     }
-
-    private static readonly Vector3 OFFSET_SHADOW = new(0, 0.02f);
-    [SerializeField] private LayerMask _shadowLayer;
+    
 
     private void CalculateShadow()
     {

@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class CharacterCombatSystem
+public class CharacterAbilitySystem
 {
     private readonly List<CharacterAbility> _abilities = new();
+    
     private readonly Dictionary<AbilityName, CharacterActiveAbility> _activeAbilities = new();
+    private readonly Dictionary<AbilityName, CharacterPassiveAbility> _passiveAbilities = new();
 
     public void AddAbility(CharacterAbility ability, CharacterFacade owner)
     {
@@ -13,6 +15,8 @@ public class CharacterCombatSystem
 
         if (ability is CharacterActiveAbility active)
             _activeAbilities[active.Id] = active;
+        if (ability is CharacterPassiveAbility passive)
+            _passiveAbilities[passive.Id] = passive;
     }
 
     public void RemoveAbility(AbilityName abilityId, CharacterFacade owner)
@@ -25,6 +29,9 @@ public class CharacterCombatSystem
 
             if (ability is CharacterActiveAbility active)
                 _activeAbilities.Remove(abilityId);
+            
+            if (ability is CharacterPassiveAbility passiveAbility)
+                _passiveAbilities.Remove(abilityId);
         }
     }
 

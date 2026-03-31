@@ -10,13 +10,13 @@ public class RogueLikeMonoInstaller : MonoInstaller
     [SerializeField] private CharacterConfiguration _characterConfiguration;
     [SerializeField] private CharacterCameraSettingsConfiguration _cameraSettingsConfiguration;
     [SerializeField] private CharacterSettingsConfiguration _characterSettingsConfiguration;
-    
+
     [SerializeField] private LevelsConfiguration _levelsConfiguration;
 
     [SerializeField] private AllAbilitiesConfiguration _abilitiesConfiguration;
 
     [SerializeField] private SceneNames.SceneNameType _sceneNameType;
-    
+
     public override void InstallBindings()
     {
         BindProviders();
@@ -26,6 +26,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         BindSpawners();
         BindObservers();
         BindCharacterWallet();
+        BindCharacterStats();
     }
 
     private void BindFactories()
@@ -49,7 +50,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<CharacterConfiguration>().FromInstance(_characterConfiguration).AsSingle();
         Container.Bind<CharacterCameraSettingsConfiguration>().FromInstance(_cameraSettingsConfiguration).AsSingle();
         Container.Bind<CharacterSettingsConfiguration>().FromInstance(_characterSettingsConfiguration).AsSingle();
-        
+
         Container.Bind<LevelsConfiguration>().FromInstance(_levelsConfiguration).AsSingle();
 
         Container.Bind<AllAbilitiesConfiguration>().FromInstance(_abilitiesConfiguration).AsSingle();
@@ -71,6 +72,9 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<EnemiesWaveObserver>().AsSingle();
     }
 
-    private void BindCharacterWallet() => 
+    private void BindCharacterWallet() =>
         Container.Bind<CharacterWallet>().AsSingle();
+
+    private void BindCharacterStats() => 
+        Container.Bind<CharacterStats>().AsSingle();
 }
