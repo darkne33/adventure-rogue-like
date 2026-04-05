@@ -24,7 +24,7 @@ public class CharacterFacade : MonoBehaviour
     [SerializeField] private LayerMask _shadowLayer;
     private static readonly Vector3 OFFSET_SHADOW = new(0, 0.02f);
 
-    [Inject] private CharacterSettingsConfiguration _characterSettingsConfiguration;
+
     [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
 
     [Inject] private ICameraService _cameraService;
@@ -56,7 +56,7 @@ public class CharacterFacade : MonoBehaviour
         _characterAnimationSystem = new CharacterAnimationSystem(_animator);
 
         _moveSystem =
-            new CharacterMoveSystem(_rigidbody, _cameraService, _characterSettingsConfiguration, _characterFxSystem,
+            new CharacterMoveSystem(_rigidbody, _cameraService, _characterStats, _characterFxSystem,
                 _characterModel, _characterAnimationSystem);
 
         _characterAbilitySystem = new CharacterAbilitySystem();
@@ -64,7 +64,7 @@ public class CharacterFacade : MonoBehaviour
 
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         _characterGoldView = characterPanel.CharacterGoldView;
-        _healthSystem = new HealthSystem(_characterSettingsConfiguration.MaxHp,
+        _healthSystem = new HealthSystem(_characterStats.MaxHp,
             new[] { characterPanel.CharacterHealthView, _healthView }, _deathSystem
         );
 

@@ -6,7 +6,7 @@ public class CharacterMoveSystem
 {
     private readonly Rigidbody _rigidbody;
     private readonly ICameraService _cameraService;
-    private readonly CharacterSettingsConfiguration _characterSettingsConfiguration;
+    private readonly CharacterStats _characterStats;
     private readonly CharacterFxSystem _characterFxSystem;
     private readonly GameObject _characterModel;
     private readonly CharacterAnimationSystem _characterAnimationSystem;
@@ -26,16 +26,17 @@ public class CharacterMoveSystem
     private bool _canJump = true;
 
     public CharacterMoveSystem(Rigidbody rigidbody,
-        ICameraService cameraService, CharacterSettingsConfiguration characterSettingsConfiguration,
+        ICameraService cameraService, CharacterStats characterStats,
         CharacterFxSystem characterFxSystem, GameObject characterModel,
         CharacterAnimationSystem characterAnimationSystem)
     {
         _rigidbody = rigidbody;
         _cameraService = cameraService;
-        _characterSettingsConfiguration = characterSettingsConfiguration;
+   
         _characterFxSystem = characterFxSystem;
         _characterModel = characterModel;
         _characterAnimationSystem = characterAnimationSystem;
+        _characterStats = characterStats;
 
         _dashAction = _inputActions.Player.Dash;
         _dashAction.started += OnDashStarted;
@@ -84,16 +85,16 @@ public class CharacterMoveSystem
 
                 if (dot < 0f)
                 {
-                    float airBrakeForce = _characterSettingsConfiguration.Acceleration * 0.8f;
+                    float airBrakeForce = _characterStats.MovementAcceleration * 0.8f;
                     _rigidbody.AddForce(-currentHorizontal.normalized * airBrakeForce, ForceMode.Acceleration);
                 }
                 else
                 {
-                    float airControlSpeed = _characterSettingsConfiguration.MovementSpeed * 1;
+                    float airControlSpeed = _characterStats.MovementSpeed * 1;
                     Vector3 desiredAirVelocity = moveDirection * airControlSpeed;
                     Vector3 velocityDiff = desiredAirVelocity - currentHorizontal;
 
-                    float airAcceleration = _characterSettingsConfiguration.Acceleration * 1f;
+                    float airAcceleration = _characterStats.MovementAcceleration * 1f;
                     if (velocityDiff.magnitude > 0.01f)
                     {
                         _rigidbody.AddForce(velocityDiff * airAcceleration, ForceMode.Acceleration);
@@ -117,14 +118,14 @@ public class CharacterMoveSystem
 
         Vector3 desiredHorizontalVelocity = blocked
             ? Vector3.zero
-            : _direction * _characterSettingsConfiguration.MovementSpeed;
+            : _direction * _characterStats.MovementSpeed;
 
         Vector3 currentHorizontalVelocity = new Vector3(_rigidbody.linearVelocity.x, 0f, _rigidbody.linearVelocity.z);
         Vector3 velocityDifference = desiredHorizontalVelocity - currentHorizontalVelocity;
 
         if (velocityDifference.magnitude > 0.01f)
         {
-            _rigidbody.AddForce(velocityDifference * _characterSettingsConfiguration.Acceleration,
+            _rigidbody.AddForce(velocityDifference * _characterStats.MovementAcceleration,
                 ForceMode.Acceleration);
         }
     }
@@ -139,7 +140,7 @@ public class CharacterMoveSystem
     {
         if (_inputActions.Player.Jump.triggered && _canJump)
         {
-            _rigidbody.AddForce(Vector3.up * _characterSettingsConfiguration.JumpForce, ForceMode.Force);
+            _rigidbody.AddForce(Vector3.up * _characterStats.JumpForce, ForceMode.Force);
             _canJump = false;
             _characterFxSystem.ActivateJump();
             _characterAnimationSystem.JumpPlay();
@@ -155,7 +156,7 @@ public class CharacterMoveSystem
         {
             Quaternion targetRotation = Quaternion.LookRotation(_direction);
         
-            float rotationSpeed = _characterSettingsConfiguration.RotationSpeed;
+            float rotationSpeed = _characterStats.RotationSpeed;
             _characterModel.transform.rotation = Quaternion.Slerp(
                 _characterModel.transform.rotation,
                 targetRotation,
@@ -172,7 +173,7 @@ public class CharacterMoveSystem
 
     private void ApplyEnhancedGravity()
     {
-        float enhancedGravity = Physics.gravity.y * _characterSettingsConfiguration.GravityMultiplier;
+        float enhancedGravity = Physics.gravity.y * _characterStats.GravityMultiplier;
 
         Vector3 currentVelocity = _rigidbody.linearVelocity;
 

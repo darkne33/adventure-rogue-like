@@ -10,6 +10,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
     [SerializeField] private CharacterConfiguration _characterConfiguration;
     [SerializeField] private CharacterCameraSettingsConfiguration _cameraSettingsConfiguration;
     [SerializeField] private CharacterSettingsConfiguration _characterSettingsConfiguration;
+    [SerializeField] private UpgradeOfferConfiguration _upgradeOfferConfiguration;
 
     [SerializeField] private LevelsConfiguration _levelsConfiguration;
 
@@ -34,6 +35,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<ICharacterFactory>().To<CharacterFactory>().AsSingle();
         Container.Bind<ILevelFactory>().To<LevelFactory>().AsSingle();
         Container.Bind<IEnemyFactory>().To<EnemyFactory>().AsSingle();
+        Container.Bind<IUpgradeOfferItemFactory>().To<UpgradeOfferItemFactory>().AsSingle();
     }
 
     private void BindProviders()
@@ -50,6 +52,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<CharacterConfiguration>().FromInstance(_characterConfiguration).AsSingle();
         Container.Bind<CharacterCameraSettingsConfiguration>().FromInstance(_cameraSettingsConfiguration).AsSingle();
         Container.Bind<CharacterSettingsConfiguration>().FromInstance(_characterSettingsConfiguration).AsSingle();
+        Container.Bind<UpgradeOfferConfiguration>().FromInstance(_upgradeOfferConfiguration).AsSingle();
 
         Container.Bind<LevelsConfiguration>().FromInstance(_levelsConfiguration).AsSingle();
 

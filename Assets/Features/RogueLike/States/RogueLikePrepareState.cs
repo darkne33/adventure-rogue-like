@@ -1,11 +1,8 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Core;
 using UI;
-using UnityEngine;
-using UnityEngine.AI;
 
 namespace Core
 {
@@ -18,14 +15,14 @@ namespace Core
         private readonly IPanelService _panelService;
         private readonly IRogueLikeRuntimeDataService _rogueLikeRuntimeDataService;
         private readonly ICameraService _cameraService;
-
         private readonly IAbilityChoiceProvider _abilityChoiceProvider;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
             ISceneService<RogueLikeSceneProvider> sceneService, ICharacterProvider characterProvider,
             ILevelFactory levelFactory, IPanelService panelService,
             IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IAbilityChoiceProvider abilityChoiceProvider,
-            ICameraService cameraService)
+            ICameraService cameraService
+        )
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
@@ -42,7 +39,7 @@ namespace Core
             var panel =
                 await _panelService.OpenPanelWithPresenter<CharacterPanel, CharacterPanelPresenter>(PanelName
                     .CharacterPanel);
-            
+
             _abilityChoiceProvider.CreateAllAbilities();
 
             _sceneService.GameSceneComponentsService.CurrentLevel =
@@ -51,20 +48,20 @@ namespace Core
 
             _rogueLikeRuntimeDataService.SetCurrentRoomData(_sceneService.GameSceneComponentsService.CurrentLevel
                 .StartRoom.RoomData);
-            
+
             _sceneService.GameSceneComponentsService.NavMeshSurface.RemoveData();
             _sceneService.GameSceneComponentsService.NavMeshSurface.BuildNavMesh();
-            
+
             StartRoomData startRoomData = (StartRoomData)_rogueLikeRuntimeDataService.CurrentRoomData;
-            
-            foreach (var roomDoor in startRoomData.RoomDoors) 
+
+            foreach (var roomDoor in startRoomData.RoomDoors)
                 roomDoor.Open();
 
             _characterProvider.CharacterFacade =
                 await _characterFactory.CreatePlayer(startRoomData.StartPoint, cts);
 
             _cameraService.MainCamera.Follow = _characterProvider.CharacterFacade.CameraPivot;
-            
+
             panel.Show().Forget();
 
             Log.Gameplay.Info("RogueLike Prepare State Completed");

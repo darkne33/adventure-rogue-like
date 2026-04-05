@@ -1,6 +1,4 @@
-﻿using TMPro;
-
-public interface IHealthView
+﻿public interface IHealthView
 {
-    void UpdateHealth(int currentHealth, int maximumHealth);
+    void UpdateHealth(float currentHealth, float maximumHealth);
 }

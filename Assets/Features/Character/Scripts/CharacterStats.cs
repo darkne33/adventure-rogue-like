@@ -4,7 +4,7 @@
 public class CharacterStats
 {
     //Damage and fight
-    public float Damage;
+    public float DamageInPercent;
     public float AttackSpeed;
     public float AbilityDuration;
     public float CritChance;
@@ -25,4 +25,8 @@ public class CharacterStats
     
     //Movement
     public float MovementSpeed;
+    public float MovementAcceleration;
+    public float JumpForce;
+    public float RotationSpeed;
+    public float GravityMultiplier;
 }

@@ -5,7 +5,7 @@
 public class CharacterSettingsConfiguration : ScriptableObject
 {
     [field: Header("Damage and fight")]
-    [field: SerializeField] public float Damage { get; private set; }
+    [field: SerializeField] public float DamageInPercent { get; private set; }
     [field: SerializeField] public float AttackSpeed { get; private set; }
     [field: SerializeField] public float AbilityDuration { get; private set; }
     [field: SerializeField] public float CritChance { get; private set; }

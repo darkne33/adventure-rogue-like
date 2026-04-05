@@ -2,14 +2,14 @@
 
 public class HealthSystem
 {
-    private int _maxHealth;
-    private int _currentHealth;
+    private float _maxHealth;
+    private float _currentHealth;
 
-    private readonly int _startHealth;
+    private readonly float _startHealth;
     private readonly IHealthView[] _characterHealthViews;
     private readonly IDeathSystem _deathSystem;
 
-    public HealthSystem(int startHealth, IHealthView[] characterHealthViews, IDeathSystem deathSystem)
+    public HealthSystem(float startHealth, IHealthView[] characterHealthViews, IDeathSystem deathSystem)
     {
         _startHealth = startHealth;
         _characterHealthViews = characterHealthViews;

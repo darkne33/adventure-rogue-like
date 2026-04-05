@@ -7,7 +7,7 @@ public class CharacterHealthView : MonoBehaviour, IHealthView
     [SerializeField] private TMP_Text _healthText;
     [SerializeField] private Slider _healthSlider;
 
-    public void UpdateHealth(int currentHealth, int maximumHealth)
+    public void UpdateHealth(float currentHealth, float maximumHealth)
     {
         _healthText.text = $"{currentHealth}/{maximumHealth}";
         _healthSlider.maxValue = maximumHealth;
