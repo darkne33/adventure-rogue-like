@@ -8,10 +8,12 @@ public class CharacterAbilitySystem
     private readonly Dictionary<AbilityName, CharacterActiveAbility> _activeAbilities = new();
     private readonly Dictionary<AbilityName, CharacterPassiveAbility> _passiveAbilities = new();
 
-    public void AddAbility(CharacterAbility ability, CharacterFacade owner)
+    public void AddAbility(CharacterAbility ability, CharacterStats characterStats)
     {
-        _abilities.Add(ability);
-        ability.OnEquip(owner);
+        if (_abilities.Contains(ability) == false)
+            _abilities.Add(ability);
+        
+        ability.OnEquip(characterStats);
 
         if (ability is CharacterActiveAbility active)
             _activeAbilities[active.Id] = active;
@@ -19,12 +21,12 @@ public class CharacterAbilitySystem
             _passiveAbilities[passive.Id] = passive;
     }
 
-    public void RemoveAbility(AbilityName abilityId, CharacterFacade owner)
+    public void RemoveAbility(AbilityName abilityId, CharacterStats characterStats)
     {
         var ability = _abilities.Find(a => a.Id == abilityId);
         if (ability != null)
         {
-            ability.OnUnequip(owner);
+            ability.OnUnequip(characterStats);
             _abilities.Remove(ability);
 
             if (ability is CharacterActiveAbility active)
@@ -37,7 +39,7 @@ public class CharacterAbilitySystem
 
     public void TickAbilities(CharacterFacade character)
     {
-        foreach (var ability in _activeAbilities.Values)
+        foreach (CharacterActiveAbility ability in _activeAbilities.Values)
         {
             ability.CurrentCooldown -= Time.deltaTime;
             ability.Use(character);

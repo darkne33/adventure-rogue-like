@@ -9,4 +9,5 @@ public class CharacterPanel : PanelBase
     [field: SerializeField] public CharacterGoldView CharacterGoldView { get; private set; }
     [field: SerializeField] public TMP_Text WaveAlertText { get; private set; }
     [field: SerializeField] public Slider ExpProgressBar { get; private set; }
+    [field: SerializeField] public UpgradeOfferPanel UpgradeOfferPanel { get; private set; }
 }

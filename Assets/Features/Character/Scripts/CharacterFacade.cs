@@ -60,7 +60,7 @@ public class CharacterFacade : MonoBehaviour
                 _characterModel, _characterAnimationSystem);
 
         _characterAbilitySystem = new CharacterAbilitySystem();
-        _characterAbilitySystem.AddAbility(_abilityChoiceProvider.GetAbility(AbilityName.RabbitBoomerang), this);
+        _characterAbilitySystem.AddAbility(_abilityChoiceProvider.GetAbility(AbilityName.RabbitBoomerang), _characterStats);
 
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         _characterGoldView = characterPanel.CharacterGoldView;

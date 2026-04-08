@@ -24,6 +24,16 @@ public class SingleShootAbility : CharacterActiveAbility
         _characterWallet = characterWallet;
     }
 
+    public override void OnEquip(CharacterStats characterStats)
+    {
+        base.OnEquip(characterStats);
+    }
+
+    public override void OnUnequip(CharacterStats characterStats)
+    {
+        base.OnUnequip(characterStats);
+    }
+
     public override void Initialize(AbilityConfiguration abilityConfig)
     {
         base.Initialize(abilityConfig);

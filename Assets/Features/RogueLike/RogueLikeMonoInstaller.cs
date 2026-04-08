@@ -44,7 +44,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
             .WithArguments(SceneNames.GetSceneNameByType(_sceneNameType));
         Container.Bind<ICharacterProvider>().To<CharacterProvider>().AsSingle();
         Container.Bind<IEnemiesProvider>().To<EnemiesProvider>().AsSingle();
-        Container.Bind<IAbilityChoiceProvider>().To<AbilityChoiceProvider>().AsSingle();
+        Container.Bind<IAbilityChoiceProvider>().To<CharacterAbilityChoiceProvider>().AsSingle();
     }
 
     private void BindConfigurations()

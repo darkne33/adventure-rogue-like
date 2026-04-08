@@ -1,5 +1,8 @@
-﻿public interface IAbilityChoiceProvider
+﻿using System.Collections.Generic;
+
+public interface IAbilityChoiceProvider
 {
-    void CreateAllAbilities();
-    CharacterAbility GetAbility(AbilityName abilityName);
+    public void CreateAllAbilities();
+    public CharacterAbility GetAbility(AbilityName abilityName);
+    public Dictionary<AbilityName, CharacterAbility> GetCharacterAbilities();
 }
