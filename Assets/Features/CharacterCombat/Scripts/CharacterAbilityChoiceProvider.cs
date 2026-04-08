@@ -35,7 +35,7 @@ public class CharacterAbilityChoiceProvider : IAbilityChoiceProvider
                     CreateAbility<CharacterScrollAttackSpeedAbility>(abilityConfig, abilityConfig.AbilityName);
                     break;
                 case AbilityName.CritChanceScroll:
-                    CreateAbility<CharacterScrollCritDamageAbility>(abilityConfig, abilityConfig.AbilityName);
+                    CreateAbility<CharacterScrollCritChanceAbility>(abilityConfig, abilityConfig.AbilityName);
                     break;
                 case AbilityName.CritDamageScroll:
                     CreateAbility<CharacterScrollCritDamageAbility>(abilityConfig, abilityConfig.AbilityName);
