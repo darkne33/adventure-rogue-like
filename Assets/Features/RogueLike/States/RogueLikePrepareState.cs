@@ -16,13 +16,13 @@ namespace Core
         private readonly IRogueLikeRuntimeDataService _rogueLikeRuntimeDataService;
         private readonly ICameraService _cameraService;
         private readonly IAbilityChoiceProvider _abilityChoiceProvider;
+        private readonly IUpgradeOfferHandler _upgradeOfferHandler;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
             ISceneService<RogueLikeSceneProvider> sceneService, ICharacterProvider characterProvider,
             ILevelFactory levelFactory, IPanelService panelService,
             IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IAbilityChoiceProvider abilityChoiceProvider,
-            ICameraService cameraService
-        )
+            ICameraService cameraService, IUpgradeOfferHandler upgradeOfferHandler)
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
@@ -32,6 +32,7 @@ namespace Core
             _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
             _abilityChoiceProvider = abilityChoiceProvider;
             _cameraService = cameraService;
+            _upgradeOfferHandler = upgradeOfferHandler;
         }
 
         public override async UniTask Enter(CancellationToken cts)
@@ -63,6 +64,8 @@ namespace Core
             _cameraService.MainCamera.Follow = _characterProvider.CharacterFacade.CameraPivot;
 
             panel.Show().Forget();
+            
+            _upgradeOfferHandler.Handle();
 
             Log.Gameplay.Info("RogueLike Prepare State Completed");
         }

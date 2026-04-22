@@ -7,15 +7,22 @@ public class UpgradeOfferPanel : MonoBehaviour
     [field: SerializeField] public Transform UpgradesRoot { get; private set; }
 
     private PanelAnimationsMonoComponent _panelAnimationsMonoComponent;
-    
+
     private void Awake()
     {
         _panelAnimationsMonoComponent = GetComponent<PanelAnimationsMonoComponent>();
     }
 
-    public UniTask Show() =>
-        _panelAnimationsMonoComponent.Show();
+    public UniTask Show()
+    {
+        gameObject.SetActive(true);
+        _panelAnimationsMonoComponent.ForceHide();
+        return _panelAnimationsMonoComponent.Show();
+    }
 
-    public UniTask Hide() =>
-        _panelAnimationsMonoComponent.Hide();
+    public async UniTask Hide()
+    {
+        await _panelAnimationsMonoComponent.Hide();
+        gameObject.SetActive(true);
+    }
 }

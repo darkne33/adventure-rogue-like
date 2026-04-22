@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using Core;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
 
@@ -14,10 +15,10 @@ public class RogueLikePrepareStatsState : State
         _characterSettingsConfiguration = characterSettingsConfiguration;
     }
 
-    public override UniTask Enter(CancellationToken cts)
+    public override async UniTask Enter(CancellationToken cts)
     {
         CharacterStatsInitialize();
-        return base.Enter(cts);
+        await StateMachine.EnterState<RogueLikePrepareState>();
     }
 
     private void CharacterStatsInitialize()

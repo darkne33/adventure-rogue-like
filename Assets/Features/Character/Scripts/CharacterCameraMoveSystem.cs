@@ -33,9 +33,6 @@ public class CharacterCameraMoveSystem
 
         _yaw = _cameraPivot.eulerAngles.y;
         _pitch = NormalizeAngle(_cameraPivot.eulerAngles.x);
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
     }
 
     public void Move()

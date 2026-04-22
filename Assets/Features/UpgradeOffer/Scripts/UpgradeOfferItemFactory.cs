@@ -12,7 +12,7 @@ public class UpgradeOfferItemFactory : IUpgradeOfferItemFactory
         _upgradeOfferConfiguration = upgradeOfferConfiguration;
     }
 
-    public UpgradeOfferItemView Create(RectTransform root)
+    public UpgradeOfferItemView Create(Transform root)
     {
         var upgradeItemView = _upgradeOfferConfiguration.UpgradeOfferItemView;
         return _container.InstantiatePrefabForComponent<UpgradeOfferItemView>(upgradeItemView, root);
@@ -21,5 +21,5 @@ public class UpgradeOfferItemFactory : IUpgradeOfferItemFactory
 
 public interface IUpgradeOfferItemFactory
 {
-    UpgradeOfferItemView Create(RectTransform root);
+    UpgradeOfferItemView Create(Transform root);
 }

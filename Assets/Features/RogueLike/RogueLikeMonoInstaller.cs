@@ -28,6 +28,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         BindObservers();
         BindCharacterWallet();
         BindCharacterStats();
+        BindUpgradeOffer();
     }
 
     private void BindFactories()
@@ -65,19 +66,21 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<ITransitToRoomService>().To<TransitToRoomService>().AsSingle();
     }
 
-    private void BindSpawners()
-    {
+    private void BindSpawners() => 
         Container.Bind<EnemySpawner>().AsSingle();
-    }
 
-    private void BindObservers()
-    {
+    private void BindObservers() => 
         Container.Bind<EnemiesWaveObserver>().AsSingle();
-    }
 
     private void BindCharacterWallet() =>
         Container.Bind<CharacterWallet>().AsSingle();
 
     private void BindCharacterStats() => 
         Container.Bind<CharacterStats>().AsSingle();
+
+    private void BindUpgradeOffer()
+    {
+        Container.Bind<IUpgradeOfferGenerator>().To<UpgradeOfferGenerator>().AsSingle();
+        Container.Bind<IUpgradeOfferHandler>().To<UpgradeOfferHandler>().AsSingle();
+    }
 }

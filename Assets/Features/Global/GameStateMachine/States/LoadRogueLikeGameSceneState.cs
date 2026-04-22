@@ -31,8 +31,8 @@ namespace Core
 
             gameSceneComponentsProvider.EnableScene();
             Log.Gameplay.Info("Done Load Game Scene State");
-
-            await gameModeService.Get<RogueLikeStateMachine>().EnterState<RogueLikePrepareState>();
+            
+            await gameModeService.Get<RogueLikeStateMachine>().EnterState<RogueLikePrepareStatsState>();
         }
     }
 }

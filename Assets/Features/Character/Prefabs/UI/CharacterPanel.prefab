@@ -1205,13 +1205,15 @@ GameObject:
   m_Component:
   - component: {fileID: 1039958641895723556}
   - component: {fileID: 150989477152094528}
+  - component: {fileID: 6568627357219431919}
+  - component: {fileID: 3673866705550378975}
   m_Layer: 5
   m_Name: UpgradeOfferPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1039958641895723556
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1249,6 +1251,41 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeOfferPanel
   <UpgradesRoot>k__BackingField: {fileID: 8606597321983107787}
+--- !u!225 &6568627357219431919
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3847207607677750673}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &3673866705550378975
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3847207607677750673}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43831bf1d91d49b29705a9e8b8fa0e36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.PanelAnimationsMonoComponent
+  _panelAnimation:
+    rid: 3123737239936041546
+  _canvasGroup: {fileID: 6568627357219431919}
+  references:
+    version: 2
+    RefIds:
+    - rid: 3123737239936041546
+      type: {class: OpenPanelPumpAnimations, ns: UI, asm: Assembly-CSharp}
+      data:
+        _canvasGroup: {fileID: 6568627357219431919}
+        _pumpRoot: {fileID: 1039958641895723556}
 --- !u!1 &4079761007319648009
 GameObject:
   m_ObjectHideFlags: 0
