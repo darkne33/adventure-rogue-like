@@ -228,6 +228,10 @@ PrefabInstance:
       propertyPath: m_VersionIndex
       value: 553
       objectReference: {fileID: 0}
+    - target: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
+      propertyPath: <EnterRoom>k__BackingField
+      value: 
+      objectReference: {fileID: 8506264831164884940}
     - target: {fileID: 4511944032062943579, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
       propertyPath: m_VersionIndex
       value: 553
@@ -341,3 +345,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00c7ce5393334a549255847f562f6338, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DefaultRoom
+--- !u!114 &8506264831164884940 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 142037117150895729, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
+  m_PrefabInstance: {fileID: 8643758756314233277}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e8f620244e34ef4ab532ae52bd9eb63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelDoor
