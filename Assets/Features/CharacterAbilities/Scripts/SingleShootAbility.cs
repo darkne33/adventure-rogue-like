@@ -27,6 +27,9 @@ public class SingleShootAbility : CharacterActiveAbility
     public override void OnEquip(CharacterStats characterStats)
     {
         base.OnEquip(characterStats);
+        
+        _damage += _abilityConfig.StartDamage;
+        Stat_1 = _damage;
     }
 
     public override void OnUnequip(CharacterStats characterStats)
@@ -38,10 +41,8 @@ public class SingleShootAbility : CharacterActiveAbility
     {
         base.Initialize(abilityConfig);
         _abilityConfig = (ShootableAbilityConfiguration)abilityConfig;
-        _damage = _abilityConfig.StartDamage;
-        Stat_1 = _damage;
+       
         StatName_1 = "Damage";
-        
         Cooldown = _abilityConfig.Cooldown;
 
         _characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);

@@ -1,3 +1,4 @@
+using System;
 using Core;
 using Features.Enemies.Scripts;
 using UI;
@@ -20,7 +21,7 @@ public class CharacterFacade : MonoBehaviour
 
     [SerializeField] private Renderer[] _meshRenderers;
     [SerializeField] private Transform _shadow;
-    
+
     [SerializeField] private LayerMask _shadowLayer;
     private static readonly Vector3 OFFSET_SHADOW = new(0, 0.02f);
 
@@ -42,9 +43,14 @@ public class CharacterFacade : MonoBehaviour
     private CharacterGoldView _characterGoldView;
     private CharacterAnimationSystem _characterAnimationSystem;
     private DealDamageEffectSystem _damageEffectSystem;
-    
+
     private Rigidbody _rigidbody;
     private Animator _animator;
+
+    private void Awake()
+    {
+        _characterAbilitySystem = new CharacterAbilitySystem();
+    }
 
     private void Start()
     {
@@ -59,11 +65,9 @@ public class CharacterFacade : MonoBehaviour
             new CharacterMoveSystem(_rigidbody, _cameraService, _characterStats, _characterFxSystem,
                 _characterModel, _characterAnimationSystem);
 
-        _characterAbilitySystem = new CharacterAbilitySystem();
-        _characterAbilitySystem.AddAbility(_abilityChoiceProvider.GetAbility(AbilityName.RabbitBoomerang), _characterStats);
-
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         _characterGoldView = characterPanel.CharacterGoldView;
+
         _healthSystem = new HealthSystem(_characterStats.MaxHp,
             new[] { characterPanel.CharacterHealthView, _healthView }, _deathSystem
         );
@@ -110,7 +114,7 @@ public class CharacterFacade : MonoBehaviour
         if (obstacle != null)
             _moveSystem.CanMove(true);
     }
-    
+
 
     private void CalculateShadow()
     {

@@ -11,7 +11,6 @@
     public override void Initialize(AbilityConfiguration abilityConfig)
     {
         base.Initialize(abilityConfig);
-        
         _scrollAbilityConfiguration = (ScrollAbilityConfiguration)abilityConfig;
     }
 

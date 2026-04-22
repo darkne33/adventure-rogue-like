@@ -6,17 +6,13 @@ public abstract class CharacterAbility
     public string DisplayName { get; protected set; }
     public string Description { get; protected set; }
     public Sprite Icon { get; protected set; }
-    public int Level { get; protected set; }
+    public int Level { get; protected set; } = 1;
 
-    public virtual void OnEquip(CharacterStats characterStats)
-    {
+    public virtual void OnEquip(CharacterStats characterStats) => 
         Level++;
-    }
 
-    public virtual void OnUnequip(CharacterStats characterStats)
-    {
+    public virtual void OnUnequip(CharacterStats characterStats) => 
         Level--;
-    }
 
     public virtual void Initialize(AbilityConfiguration abilityConfig)
     {
