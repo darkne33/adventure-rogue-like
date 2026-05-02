@@ -23,6 +23,6 @@ public class UpgradeOfferPanel : MonoBehaviour
     public async UniTask Hide()
     {
         await _panelAnimationsMonoComponent.Hide();
-        gameObject.SetActive(true);
+        gameObject.SetActive(false);
     }
 }

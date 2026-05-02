@@ -1,4 +1,5 @@
 ﻿public interface IUpgradeOfferHandler
 {
-    void Handle();
+    public void Handle();
+    public void ApplyAbilityToCharacter(CharacterAbility characterAbility);
 }

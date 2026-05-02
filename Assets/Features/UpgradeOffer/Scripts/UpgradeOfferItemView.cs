@@ -42,8 +42,3 @@ public class UpgradeOfferItemView : MonoBehaviour
         _skillDescription_2.text = skillDescription;
     }
 }
-
-public class UpgradeOfferItemModel
-{
-    
-}

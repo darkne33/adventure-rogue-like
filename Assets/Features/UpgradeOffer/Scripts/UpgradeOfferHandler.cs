@@ -1,6 +1,9 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
+using Cysharp.Threading.Tasks;
 using UI;
+using UnityEngine;
 
 public class UpgradeOfferHandler : IUpgradeOfferHandler
 {
@@ -8,14 +11,18 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler
     private readonly IUpgradeOfferItemFactory _upgradeOfferItemFactory;
     private readonly IPanelService _panelService;
     private readonly CharacterStats _characterStats;
+    private readonly ICharacterProvider _characterProvider;
+
+    private readonly List<UpgradeOfferItemView> _upgradeItems = new();
 
     public UpgradeOfferHandler(IUpgradeOfferGenerator upgradeOfferGenerator,
-        IUpgradeOfferItemFactory upgradeOfferItemFactory, IPanelService panelService, CharacterStats characterStats)
+        IUpgradeOfferItemFactory upgradeOfferItemFactory, IPanelService panelService, CharacterStats characterStats, ICharacterProvider characterProvider)
     {
         _upgradeOfferGenerator = upgradeOfferGenerator;
         _upgradeOfferItemFactory = upgradeOfferItemFactory;
         _panelService = panelService;
         _characterStats = characterStats;
+        _characterProvider = characterProvider;
     }
 
     public void Handle()
@@ -30,7 +37,8 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler
 
         foreach (CharacterAbility ability in abilities)
         {
-            UpgradeOfferItemView offerItemView = _upgradeOfferItemFactory.Create(upgradesRoot);
+            var upgradeItemOfferFacade = _upgradeOfferItemFactory.Create(upgradesRoot);
+            UpgradeOfferItemView offerItemView = upgradeItemOfferFacade.UpgradeOfferItemView;
 
             offerItemView.DeactivateSkillsDescriptions();
             offerItemView.SetupName(ability.DisplayName);
@@ -50,9 +58,26 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler
                         (int)activeAbility.GetStatFromIncrease(), (int)activeAbility.GetStatToIncrease());
                     break;
             }
+            _upgradeItems.Add(offerItemView);
+            upgradeItemOfferFacade.UpgradeOfferItemApplyHandler.Initialize(ability);
         }
         
         upgradeOfferPanel.Show();
+    }
+
+    public void ApplyAbilityToCharacter(CharacterAbility characterAbility)
+    {
+        _characterProvider.CharacterFacade.CharacterAbilitySystem.AddAbility(characterAbility, _characterStats);
+        var characterPanelPresenter =
+            _panelService.GetPanelPresenter<CharacterPanelPresenter>(PanelName.CharacterPanel);
+
+        var characterPanel = characterPanelPresenter.Panel;
+        var upgradeOfferPanel = characterPanel.UpgradeOfferPanel;
+
+        foreach (var upgradeItem in _upgradeItems) 
+            Object.Destroy(upgradeItem.gameObject);
+
+        upgradeOfferPanel.Hide().Forget();
     }
 
     private string CleanCharacterStatName(string abilityName)

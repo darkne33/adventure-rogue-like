@@ -12,14 +12,14 @@ public class UpgradeOfferItemFactory : IUpgradeOfferItemFactory
         _upgradeOfferConfiguration = upgradeOfferConfiguration;
     }
 
-    public UpgradeOfferItemView Create(Transform root)
+    public UpgradeOfferItemFacade Create(Transform root)
     {
-        var upgradeItemView = _upgradeOfferConfiguration.UpgradeOfferItemView;
-        return _container.InstantiatePrefabForComponent<UpgradeOfferItemView>(upgradeItemView, root);
+        var upgradeOfferItemFacade = _upgradeOfferConfiguration.UpgradeOfferItemFacade;
+        return _container.InstantiatePrefabForComponent<UpgradeOfferItemFacade>(upgradeOfferItemFacade, root);
     }
 }
 
 public interface IUpgradeOfferItemFactory
 {
-    UpgradeOfferItemView Create(Transform root);
+    UpgradeOfferItemFacade Create(Transform root);
 }
