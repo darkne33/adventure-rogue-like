@@ -62,6 +62,7 @@ namespace Core
 
             _characterProvider.CharacterFacade =
                 await _characterFactory.CreatePlayer(startRoomData.StartPoint, cts);
+            _characterProvider.CharacterFacade.Initialize();
 
             _characterProvider.CharacterFacade.CharacterAbilitySystem.AddAbility(
                 _abilityChoiceProvider.GetAbility(AbilityName.RabbitBoomerang), _characterStats);

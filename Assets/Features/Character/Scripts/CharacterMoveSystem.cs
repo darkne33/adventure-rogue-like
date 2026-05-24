@@ -10,6 +10,7 @@ public class CharacterMoveSystem
     private readonly CharacterFxSystem _characterFxSystem;
     private readonly GameObject _characterModel;
     private readonly CharacterAnimationSystem _characterAnimationSystem;
+    private readonly PauseEntity _pauseEntity;
 
     private readonly InputSystem_Actions _inputActions = new();
 
@@ -28,15 +29,16 @@ public class CharacterMoveSystem
     public CharacterMoveSystem(Rigidbody rigidbody,
         ICameraService cameraService, CharacterStats characterStats,
         CharacterFxSystem characterFxSystem, GameObject characterModel,
-        CharacterAnimationSystem characterAnimationSystem)
+        CharacterAnimationSystem characterAnimationSystem, PauseEntity pauseEntity)
     {
         _rigidbody = rigidbody;
         _cameraService = cameraService;
-   
+
         _characterFxSystem = characterFxSystem;
         _characterModel = characterModel;
-        _characterAnimationSystem = characterAnimationSystem;
         _characterStats = characterStats;
+        _characterAnimationSystem = characterAnimationSystem;
+        _pauseEntity = pauseEntity;
 
         _dashAction = _inputActions.Player.Dash;
         _dashAction.started += OnDashStarted;
@@ -46,7 +48,7 @@ public class CharacterMoveSystem
 
     public void Move()
     {
-        if (_canMove == false)
+        if (_canMove == false || _pauseEntity.IsPauseEntity)
             return;
 
         Vector2 input = _inputActions.Player.Move.ReadValue<Vector2>();
@@ -130,11 +132,8 @@ public class CharacterMoveSystem
         }
     }
 
-    public void CanMove(bool state)
-    {
+    public void CanMove(bool state) =>
         _canMove = state;
-        
-    }
 
     public void Jump()
     {
@@ -155,7 +154,7 @@ public class CharacterMoveSystem
         if (_direction.magnitude > 0.1f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(_direction);
-        
+
             float rotationSpeed = _characterStats.RotationSpeed;
             _characterModel.transform.rotation = Quaternion.Slerp(
                 _characterModel.transform.rotation,

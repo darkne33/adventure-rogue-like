@@ -12,17 +12,20 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler
     private readonly IPanelService _panelService;
     private readonly CharacterStats _characterStats;
     private readonly ICharacterProvider _characterProvider;
+    private readonly IPauseService _pauseService;
 
     private readonly List<UpgradeOfferItemView> _upgradeItems = new();
 
     public UpgradeOfferHandler(IUpgradeOfferGenerator upgradeOfferGenerator,
-        IUpgradeOfferItemFactory upgradeOfferItemFactory, IPanelService panelService, CharacterStats characterStats, ICharacterProvider characterProvider)
+        IUpgradeOfferItemFactory upgradeOfferItemFactory, IPanelService panelService, CharacterStats characterStats,
+        ICharacterProvider characterProvider, IPauseService pauseService)
     {
         _upgradeOfferGenerator = upgradeOfferGenerator;
         _upgradeOfferItemFactory = upgradeOfferItemFactory;
         _panelService = panelService;
         _characterStats = characterStats;
         _characterProvider = characterProvider;
+        _pauseService = pauseService;
     }
 
     public void Handle()
@@ -58,10 +61,12 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler
                         (int)activeAbility.GetStatFromIncrease(), (int)activeAbility.GetStatToIncrease());
                     break;
             }
+
             _upgradeItems.Add(offerItemView);
             upgradeItemOfferFacade.UpgradeOfferItemApplyHandler.Initialize(ability);
         }
-        
+
+        _pauseService.HandlePause();
         upgradeOfferPanel.Show();
     }
 
@@ -74,9 +79,10 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler
         var characterPanel = characterPanelPresenter.Panel;
         var upgradeOfferPanel = characterPanel.UpgradeOfferPanel;
 
-        foreach (var upgradeItem in _upgradeItems) 
+        foreach (var upgradeItem in _upgradeItems)
             Object.Destroy(upgradeItem.gameObject);
 
+        _pauseService.CancelPause();
         upgradeOfferPanel.Hide().Forget();
     }
 

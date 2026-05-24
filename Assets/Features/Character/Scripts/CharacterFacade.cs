@@ -14,6 +14,7 @@ public class CharacterFacade : MonoBehaviour
     public CharacterAbilitySystem CharacterAbilitySystem => _characterAbilitySystem;
     public CharacterMoveSystem MoveSystem => _moveSystem;
     public DealDamageEffectSystem DamageEffectSystem => _damageEffectSystem;
+    public CharacterCameraMoveSystem CameraSystem => _cameraSystem;
     public Transform CameraPivot => _cameraPivot.transform;
 
     [SerializeField] private GameObject _characterModel;
@@ -32,9 +33,11 @@ public class CharacterFacade : MonoBehaviour
     [Inject] private IPanelService _panelService;
     [Inject] private IAbilityChoiceProvider _abilityChoiceProvider;
     [Inject] private CharacterStats _characterStats;
+    [Inject] private PauseEntityDistributor _pauseEntityDistributor;
 
     private CharacterMoveSystem _moveSystem;
     private CharacterCameraMoveSystem _cameraSystem;
+
     private HealthSystem _healthSystem;
     private CharacterFxSystem _characterFxSystem;
     private IHealthView _healthView;
@@ -46,41 +49,6 @@ public class CharacterFacade : MonoBehaviour
 
     private Rigidbody _rigidbody;
     private Animator _animator;
-
-    private void Awake()
-    {
-        _characterAbilitySystem = new CharacterAbilitySystem();
-    }
-
-    private void Start()
-    {
-        _rigidbody = GetComponent<Rigidbody>();
-        _characterFxSystem = GetComponent<CharacterFxSystem>();
-        _healthView = GetComponent<HealthView>();
-        _animator = GetComponent<Animator>();
-
-        _characterAnimationSystem = new CharacterAnimationSystem(_animator);
-
-        _moveSystem =
-            new CharacterMoveSystem(_rigidbody, _cameraService, _characterStats, _characterFxSystem,
-                _characterModel, _characterAnimationSystem);
-
-        CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
-        _characterGoldView = characterPanel.CharacterGoldView;
-
-        _healthSystem = new HealthSystem(_characterStats.MaxHp,
-            new[] { characterPanel.CharacterHealthView, _healthView }, _deathSystem
-        );
-
-        _healthSystem.Initialize();
-
-        _cameraSystem = new CharacterCameraMoveSystem(_cameraPivot.transform,
-            _characterCameraSettingsConfiguration);
-
-        _damageEffectSystem = new DealDamageEffectSystem(_meshRenderers);
-
-        _shadow.parent = null;
-    }
 
     private void Update()
     {
@@ -115,6 +83,39 @@ public class CharacterFacade : MonoBehaviour
             _moveSystem.CanMove(true);
     }
 
+    public void Initialize()
+    {
+        _rigidbody = GetComponent<Rigidbody>();
+        _characterFxSystem = GetComponent<CharacterFxSystem>();
+        _healthView = GetComponent<HealthView>();
+        _animator = GetComponent<Animator>();
+
+        PauseEntity pauseEntity = _pauseEntityDistributor.EntityDistribute();
+
+        _characterAnimationSystem = new CharacterAnimationSystem(_animator);
+
+        _moveSystem =
+            new CharacterMoveSystem(_rigidbody, _cameraService, _characterStats, _characterFxSystem,
+                _characterModel, _characterAnimationSystem, pauseEntity);
+
+        CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
+        _characterGoldView = characterPanel.CharacterGoldView;
+
+        _healthSystem = new HealthSystem(_characterStats.MaxHp,
+            new[] { characterPanel.CharacterHealthView, _healthView }, _deathSystem
+        );
+
+        _characterAbilitySystem = new CharacterAbilitySystem();
+
+        _cameraSystem = new CharacterCameraMoveSystem(_cameraPivot.transform,
+            _characterCameraSettingsConfiguration, pauseEntity);
+
+        _damageEffectSystem = new DealDamageEffectSystem(_meshRenderers);
+
+        _shadow.parent = null;
+
+        _healthSystem.Initialize();
+    }
 
     private void CalculateShadow()
     {
