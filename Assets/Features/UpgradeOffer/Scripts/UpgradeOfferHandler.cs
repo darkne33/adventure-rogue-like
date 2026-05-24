@@ -16,6 +16,11 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler
 
     private readonly List<UpgradeOfferItemView> _upgradeItems = new();
 
+    private Transform UpgradesRoot => _panelService.GetPanelPresenter<CharacterPanelPresenter>(PanelName.CharacterPanel)
+        .Panel.UpgradeOfferPanel.UpgradesRoot;
+    private UpgradeOfferPanel UpgradeOfferPanel => _panelService.GetPanelPresenter<CharacterPanelPresenter>(PanelName.CharacterPanel)
+        .Panel.UpgradeOfferPanel;
+
     public UpgradeOfferHandler(IUpgradeOfferGenerator upgradeOfferGenerator,
         IUpgradeOfferItemFactory upgradeOfferItemFactory, IPanelService panelService, CharacterStats characterStats,
         ICharacterProvider characterProvider, IPauseService pauseService)
@@ -30,13 +35,45 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler
 
     public void Handle()
     {
-        var abilities = _upgradeOfferGenerator.GenerateOfferAbilities();
-        var characterPanelPresenter =
-            _panelService.GetPanelPresenter<CharacterPanelPresenter>(PanelName.CharacterPanel);
+        GenerateUpgrades(UpgradesRoot);
+        
+        _pauseService.HandlePause();
+        UpgradeOfferPanel.Show();
+    }
 
-        var characterPanel = characterPanelPresenter.Panel;
-        var upgradeOfferPanel = characterPanel.UpgradeOfferPanel;
-        var upgradesRoot = upgradeOfferPanel.UpgradesRoot;
+    public void RefreshItems()
+    {
+        DestroyViews();
+        
+        GenerateUpgrades(UpgradesRoot);
+    }
+
+    public void SkipUpgrades()
+    {
+        DestroyViews();
+
+        _pauseService.CancelPause();
+        UpgradeOfferPanel.Hide().Forget();
+    }
+
+    public void ApplyAbilityToCharacter(CharacterAbility characterAbility)
+    {
+        _characterProvider.CharacterFacade.CharacterAbilitySystem.AddAbility(characterAbility, _characterStats);
+
+        SkipUpgrades();
+    }
+
+    private void DestroyViews()
+    {
+        foreach (var upgradeItem in _upgradeItems)
+            Object.Destroy(upgradeItem.gameObject);
+        
+        _upgradeItems.Clear();
+    }
+
+    private void GenerateUpgrades(Transform upgradesRoot)
+    {
+        var abilities = _upgradeOfferGenerator.GenerateOfferAbilities();
 
         foreach (CharacterAbility ability in abilities)
         {
@@ -65,25 +102,6 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler
             _upgradeItems.Add(offerItemView);
             upgradeItemOfferFacade.UpgradeOfferItemApplyHandler.Initialize(ability);
         }
-
-        _pauseService.HandlePause();
-        upgradeOfferPanel.Show();
-    }
-
-    public void ApplyAbilityToCharacter(CharacterAbility characterAbility)
-    {
-        _characterProvider.CharacterFacade.CharacterAbilitySystem.AddAbility(characterAbility, _characterStats);
-        var characterPanelPresenter =
-            _panelService.GetPanelPresenter<CharacterPanelPresenter>(PanelName.CharacterPanel);
-
-        var characterPanel = characterPanelPresenter.Panel;
-        var upgradeOfferPanel = characterPanel.UpgradeOfferPanel;
-
-        foreach (var upgradeItem in _upgradeItems)
-            Object.Destroy(upgradeItem.gameObject);
-
-        _pauseService.CancelPause();
-        upgradeOfferPanel.Hide().Forget();
     }
 
     private string CleanCharacterStatName(string abilityName)

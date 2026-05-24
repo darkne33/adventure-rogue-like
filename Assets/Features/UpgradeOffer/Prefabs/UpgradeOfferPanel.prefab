@@ -12,8 +12,9 @@ GameObject:
   - component: {fileID: 6595532004411212502}
   - component: {fileID: 2600385510777881676}
   - component: {fileID: 2524637355091715797}
+  - component: {fileID: 8516517535525462411}
   m_Layer: 5
-  m_Name: UpdateUpgradeButton
+  m_Name: RefreshUpgradesButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -121,6 +122,19 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &8516517535525462411
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 91411168118571202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41db4dea47a24b6a807c6580dbdf5f54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeOfferItemsRefreshHandler
+  _refreshButton: {fileID: 2524637355091715797}
 --- !u!1 &560147574109228190
 GameObject:
   m_ObjectHideFlags: 0
@@ -528,6 +542,7 @@ GameObject:
   - component: {fileID: 4075269151123796091}
   - component: {fileID: 9030870837624439015}
   - component: {fileID: 3170399555676462121}
+  - component: {fileID: 2364346894488000679}
   m_Layer: 5
   m_Name: SkipUpgradeButton
   m_TagString: Untagged
@@ -637,6 +652,19 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2364346894488000679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7641849869456045858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 484261d9e5844e4daa809de1486dcffc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeOfferItemsSkipHandler
+  _skipButton: {fileID: 3170399555676462121}
 --- !u!1 &7875361190409699116
 GameObject:
   m_ObjectHideFlags: 0
