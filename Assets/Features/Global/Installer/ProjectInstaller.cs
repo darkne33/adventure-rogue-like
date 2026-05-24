@@ -14,7 +14,7 @@ namespace Core.Installer
         private void Awake()
         {
             QualitySettings.vSyncCount = 0;
-            Application.targetFrameRate = 60;
+            Application.targetFrameRate = 120;
             
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -44,6 +44,8 @@ namespace Core.Installer
             
             Container.Bind<CharacterExpConfig>().FromInstance(_characterExpConfig).AsSingle();
             Container.Bind<ICharacterLevelService>().To<CharacterLevelService>().AsSingle();
+            Container.Bind<IPauseService>().To<PauseService>().AsSingle();
+            Container.Bind<PauseEntityDistributor>().AsSingle();
         }
     }
 }
