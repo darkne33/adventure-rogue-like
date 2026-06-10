@@ -13,15 +13,17 @@ public class SingleShootAbility : CharacterActiveAbility
     private readonly IEnemiesProvider _enemiesProvider;
     private readonly IPanelService _panelService;
     private readonly CharacterWallet _characterWallet;
+    private readonly CharacterDamageCalculator _damageCalculator;
 
     private CharacterPanel _characterPanel;
 
     public SingleShootAbility(IEnemiesProvider enemiesProvider, IPanelService panelService,
-        CharacterWallet characterWallet)
+        CharacterWallet characterWallet, CharacterDamageCalculator damageCalculator)
     {
         _enemiesProvider = enemiesProvider;
         _panelService = panelService;
         _characterWallet = characterWallet;
+        _damageCalculator = damageCalculator;
     }
 
     public override void OnEquip(CharacterStats characterStats)
@@ -76,7 +78,8 @@ public class SingleShootAbility : CharacterActiveAbility
 
     private void DamageDeal(GameObject shootObj, EnemyFacade enemyFacade)
     {
-        enemyFacade.HealthSystem.GetDamage(_damage);
+        CharacterDamageResult damageResult = _damageCalculator.Calculate(_damage);
+        enemyFacade.HealthSystem.GetDamage(damageResult.Damage, damageResult.IsCritical);
 
         _characterPanel.CharacterGoldView.ShowGold(1);
         _characterWallet.Money.Add(1);

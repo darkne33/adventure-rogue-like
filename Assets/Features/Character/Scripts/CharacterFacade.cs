@@ -25,6 +25,9 @@ public class CharacterFacade : MonoBehaviour
 
     [SerializeField] private LayerMask _shadowLayer;
     private static readonly Vector3 OFFSET_SHADOW = new(0, 0.02f);
+    private const float MIN_GROUND_NORMAL_Y = 0.5f;
+    private const float MAX_GROUNDED_VERTICAL_SPEED = 0.1f;
+    private const float GROUND_CHECK_DISTANCE = 0.15f;
 
 
     [Inject] private CharacterCameraSettingsConfiguration _characterCameraSettingsConfiguration;
@@ -48,32 +51,32 @@ public class CharacterFacade : MonoBehaviour
     private DealDamageEffectSystem _damageEffectSystem;
 
     private Rigidbody _rigidbody;
+    private Collider _collider;
     private Animator _animator;
 
     private void Update()
     {
+        _moveSystem.CaptureJumpInput(Time.deltaTime);
         _moveSystem.UpdateDash(Time.deltaTime);
+        _moveSystem.Rotate(Time.deltaTime);
         _characterAbilitySystem.TickAbilities(this);
         _cameraSystem.Move();
     }
 
     private void FixedUpdate()
     {
+        UpdateGroundedState();
         _moveSystem.Move();
         _moveSystem.Jump();
-        _moveSystem.Rotate();
+    }
+
+    private void LateUpdate()
+    {
         CalculateShadow();
     }
 
     private void OnCollisionEnter(Collision other)
     {
-        var ground = other.gameObject.GetComponent<Ground>();
-        if (ground != null)
-        {
-            _moveSystem.ResetCanJump();
-            _moveSystem.CanMove(true);
-        }
-
         var wall = other.gameObject.GetComponent<Wall>();
         if (wall != null)
             _moveSystem.CanMove(true);
@@ -86,6 +89,8 @@ public class CharacterFacade : MonoBehaviour
     public void Initialize()
     {
         _rigidbody = GetComponent<Rigidbody>();
+        _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+        _collider = GetComponent<Collider>();
         _characterFxSystem = GetComponent<CharacterFxSystem>();
         _healthView = GetComponent<HealthView>();
         _animator = GetComponent<Animator>();
@@ -119,7 +124,33 @@ public class CharacterFacade : MonoBehaviour
 
     private void CalculateShadow()
     {
-        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.down), out var hit, _shadowLayer))
-            _shadow.position = hit.point + OFFSET_SHADOW;
+        if (!Physics.Raycast(transform.position, Vector3.down, out var hit, Mathf.Infinity, _shadowLayer,
+                QueryTriggerInteraction.Ignore))
+            return;
+
+        Vector3 characterPosition = transform.position;
+        _shadow.position = new Vector3(characterPosition.x, hit.point.y + OFFSET_SHADOW.y, characterPosition.z);
+    }
+
+    private void UpdateGroundedState()
+    {
+        if (_rigidbody.linearVelocity.y > MAX_GROUNDED_VERTICAL_SPEED)
+        {
+            _moveSystem.SetGrounded(false);
+            return;
+        }
+
+        Bounds bounds = _collider.bounds;
+        float radius = Mathf.Min(bounds.extents.x, bounds.extents.z) * 0.9f;
+        float castDistance = bounds.extents.y - radius + GROUND_CHECK_DISTANCE;
+
+        bool isGrounded = Physics.SphereCast(bounds.center, radius, Vector3.down, out RaycastHit hit,
+                              castDistance, _shadowLayer, QueryTriggerInteraction.Ignore)
+                          && hit.normal.y >= MIN_GROUND_NORMAL_Y;
+
+        _moveSystem.SetGrounded(isGrounded);
+
+        if (isGrounded)
+            _moveSystem.CanMove(true);
     }
 }

@@ -75,8 +75,11 @@ public class RogueLikeMonoInstaller : MonoInstaller
     private void BindCharacterWallet() =>
         Container.Bind<CharacterWallet>().AsSingle();
 
-    private void BindCharacterStats() => 
+    private void BindCharacterStats()
+    {
         Container.Bind<CharacterStats>().AsSingle();
+        Container.Bind<CharacterDamageCalculator>().AsSingle();
+    }
 
     private void BindUpgradeOffer()
     {

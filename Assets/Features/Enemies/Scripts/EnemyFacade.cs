@@ -33,6 +33,7 @@ namespace Features.Enemies.Scripts
         private IEnemyAnimationSystem _animationSystem;
         private HealthSystem _healthSystem;
         private IHealthView _healthView;
+        private IDamageView _damageView;
         private DealDamageEffectSystem _effectsSystem;
         private IDeathSystem _deathSystem;
 
@@ -82,8 +83,9 @@ namespace Features.Enemies.Scripts
             _enemyDamageSystem.Initialize();
 
             _deathSystem = new EnemyDeathSystem(_enemiesProvider, this, _characterLevelService, _enemyConfiguration);
-            _healthView = GetComponent<HealthView>();
-            _healthSystem = new HealthSystem(100, new[] { _healthView }, _deathSystem);
+            _healthView = GetComponent<EnemyHealthView>();
+            _damageView = GetComponent<EnemyDamageNumberView>();
+            _healthSystem = new HealthSystem(100, new[] { _healthView }, _deathSystem, new[] { _damageView });
             _healthSystem.Initialize();
 
             _effectsSystem = new DealDamageEffectSystem(_meshRenderers);

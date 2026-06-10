@@ -22,9 +22,12 @@ public class CharacterMoveSystem
 
     private readonly float _dashForce = 25f;
     private readonly float _dashCooldown = 1f;
+    private const float JUMP_INPUT_BUFFER_TIME = 0.15f;
 
     private bool _canMove = true;
     private bool _canJump = true;
+    private bool _isGrounded = true;
+    private float _jumpInputBufferTimer;
 
     public CharacterMoveSystem(Rigidbody rigidbody,
         ICameraService cameraService, CharacterStats characterStats,
@@ -71,10 +74,9 @@ public class CharacterMoveSystem
             moveDirection = (forward * input.y + right * input.x).normalized;
         }
 
-        bool isGrounded = _canJump;
-        _characterAnimationSystem.GroundConditionState(isGrounded);
+        _characterAnimationSystem.GroundConditionState(_isGrounded);
 
-        if (!isGrounded)
+        if (!_isGrounded)
         {
             ApplyEnhancedGravity();
 
@@ -135,21 +137,36 @@ public class CharacterMoveSystem
     public void CanMove(bool state) =>
         _canMove = state;
 
-    public void Jump()
+    public void SetGrounded(bool isGrounded)
     {
-        if (_inputActions.Player.Jump.triggered && _canJump)
-        {
-            _rigidbody.AddForce(Vector3.up * _characterStats.JumpForce, ForceMode.Force);
-            _canJump = false;
-            _characterFxSystem.ActivateJump();
-            _characterAnimationSystem.JumpPlay();
-        }
+        if (isGrounded && !_isGrounded)
+            _canJump = true;
+
+        _isGrounded = isGrounded;
     }
 
-    public void ResetCanJump() =>
-        _canJump = true;
+    public void CaptureJumpInput(float deltaTime)
+    {
+        _jumpInputBufferTimer = Mathf.Max(0f, _jumpInputBufferTimer - deltaTime);
 
-    public void Rotate()
+        if (_inputActions.Player.Jump.WasPressedThisFrame())
+            _jumpInputBufferTimer = JUMP_INPUT_BUFFER_TIME;
+    }
+
+    public void Jump()
+    {
+        if (_jumpInputBufferTimer <= 0f || !_canJump)
+            return;
+
+        _jumpInputBufferTimer = 0f;
+        _rigidbody.AddForce(Vector3.up * _characterStats.JumpForce, ForceMode.Force);
+        _canJump = false;
+        _isGrounded = false;
+        _characterFxSystem.ActivateJump();
+        _characterAnimationSystem.JumpPlay();
+    }
+
+    public void Rotate(float deltaTime)
     {
         if (_direction.magnitude > 0.1f)
         {
@@ -159,7 +176,7 @@ public class CharacterMoveSystem
             _characterModel.transform.rotation = Quaternion.Slerp(
                 _characterModel.transform.rotation,
                 targetRotation,
-                rotationSpeed * Time.fixedDeltaTime
+                rotationSpeed * deltaTime
             );
         }
     }

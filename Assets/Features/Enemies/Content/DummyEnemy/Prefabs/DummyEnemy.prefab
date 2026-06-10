@@ -357,7 +357,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 0}
   m_FillRect: {fileID: 825248777763803998}
   m_HandleRect: {fileID: 0}
-  m_Direction: 1
+  m_Direction: 0
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
@@ -411,6 +411,7 @@ GameObject:
   - component: {fileID: 2841528611562344274}
   - component: {fileID: 358371706849013189}
   - component: {fileID: 226054964259705086}
+  - component: {fileID: 7199049114847290061}
   - component: {fileID: 4228037969279559467}
   m_Layer: 0
   m_Name: DummyEnemy
@@ -558,10 +559,32 @@ MonoBehaviour:
   m_GameObject: {fileID: 2706834636654241046}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8c864d95cdb64c118c3b8a2a9bfacddc, type: 3}
+  m_Script: {fileID: 11500000, guid: 320e5a90ba754a7aa72f02de31fffa3a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HealthView
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyHealthView
   _healthSlider: {fileID: 2109169256083673383}
+  _visibleDuration: 1
+  _showDuration: 0.16
+  _hideDuration: 0.24
+  _healthChangeDuration: 0.28
+  _damageFlashColor: {r: 1, g: 0.75, b: 0.45, a: 1}
+--- !u!114 &7199049114847290061
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2706834636654241046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ea66a5458c14cd493ed4d50c03ac89e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyDamageNumberView
+  _worldCanvas: {fileID: 6345428810085301797}
+  _fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
+  _lowDamageColor: {r: 1, g: 1, b: 1, a: 1}
+  _mediumDamageColor: {r: 1, g: 0.72, b: 0.15, a: 1}
+  _highDamageColor: {r: 1, g: 0.2, b: 0.08, a: 1}
 --- !u!114 &4228037969279559467
 MonoBehaviour:
   m_ObjectHideFlags: 0
