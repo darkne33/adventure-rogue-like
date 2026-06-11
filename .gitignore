@@ -1,16 +1,52 @@
-﻿# Unity
+# Unity generated
 /Library/
 /Temp/
 /Obj/
-/Build/
-/Builds/
+/obj/
 /Logs/
 /UserSettings/
-/Assets/Plugins/**/*.dll.meta
-JetBrains Rider 2025.2.4log
-JetBrains Rider 2025.2.4cache
-Library/
-UserSettings
-Assembly-CSharp.csproj
+/MemoryCaptures/
+/Recordings/
+
+# Builds
+/Build/
+/Builds/
+
+# IDE generated
+/.idea/
+/.vs/
+/.vscode/
 *.csproj
-Logs
+*.sln
+*.slnx
+*.user
+*.suo
+*.tmp
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.DotSettings.user
+
+# Logs and crash dumps
+*.log
+*.stackdump
+replay_pid*
+
+# Rider cache folders accidentally created as Unity assets
+**/JetBrains Rider *cache/
+**/JetBrains Rider *cache.meta
+**/JetBrains Rider *log/
+**/JetBrains Rider *log.meta
+
+# OS generated
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Unity package binaries
+/Assets/Plugins/**/*.dll.meta
