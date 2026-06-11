@@ -15,6 +15,7 @@ namespace UI
             switch (panelName)
             {
                 case PanelName.CharacterPanel: return typeof(CharacterPanelPresenter);
+                case PanelName.RoomTransitionPanel: return typeof(RoomTransitionPanelPresenter);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(panelName), panelName, null);
             }

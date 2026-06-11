@@ -8,17 +8,23 @@ namespace Features.Enemies.Scripts.Level.Scripts
         private readonly IRogueLikeRuntimeDataService _runtimeDataService;
         private readonly ICharacterProvider _characterProvider;
         private readonly IGameModeService _gameModeService;
+        private readonly IRoomTransitionService _roomTransitionService;
 
         public TransitToRoomService(IRogueLikeRuntimeDataService runtimeDataService,
-            ICharacterProvider characterProvider, IGameModeService gameModeService)
+            ICharacterProvider characterProvider, IGameModeService gameModeService,
+            IRoomTransitionService roomTransitionService)
         {
             _runtimeDataService = runtimeDataService;
             _characterProvider = characterProvider;
             _gameModeService = gameModeService;
+            _roomTransitionService = roomTransitionService;
         }
 
         public void Transit(Room nextRoom)
         {
+            if (_roomTransitionService.IsPlaying)
+                return;
+
             if (nextRoom == null)
                 throw new System.ArgumentNullException(nameof(nextRoom));
 
@@ -35,15 +41,24 @@ namespace Features.Enemies.Scripts.Level.Scripts
             if (_characterProvider.CharacterFacade == null)
                 throw new System.InvalidOperationException("Character is not available for room transition.");
 
-            _runtimeDataService.SetCurrentRoomData(roomData);
+            TransitAsync(defaultRoom, roomData).Forget();
+        }
 
-            var teleportPlayerTarget = defaultRoom.EnterRoom.transform;
-            const int offset = 10;
-            var characterPosition = teleportPlayerTarget.position + teleportPlayerTarget.forward * offset;
+        private async UniTask TransitAsync(DefaultRoom defaultRoom, DefaultEnemiesRoomData roomData)
+        {
+            await _roomTransitionService.Play(() =>
+            {
+                _runtimeDataService.SetCurrentRoomData(roomData);
 
-            _characterProvider.CharacterFacade.transform.position = characterPosition;
+                var teleportPlayerTarget = defaultRoom.EnterRoom.transform;
+                const int offset = 10;
+                var characterPosition = teleportPlayerTarget.position + teleportPlayerTarget.forward * offset;
 
-            _gameModeService.Get<RogueLikeStateMachine>().EnterState<RogueLikeRoomPrepareState>().Forget();
+                _characterProvider.CharacterFacade.transform.position = characterPosition;
+
+                _gameModeService.Get<RogueLikeStateMachine>().EnterState<RogueLikeRoomPrepareState>().Forget();
+                return UniTask.CompletedTask;
+            });
         }
     }
 
