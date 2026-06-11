@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Features.Enemies.Scripts;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class EnemySpawner
 {
@@ -14,8 +15,12 @@ public class EnemySpawner
 
     private readonly Vector2 _spawnRadius = new Vector2(0, 40f);
 
-    private LayerMask _groundLayer;
-    private LayerMask _obstacleLayer;
+    private const float RayStartHeight = 50f;
+    private const float RayDistance = 100f;
+    private const float NavMeshSampleDistance = 1.5f;
+    private const float MaxGroundNavMeshHeightDifference = 0.5f;
+    private const float ObstacleCheckRadius = 1f;
+    private const float ObstacleCheckHeight = 1f;
 
     public EnemySpawner(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IEnemyFactory enemyFactory,
         LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider, IEffectsService effectsService)
@@ -78,7 +83,7 @@ public class EnemySpawner
 
         var portalEffect = _effectsService.GetEffect(EffectName.EnemyPortal);
         var defaultScaleEffect = portalEffect.transform.localScale;
-        portalEffect.transform.position = spawnPosition + Vector3.down * 0.9f;
+        portalEffect.transform.position = spawnPosition + Vector3.up * 0.1f;
         portalEffect.PlayWithoutRelease();
 
         enemyFacade.SetStop(true);
@@ -121,23 +126,31 @@ public class EnemySpawner
 
     private bool IsPositionValid(Vector3 position, out Vector3 finalPosition)
     {
-        finalPosition = position;
+        finalPosition = Vector3.zero;
 
-        float rayStartHeight = position.y + 10f;
-        if (Physics.Raycast(new Vector3(position.x, rayStartHeight, position.z), Vector3.down, out RaycastHit hit, 100f,
-                _levelsConfiguration.GroundLayer) == false)
+        Vector3 rayOrigin = position + Vector3.up * RayStartHeight;
+        if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, RayDistance,
+                _levelsConfiguration.GroundLayer, QueryTriggerInteraction.Ignore) == false)
         {
             return false;
         }
 
-        finalPosition = new Vector3(hit.point.x, position.y, hit.point.z);
-
-        var colliders = Physics.OverlapSphere(finalPosition, 1f, _levelsConfiguration.ObstacleLayer);
-        if (colliders.Length > 0)
+        if (NavMesh.SamplePosition(hit.point, out NavMeshHit navMeshHit, NavMeshSampleDistance,
+                NavMesh.AllAreas) == false)
         {
             return false;
         }
 
-        return true;
+        if (Mathf.Abs(navMeshHit.position.y - hit.point.y) > MaxGroundNavMeshHeightDifference)
+        {
+            return false;
+        }
+
+        finalPosition = navMeshHit.position;
+        Vector3 obstacleCheckPosition = finalPosition + Vector3.up * ObstacleCheckHeight;
+        Collider[] colliders = Physics.OverlapSphere(obstacleCheckPosition, ObstacleCheckRadius,
+            _levelsConfiguration.ObstacleLayer, QueryTriggerInteraction.Ignore);
+
+        return colliders.Length == 0;
     }
 }
