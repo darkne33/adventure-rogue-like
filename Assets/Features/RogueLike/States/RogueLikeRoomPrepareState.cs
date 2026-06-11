@@ -17,18 +17,18 @@ namespace Core
         public override async UniTask Enter(CancellationToken cts)
         {
             var currentRoomData = _rogueLikeRuntimeDataService.CurrentRoomData;
-            
-            foreach (var roomDoor in currentRoomData.RoomDoors) 
+
+            if (currentRoomData is not DefaultEnemiesRoomData)
+                throw new InvalidOperationException(
+                    $"Room prepare state does not support {currentRoomData?.GetType().Name ?? "null"} room data.");
+
+            if (currentRoomData.RoomDoors == null)
+                throw new InvalidOperationException("Room doors are not configured.");
+
+            foreach (var roomDoor in currentRoomData.RoomDoors)
                 roomDoor.Close();
 
-            switch (currentRoomData)
-            {
-                case DefaultEnemiesRoomData defaultRoomData:
-                    await StateMachine.EnterState<RogueLikeSpawnEnemyWaveState>();
-                    break;
-                default:
-                    throw new Exception("Incorrect room data");
-            }
+            await StateMachine.EnterState<RogueLikeSpawnEnemyWaveState>();
         }
     }
 }

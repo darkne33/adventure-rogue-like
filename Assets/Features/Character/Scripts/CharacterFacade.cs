@@ -106,6 +106,7 @@ public class CharacterFacade : MonoBehaviour
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         _characterGoldView = characterPanel.CharacterGoldView;
 
+        _deathSystem = new CharacterDeathSystem(this);
         _healthSystem = new HealthSystem(_characterStats.MaxHp,
             new[] { characterPanel.CharacterHealthView, _healthView }, _deathSystem
         );
@@ -120,6 +121,20 @@ public class CharacterFacade : MonoBehaviour
         _shadow.parent = null;
 
         _healthSystem.Initialize();
+    }
+
+    public void DisableAfterDeath()
+    {
+        enabled = false;
+        _rigidbody.linearVelocity = Vector3.zero;
+        _rigidbody.angularVelocity = Vector3.zero;
+        _rigidbody.isKinematic = true;
+        _collider.enabled = false;
+
+        if (_shadow != null)
+            Destroy(_shadow.gameObject);
+
+        Destroy(gameObject);
     }
 
     private void CalculateShadow()

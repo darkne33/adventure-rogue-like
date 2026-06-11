@@ -19,8 +19,23 @@ namespace Features.Enemies.Scripts.Level.Scripts
 
         public void Transit(Room nextRoom)
         {
-            _runtimeDataService.SetCurrentRoomData(nextRoom.RoomData);
-            var defaultRoom = (DefaultRoom)nextRoom;
+            if (nextRoom == null)
+                throw new System.ArgumentNullException(nameof(nextRoom));
+
+            if (nextRoom is not DefaultRoom defaultRoom)
+                throw new System.InvalidOperationException(
+                    $"Room transition requires {nameof(DefaultRoom)}, but received {nextRoom.GetType().Name}.");
+
+            if (defaultRoom.RoomData is not DefaultEnemiesRoomData roomData)
+                throw new System.InvalidOperationException("Default room must contain DefaultEnemiesRoomData.");
+
+            if (defaultRoom.EnterRoom == null)
+                throw new System.InvalidOperationException("Default room enter door is not configured.");
+
+            if (_characterProvider.CharacterFacade == null)
+                throw new System.InvalidOperationException("Character is not available for room transition.");
+
+            _runtimeDataService.SetCurrentRoomData(roomData);
 
             var teleportPlayerTarget = defaultRoom.EnterRoom.transform;
             const int offset = 10;

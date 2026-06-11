@@ -29,9 +29,28 @@ public class EnemySpawner
 
     public void TrySpawnEnemies(CharacterFacade characterFacade, int currentWave)
     {
-        DefaultEnemiesRoomData currentRoomData = (DefaultEnemiesRoomData)_rogueLikeRuntimeDataService.CurrentRoomData;
-        
-        var wave = currentRoomData.EnemyWavesConfiguration[currentWave];
+        if (characterFacade == null)
+            throw new System.ArgumentNullException(nameof(characterFacade));
+
+        if (_rogueLikeRuntimeDataService.CurrentRoomData is not DefaultEnemiesRoomData currentRoomData)
+            throw new System.InvalidOperationException("Enemies can only be spawned in a default enemies room.");
+
+        if (currentRoomData.EnemyWavesConfiguration == null ||
+            currentWave < 0 ||
+            currentWave >= currentRoomData.EnemyWavesConfiguration.Length)
+            throw new System.ArgumentOutOfRangeException(nameof(currentWave), currentWave,
+                "Wave index is outside the current room wave configuration.");
+
+        EnemyWavesConfiguration wave = currentRoomData.EnemyWavesConfiguration[currentWave];
+        if (wave == null || wave.EnemyTypes == null)
+            throw new System.InvalidOperationException($"Wave {currentWave} is not configured correctly.");
+
+        LevelSettings levelSettings =
+            _levelsConfiguration.GetLevel(_rogueLikeRuntimeDataService.CurrentIndexLevel);
+
+        if (levelSettings.EnemyFactoryConfiguration == null)
+            throw new System.InvalidOperationException(
+                "Enemy factory configuration is missing for the current level.");
 
         for (int i = 0; i < wave.EnemyTypes.Length; i++)
         {
@@ -43,8 +62,7 @@ public class EnemySpawner
                 continue;
             }
 
-            var enemy = _levelsConfiguration.Levels[_rogueLikeRuntimeDataService.CurrentIndexLevel]
-                .EnemyFactoryConfiguration.GetEnemyByType(enemyType);
+            var enemy = levelSettings.EnemyFactoryConfiguration.GetEnemyByType(enemyType);
 
             SpawnEnemy(enemy, spawnPosition).Forget();
         }
@@ -91,7 +109,6 @@ public class EnemySpawner
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
             Vector3 candidate = GetRandomPointInAnnulus(center, _spawnRadius.x, _spawnRadius.y);
-            Debug.Log(candidate);
             if (IsPositionValid(candidate, out validPosition))
             {
                 return true;

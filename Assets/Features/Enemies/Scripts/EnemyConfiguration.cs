@@ -3,6 +3,10 @@
 [CreateAssetMenu(menuName = "Configs/Enemies/EnemyConfiguration", fileName = "EnemyConfiguration", order = 0)]
 public class EnemyConfiguration : ScriptableObject
 {
+    [field: Header("Health Settings")]
+    [field: Min(1)]
+    [field: SerializeField] public int MaxHealth { get; private set; } = 100;
+
     [field: Header("Damage Settings")]
     
     [field: SerializeField] public int Damage { get; private set; }

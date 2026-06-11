@@ -34,8 +34,12 @@ namespace Core
         {
             Log.Gameplay.Info("RogueLikeSpawnEnemyWaveState Completed");
 
-            foreach (var enemyPrefabData in _levelsConfiguration.Levels[_rogueLikeRuntimeDataService.CurrentIndexLevel]
-                         .EnemyFactoryConfiguration.EnemyPrefabs)
+            LevelSettings levelSettings =
+                _levelsConfiguration.GetLevel(_rogueLikeRuntimeDataService.CurrentIndexLevel);
+            if (levelSettings.EnemyFactoryConfiguration == null)
+                throw new InvalidOperationException("Enemy factory configuration is missing for the current level.");
+
+            foreach (var enemyPrefabData in levelSettings.EnemyFactoryConfiguration.EnemyPrefabs)
                 await enemyPrefabData.WavesConfigurationContainer.Load(cts);
 
             var characterPanel =  _panelService.GetPanelPresenter<CharacterPanelPresenter>(PanelName.CharacterPanel).Panel;

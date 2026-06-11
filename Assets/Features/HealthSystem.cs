@@ -4,6 +4,7 @@ public class HealthSystem
 {
     private float _maxHealth;
     private float _currentHealth;
+    private bool _isDead;
 
     private readonly float _startHealth;
     private readonly IHealthView[] _characterHealthViews;
@@ -23,20 +24,25 @@ public class HealthSystem
     {
         _maxHealth = _startHealth;
         _currentHealth = _maxHealth;
+        _isDead = false;
 
         UpdateViews();
     }
 
     public void GetDamage(int damage, bool isCritical = false)
     {
-        _currentHealth -= damage;
+        if (_isDead || damage <= 0)
+            return;
+
+        _currentHealth = Math.Max(0f, _currentHealth - damage);
         UpdateViews();
         UpdateDamageViews(damage, isCritical);
 
-        if (_currentHealth <= 0)
-        {
-            _deathSystem.HandleDeath();
-        }
+        if (_currentHealth > 0)
+            return;
+
+        _isDead = true;
+        _deathSystem.HandleDeath();
     }
 
     public void IncreaseCurrentHealth(int increase)

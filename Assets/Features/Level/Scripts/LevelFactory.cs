@@ -14,7 +14,10 @@ public class LevelFactory : ILevelFactory
 
     public LevelView CreateLevelView(int levelNumber, Transform parent)
     {
-        var level = _container.InstantiatePrefabForComponent<LevelView>(_levelsConfiguration.Levels[levelNumber].LevelView, parent);
-        return level;
+        LevelSettings levelSettings = _levelsConfiguration.GetLevel(levelNumber);
+        if (levelSettings.LevelView == null)
+            throw new MissingReferenceException($"Level view is not configured for level index {levelNumber}.");
+
+        return _container.InstantiatePrefabForComponent<LevelView>(levelSettings.LevelView, parent);
     }
 }

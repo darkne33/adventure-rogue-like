@@ -85,7 +85,8 @@ namespace Features.Enemies.Scripts
             _deathSystem = new EnemyDeathSystem(_enemiesProvider, this, _characterLevelService, _enemyConfiguration);
             _healthView = GetComponent<EnemyHealthView>();
             _damageView = GetComponent<EnemyDamageNumberView>();
-            _healthSystem = new HealthSystem(100, new[] { _healthView }, _deathSystem, new[] { _damageView });
+            _healthSystem = new HealthSystem(_enemyConfiguration.MaxHealth, new[] { _healthView }, _deathSystem,
+                new[] { _damageView });
             _healthSystem.Initialize();
 
             _effectsSystem = new DealDamageEffectSystem(_meshRenderers);

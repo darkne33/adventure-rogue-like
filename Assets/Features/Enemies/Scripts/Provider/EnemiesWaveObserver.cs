@@ -9,21 +9,27 @@ namespace Features.Enemies.Scripts
 
         private readonly IRogueLikeRuntimeDataService _runtimeDataService;
         private readonly IGameModeService _gameModeService;
-        private readonly LevelsConfiguration _levelsConfiguration;
-
         public EnemiesWaveObserver(IRogueLikeRuntimeDataService runtimeDataService,
-            IGameModeService gameModeService, LevelsConfiguration levelsConfiguration)
+            IGameModeService gameModeService)
         {
             _runtimeDataService = runtimeDataService;
             _gameModeService = gameModeService;
-            _levelsConfiguration = levelsConfiguration;
         }
 
         public void Observe(List<EnemyFacade> enemies)
         {
-            DefaultEnemiesRoomData currentRoomData = (DefaultEnemiesRoomData)_runtimeDataService.CurrentRoomData;
+            if (enemies == null)
+                throw new System.ArgumentNullException(nameof(enemies));
 
-            var lastCurrentWaveIndex = currentRoomData.EnemyWavesConfiguration.Length - 1;
+            if (_runtimeDataService.CurrentRoomData is not DefaultEnemiesRoomData currentRoomData)
+                throw new System.InvalidOperationException(
+                    "Enemy waves can only be observed in a default enemies room.");
+
+            if (currentRoomData.EnemyWavesConfiguration == null ||
+                currentRoomData.EnemyWavesConfiguration.Length == 0)
+                throw new System.InvalidOperationException("Enemy waves are not configured for the current room.");
+
+            int lastCurrentWaveIndex = currentRoomData.EnemyWavesConfiguration.Length - 1;
 
             if (enemies.Count == 0 && CurrentWave < lastCurrentWaveIndex)
             {

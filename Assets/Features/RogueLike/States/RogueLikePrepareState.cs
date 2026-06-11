@@ -49,13 +49,23 @@ namespace Core
                 _levelFactory.CreateLevelView(_rogueLikeRuntimeDataService.CurrentIndexLevel,
                     _sceneService.GameSceneComponentsService.LevelSpawnPoint);
 
-            _rogueLikeRuntimeDataService.SetCurrentRoomData(_sceneService.GameSceneComponentsService.CurrentLevel
-                .StartRoom.RoomData);
+            LevelView currentLevel = _sceneService.GameSceneComponentsService.CurrentLevel;
+            if (currentLevel.StartRoom == null)
+                throw new System.InvalidOperationException("The current level does not have a start room.");
+
+            if (currentLevel.StartRoom.RoomData is not StartRoomData startRoomData)
+                throw new System.InvalidOperationException("The level start room must contain StartRoomData.");
+
+            if (startRoomData.StartPoint == null)
+                throw new System.InvalidOperationException("The start room player spawn point is not configured.");
+
+            if (startRoomData.RoomDoors == null)
+                throw new System.InvalidOperationException("The start room doors are not configured.");
+
+            _rogueLikeRuntimeDataService.SetCurrentRoomData(startRoomData);
 
             _sceneService.GameSceneComponentsService.NavMeshSurface.RemoveData();
             _sceneService.GameSceneComponentsService.NavMeshSurface.BuildNavMesh();
-
-            StartRoomData startRoomData = (StartRoomData)_rogueLikeRuntimeDataService.CurrentRoomData;
 
             foreach (var roomDoor in startRoomData.RoomDoors)
                 roomDoor.Open();

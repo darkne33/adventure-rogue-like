@@ -8,6 +8,19 @@ public class LevelsConfiguration : ScriptableObject
     [field: SerializeField] public LayerMask GroundLayer { get; private set; }
     [field: SerializeField] public LayerMask ObstacleLayer { get; private set; }
     [field: SerializeField] public List<LevelSettings> Levels { get; private set; }
+
+    public LevelSettings GetLevel(int levelIndex)
+    {
+        if (Levels == null || levelIndex < 0 || levelIndex >= Levels.Count)
+            throw new ArgumentOutOfRangeException(nameof(levelIndex), levelIndex,
+                $"Level index must be between 0 and {(Levels?.Count ?? 0) - 1}.");
+
+        LevelSettings level = Levels[levelIndex];
+        if (level == null)
+            throw new InvalidOperationException($"Level configuration at index {levelIndex} is null.");
+
+        return level;
+    }
 }
 
 [Serializable]
