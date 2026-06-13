@@ -765,7 +765,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 0
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -785,7 +785,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_FillRect: {fileID: 825248777763803998}
   m_HandleRect: {fileID: 0}
@@ -1082,6 +1082,7 @@ MonoBehaviour:
   _lowDamageColor: {r: 1, g: 1, b: 1, a: 1}
   _mediumDamageColor: {r: 1, g: 0.72, b: 0.15, a: 1}
   _highDamageColor: {r: 1, g: 0.2, b: 0.08, a: 1}
+  _criticalDamageColor: {r: 1, g: 0.35, b: 0.05, a: 1}
 --- !u!114 &4228037969279559467
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1104,7 +1105,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d1a43db21a744a54ab236d47e24b3438, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyDashView
   _material: {fileID: 2100000, guid: 5a792f61f6945d44bb1af16ed5ce7468, type: 2}
   _telegraphColor: {r: 1, g: 0.08, b: 0.03, a: 0.85}
