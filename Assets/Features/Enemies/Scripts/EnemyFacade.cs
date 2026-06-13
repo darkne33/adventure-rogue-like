@@ -16,13 +16,11 @@ namespace Features.Enemies.Scripts
         public EnemyCollisionDetector EnemyCollisionDetector => _collisionDetector;
         public IEnemyAnimationSystem AnimationSystem => _animationSystem;
 
-        internal EnemyConfiguration Configuration => _enemyConfiguration;
-        internal Renderer[] MeshRenderers => _meshRenderers;
+        public EnemyConfiguration Configuration => _enemyConfiguration;
+        public Renderer[] MeshRenderers => _meshRenderers;
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
         [SerializeField] private Renderer[] _meshRenderers;
-
-        [Inject] private IEnemySystemsFactory _systemsFactory;
 
         private CharacterFacade _character;
         private Rigidbody _rigidbody;
@@ -33,15 +31,14 @@ namespace Features.Enemies.Scripts
         private HealthSystem _healthSystem;
         private DealDamageEffectSystem _effectsSystem;
 
+        [Inject]
+        private void CreateSystems(IEnemySystemsFactory systemsFactory)
+        {
+            systemsFactory.Create(this);
+        }
+
         private void Start()
         {
-            _systemsFactory.Create(this);
-
-            _navMeshAgent.speed = _enemyConfiguration.Speed;
-            _navMeshAgent.angularSpeed = _enemyConfiguration.RotationSpeed;
-            _navMeshAgent.updatePosition = false;
-            _navMeshAgent.Warp(transform.position);
-
             _damageSystem.Initialize();
             _healthSystem.Initialize();
             _damageSystem.Tick(gameObject.GetCancellationTokenOnDestroy()).Forget();
@@ -50,7 +47,7 @@ namespace Features.Enemies.Scripts
         private void FixedUpdate() =>
             MoveTowardsPlayer();
 
-        internal void Construct(CharacterFacade character, Rigidbody rigidbody, NavMeshAgent navMeshAgent,
+        public void Construct(CharacterFacade character, Rigidbody rigidbody, NavMeshAgent navMeshAgent,
             EnemyCollisionDetector collisionDetector, IEnemyAnimationSystem animationSystem,
             IEnemyDamageSystem damageSystem, HealthSystem healthSystem, DealDamageEffectSystem effectsSystem)
         {
@@ -77,6 +74,20 @@ namespace Features.Enemies.Scripts
 
         public void SetStop(bool state) =>
             _navMeshAgent.isStopped = state;
+
+        internal void InitializeNavigation(Vector3 navMeshPosition)
+        {
+            Vector3 visualPosition = transform.position;
+            _navMeshAgent.speed = _enemyConfiguration.Speed;
+            _navMeshAgent.angularSpeed = _enemyConfiguration.RotationSpeed;
+            _navMeshAgent.updatePosition = false;
+
+            if (_navMeshAgent.Warp(navMeshPosition) == false)
+                throw new InvalidOperationException(
+                    $"Enemy {name} could not be placed on NavMesh at {navMeshPosition}.");
+
+            transform.position = visualPosition;
+        }
 
         private void MoveTowardsPlayer()
         {

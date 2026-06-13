@@ -3,5 +3,5 @@ using UnityEngine;
 
 public interface IEnemyFactory
 {
-    public EnemyFacade Create(GameObject enemy, Transform spawnPoint);
+    EnemyFacade Create(GameObject enemy, Vector3 initialPosition, Vector3 navMeshPosition);
 }

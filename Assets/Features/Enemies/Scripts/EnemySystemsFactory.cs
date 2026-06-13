@@ -42,7 +42,7 @@ namespace Features.Enemies.Scripts
                 healthSystem, effectsSystem);
         }
 
-        private static IEnemyAnimationSystem CreateAnimationSystem(EnemyConfiguration configuration,
+        private IEnemyAnimationSystem CreateAnimationSystem(EnemyConfiguration configuration,
             Animator animator) =>
             configuration.EnemyAnimationType switch
             {
@@ -52,7 +52,7 @@ namespace Features.Enemies.Scripts
                     configuration.EnemyAnimationType, "Enemy animation type is not supported.")
             };
 
-        private static IEnemyDamageSystem CreateDamageSystem(EnemyConfiguration configuration, EnemyFacade facade,
+        private IEnemyDamageSystem CreateDamageSystem(EnemyConfiguration configuration, EnemyFacade facade,
             CharacterFacade character) =>
             configuration.EnemyDamageType switch
             {

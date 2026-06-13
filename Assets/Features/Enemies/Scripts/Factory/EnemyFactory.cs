@@ -11,10 +11,11 @@ public class EnemyFactory : IEnemyFactory
         _container = container;
     }
     
-    public EnemyFacade Create(GameObject enemy, Transform spawnPoint)
+    public EnemyFacade Create(GameObject enemy, Vector3 initialPosition, Vector3 navMeshPosition)
     {
-        var enemyFacade =
-            _container.InstantiatePrefabForComponent<EnemyFacade>(enemy, spawnPoint);
+        EnemyFacade enemyFacade = _container.InstantiatePrefabForComponent<EnemyFacade>(
+            enemy, initialPosition, Quaternion.identity, null);
+        enemyFacade.InitializeNavigation(navMeshPosition);
         return enemyFacade;
     }
 }

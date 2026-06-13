@@ -75,11 +75,9 @@ public class EnemySpawner
 
     private async UniTask SpawnEnemy(GameObject enemy, Vector3 spawnPosition)
     {
-        EnemyFacade enemyFacade = _enemyFactory.Create(enemy, null);
-
         var offsetDown = 2f;
         Vector3 underGroundPosition = spawnPosition + Vector3.down * offsetDown;
-        enemyFacade.transform.position = underGroundPosition;
+        EnemyFacade enemyFacade = _enemyFactory.Create(enemy, underGroundPosition, spawnPosition);
 
         var portalEffect = _effectsService.GetEffect(EffectName.EnemyPortal);
         var defaultScaleEffect = portalEffect.transform.localScale;
