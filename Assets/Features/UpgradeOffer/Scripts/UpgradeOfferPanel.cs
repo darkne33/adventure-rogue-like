@@ -17,11 +17,15 @@ public class UpgradeOfferPanel : MonoBehaviour
     {
         gameObject.SetActive(true);
         _panelAnimationsMonoComponent.ForceHide();
+        Cursor.lockState = CursorLockMode.Confined;
+        Cursor.visible = true;
         return _panelAnimationsMonoComponent.Show();
     }
 
     public async UniTask Hide()
     {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
         await _panelAnimationsMonoComponent.Hide();
         gameObject.SetActive(false);
     }

@@ -17,8 +17,6 @@ namespace UI
         {
             IsPlaying = true;
             SetInputState(true);
-            Cursor.lockState = CursorLockMode.Confined;
-            Cursor.visible = true;
             await _panelAnimation.Show();
             IsPlaying = false;
         }
@@ -27,15 +25,11 @@ namespace UI
         {
             SetInputState(true);
             _panelAnimation.ForceShow();
-            Cursor.lockState = CursorLockMode.Confined;
-            Cursor.visible = true;
         }
 
         public virtual async UniTask Hide()
         {
             IsPlaying = true;
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
             await _panelAnimation.Hide();
             SetInputState(false);
             IsPlaying = false;
@@ -45,8 +39,6 @@ namespace UI
         {
             SetInputState(false);
             _panelAnimation.ForceHide();
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
         }
 
         public void SetInputState(bool interactable)
