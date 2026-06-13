@@ -8,6 +8,8 @@ namespace Features.Enemies.Scripts
 {
     public class EnemyFacade : MonoBehaviour
     {
+        private const float NavMeshSampleDistance = 4f;
+
         [field: SerializeField] public Transform TargetToShootDamage { get; private set; }
 
         public HealthSystem HealthSystem => _healthSystem;
@@ -15,6 +17,7 @@ namespace Features.Enemies.Scripts
         public Rigidbody Rigidbody => _rigidbody;
         public EnemyCollisionDetector EnemyCollisionDetector => _collisionDetector;
         public IEnemyAnimationSystem AnimationSystem => _animationSystem;
+        public bool IsStopped => _navMeshAgent.isStopped;
 
         public EnemyConfiguration Configuration => _enemyConfiguration;
         public Renderer[] MeshRenderers => _meshRenderers;
@@ -22,11 +25,11 @@ namespace Features.Enemies.Scripts
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
         [SerializeField] private Renderer[] _meshRenderers;
 
-        private CharacterFacade _character;
         private Rigidbody _rigidbody;
         private NavMeshAgent _navMeshAgent;
         private EnemyCollisionDetector _collisionDetector;
         private IEnemyAnimationSystem _animationSystem;
+        private IEnemyMovementSystem _movementSystem;
         private IEnemyDamageSystem _damageSystem;
         private HealthSystem _healthSystem;
         private DealDamageEffectSystem _effectsSystem;
@@ -45,17 +48,18 @@ namespace Features.Enemies.Scripts
         }
 
         private void FixedUpdate() =>
-            MoveTowardsPlayer();
+            _movementSystem.Tick();
 
-        public void Construct(CharacterFacade character, Rigidbody rigidbody, NavMeshAgent navMeshAgent,
+        public void Construct(Rigidbody rigidbody, NavMeshAgent navMeshAgent,
             EnemyCollisionDetector collisionDetector, IEnemyAnimationSystem animationSystem,
-            IEnemyDamageSystem damageSystem, HealthSystem healthSystem, DealDamageEffectSystem effectsSystem)
+            IEnemyMovementSystem movementSystem, IEnemyDamageSystem damageSystem,
+            HealthSystem healthSystem, DealDamageEffectSystem effectsSystem)
         {
-            _character = character;
             _rigidbody = rigidbody;
             _navMeshAgent = navMeshAgent;
             _collisionDetector = collisionDetector;
             _animationSystem = animationSystem;
+            _movementSystem = movementSystem;
             _damageSystem = damageSystem;
             _healthSystem = healthSystem;
             _effectsSystem = effectsSystem;
@@ -72,14 +76,27 @@ namespace Features.Enemies.Scripts
             SetStop(false);
         }
 
-        public void SetStop(bool state) =>
+        public void SetStop(bool state)
+        {
             _navMeshAgent.isStopped = state;
+
+            if (state == false)
+                _movementSystem.Reset();
+        }
+
+        public void SyncNavigationPosition()
+        {
+            if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, NavMeshSampleDistance,
+                    NavMesh.AllAreas))
+                _navMeshAgent.Warp(hit.position);
+        }
 
         internal void InitializeNavigation(Vector3 navMeshPosition)
         {
             Vector3 visualPosition = transform.position;
             _navMeshAgent.speed = _enemyConfiguration.Speed;
             _navMeshAgent.angularSpeed = _enemyConfiguration.RotationSpeed;
+            _navMeshAgent.acceleration = _enemyConfiguration.Acceleration;
             _navMeshAgent.updatePosition = false;
 
             if (_navMeshAgent.Warp(navMeshPosition) == false)
@@ -87,29 +104,6 @@ namespace Features.Enemies.Scripts
                     $"Enemy {name} could not be placed on NavMesh at {navMeshPosition}.");
 
             transform.position = visualPosition;
-        }
-
-        private void MoveTowardsPlayer()
-        {
-            if (_character == null || _navMeshAgent.isStopped)
-                return;
-
-            _animationSystem.RunAnimation();
-
-            Vector3 direction = _character.transform.position - transform.position;
-            direction.y = 0f;
-
-            if (direction.magnitude <= _enemyConfiguration.DistanceToStop)
-                return;
-
-            var targetPosition = new Vector3(_character.transform.position.x, transform.position.y,
-                _character.transform.position.z);
-
-            _navMeshAgent.SetDestination(targetPosition);
-            transform.position = Vector3.Lerp(
-                transform.position,
-                _navMeshAgent.nextPosition,
-                Time.deltaTime * _navMeshAgent.speed);
         }
     }
 }

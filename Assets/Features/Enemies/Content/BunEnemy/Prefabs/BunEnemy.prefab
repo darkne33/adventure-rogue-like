@@ -910,6 +910,7 @@ GameObject:
   - component: {fileID: 226054964259705086}
   - component: {fileID: 7199049114847290061}
   - component: {fileID: 4228037969279559467}
+  - component: {fileID: 6123456789012345678}
   m_Layer: 0
   m_Name: BunEnemy
   m_TagString: Untagged
@@ -1093,6 +1094,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 875524f7456d4c0a834a4f1a771a70b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyCollisionDetector
+--- !u!114 &6123456789012345678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2706834636654241046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1a43db21a744a54ab236d47e24b3438, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyDashView
+  _material: {fileID: 2100000, guid: 5a792f61f6945d44bb1af16ed5ce7468, type: 2}
+  _telegraphColor: {r: 1, g: 0.08, b: 0.03, a: 0.85}
+  _dashColor: {r: 1, g: 0.45, b: 0.05, a: 0.8}
 --- !u!1 &2965618105848705874
 GameObject:
   m_ObjectHideFlags: 0

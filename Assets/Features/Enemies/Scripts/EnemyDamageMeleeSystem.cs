@@ -49,7 +49,9 @@ namespace Features.Enemies.Scripts
                 var distanceToCharacter =
                     Vector3.Distance(_characterFacade.transform.position, _enemyFacade.transform.position);
                 _cooldown -= Time.deltaTime;
-                if (_cooldown <= 0 && distanceToCharacter <= _distanceExecuteDamage)
+                if (_enemyFacade.IsStopped == false &&
+                    _cooldown <= 0 &&
+                    distanceToCharacter <= _distanceExecuteDamage)
                 {
                     await Execute(cancellationToken);
                     _cooldown = _enemyConfiguration.DamageCooldown;

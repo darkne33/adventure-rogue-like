@@ -30,7 +30,10 @@ namespace Features.Enemies.Scripts
             EnemyCollisionDetector collisionDetector = facade.GetComponent<EnemyCollisionDetector>();
 
             IEnemyAnimationSystem animationSystem = CreateAnimationSystem(configuration, animator);
-            IEnemyDamageSystem damageSystem = CreateDamageSystem(configuration, facade, character);
+            IEnemyMovementSystem movementSystem = CreateMovementSystem(configuration, facade, character,
+                navMeshAgent, animationSystem);
+            IEnemyDamageSystem damageSystem = CreateDamageSystem(configuration, facade, character,
+                facade.GetComponent<EnemyDashView>());
             var deathSystem = new EnemyDeathSystem(_enemiesProvider, facade, _characterLevelService, configuration,
                 _characterStats, character);
             var healthSystem = new HealthSystem(configuration.MaxHealth,
@@ -38,8 +41,8 @@ namespace Features.Enemies.Scripts
                 new IDamageView[] { facade.GetComponent<EnemyDamageNumberView>() });
             var effectsSystem = new DealDamageEffectSystem(facade.MeshRenderers);
 
-            facade.Construct(character, rigidbody, navMeshAgent, collisionDetector, animationSystem, damageSystem,
-                healthSystem, effectsSystem);
+            facade.Construct(rigidbody, navMeshAgent, collisionDetector, animationSystem, movementSystem,
+                damageSystem, healthSystem, effectsSystem);
         }
 
         private IEnemyAnimationSystem CreateAnimationSystem(EnemyConfiguration configuration,
@@ -53,13 +56,25 @@ namespace Features.Enemies.Scripts
             };
 
         private IEnemyDamageSystem CreateDamageSystem(EnemyConfiguration configuration, EnemyFacade facade,
-            CharacterFacade character) =>
+            CharacterFacade character, EnemyDashView dashView) =>
             configuration.EnemyDamageType switch
             {
                 EnemyDamageType.Melee => new EnemyDamageMeleeSystem(facade, character, configuration),
-                EnemyDamageType.Dash => new EnemyDashAttackSystem(character, configuration, facade),
+                EnemyDamageType.Dash => new EnemyDashAttackSystem(character, configuration, facade, dashView),
                 _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyDamageType),
                     configuration.EnemyDamageType, "Enemy damage type is not supported.")
+            };
+
+        private IEnemyMovementSystem CreateMovementSystem(EnemyConfiguration configuration, EnemyFacade facade,
+            CharacterFacade character, NavMeshAgent navMeshAgent, IEnemyAnimationSystem animationSystem) =>
+            configuration.EnemyMovementType switch
+            {
+                EnemyMovementType.Chase => new EnemyChaseMovementSystem(
+                    facade, character, configuration, navMeshAgent, animationSystem),
+                EnemyMovementType.Skirmisher => new EnemySkirmisherMovementSystem(
+                    facade, character, configuration, navMeshAgent, animationSystem),
+                _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyMovementType),
+                    configuration.EnemyMovementType, "Enemy movement type is not supported.")
             };
     }
 }

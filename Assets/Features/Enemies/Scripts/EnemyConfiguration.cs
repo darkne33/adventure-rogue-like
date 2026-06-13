@@ -14,6 +14,7 @@ public class EnemyConfiguration : ScriptableObject
     [field: SerializeField] public float DamageCooldown { get; private set; }
     [field: SerializeField] public EnemyDamageType EnemyDamageType { get; private set; }
     [field: SerializeField] public EnemyAnimationType EnemyAnimationType { get; private set; }
+    [field: SerializeField] public EnemyMovementType EnemyMovementType { get; private set; }
     [field: SerializeField] public int Exp { get; private set; }
 
     [field: Header("Movement Settings")]
