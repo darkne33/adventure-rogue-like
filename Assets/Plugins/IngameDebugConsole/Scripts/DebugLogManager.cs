@@ -321,6 +321,9 @@ namespace IngameDebugConsole
 
 		private bool isLogWindowVisible = true;
 		public bool IsLogWindowVisible { get { return isLogWindowVisible; } }
+		private CursorLockMode cursorLockModeBeforeConsole;
+		private bool cursorVisibleBeforeConsole;
+		private bool cursorStateCaptured;
 
 		public bool PopupEnabled
 		{
@@ -954,6 +957,16 @@ namespace IngameDebugConsole
 
 		public void ShowLogWindow()
 		{
+			if( !cursorStateCaptured )
+			{
+				cursorLockModeBeforeConsole = Cursor.lockState;
+				cursorVisibleBeforeConsole = Cursor.visible;
+				cursorStateCaptured = true;
+			}
+
+			Cursor.lockState = CursorLockMode.None;
+			Cursor.visible = true;
+
 			// Show the log window
 			logWindowCanvasGroup.blocksRaycasts = true;
 			logWindowCanvasGroup.alpha = logWindowOpacity;
@@ -993,6 +1006,13 @@ namespace IngameDebugConsole
 			// Deselect the currently selected UI object (if any) when the log window is hidden to avoid edge cases: https://github.com/yasirkula/UnityIngameDebugConsole/pull/85
 			if( EventSystem.current != null )
 				EventSystem.current.SetSelectedGameObject( null );
+
+			if( cursorStateCaptured )
+			{
+				Cursor.lockState = cursorLockModeBeforeConsole;
+				Cursor.visible = cursorVisibleBeforeConsole;
+				cursorStateCaptured = false;
+			}
 
 			if( OnLogWindowHidden != null )
 				OnLogWindowHidden();
@@ -1838,9 +1858,22 @@ namespace IngameDebugConsole
 		{
 			// Waiting 1 frame before activating commandInputField ensures that the toggleKey isn't captured by it
 			yield return null;
+
+			if( !isLogWindowVisible )
+				yield break;
+
+			if( EventSystem.current != null )
+				EventSystem.current.SetSelectedGameObject( commandInputField.gameObject );
+
+			commandInputField.Select();
 			commandInputField.ActivateInputField();
 
 			yield return null;
+
+			if( EventSystem.current != null &&
+				EventSystem.current.currentSelectedGameObject != commandInputField.gameObject )
+				EventSystem.current.SetSelectedGameObject( commandInputField.gameObject );
+
 			commandInputField.MoveTextEnd( false );
 		}
 #endif

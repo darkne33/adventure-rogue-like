@@ -29,6 +29,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         BindCharacterWallet();
         BindCharacterStats();
         BindUpgradeOffer();
+        BindDebugMode();
     }
 
     private void BindFactories()
@@ -89,4 +90,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<IUpgradeOfferGenerator>().To<UpgradeOfferGenerator>().AsSingle();
         Container.BindInterfacesAndSelfTo<UpgradeOfferHandler>().AsSingle();
     }
+
+    private void BindDebugMode() =>
+        Container.BindInterfacesAndSelfTo<GameDebugService>().AsSingle().NonLazy();
 }

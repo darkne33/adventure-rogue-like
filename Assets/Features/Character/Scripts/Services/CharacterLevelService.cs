@@ -16,13 +16,7 @@ public class CharacterLevelService : ICharacterLevelService
     public CharacterLevelService(CharacterExpConfig characterExpConfig)
     {
         _characterExpConfig = characterExpConfig;
-
-        _characterExpData = new CharacterExpData
-        {
-            CurrentExp = 0,
-            Level = 1,
-            MaxExp = characterExpConfig.GetMaxExpByLevel(1)
-        };
+        ResetData();
     }
 
     public void AddExp(int amount)
@@ -46,6 +40,22 @@ public class CharacterLevelService : ICharacterLevelService
                 Math.Min(_characterExpData.CurrentExp, _characterExpData.MaxExp);
 
         OnUpdateAddExpView?.Invoke(_characterExpData.CurrentExp, _characterExpData.MaxExp);
+    }
+
+    public void Reset()
+    {
+        ResetData();
+        OnUpdateAddExpView?.Invoke(_characterExpData.CurrentExp, _characterExpData.MaxExp);
+    }
+
+    private void ResetData()
+    {
+        _characterExpData = new CharacterExpData
+        {
+            CurrentExp = 0,
+            Level = 1,
+            MaxExp = _characterExpConfig.GetMaxExpByLevel(1)
+        };
     }
 }
 

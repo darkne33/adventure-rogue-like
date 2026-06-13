@@ -794,7 +794,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Slack
+  m_Text:
 --- !u!1 &5836204506935451578
 GameObject:
   m_ObjectHideFlags: 0
@@ -808,12 +808,12 @@ GameObject:
   - component: {fileID: 5057470767125206085}
   - component: {fileID: 4776165256980287913}
   m_Layer: 5
-  m_Name: SlackButton
+  m_Name: DisabledIntegrationButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1767217642961039493
 RectTransform:
   m_ObjectHideFlags: 0
@@ -915,16 +915,4 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5057470767125206085}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 11408050}
-        m_TargetAssemblyTypeName: IngameDebugConsole.DebugLogItem, IngameDebugConsole.Runtime
-        m_MethodName: SlackLog
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []

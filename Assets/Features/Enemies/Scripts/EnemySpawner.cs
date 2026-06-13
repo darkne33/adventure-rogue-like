@@ -78,23 +78,34 @@ public class EnemySpawner
         var offsetDown = 2f;
         Vector3 underGroundPosition = spawnPosition + Vector3.down * offsetDown;
         EnemyFacade enemyFacade = _enemyFactory.Create(enemy, underGroundPosition, spawnPosition);
+        _enemiesProvider.AddEnemy(enemyFacade);
 
         var portalEffect = _effectsService.GetEffect(EffectName.EnemyPortal);
         var defaultScaleEffect = portalEffect.transform.localScale;
         portalEffect.transform.position = spawnPosition + Vector3.up * 0.1f;
         portalEffect.PlayWithoutRelease();
 
-        enemyFacade.SetStop(true);
+        try
+        {
+            enemyFacade.SetStop(true);
 
-        await enemyFacade.transform.DOMoveY(spawnPosition.y, 0.5f)
-            .ToUniTask(cancellationToken: enemyFacade.GetCancellationTokenOnDestroy());
+            await enemyFacade.transform.DOMoveY(spawnPosition.y, 0.5f)
+                .ToUniTask(cancellationToken: enemyFacade.GetCancellationTokenOnDestroy());
 
-        enemyFacade.SetStop(false);
-        await portalEffect.transform.DOScale(Vector3.zero, 0.3f).ToUniTask();
-        portalEffect.transform.localScale = defaultScaleEffect;
-        portalEffect.Release();
-        
-        _enemiesProvider.AddEnemy(enemyFacade);
+            if (enemyFacade != null)
+                enemyFacade.SetStop(false);
+
+            await portalEffect.transform.DOScale(Vector3.zero, 0.3f).ToUniTask();
+        }
+        catch (System.OperationCanceledException)
+        {
+        }
+        finally
+        {
+            portalEffect.transform.DOKill();
+            portalEffect.transform.localScale = defaultScaleEffect;
+            portalEffect.Release();
+        }
     }
 
     private Vector3 GetRandomPointInAnnulus(Vector3 center, float minRadius, float maxRadius)

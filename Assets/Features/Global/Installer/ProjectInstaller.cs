@@ -10,6 +10,7 @@ namespace Core.Installer
     {
         [SerializeField] private EffectsConfig _effectsConfig;
         [SerializeField] private CharacterExpConfig _characterExpConfig;
+        [SerializeField] private GameObject _debugConsolePrefab;
         
         private void Awake()
         {
@@ -17,7 +18,12 @@ namespace Core.Installer
             Application.targetFrameRate = 120;
             
             Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            Cursor.visible = true;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (_debugConsolePrefab != null)
+                Instantiate(_debugConsolePrefab, transform);
+#endif
         }
         
         public override void InstallBindings()

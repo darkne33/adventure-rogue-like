@@ -7,5 +7,6 @@ namespace Core
     {
         public void Add<T>(DiContainer diContainer) where T : ZenjectStateMachine;
         public T Get<T>() where T : ZenjectStateMachine;
+        public bool Remove<T>() where T : ZenjectStateMachine;
     }
 }

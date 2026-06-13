@@ -8,4 +8,5 @@ public interface ICharacterLevelService
     public int GetMaxExp { get; }
     public int GetLevel { get; }
     public void AddExp(int amount);
+    public void Reset();
 }
