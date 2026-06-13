@@ -81,10 +81,16 @@ namespace Features.Enemies.Scripts
 
         private void ApplyDamage()
         {
+            if (_canDamage == false)
+                return;
+
             _canDamage = false;
-            _characterFacade.HealthSystem.GetDamage(_enemyConfiguration.Damage);
+            bool damageApplied = _characterFacade.ReceiveDamage(_enemyConfiguration.Damage, _enemyFacade);
+
+            if (damageApplied == false)
+                return;
+
             _characterFacade.MoveSystem.CanMove(false);
-            _characterFacade.DamageEffectSystem.DealDamage();
 
             Vector3 pushDirection = _characterFacade.transform.position - _enemyFacade.transform.position;
             pushDirection.y = 0.5f;

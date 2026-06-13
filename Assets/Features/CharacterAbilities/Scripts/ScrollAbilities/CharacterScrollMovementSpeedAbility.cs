@@ -4,6 +4,7 @@
 
     public override void OnUnequip(CharacterStats characterStats)
     {
+        base.OnUnequip(characterStats);
         characterStats.MovementSpeed -= _scrollAbilityConfiguration.DefaultIncreaseStat;
     }
 
@@ -16,6 +17,7 @@
 
     public override void OnEquip(CharacterStats characterStats)
     {
+        base.OnEquip(characterStats);
         characterStats.MovementSpeed += _scrollAbilityConfiguration.DefaultIncreaseStat;
     }
 

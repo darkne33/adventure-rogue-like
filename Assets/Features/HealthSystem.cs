@@ -2,6 +2,10 @@
 
 public class HealthSystem
 {
+    public float MaxHealth => _maxHealth;
+    public float CurrentHealth => _currentHealth;
+    public bool IsDead => _isDead;
+
     private float _maxHealth;
     private float _currentHealth;
     private bool _isDead;
@@ -29,25 +33,46 @@ public class HealthSystem
         UpdateViews();
     }
 
-    public void GetDamage(int damage, bool isCritical = false)
+    public int GetDamage(int damage, bool isCritical = false)
     {
         if (_isDead || damage <= 0)
-            return;
+            return 0;
 
-        _currentHealth = Math.Max(0f, _currentHealth - damage);
+        int appliedDamage = (int)Math.Ceiling(Math.Min(_currentHealth, damage));
+        _currentHealth = Math.Max(0f, _currentHealth - appliedDamage);
         UpdateViews();
-        UpdateDamageViews(damage, isCritical);
+        UpdateDamageViews(appliedDamage, isCritical);
 
         if (_currentHealth > 0)
-            return;
+            return appliedDamage;
 
         _isDead = true;
         _deathSystem.HandleDeath();
+        return appliedDamage;
     }
 
-    public void IncreaseCurrentHealth(int increase)
+    public void IncreaseCurrentHealth(float increase)
     {
-        _currentHealth += increase;
+        if (_isDead || increase <= 0f || _currentHealth >= _maxHealth)
+            return;
+
+        _currentHealth = Math.Min(_maxHealth, _currentHealth + increase);
+        UpdateViews();
+    }
+
+    public void SetMaxHealth(float maxHealth, bool healIncrease = true)
+    {
+        maxHealth = Math.Max(1f, maxHealth);
+        if (Math.Abs(_maxHealth - maxHealth) < 0.001f)
+            return;
+
+        float difference = maxHealth - _maxHealth;
+        _maxHealth = maxHealth;
+
+        if (healIncrease && difference > 0f)
+            _currentHealth += difference;
+
+        _currentHealth = Math.Min(_currentHealth, _maxHealth);
         UpdateViews();
     }
 

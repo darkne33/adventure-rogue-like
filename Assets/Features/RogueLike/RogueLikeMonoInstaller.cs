@@ -34,8 +34,10 @@ public class RogueLikeMonoInstaller : MonoInstaller
     private void BindFactories()
     {
         Container.Bind<ICharacterFactory>().To<CharacterFactory>().AsSingle();
+        Container.Bind<ICharacterSystemsFactory>().To<CharacterSystemsFactory>().AsSingle();
         Container.Bind<ILevelFactory>().To<LevelFactory>().AsSingle();
         Container.Bind<IEnemyFactory>().To<EnemyFactory>().AsSingle();
+        Container.Bind<IEnemySystemsFactory>().To<EnemySystemsFactory>().AsSingle();
         Container.Bind<IUpgradeOfferItemFactory>().To<UpgradeOfferItemFactory>().AsSingle();
     }
 
@@ -85,6 +87,6 @@ public class RogueLikeMonoInstaller : MonoInstaller
     private void BindUpgradeOffer()
     {
         Container.Bind<IUpgradeOfferGenerator>().To<UpgradeOfferGenerator>().AsSingle();
-        Container.Bind<IUpgradeOfferHandler>().To<UpgradeOfferHandler>().AsSingle();
+        Container.BindInterfacesAndSelfTo<UpgradeOfferHandler>().AsSingle();
     }
 }

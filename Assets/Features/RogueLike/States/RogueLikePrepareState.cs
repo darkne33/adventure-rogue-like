@@ -16,7 +16,6 @@ namespace Core
         private readonly IRogueLikeRuntimeDataService _rogueLikeRuntimeDataService;
         private readonly ICameraService _cameraService;
         private readonly IAbilityChoiceProvider _abilityChoiceProvider;
-        private readonly IUpgradeOfferHandler _upgradeOfferHandler;
         private readonly CharacterStats _characterStats;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
@@ -33,7 +32,6 @@ namespace Core
             _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
             _abilityChoiceProvider = abilityChoiceProvider;
             _cameraService = cameraService;
-            _upgradeOfferHandler = upgradeOfferHandler;
             _characterStats = characterStats;
         }
 
@@ -80,8 +78,6 @@ namespace Core
             _cameraService.MainCamera.Follow = _characterProvider.CharacterFacade.CameraPivot;
 
             panel.Show().Forget();
-
-            _upgradeOfferHandler.Handle();
 
             Log.Gameplay.Info("RogueLike Prepare State Completed");
         }

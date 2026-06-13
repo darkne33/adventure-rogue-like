@@ -3,9 +3,11 @@
 public class CharacterLevelService : ICharacterLevelService
 {
     public event Action<int, int> OnUpdateAddExpView;
+    public event Action<int> OnLevelUp;
     
     public int GetCurrentExp => _characterExpData.CurrentExp;
     public int GetMaxExp => _characterExpData.MaxExp;
+    public int GetLevel => _characterExpData.Level;
 
     private readonly CharacterExpConfig _characterExpConfig;
     
@@ -25,16 +27,25 @@ public class CharacterLevelService : ICharacterLevelService
 
     public void AddExp(int amount)
     {
+        if (amount <= 0)
+            return;
+
         _characterExpData.CurrentExp += amount;
-        
-        OnUpdateAddExpView?.Invoke(_characterExpData.CurrentExp, _characterExpData.MaxExp);
-        
-        if (_characterExpData.CurrentExp >= _characterExpData.MaxExp)
+
+        while (_characterExpData.CurrentExp >= _characterExpData.MaxExp &&
+               _characterExpData.Level < _characterExpConfig.MaxLevel)
         {
-            _characterExpData.CurrentExp = 0;
+            _characterExpData.CurrentExp -= _characterExpData.MaxExp;
             _characterExpData.Level++;
             _characterExpData.MaxExp = _characterExpConfig.GetMaxExpByLevel(_characterExpData.Level);
+            OnLevelUp?.Invoke(_characterExpData.Level);
         }
+
+        if (_characterExpData.Level >= _characterExpConfig.MaxLevel)
+            _characterExpData.CurrentExp =
+                Math.Min(_characterExpData.CurrentExp, _characterExpData.MaxExp);
+
+        OnUpdateAddExpView?.Invoke(_characterExpData.CurrentExp, _characterExpData.MaxExp);
     }
 }
 

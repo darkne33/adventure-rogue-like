@@ -9,7 +9,7 @@ public class CharacterHealthView : MonoBehaviour, IHealthView
 
     public void UpdateHealth(float currentHealth, float maximumHealth)
     {
-        _healthText.text = $"{currentHealth}/{maximumHealth}";
+        _healthText.text = $"{Mathf.CeilToInt(currentHealth)}/{Mathf.CeilToInt(maximumHealth)}";
         _healthSlider.maxValue = maximumHealth;
         _healthSlider.value = currentHealth;
     }

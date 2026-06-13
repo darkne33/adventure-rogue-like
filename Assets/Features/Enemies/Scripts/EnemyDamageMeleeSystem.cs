@@ -32,8 +32,8 @@ namespace Features.Enemies.Scripts
             await UniTask.Delay(TimeSpan.FromSeconds(0.5f), cancellationToken: cancellationToken);
 
             var enemyTransform = _enemyFacade.transform;
-            _characterFacade.HealthSystem.GetDamage(_enemyConfiguration.Damage);
-            _characterFacade.DamageEffectSystem.DealDamage();
+            if (_characterFacade.ReceiveDamage(_enemyConfiguration.Damage, _enemyFacade) == false)
+                return;
 
             Vector3 pushDirection = _characterFacade.transform.position - enemyTransform.position;
             pushDirection.y = 0f;
