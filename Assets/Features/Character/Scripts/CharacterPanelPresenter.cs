@@ -12,6 +12,8 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 
     private Tween _expTween;
     private Tween _roomTween;
+    private EnemiesWaveObserver _enemiesWaveObserver;
+    private MinimapController _minimapController;
 
     public CharacterPanelPresenter(ICharacterLevelService characterLevelService,
         IGameModeService gameModeService)
@@ -24,8 +26,12 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     {
         Panel.WaveAlertText.DOFade(0, 0);
         _characterLevelService.OnUpdateAddExpView += UpdateExpView;
-        var enemiesWaveObserver = _gameModeService.Get<RogueLikeStateMachine>().Resolve<EnemiesWaveObserver>();
-        enemiesWaveObserver.RoomCompleted += UpdateRoomView;
+        RogueLikeStateMachine stateMachine = _gameModeService.Get<RogueLikeStateMachine>();
+        _enemiesWaveObserver = stateMachine.Resolve<EnemiesWaveObserver>();
+        _minimapController = stateMachine.Resolve<MinimapController>();
+
+        _enemiesWaveObserver.RoomCompleted += UpdateRoomView;
+        _minimapController.Attach(Panel.MinimapView);
 
         UpdateExpView(_characterLevelService.GetCurrentExp, _characterLevelService.GetMaxExp);
         UpdateRoomView();
@@ -36,8 +42,8 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     public override UniTask OnClosed()
     {
         _characterLevelService.OnUpdateAddExpView -= UpdateExpView;
-        var enemiesWaveObserver = _gameModeService.Get<RogueLikeStateMachine>().Resolve<EnemiesWaveObserver>();
-        enemiesWaveObserver.RoomCompleted -= UpdateRoomView;
+        _enemiesWaveObserver.RoomCompleted -= UpdateRoomView;
+        _minimapController.Detach(Panel.MinimapView);
         _expTween?.Kill();
         _roomTween?.Kill();
         return base.OnClosed();
@@ -54,8 +60,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 
     private void UpdateRoomView(DefaultEnemiesRoomData roomData = null)
     {
-        var enemiesWaveObserver = _gameModeService.Get<RogueLikeStateMachine>().Resolve<EnemiesWaveObserver>();
-        Panel.RoomNumberText.text = $"ROOM {enemiesWaveObserver.CompletedRooms}";
+        Panel.RoomNumberText.text = $"ROOM {_enemiesWaveObserver.CompletedRooms}";
 
         if (roomData == null)
             return;

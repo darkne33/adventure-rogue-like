@@ -16,6 +16,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
     private readonly IRoomTransitionService _roomTransitionService;
     private readonly EnemiesWaveObserver _enemiesWaveObserver;
     private readonly IGameModeService _gameModeService;
+    private readonly MinimapController _minimapController;
 
     private bool _isTransitioning;
     private bool _isRunCompleted;
@@ -24,7 +25,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         IRogueLikeRuntimeDataService runtimeDataService, ISceneService<RogueLikeSceneProvider> sceneService,
         ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
         IRoomTransitionService roomTransitionService, EnemiesWaveObserver enemiesWaveObserver,
-        IGameModeService gameModeService)
+        IGameModeService gameModeService, MinimapController minimapController)
     {
         _levelsConfiguration = levelsConfiguration;
         _levelFactory = levelFactory;
@@ -35,6 +36,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         _roomTransitionService = roomTransitionService;
         _enemiesWaveObserver = enemiesWaveObserver;
         _gameModeService = gameModeService;
+        _minimapController = minimapController;
 
         _enemiesWaveObserver.RoomCompleted += HandleRoomCompleted;
     }
@@ -141,8 +143,9 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
 
         _enemiesProvider.ClearEnemies();
         _runtimeDataService.CurrentIndexLevel = nextLevelIndex;
-        _runtimeDataService.SetCurrentRoomData(startRoomData);
         sceneProvider.CurrentLevel = nextLevel;
+        _minimapController.SetLevel(nextLevel);
+        _runtimeDataService.SetCurrentRoomData(startRoomData);
 
         sceneProvider.NavMeshSurface.RemoveData();
         sceneProvider.NavMeshSurface.BuildNavMesh();

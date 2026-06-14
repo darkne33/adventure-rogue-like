@@ -40,6 +40,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<IEnemyFactory>().To<EnemyFactory>().AsSingle();
         Container.Bind<IEnemySystemsFactory>().To<EnemySystemsFactory>().AsSingle();
         Container.Bind<IUpgradeOfferItemFactory>().To<UpgradeOfferItemFactory>().AsSingle();
+        Container.Bind<MinimapElementFactory>().AsSingle();
     }
 
     private void BindProviders()
@@ -69,6 +70,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<IRoomTransitionService>().To<RoomTransitionService>().AsSingle();
         Container.Bind<ITransitToRoomService>().To<TransitToRoomService>().AsSingle();
         Container.BindInterfacesAndSelfTo<LevelProgressionService>().AsSingle();
+        Container.BindInterfacesAndSelfTo<MinimapController>().AsSingle();
     }
 
     private void BindSpawners() => 

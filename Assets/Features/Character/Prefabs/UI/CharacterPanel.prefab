@@ -378,6 +378,7 @@ RectTransform:
   - {fileID: 6567067083099538209}
   - {fileID: 1039958641895723556}
   - {fileID: 9102297992498430010}
+  - {fileID: 8800000000000000001}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -402,6 +403,7 @@ MonoBehaviour:
   <CharacterGoldView>k__BackingField: {fileID: 4032070519680873248}
   <WaveAlertText>k__BackingField: {fileID: 8775195478745771354}
   <RoomNumberText>k__BackingField: {fileID: 6358009199911703901}
+  <MinimapView>k__BackingField: {fileID: 8800000000000000002}
   <ExpProgressBar>k__BackingField: {fileID: 2871435926976799675}
   <UpgradeOfferPanel>k__BackingField: {fileID: 150989477152094528}
 --- !u!114 &781633305479051370
@@ -1812,3 +1814,32 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4708498368326252390, guid: 4797b8bc4dbb9c54e9ce3f17f35dec31, type: 3}
   m_PrefabInstance: {fileID: 5708697967903204674}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &8800000000000000000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 480872011042158490}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c1a5e6f8a0b34d18a2d7939000000004, type: 3}
+--- !u!224 &8800000000000000001 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4001, guid: c1a5e6f8a0b34d18a2d7939000000004, type: 3}
+  m_PrefabInstance: {fileID: 8800000000000000000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8800000000000000002 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4005, guid: c1a5e6f8a0b34d18a2d7939000000004, type: 3}
+  m_PrefabInstance: {fileID: 8800000000000000000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61eac577908202e469653ab8a209953a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MinimapView

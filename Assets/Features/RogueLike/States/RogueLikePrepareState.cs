@@ -17,12 +17,14 @@ namespace Core
         private readonly ICameraService _cameraService;
         private readonly IAbilityChoiceProvider _abilityChoiceProvider;
         private readonly CharacterStats _characterStats;
+        private readonly MinimapController _minimapController;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
             ISceneService<RogueLikeSceneProvider> sceneService, ICharacterProvider characterProvider,
             ILevelFactory levelFactory, IPanelService panelService,
             IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IAbilityChoiceProvider abilityChoiceProvider,
-            ICameraService cameraService, IUpgradeOfferHandler upgradeOfferHandler, CharacterStats characterStats)
+            ICameraService cameraService, IUpgradeOfferHandler upgradeOfferHandler, CharacterStats characterStats,
+            MinimapController minimapController)
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
@@ -33,6 +35,7 @@ namespace Core
             _abilityChoiceProvider = abilityChoiceProvider;
             _cameraService = cameraService;
             _characterStats = characterStats;
+            _minimapController = minimapController;
         }
 
         public override async UniTask Enter(CancellationToken cts)
@@ -60,6 +63,7 @@ namespace Core
             if (startRoomData.RoomDoors == null)
                 throw new System.InvalidOperationException("The start room doors are not configured.");
 
+            _minimapController.SetLevel(currentLevel);
             _rogueLikeRuntimeDataService.SetCurrentRoomData(startRoomData);
 
             _sceneService.GameSceneComponentsService.NavMeshSurface.RemoveData();

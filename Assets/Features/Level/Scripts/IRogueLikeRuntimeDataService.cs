@@ -1,6 +1,9 @@
-﻿public interface IRogueLikeRuntimeDataService
+using System;
+
+public interface IRogueLikeRuntimeDataService
 {
-    public int CurrentIndexLevel { get; set; }
-    public RoomData CurrentRoomData { get; }
-    public void SetCurrentRoomData(RoomData roomData);
+    int CurrentIndexLevel { get; set; }
+    RoomData CurrentRoomData { get; }
+    event Action<RoomData, RoomData> RoomChanged;
+    void SetCurrentRoomData(RoomData roomData);
 }

@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class LevelView : MonoBehaviour
 {
-    private const float RoomSpacing = 160f;
+    public const float RoomWorldSize = 160f;
 
     [field: SerializeField] public Room StartRoom { get; private set; }
 
@@ -247,7 +247,7 @@ public class LevelView : MonoBehaviour
     }
 
     private static Vector3 ToWorldPosition(Vector2Int gridPosition) =>
-        new(gridPosition.x * RoomSpacing, 0f, gridPosition.y * RoomSpacing);
+        new(gridPosition.x * RoomWorldSize, 0f, gridPosition.y * RoomWorldSize);
 }
 
 [Serializable]
