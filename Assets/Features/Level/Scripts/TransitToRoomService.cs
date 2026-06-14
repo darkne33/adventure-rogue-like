@@ -43,6 +43,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
             if (_characterProvider.CharacterFacade == null)
                 throw new System.InvalidOperationException("Character is not available for room transition.");
 
+            CloseRoomDoors(_runtimeDataService.CurrentRoomData);
             TransitAsync(roomData, entryDoor).Forget();
         }
 
@@ -57,6 +58,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
                 Vector3 characterPosition = teleportPlayerTarget.position + teleportPlayerTarget.forward * offset;
 
                 _characterProvider.CharacterFacade.transform.position = characterPosition;
+                entryDoor.Close();
 
                 if (roomData is DefaultEnemiesRoomData)
                 {
@@ -74,6 +76,18 @@ namespace Features.Enemies.Scripts.Level.Scripts
 
                 return UniTask.CompletedTask;
             });
+        }
+
+        private static void CloseRoomDoors(RoomData roomData)
+        {
+            if (roomData?.RoomDoors == null)
+                return;
+
+            foreach (RoomDoor roomDoor in roomData.RoomDoors)
+            {
+                if (roomDoor != null)
+                    roomDoor.Close();
+            }
         }
     }
 

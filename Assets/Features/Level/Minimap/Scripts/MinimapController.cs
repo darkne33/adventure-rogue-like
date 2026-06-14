@@ -6,6 +6,8 @@ using Zenject;
 
 public sealed class MinimapController : IDisposable, ITickable
 {
+    private const float BpmMapRotationOffset = 45f;
+
     private readonly IRogueLikeRuntimeDataService _runtimeDataService;
     private readonly MinimapElementFactory _elementFactory;
     private readonly ICharacterProvider _characterProvider;
@@ -78,7 +80,7 @@ public sealed class MinimapController : IDisposable, ITickable
             : NormalizeByDefaultRoomSize(localPosition);
         currentIcon.SetPlayerPosition(normalizedPosition);
 
-        float mapRotation = character.CameraPivot.eulerAngles.y;
+        float mapRotation = character.CameraPivot.eulerAngles.y + BpmMapRotationOffset;
         currentIcon.SetPlayerRotation(-mapRotation);
         _view.Content.localRotation = Quaternion.Euler(0f, 0f, mapRotation);
 

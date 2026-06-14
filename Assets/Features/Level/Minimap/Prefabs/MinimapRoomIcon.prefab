@@ -40,7 +40,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 76, y: 76}
+  m_SizeDelta: {x: 72, y: 72}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1002
 CanvasGroup:
@@ -72,13 +72,13 @@ MonoBehaviour:
   _exitMarker: {fileID: 1403}
   _playerMarker: {fileID: 1501}
   _canvasGroup: {fileID: 1002}
-  _availableOutlineColor: {r: 0.78, g: 0.82, b: 0.84, a: 0.28}
-  _visitedOutlineColor: {r: 0.88, g: 0.91, b: 0.93, a: 0.62}
+  _availableOutlineColor: {r: 1, g: 1, b: 1, a: 0.34}
+  _visitedOutlineColor: {r: 1, g: 1, b: 1, a: 0.68}
   _currentOutlineColor: {r: 1, g: 1, b: 1, a: 1}
-  _availableFillColor: {r: 0.04, g: 0.05, b: 0.06, a: 0.08}
-  _visitedFillColor: {r: 0.04, g: 0.05, b: 0.06, a: 0.12}
-  _currentFillColor: {r: 0.04, g: 0.05, b: 0.06, a: 0.24}
-  _playerMarkerRange: {x: 20, y: 20}
+  _availableFillColor: {r: 0.02, g: 0.02, b: 0.02, a: 0.04}
+  _visitedFillColor: {r: 0.02, g: 0.02, b: 0.02, a: 0.12}
+  _currentFillColor: {r: 0.02, g: 0.02, b: 0.02, a: 0.22}
+  _playerMarkerRange: {x: 18, y: 18}
   _exitMarkerDistance: 38
 --- !u!1 &1100
 GameObject:
@@ -115,7 +115,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 64, y: 64}
+  m_SizeDelta: {x: 58, y: 58}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1102
 CanvasRenderer:
@@ -266,8 +266,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -3}
-  m_SizeDelta: {x: 5, y: 16}
+  m_AnchoredPosition: {x: 0, y: -2}
+  m_SizeDelta: {x: 4, y: 15}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1512
 CanvasRenderer:
@@ -342,7 +342,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 8}
-  m_SizeDelta: {x: 12, y: 12}
+  m_SizeDelta: {x: 11, y: 11}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1522
 CanvasRenderer:
@@ -417,7 +417,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 52, y: 52}
+  m_SizeDelta: {x: 48, y: 48}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1202
 CanvasRenderer:
@@ -492,7 +492,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 14, y: 14}
+  m_SizeDelta: {x: 10, y: 10}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1302
 CanvasRenderer:
@@ -515,7 +515,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.86}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.75}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -567,7 +567,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 42}
-  m_SizeDelta: {x: 20, y: 20}
+  m_SizeDelta: {x: 16, y: 16}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1402
 CanvasRenderer:
@@ -590,7 +590,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.86, b: 0.28, a: 0.95}
+  m_Color: {r: 1, g: 0.93, b: 0.38, a: 0.95}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

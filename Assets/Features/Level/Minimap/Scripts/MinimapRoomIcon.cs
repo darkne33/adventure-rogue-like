@@ -10,17 +10,17 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     [SerializeField] private RectTransform _playerMarker;
     [SerializeField] private CanvasGroup _canvasGroup;
     [SerializeField] private Color _availableOutlineColor =
-        new(0.78f, 0.82f, 0.84f, 0.28f);
+        new(1f, 1f, 1f, 0.34f);
     [SerializeField] private Color _visitedOutlineColor =
-        new(0.88f, 0.91f, 0.93f, 0.62f);
+        new(1f, 1f, 1f, 0.68f);
     [SerializeField] private Color _currentOutlineColor = Color.white;
     [SerializeField] private Color _availableFillColor =
-        new(0.04f, 0.05f, 0.06f, 0.08f);
+        new(0.02f, 0.02f, 0.02f, 0.04f);
     [SerializeField] private Color _visitedFillColor =
-        new(0.04f, 0.05f, 0.06f, 0.32f);
+        new(0.02f, 0.02f, 0.02f, 0.12f);
     [SerializeField] private Color _currentFillColor =
-        new(0.04f, 0.05f, 0.06f, 0.48f);
-    [SerializeField] private Vector2 _playerMarkerRange = new(20f, 20f);
+        new(0.02f, 0.02f, 0.02f, 0.22f);
+    [SerializeField] private Vector2 _playerMarkerRange = new(18f, 18f);
     [SerializeField, Min(0f)] private float _exitMarkerDistance = 38f;
 
     public void Configure(Image fill, Image outline, Image startMarker,
