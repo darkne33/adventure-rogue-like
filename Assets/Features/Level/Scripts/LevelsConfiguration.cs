@@ -9,6 +9,9 @@ public class LevelsConfiguration : ScriptableObject
     [field: SerializeField] public LayerMask ObstacleLayer { get; private set; }
     [field: SerializeField] public List<LevelSettings> Levels { get; private set; }
 
+    public bool HasLevel(int levelIndex) =>
+        Levels != null && levelIndex >= 0 && levelIndex < Levels.Count && Levels[levelIndex] != null;
+
     public LevelSettings GetLevel(int levelIndex)
     {
         if (Levels == null || levelIndex < 0 || levelIndex >= Levels.Count)

@@ -1,5 +1,6 @@
 ﻿using Core;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace Features.Enemies.Scripts.Level.Scripts
 {
@@ -20,7 +21,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
             _roomTransitionService = roomTransitionService;
         }
 
-        public void Transit(Room nextRoom)
+        public void Transit(Room nextRoom, RoomDoor entryDoor)
         {
             if (_roomTransitionService.IsPlaying)
                 return;
@@ -28,35 +29,49 @@ namespace Features.Enemies.Scripts.Level.Scripts
             if (nextRoom == null)
                 throw new System.ArgumentNullException(nameof(nextRoom));
 
-            if (nextRoom is not DefaultRoom defaultRoom)
+            if (entryDoor == null)
+                throw new System.ArgumentNullException(nameof(entryDoor));
+
+            RoomData roomData = nextRoom.RoomData ??
+                                throw new System.InvalidOperationException(
+                                    $"{nextRoom.name} does not contain room data.");
+
+            if (roomData is not DefaultEnemiesRoomData && roomData is not StartRoomData)
                 throw new System.InvalidOperationException(
-                    $"Room transition requires {nameof(DefaultRoom)}, but received {nextRoom.GetType().Name}.");
-
-            if (defaultRoom.RoomData is not DefaultEnemiesRoomData roomData)
-                throw new System.InvalidOperationException("Default room must contain DefaultEnemiesRoomData.");
-
-            if (defaultRoom.EnterRoom == null)
-                throw new System.InvalidOperationException("Default room enter door is not configured.");
+                    $"Room transition does not support {roomData.GetType().Name}.");
 
             if (_characterProvider.CharacterFacade == null)
                 throw new System.InvalidOperationException("Character is not available for room transition.");
 
-            TransitAsync(defaultRoom, roomData).Forget();
+            TransitAsync(roomData, entryDoor).Forget();
         }
 
-        private async UniTask TransitAsync(DefaultRoom defaultRoom, DefaultEnemiesRoomData roomData)
+        private async UniTask TransitAsync(RoomData roomData, RoomDoor entryDoor)
         {
             await _roomTransitionService.Play(() =>
             {
                 _runtimeDataService.SetCurrentRoomData(roomData);
 
-                var teleportPlayerTarget = defaultRoom.EnterRoom.transform;
+                Transform teleportPlayerTarget = entryDoor.transform;
                 const int offset = 10;
-                var characterPosition = teleportPlayerTarget.position + teleportPlayerTarget.forward * offset;
+                Vector3 characterPosition = teleportPlayerTarget.position + teleportPlayerTarget.forward * offset;
 
                 _characterProvider.CharacterFacade.transform.position = characterPosition;
 
-                _gameModeService.Get<RogueLikeStateMachine>().EnterState<RogueLikeRoomPrepareState>().Forget();
+                if (roomData is DefaultEnemiesRoomData)
+                {
+                    _gameModeService.Get<RogueLikeStateMachine>()
+                        .EnterState<RogueLikeRoomPrepareState>().Forget();
+                }
+                else
+                {
+                    foreach (RoomDoor roomDoor in roomData.RoomDoors)
+                    {
+                        if (roomDoor != null)
+                            roomDoor.Open();
+                    }
+                }
+
                 return UniTask.CompletedTask;
             });
         }
@@ -64,6 +79,6 @@ namespace Features.Enemies.Scripts.Level.Scripts
 
     public interface ITransitToRoomService
     {
-        public void Transit(Room nextRoom);
+        void Transit(Room nextRoom, RoomDoor entryDoor);
     }
 }

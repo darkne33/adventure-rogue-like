@@ -18,6 +18,8 @@ public class LevelFactory : ILevelFactory
         if (levelSettings.LevelView == null)
             throw new MissingReferenceException($"Level view is not configured for level index {levelNumber}.");
 
-        return _container.InstantiatePrefabForComponent<LevelView>(levelSettings.LevelView, parent);
+        LevelView levelView = _container.InstantiatePrefabForComponent<LevelView>(levelSettings.LevelView, parent);
+        levelView.Initialize(_levelsConfiguration.HasLevel(levelNumber + 1));
+        return levelView;
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Core;
 using Cysharp.Threading.Tasks;
@@ -7,10 +8,14 @@ namespace Features.Enemies.Scripts
     public class EnemiesWaveObserver
     {
         public int CurrentWave { get; private set; }
+        public int CompletedRooms => _completedRooms.Count;
         public bool IsRoomCompleted { get; private set; }
 
         private readonly IRogueLikeRuntimeDataService _runtimeDataService;
         private readonly IGameModeService _gameModeService;
+        private readonly HashSet<DefaultEnemiesRoomData> _completedRooms = new();
+
+        public event Action<DefaultEnemiesRoomData> RoomCompleted;
 
         public EnemiesWaveObserver(IRogueLikeRuntimeDataService runtimeDataService,
             IGameModeService gameModeService)
@@ -32,6 +37,27 @@ namespace Features.Enemies.Scripts
         {
             CurrentWave = 0;
             IsRoomCompleted = false;
+        }
+
+        public bool RestoreCompletedRoom()
+        {
+            DefaultEnemiesRoomData currentRoomData = GetCurrentRoomData();
+            if (!currentRoomData.IsCompleted)
+                return false;
+
+            CurrentWave = currentRoomData.EnemyWavesConfiguration == null
+                ? 0
+                : System.Math.Max(0, currentRoomData.EnemyWavesConfiguration.Length - 1);
+            IsRoomCompleted = true;
+
+            OpenRoomDoors(currentRoomData);
+            return true;
+        }
+
+        public void ResetCurrentRoom()
+        {
+            GetCurrentRoomData().ResetProgress();
+            StartRoom();
         }
 
         public void CompleteCurrentWave()
@@ -71,10 +97,22 @@ namespace Features.Enemies.Scripts
                 currentRoomData.EnemyWavesConfiguration.Length > 0)
                 CurrentWave = currentRoomData.EnemyWavesConfiguration.Length - 1;
 
+            currentRoomData.MarkCompleted();
             IsRoomCompleted = true;
 
+            OpenRoomDoors(currentRoomData);
+
+            if (_completedRooms.Add(currentRoomData))
+                RoomCompleted?.Invoke(currentRoomData);
+        }
+
+        private static void OpenRoomDoors(DefaultEnemiesRoomData currentRoomData)
+        {
             foreach (RoomDoor roomDoor in currentRoomData.RoomDoors)
-                roomDoor.Open();
+            {
+                if (roomDoor != null)
+                    roomDoor.Open();
+            }
         }
 
         private DefaultEnemiesRoomData GetCurrentRoomData()

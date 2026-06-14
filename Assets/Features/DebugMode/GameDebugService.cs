@@ -148,6 +148,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
 
         int removedEnemies = _enemiesProvider.ClearEnemies();
         _pauseService.CancelPause();
+        _enemiesWaveObserver.ResetCurrentRoom();
 
         RogueLikeStateMachine stateMachine = _gameModeService.Get<RogueLikeStateMachine>();
         stateMachine.EnterState<RogueLikeRoomPrepareState>().Forget();

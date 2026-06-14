@@ -29,10 +29,16 @@ namespace Core
             if (currentRoomData.RoomDoors == null)
                 throw new InvalidOperationException("Room doors are not configured.");
 
+            if (_enemiesWaveObserver.RestoreCompletedRoom())
+                return;
+
             _enemiesWaveObserver.StartRoom();
 
             foreach (var roomDoor in currentRoomData.RoomDoors)
-                roomDoor.Close();
+            {
+                if (roomDoor != null)
+                    roomDoor.Close();
+            }
 
             await StateMachine.EnterState<RogueLikeSpawnEnemyWaveState>();
         }

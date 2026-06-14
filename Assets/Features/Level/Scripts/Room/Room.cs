@@ -19,6 +19,14 @@ public class RoomData
 public class DefaultEnemiesRoomData : RoomData
 {
     [field: SerializeField] public EnemyWavesConfiguration[] EnemyWavesConfiguration { get; private set; }
+
+    public bool IsCompleted { get; private set; }
+
+    public void MarkCompleted() =>
+        IsCompleted = true;
+
+    public void ResetProgress() =>
+        IsCompleted = false;
 }
 
 [Serializable]
