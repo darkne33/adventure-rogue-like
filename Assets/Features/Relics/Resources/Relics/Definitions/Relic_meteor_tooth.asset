@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c6dd3b5329c40c3ad1375b2a2bad5f0, type: 3}
+  m_Name: Relic_meteor_tooth
+  m_EditorClassIdentifier:
+  <Id>k__BackingField: meteor_tooth
+  <DisplayName>k__BackingField: Meteor Tooth
+  <Description>k__BackingField: On hit: 12% chance to call a small meteor near the target, dealing 90% weapon damage in a 3 meter radius.
+  <Rarity>k__BackingField: 2
+  <Tags>k__BackingField:
+  - 6
+  - 9
+  - 13
+  <Icon>k__BackingField: {fileID: 21300000, guid: 21b79ad74cd4465c868eb5f09669f52b, type: 3}
+  <IsUnique>k__BackingField: 0
+  <MaxStacks>k__BackingField: 5
+  <UnlockQuestId>k__BackingField:
+  <UnlockCost>k__BackingField: 0
+  <Effects>k__BackingField:
+  - <TriggerType>k__BackingField: 4
+    <StatType>k__BackingField: 0
+    <Value>k__BackingField: 0.9
+    <BossValue>k__BackingField: 0
+    <Chance>k__BackingField: 0.12
+    <Cooldown>k__BackingField: 0.3
+    <Duration>k__BackingField: 3
+    <Radius>k__BackingField: 3
+    <Cap>k__BackingField: 0
+    <ScalingType>k__BackingField: 2
+    <StatusEffectId>k__BackingField: 
+    <EffectPrefabId>k__BackingField: meteor

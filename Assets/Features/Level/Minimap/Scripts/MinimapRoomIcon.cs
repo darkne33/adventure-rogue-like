@@ -7,6 +7,7 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     [SerializeField] private Image _outline;
     [SerializeField] private Image _startMarker;
     [SerializeField] private Image _exitMarker;
+    [SerializeField] private Image _chestMarker;
     [SerializeField] private RectTransform _playerMarker;
     [SerializeField] private CanvasGroup _canvasGroup;
     [SerializeField] private Color _availableOutlineColor =
@@ -24,12 +25,13 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     [SerializeField, Min(0f)] private float _exitMarkerDistance = 38f;
 
     public void Configure(Image fill, Image outline, Image startMarker,
-        Image exitMarker, RectTransform playerMarker, CanvasGroup canvasGroup)
+        Image exitMarker, Image chestMarker, RectTransform playerMarker, CanvasGroup canvasGroup)
     {
         _fill = fill;
         _outline = outline;
         _startMarker = startMarker;
         _exitMarker = exitMarker;
+        _chestMarker = chestMarker;
         _playerMarker = playerMarker;
         _canvasGroup = canvasGroup;
     }
@@ -42,6 +44,12 @@ public sealed class MinimapRoomIcon : MonoBehaviour
         if (kind == MinimapRoomKind.Exit && exitDirection.HasValue)
             _exitMarker.rectTransform.anchoredPosition =
                 GetDirection(exitDirection.Value) * _exitMarkerDistance;
+    }
+
+    public void SetChestVisible(bool isVisible)
+    {
+        if (_chestMarker != null)
+            _chestMarker.gameObject.SetActive(isVisible);
     }
 
     public void SetState(MinimapRoomState state)

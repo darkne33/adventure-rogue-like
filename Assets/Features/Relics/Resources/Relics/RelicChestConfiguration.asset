@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd45a51bb0f3450589bc459df0521a38, type: 3}
+  m_Name: RelicChestConfiguration
+  m_EditorClassIdentifier:
+  <ChestPrefab>k__BackingField: {fileID: 7387248207753150389, guid: d9e4fe85a861f974fa1421a3bfb43e40, type: 3}
+  <RelicPickupPrefab>k__BackingField: {fileID: 100000, guid: 7d65e8eaf55a48b08f5c084f5fb9ecbb, type: 3}
+  <ChestsPerLevel>k__BackingField: 2
+  <ChestRoomOffsetRadius>k__BackingField: 4
+  <ChestSpawnAttempts>k__BackingField: 24
+  <GroundRayStartHeight>k__BackingField: 50
+  <GroundRayDistance>k__BackingField: 100
+  <ChestSpawnHeight>k__BackingField: 0.45
+  <ObstacleCheckRadius>k__BackingField: 1
+  <ObstacleCheckHeight>k__BackingField: 0.6
+  <InteractDistance>k__BackingField: 4
+  <RelicDropHeight>k__BackingField: 2.2
+  <RelicPickupDistance>k__BackingField: 3

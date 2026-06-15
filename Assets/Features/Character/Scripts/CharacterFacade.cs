@@ -1,4 +1,5 @@
 using Features.Enemies.Scripts;
+using Features.Relics.Scripts;
 using UnityEngine;
 using Zenject;
 
@@ -28,6 +29,8 @@ public class CharacterFacade : MonoBehaviour
     [SerializeField] private LayerMask _shadowLayer;
 
     [Inject] private ICharacterSystemsFactory _systemsFactory;
+    [InjectOptional] private RelicManager _relicManager;
+    [InjectOptional] private RelicEventBus _relicEventBus;
 
     private Rigidbody _rigidbody;
     private Collider _collider;
@@ -38,6 +41,7 @@ public class CharacterFacade : MonoBehaviour
     private CharacterMoveSystem _moveSystem;
     private CharacterCameraMoveSystem _cameraSystem;
     private DealDamageEffectSystem _damageEffectSystem;
+    private float _invulnerableUntilTime;
 
     private void Update()
     {
@@ -98,6 +102,9 @@ public class CharacterFacade : MonoBehaviour
 
     public bool ReceiveDamage(int rawDamage, EnemyFacade source)
     {
+        if (Time.unscaledTime < _invulnerableUntilTime)
+            return false;
+
         if (_healthSystem.IsDead || rawDamage <= 0)
             return false;
 
@@ -107,12 +114,22 @@ public class CharacterFacade : MonoBehaviour
 
         float armorMultiplier = 100f / (100f + Mathf.Max(0f, _characterStats.Armor));
         int reducedDamage = Mathf.Max(1, Mathf.RoundToInt(rawDamage * armorMultiplier));
+
+        if (_healthSystem.CurrentHealth - reducedDamage <= 0f &&
+            _relicManager != null &&
+            _relicManager.TryCancelFatalDamage(this, reducedDamage))
+        {
+            _damageEffectSystem.DealDamage();
+            return true;
+        }
+
         int appliedDamage = _healthSystem.GetDamage(reducedDamage);
 
         if (appliedDamage <= 0)
             return false;
 
         _damageEffectSystem.DealDamage();
+        _relicEventBus?.PublishDamageTaken(new RelicDamageTakenEvent(this, source, appliedDamage, "Enemy"));
 
         int thornsDamage = Mathf.Max(0, Mathf.RoundToInt(_characterStats.ThornsDamage));
         if (source != null && thornsDamage > 0)
@@ -120,6 +137,9 @@ public class CharacterFacade : MonoBehaviour
 
         return true;
     }
+
+    public void SetTemporaryInvulnerability(float duration) =>
+        _invulnerableUntilTime = Mathf.Max(_invulnerableUntilTime, Time.unscaledTime + duration);
 
     public void DisableAfterDeath()
     {
@@ -140,7 +160,11 @@ public class CharacterFacade : MonoBehaviour
         _healthSystem.SetMaxHealth(_characterStats.MaxHp);
 
         if (_pauseEntity.IsPauseEntity == false)
-            _healthSystem.IncreaseCurrentHealth(Mathf.Max(0f, _characterStats.RegenHp) * deltaTime);
+        {
+            float healed = _healthSystem.IncreaseCurrentHealth(Mathf.Max(0f, _characterStats.RegenHp) * deltaTime);
+            if (healed > 0f)
+                _relicEventBus?.PublishHeal(new RelicHealEvent(this, healed));
+        }
     }
 
     private void UpdateShadow()

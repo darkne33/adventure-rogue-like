@@ -2,6 +2,7 @@ using Core;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Features.Enemies.Scripts;
+using Features.Relics.Scripts;
 using UI;
 using UnityEngine;
 
@@ -14,6 +15,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     private Tween _roomTween;
     private EnemiesWaveObserver _enemiesWaveObserver;
     private MinimapController _minimapController;
+    private RelicInventoryViewService _relicInventoryViewService;
 
     public CharacterPanelPresenter(ICharacterLevelService characterLevelService,
         IGameModeService gameModeService)
@@ -29,9 +31,11 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         RogueLikeStateMachine stateMachine = _gameModeService.Get<RogueLikeStateMachine>();
         _enemiesWaveObserver = stateMachine.Resolve<EnemiesWaveObserver>();
         _minimapController = stateMachine.Resolve<MinimapController>();
+        _relicInventoryViewService = stateMachine.Resolve<RelicInventoryViewService>();
 
         _enemiesWaveObserver.RoomCompleted += UpdateRoomView;
         _minimapController.Attach(Panel.MinimapView);
+        _relicInventoryViewService.Attach(Panel);
 
         UpdateExpView(_characterLevelService.GetCurrentExp, _characterLevelService.GetMaxExp);
         UpdateRoomView();
@@ -44,6 +48,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         _characterLevelService.OnUpdateAddExpView -= UpdateExpView;
         _enemiesWaveObserver.RoomCompleted -= UpdateRoomView;
         _minimapController.Detach(Panel.MinimapView);
+        _relicInventoryViewService.Detach();
         _expTween?.Kill();
         _roomTween?.Kill();
         return base.OnClosed();

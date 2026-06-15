@@ -51,12 +51,23 @@ public class HealthSystem
         return appliedDamage;
     }
 
-    public void IncreaseCurrentHealth(float increase)
+    public float IncreaseCurrentHealth(float increase)
     {
         if (_isDead || increase <= 0f || _currentHealth >= _maxHealth)
-            return;
+            return 0f;
 
+        float previousHealth = _currentHealth;
         _currentHealth = Math.Min(_maxHealth, _currentHealth + increase);
+        UpdateViews();
+        return _currentHealth - previousHealth;
+    }
+
+    public void SetCurrentHealth(float health)
+    {
+        if (_isDead)
+            _isDead = false;
+
+        _currentHealth = Math.Clamp(health, 0f, _maxHealth);
         UpdateViews();
     }
 

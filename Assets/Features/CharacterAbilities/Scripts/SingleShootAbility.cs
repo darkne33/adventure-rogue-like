@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Features.Enemies.Scripts;
+using Features.Relics.Scripts;
 using UI;
 using UnityEngine;
 
@@ -15,17 +16,22 @@ public class SingleShootAbility : CharacterActiveAbility
     private readonly CharacterWallet _characterWallet;
     private readonly CharacterDamageCalculator _damageCalculator;
     private readonly CharacterStats _characterStats;
+    private readonly RelicEventBus _relicEventBus;
+    private readonly RelicManager _relicManager;
 
     private CharacterPanel _characterPanel;
 
     public SingleShootAbility(IEnemiesProvider enemiesProvider, IPanelService panelService,
-        CharacterWallet characterWallet, CharacterDamageCalculator damageCalculator, CharacterStats characterStats)
+        CharacterWallet characterWallet, CharacterDamageCalculator damageCalculator, CharacterStats characterStats,
+        RelicEventBus relicEventBus, RelicManager relicManager)
     {
         _enemiesProvider = enemiesProvider;
         _panelService = panelService;
         _characterWallet = characterWallet;
         _damageCalculator = damageCalculator;
         _characterStats = characterStats;
+        _relicEventBus = relicEventBus;
+        _relicManager = relicManager;
     }
 
     public override void OnEquip(CharacterStats characterStats)
@@ -81,18 +87,27 @@ public class SingleShootAbility : CharacterActiveAbility
     private void DamageDeal(CharacterFacade character, GameObject shootObj, EnemyFacade enemyFacade)
     {
         CharacterDamageResult damageResult = _damageCalculator.Calculate(_damage);
-        int appliedDamage = enemyFacade.HealthSystem.GetDamage(damageResult.Damage, damageResult.IsCritical);
+        int finalDamage = _relicManager.ModifyOutgoingDamage(damageResult.Damage, enemyFacade);
+        int appliedDamage = enemyFacade.HealthSystem.GetDamage(finalDamage, damageResult.IsCritical);
 
         if (appliedDamage > 0)
         {
             float lifeStealPercent = Mathf.Max(0f, _characterStats.LifeSteal) * 0.01f;
-            character.HealthSystem.IncreaseCurrentHealth(appliedDamage * lifeStealPercent);
+            float healed = character.HealthSystem.IncreaseCurrentHealth(appliedDamage * lifeStealPercent);
+            if (healed > 0f)
+                _relicEventBus.PublishHeal(new RelicHealEvent(character, healed));
 
             int goldReward = CalculateGoldReward(1);
             _characterPanel.CharacterGoldView.ShowGold(goldReward);
             _characterWallet.Money.Add(goldReward);
 
             enemyFacade.EffectsSystem.DealDamage();
+            _relicEventBus.PublishHit(new RelicHitEvent(character, enemyFacade, appliedDamage,
+                damageResult.IsCritical, _abilityConfig.AbilityName.ToString(), enemyFacade.transform.position));
+
+            if (enemyFacade.HealthSystem.IsDead)
+                _relicEventBus.PublishKill(new RelicKillEvent(character, enemyFacade,
+                    enemyFacade.transform.position));
         }
 
         DestroyShoot(shootObj);

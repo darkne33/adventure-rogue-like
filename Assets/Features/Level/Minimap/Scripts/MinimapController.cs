@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Features.Relics.Scripts;
 using UnityEngine;
 using Zenject;
 
@@ -11,12 +12,14 @@ public sealed class MinimapController : IDisposable, ITickable
     private readonly IRogueLikeRuntimeDataService _runtimeDataService;
     private readonly MinimapElementFactory _elementFactory;
     private readonly ICharacterProvider _characterProvider;
+    private readonly RelicEventBus _relicEventBus;
     private readonly Dictionary<RoomData, MinimapRoomIcon> _icons = new();
     private readonly Dictionary<RoomData, Room> _roomViews = new();
     private readonly Dictionary<Vector2Int, RoomData> _roomsByPosition = new();
     private readonly Dictionary<RoomData, Vector2Int> _positionsByRoom = new();
     private readonly Dictionary<RoomData, RoomBounds> _boundsByRoom = new();
     private readonly HashSet<RoomData> _visitedRooms = new();
+    private readonly HashSet<RoomData> _relicChestRooms = new();
     private readonly List<ConnectionEntry> _connections = new();
 
     private MinimapView _view;
@@ -24,12 +27,17 @@ public sealed class MinimapController : IDisposable, ITickable
     private RoomData _currentRoom;
 
     public MinimapController(IRogueLikeRuntimeDataService runtimeDataService,
-        MinimapElementFactory elementFactory, ICharacterProvider characterProvider)
+        MinimapElementFactory elementFactory, ICharacterProvider characterProvider,
+        RelicEventBus relicEventBus)
     {
         _runtimeDataService = runtimeDataService;
         _elementFactory = elementFactory;
         _characterProvider = characterProvider;
+        _relicEventBus = relicEventBus;
         _runtimeDataService.RoomChanged += HandleRoomChanged;
+        _relicEventBus.ChestsCleared += HandleRelicChestsCleared;
+        _relicEventBus.ChestSpawned += HandleRelicChestSpawned;
+        _relicEventBus.ChestCollected += HandleRelicChestCollected;
     }
 
     public void Attach(MinimapView view)
@@ -59,8 +67,13 @@ public sealed class MinimapController : IDisposable, ITickable
             Build();
     }
 
-    public void Dispose() =>
+    public void Dispose()
+    {
         _runtimeDataService.RoomChanged -= HandleRoomChanged;
+        _relicEventBus.ChestsCleared -= HandleRelicChestsCleared;
+        _relicEventBus.ChestSpawned -= HandleRelicChestSpawned;
+        _relicEventBus.ChestCollected -= HandleRelicChestCollected;
+    }
 
     public void Tick()
     {
@@ -120,6 +133,7 @@ public sealed class MinimapController : IDisposable, ITickable
             Vector2 position = ToUiPosition(room.Position, center);
             MinimapRoomIcon icon = _elementFactory.CreateRoom(_view, position);
             icon.SetKind(room.Kind, room.ExitDirection);
+            icon.SetChestVisible(_relicChestRooms.Contains(room.Data));
             _icons.Add(room.Data, icon);
         }
 
@@ -188,6 +202,33 @@ public sealed class MinimapController : IDisposable, ITickable
 
         _currentRoom = currentRoom;
         UpdateStates();
+    }
+
+    private void HandleRelicChestsCleared()
+    {
+        _relicChestRooms.Clear();
+        foreach (MinimapRoomIcon icon in _icons.Values)
+            icon.SetChestVisible(false);
+    }
+
+    private void HandleRelicChestSpawned(RoomData roomData)
+    {
+        if (roomData == null)
+            return;
+
+        _relicChestRooms.Add(roomData);
+        if (_icons.TryGetValue(roomData, out MinimapRoomIcon icon))
+            icon.SetChestVisible(true);
+    }
+
+    private void HandleRelicChestCollected(RoomData roomData)
+    {
+        if (roomData == null)
+            return;
+
+        _relicChestRooms.Remove(roomData);
+        if (_icons.TryGetValue(roomData, out MinimapRoomIcon icon))
+            icon.SetChestVisible(false);
     }
 
     private void UpdateStates()

@@ -3,6 +3,7 @@ using Core;
 using Cysharp.Threading.Tasks;
 using Features.Enemies.Scripts;
 using Features.Enemies.Scripts.Level.Scripts;
+using Features.Relics.Scripts;
 using IngameDebugConsole;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -17,6 +18,10 @@ public sealed class GameDebugService : IInitializable, IDisposable
     private const string RestartRoomCommand = "debug.room.restart";
     private const string RestartGameCommand = "debug.game.restart";
     private const string StatusCommand = "debug.status";
+    private const string GiveRelicCommand = "debug.relic.give";
+    private const string GiveRandomRelicCommand = "debug.relic.random";
+    private const string ClearRelicsCommand = "debug.relic.clear";
+    private const string PrintRelicsCommand = "debug.relics";
 
     private readonly ICharacterLevelService _characterLevelService;
     private readonly CharacterExpConfig _characterExpConfig;
@@ -28,6 +33,8 @@ public sealed class GameDebugService : IInitializable, IDisposable
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
     private readonly IRoomTransitionService _roomTransitionService;
     private readonly IPauseService _pauseService;
+    private readonly RelicManager _relicManager;
+    private readonly RelicPool _relicPool;
 
     private bool _commandsRegistered;
     private bool _isRestartingGame;
@@ -37,7 +44,8 @@ public sealed class GameDebugService : IInitializable, IDisposable
         EnemiesWaveObserver enemiesWaveObserver, IRogueLikeRuntimeDataService runtimeDataService,
         IGameModeService gameModeService, ISceneLoader sceneLoader,
         ISceneService<RogueLikeSceneProvider> sceneService,
-        IRoomTransitionService roomTransitionService, IPauseService pauseService)
+        IRoomTransitionService roomTransitionService, IPauseService pauseService,
+        RelicManager relicManager, RelicPool relicPool)
     {
         _characterLevelService = characterLevelService;
         _characterExpConfig = characterExpConfig;
@@ -49,6 +57,8 @@ public sealed class GameDebugService : IInitializable, IDisposable
         _sceneService = sceneService;
         _roomTransitionService = roomTransitionService;
         _pauseService = pauseService;
+        _relicManager = relicManager;
+        _relicPool = relicPool;
     }
 
     public void Initialize()
@@ -70,6 +80,14 @@ public sealed class GameDebugService : IInitializable, IDisposable
             "Restarts the current run", RestartGame);
         DebugLogConsole.AddCommand(StatusCommand,
             "Shows the current debug gameplay state", GetStatus);
+        DebugLogConsole.AddCommand<string, string>(GiveRelicCommand,
+            "Gives relic by id", GiveRelic, "id");
+        DebugLogConsole.AddCommand(GiveRandomRelicCommand,
+            "Gives a random available relic", GiveRandomRelic);
+        DebugLogConsole.AddCommand(ClearRelicsCommand,
+            "Clears all active relics", ClearRelics);
+        DebugLogConsole.AddCommand(PrintRelicsCommand,
+            "Prints active relics", PrintRelics);
 
         _commandsRegistered = true;
     }
@@ -86,6 +104,10 @@ public sealed class GameDebugService : IInitializable, IDisposable
         DebugLogConsole.RemoveCommand(RestartRoomCommand);
         DebugLogConsole.RemoveCommand(RestartGameCommand);
         DebugLogConsole.RemoveCommand(StatusCommand);
+        DebugLogConsole.RemoveCommand(GiveRelicCommand);
+        DebugLogConsole.RemoveCommand(GiveRandomRelicCommand);
+        DebugLogConsole.RemoveCommand(ClearRelicsCommand);
+        DebugLogConsole.RemoveCommand(PrintRelicsCommand);
         _commandsRegistered = false;
     }
 
@@ -179,6 +201,30 @@ public sealed class GameDebugService : IInitializable, IDisposable
                $"room {room}, wave {_enemiesWaveObserver.CurrentWave + 1}, " +
                $"enemies {_enemiesProvider.Count}, state {state}.";
     }
+
+    private string GiveRelic(string id) =>
+        _relicManager.GiveRelic(id, _relicPool)
+            ? $"Relic '{id}' added. {_relicManager.PrintActiveRelics()}"
+            : $"Relic '{id}' was not found or cannot be added.";
+
+    private string GiveRandomRelic()
+    {
+        RelicDefinition relic = _relicPool.Roll(_relicManager.ActiveRelics);
+        if (relic == null)
+            return "No available relics in pool.";
+
+        _relicManager.AddRelic(relic);
+        return $"Relic '{relic.Id}' added. {_relicManager.PrintActiveRelics()}";
+    }
+
+    private string ClearRelics()
+    {
+        _relicManager.ClearRelics();
+        return "Relics cleared.";
+    }
+
+    private string PrintRelics() =>
+        _relicManager.PrintActiveRelics();
 
     private string ValidateRoomCommand(bool requireEnemies)
     {

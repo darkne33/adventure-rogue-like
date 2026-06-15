@@ -2,6 +2,7 @@
 using Core.Services;
 using Features.Enemies.Scripts;
 using Features.Enemies.Scripts.Level.Scripts;
+using Features.Relics.Scripts;
 using UnityEngine;
 using Zenject;
 
@@ -15,6 +16,8 @@ public class RogueLikeMonoInstaller : MonoInstaller
     [SerializeField] private LevelsConfiguration _levelsConfiguration;
 
     [SerializeField] private AllAbilitiesConfiguration _abilitiesConfiguration;
+    [SerializeField] private RelicPoolConfiguration _relicPoolConfiguration;
+    [SerializeField] private RelicChestConfiguration _relicChestConfiguration;
 
     [SerializeField] private SceneNames.SceneNameType _sceneNameType;
 
@@ -29,6 +32,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         BindCharacterWallet();
         BindCharacterStats();
         BindUpgradeOffer();
+        BindRelics();
         BindDebugMode();
     }
 
@@ -92,6 +96,21 @@ public class RogueLikeMonoInstaller : MonoInstaller
     {
         Container.Bind<IUpgradeOfferGenerator>().To<UpgradeOfferGenerator>().AsSingle();
         Container.BindInterfacesAndSelfTo<UpgradeOfferHandler>().AsSingle();
+    }
+
+    private void BindRelics()
+    {
+        _relicPoolConfiguration ??= Resources.Load<RelicPoolConfiguration>("Relics/RelicPoolConfiguration");
+        _relicChestConfiguration ??= Resources.Load<RelicChestConfiguration>("Relics/RelicChestConfiguration");
+
+        Container.Bind<RelicPoolConfiguration>().FromInstance(_relicPoolConfiguration).AsSingle();
+        Container.Bind<RelicChestConfiguration>().FromInstance(_relicChestConfiguration).AsSingle();
+        Container.Bind<RelicEventBus>().AsSingle();
+        Container.Bind<RelicUnlockService>().AsSingle();
+        Container.Bind<RelicPool>().AsSingle();
+        Container.BindInterfacesAndSelfTo<RelicManager>().AsSingle();
+        Container.BindInterfacesAndSelfTo<RelicChestSpawner>().AsSingle();
+        Container.BindInterfacesAndSelfTo<RelicInventoryViewService>().AsSingle();
     }
 
     private void BindDebugMode() =>

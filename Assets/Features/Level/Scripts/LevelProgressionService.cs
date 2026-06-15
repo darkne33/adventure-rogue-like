@@ -3,6 +3,7 @@ using Core;
 using Cysharp.Threading.Tasks;
 using Features.Enemies.Scripts;
 using Features.Enemies.Scripts.Level.Scripts;
+using Features.Relics.Scripts;
 using UnityEngine;
 
 public sealed class LevelProgressionService : ILevelProgressionService, IDisposable
@@ -17,6 +18,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
     private readonly EnemiesWaveObserver _enemiesWaveObserver;
     private readonly IGameModeService _gameModeService;
     private readonly MinimapController _minimapController;
+    private readonly RelicChestSpawner _relicChestSpawner;
 
     private bool _isTransitioning;
     private bool _isRunCompleted;
@@ -25,7 +27,8 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         IRogueLikeRuntimeDataService runtimeDataService, ISceneService<RogueLikeSceneProvider> sceneService,
         ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
         IRoomTransitionService roomTransitionService, EnemiesWaveObserver enemiesWaveObserver,
-        IGameModeService gameModeService, MinimapController minimapController)
+        IGameModeService gameModeService, MinimapController minimapController,
+        RelicChestSpawner relicChestSpawner)
     {
         _levelsConfiguration = levelsConfiguration;
         _levelFactory = levelFactory;
@@ -37,6 +40,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         _enemiesWaveObserver = enemiesWaveObserver;
         _gameModeService = gameModeService;
         _minimapController = minimapController;
+        _relicChestSpawner = relicChestSpawner;
 
         _enemiesWaveObserver.RoomCompleted += HandleRoomCompleted;
     }
@@ -144,6 +148,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         _enemiesProvider.ClearEnemies();
         _runtimeDataService.CurrentIndexLevel = nextLevelIndex;
         sceneProvider.CurrentLevel = nextLevel;
+        _relicChestSpawner.SpawnForLevel(nextLevel);
         _minimapController.SetLevel(nextLevel);
         _runtimeDataService.SetCurrentRoomData(startRoomData);
 
