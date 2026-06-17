@@ -147,6 +147,12 @@ public class CharacterMoveSystem
 
     public void CaptureJumpInput(float deltaTime)
     {
+        if (_pauseEntity.IsPauseEntity)
+        {
+            _jumpInputBufferTimer = 0f;
+            return;
+        }
+
         _jumpInputBufferTimer = Mathf.Max(0f, _jumpInputBufferTimer - deltaTime);
 
         if (_inputActions.Player.Jump.WasPressedThisFrame())
@@ -155,7 +161,7 @@ public class CharacterMoveSystem
 
     public void Jump()
     {
-        if (_jumpInputBufferTimer <= 0f || !_canJump)
+        if (_pauseEntity.IsPauseEntity || _jumpInputBufferTimer <= 0f || !_canJump)
             return;
 
         _jumpInputBufferTimer = 0f;
@@ -168,6 +174,9 @@ public class CharacterMoveSystem
 
     public void Rotate(float deltaTime)
     {
+        if (_pauseEntity.IsPauseEntity)
+            return;
+
         if (_direction.magnitude > 0.1f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(_direction);
@@ -183,6 +192,9 @@ public class CharacterMoveSystem
 
     public void UpdateDash(float deltaTime)
     {
+        if (_pauseEntity.IsPauseEntity)
+            return;
+
         if (_dashCooldownTimer > 0f)
             _dashCooldownTimer -= deltaTime;
     }
@@ -204,7 +216,7 @@ public class CharacterMoveSystem
 
     private void TryDash()
     {
-        if (_dashCooldownTimer > 0f || _direction == Vector3.zero)
+        if (_pauseEntity.IsPauseEntity || _dashCooldownTimer > 0f || _direction == Vector3.zero)
             return;
 
         _characterFxSystem.ActivateDash();
