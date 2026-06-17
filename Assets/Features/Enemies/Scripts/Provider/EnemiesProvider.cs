@@ -8,6 +8,7 @@ namespace Features.Enemies.Scripts
     public class EnemiesProvider : IEnemiesProvider
     {
         public int Count => _enemies.Count;
+        public IReadOnlyList<EnemyFacade> ActiveEnemies => _enemies;
 
         private readonly EnemiesWaveObserver _enemiesWaveObserver;
         private readonly List<EnemyFacade> _enemies = new();

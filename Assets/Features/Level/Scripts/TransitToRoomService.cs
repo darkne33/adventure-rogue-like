@@ -10,6 +10,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
         private readonly ICharacterProvider _characterProvider;
         private readonly IGameModeService _gameModeService;
         private readonly IRoomTransitionService _roomTransitionService;
+        private bool _isTransitioning;
 
         public TransitToRoomService(IRogueLikeRuntimeDataService runtimeDataService,
             ICharacterProvider characterProvider, IGameModeService gameModeService,
@@ -23,7 +24,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
 
         public void Transit(Room nextRoom, RoomDoor entryDoor)
         {
-            if (_roomTransitionService.IsPlaying)
+            if (_isTransitioning || _roomTransitionService.IsPlaying)
                 return;
 
             if (nextRoom == null)
@@ -43,39 +44,57 @@ namespace Features.Enemies.Scripts.Level.Scripts
             if (_characterProvider.CharacterFacade == null)
                 throw new System.InvalidOperationException("Character is not available for room transition.");
 
+            _isTransitioning = true;
             CloseRoomDoors(_runtimeDataService.CurrentRoomData);
             TransitAsync(roomData, entryDoor).Forget();
         }
 
         private async UniTask TransitAsync(RoomData roomData, RoomDoor entryDoor)
         {
-            await _roomTransitionService.Play(() =>
+            try
             {
-                _runtimeDataService.SetCurrentRoomData(roomData);
-
-                Transform teleportPlayerTarget = entryDoor.transform;
-                const int offset = 10;
-                Vector3 characterPosition = teleportPlayerTarget.position + teleportPlayerTarget.forward * offset;
-
-                _characterProvider.CharacterFacade.transform.position = characterPosition;
-                entryDoor.Close();
-
-                if (roomData is DefaultEnemiesRoomData)
+                await _roomTransitionService.Play(() =>
                 {
-                    _gameModeService.Get<RogueLikeStateMachine>()
-                        .EnterState<RogueLikeRoomPrepareState>().Forget();
-                }
-                else
-                {
-                    foreach (RoomDoor roomDoor in roomData.RoomDoors)
+                    _runtimeDataService.SetCurrentRoomData(roomData);
+
+                    Transform teleportPlayerTarget = entryDoor.transform;
+                    const int offset = 10;
+                    Vector3 characterPosition = teleportPlayerTarget.position + teleportPlayerTarget.forward * offset;
+
+                    TeleportCharacter(characterPosition);
+                    entryDoor.Close();
+
+                    if (roomData is DefaultEnemiesRoomData)
                     {
-                        if (roomDoor != null)
-                            roomDoor.Open();
+                        _gameModeService.Get<RogueLikeStateMachine>()
+                            .EnterState<RogueLikeRoomPrepareState>().Forget();
                     }
-                }
+                    else
+                    {
+                        foreach (RoomDoor roomDoor in roomData.RoomDoors)
+                        {
+                            if (roomDoor != null)
+                                roomDoor.Open();
+                        }
+                    }
 
-                return UniTask.CompletedTask;
-            });
+                    return UniTask.CompletedTask;
+                });
+            }
+            finally
+            {
+                _isTransitioning = false;
+            }
+        }
+
+        private void TeleportCharacter(Vector3 position)
+        {
+            CharacterFacade character = _characterProvider.CharacterFacade;
+            character.Rigidbody.linearVelocity = Vector3.zero;
+            character.Rigidbody.angularVelocity = Vector3.zero;
+            character.Rigidbody.position = position;
+            character.transform.position = position;
+            Physics.SyncTransforms();
         }
 
         private static void CloseRoomDoors(RoomData roomData)

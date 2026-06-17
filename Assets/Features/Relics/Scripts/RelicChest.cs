@@ -10,6 +10,10 @@ namespace Features.Relics.Scripts
     {
         private InputSystem_Actions _inputActions;
 
+        public bool IsOpened => _isOpened;
+        public Room Room => _room;
+        public RoomData RoomData => _roomData;
+
         [SerializeField] private Outline _outline;
         [SerializeField] private CanvasGroup _interactionPromptCanvasGroup;
         [SerializeField] private Transform _interactionPromptTransform;
@@ -23,6 +27,7 @@ namespace Features.Relics.Scripts
         private ICharacterProvider _characterProvider;
         private DiContainer _container;
         private RoomData _roomData;
+        private Room _room;
         private bool _isOpened;
         private bool _isInteractionAvailable;
         private Transform _lid;
@@ -44,7 +49,7 @@ namespace Features.Relics.Scripts
 
         public void Construct(RelicDefinition relic, RelicChestConfiguration configuration,
             RelicManager relicManager, RelicEventBus eventBus, ICharacterProvider characterProvider,
-            DiContainer container, RoomData roomData)
+            DiContainer container, RoomData roomData, Room room)
         {
             _relic = relic;
             _configuration = configuration;
@@ -53,6 +58,7 @@ namespace Features.Relics.Scripts
             _characterProvider = characterProvider;
             _container = container;
             _roomData = roomData;
+            _room = room;
             _lid = transform.GetComponentsInChildren<Transform>(true)
                 .FirstOrDefaultByName("Chest_cap");
         }
@@ -155,7 +161,8 @@ namespace Features.Relics.Scripts
                 Quaternion.identity,
                 transform.parent);
             pickup.name = $"RelicPickup_{_relic.Id}";
-            pickup.Construct(_relic, _configuration, _relicManager, _eventBus, _characterProvider, _roomData);
+            pickup.Construct(_relic, _configuration, _relicManager, _eventBus, _characterProvider,
+                _roomData, _room, true);
         }
     }
 

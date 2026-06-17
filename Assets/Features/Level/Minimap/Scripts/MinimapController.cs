@@ -1,43 +1,42 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Features.Relics.Scripts;
+using Features.Enemies.Scripts;
 using UnityEngine;
 using Zenject;
 
 public sealed class MinimapController : IDisposable, ITickable
 {
-    private const float BpmMapRotationOffset = 45f;
-
     private readonly IRogueLikeRuntimeDataService _runtimeDataService;
     private readonly MinimapElementFactory _elementFactory;
     private readonly ICharacterProvider _characterProvider;
-    private readonly RelicEventBus _relicEventBus;
+    private readonly IEnemiesProvider _enemiesProvider;
+    private readonly MinimapChestMarkerController _chestMarkerController;
     private readonly Dictionary<RoomData, MinimapRoomIcon> _icons = new();
+    private readonly Dictionary<Room, MinimapRoomIcon> _iconsByRoom = new();
     private readonly Dictionary<RoomData, Room> _roomViews = new();
     private readonly Dictionary<Vector2Int, RoomData> _roomsByPosition = new();
     private readonly Dictionary<RoomData, Vector2Int> _positionsByRoom = new();
-    private readonly Dictionary<RoomData, RoomBounds> _boundsByRoom = new();
+    private readonly Dictionary<RoomData, MinimapRoomBounds> _boundsByRoom = new();
+    private readonly Dictionary<Room, MinimapRoomBounds> _boundsByRoomView = new();
     private readonly HashSet<RoomData> _visitedRooms = new();
-    private readonly HashSet<RoomData> _relicChestRooms = new();
     private readonly List<ConnectionEntry> _connections = new();
 
     private MinimapView _view;
     private LevelView _level;
     private RoomData _currentRoom;
+    private readonly List<Vector2> _enemyPositions = new();
 
     public MinimapController(IRogueLikeRuntimeDataService runtimeDataService,
         MinimapElementFactory elementFactory, ICharacterProvider characterProvider,
-        RelicEventBus relicEventBus)
+        IEnemiesProvider enemiesProvider, MinimapChestMarkerController chestMarkerController)
     {
         _runtimeDataService = runtimeDataService;
         _elementFactory = elementFactory;
         _characterProvider = characterProvider;
-        _relicEventBus = relicEventBus;
+        _enemiesProvider = enemiesProvider;
+        _chestMarkerController = chestMarkerController;
         _runtimeDataService.RoomChanged += HandleRoomChanged;
-        _relicEventBus.ChestsCleared += HandleRelicChestsCleared;
-        _relicEventBus.ChestSpawned += HandleRelicChestSpawned;
-        _relicEventBus.ChestCollected += HandleRelicChestCollected;
     }
 
     public void Attach(MinimapView view)
@@ -70,9 +69,6 @@ public sealed class MinimapController : IDisposable, ITickable
     public void Dispose()
     {
         _runtimeDataService.RoomChanged -= HandleRoomChanged;
-        _relicEventBus.ChestsCleared -= HandleRelicChestsCleared;
-        _relicEventBus.ChestSpawned -= HandleRelicChestSpawned;
-        _relicEventBus.ChestCollected -= HandleRelicChestCollected;
     }
 
     public void Tick()
@@ -88,13 +84,14 @@ public sealed class MinimapController : IDisposable, ITickable
 
         Vector3 localPosition =
             currentRoomView.transform.InverseTransformPoint(character.transform.position);
-        Vector2 normalizedPosition = _boundsByRoom.TryGetValue(_currentRoom, out RoomBounds bounds)
+        Vector2 normalizedPosition = _boundsByRoom.TryGetValue(_currentRoom, out MinimapRoomBounds bounds)
             ? bounds.Normalize(localPosition)
             : NormalizeByDefaultRoomSize(localPosition);
         currentIcon.SetPlayerPosition(normalizedPosition);
 
-        float mapRotation = character.CameraPivot.eulerAngles.y + BpmMapRotationOffset;
+        float mapRotation = character.CameraPivot.eulerAngles.y;
         currentIcon.SetPlayerRotation(-mapRotation);
+        UpdateEnemyMarkers(currentIcon, currentRoomView);
         _view.Content.localRotation = Quaternion.Euler(0f, 0f, mapRotation);
 
         Vector2 roomPosition =
@@ -123,7 +120,9 @@ public sealed class MinimapController : IDisposable, ITickable
             _roomsByPosition.Add(room.Position, room.Data);
             _positionsByRoom.Add(room.Data, room.Position);
             _roomViews.Add(room.Data, room.View);
-            _boundsByRoom.Add(room.Data, CalculateRoomBounds(room.View));
+            MinimapRoomBounds bounds = CalculateRoomBounds(room.View);
+            _boundsByRoom.Add(room.Data, bounds);
+            _boundsByRoomView.Add(room.View, bounds);
         }
 
         BuildConnections(rooms, center);
@@ -133,14 +132,16 @@ public sealed class MinimapController : IDisposable, ITickable
             Vector2 position = ToUiPosition(room.Position, center);
             MinimapRoomIcon icon = _elementFactory.CreateRoom(_view, position);
             icon.SetKind(room.Kind, room.ExitDirection);
-            icon.SetChestVisible(_relicChestRooms.Contains(room.Data));
             _icons.Add(room.Data, icon);
+            _iconsByRoom.Add(room.View, icon);
         }
 
         RoomData currentRoom = _runtimeDataService.CurrentRoomData;
         if (currentRoom != null && _positionsByRoom.ContainsKey(currentRoom))
             _currentRoom = currentRoom;
 
+        _chestMarkerController.SetRooms(_iconsByRoom, _boundsByRoomView);
+        SyncCurrentRoomMarkers();
         UpdateStates();
     }
 
@@ -201,34 +202,43 @@ public sealed class MinimapController : IDisposable, ITickable
             _visitedRooms.Add(previousRoom);
 
         _currentRoom = currentRoom;
+        foreach (MinimapRoomIcon icon in _icons.Values)
+            icon.SetEnemyPositions(null);
+
+        SyncCurrentRoomMarkers();
         UpdateStates();
     }
 
-    private void HandleRelicChestsCleared()
+    private void UpdateEnemyMarkers(MinimapRoomIcon currentIcon, Room currentRoomView)
     {
-        _relicChestRooms.Clear();
-        foreach (MinimapRoomIcon icon in _icons.Values)
-            icon.SetChestVisible(false);
+        _enemyPositions.Clear();
+        IReadOnlyList<EnemyFacade> enemies = _enemiesProvider.ActiveEnemies;
+
+        for (int index = 0; index < enemies.Count; index++)
+        {
+            EnemyFacade enemy = enemies[index];
+            if (enemy == null || enemy.gameObject.activeInHierarchy == false)
+                continue;
+
+            Vector3 localPosition =
+                currentRoomView.transform.InverseTransformPoint(enemy.transform.position);
+            Vector2 normalizedPosition = _boundsByRoom.TryGetValue(_currentRoom, out MinimapRoomBounds bounds)
+                ? bounds.Normalize(localPosition)
+                : NormalizeByDefaultRoomSize(localPosition);
+
+            _enemyPositions.Add(normalizedPosition);
+        }
+
+        currentIcon.SetEnemyPositions(_enemyPositions);
     }
 
-    private void HandleRelicChestSpawned(RoomData roomData)
+    private void SyncCurrentRoomMarkers()
     {
-        if (roomData == null)
-            return;
-
-        _relicChestRooms.Add(roomData);
-        if (_icons.TryGetValue(roomData, out MinimapRoomIcon icon))
-            icon.SetChestVisible(true);
-    }
-
-    private void HandleRelicChestCollected(RoomData roomData)
-    {
-        if (roomData == null)
-            return;
-
-        _relicChestRooms.Remove(roomData);
-        if (_icons.TryGetValue(roomData, out MinimapRoomIcon icon))
-            icon.SetChestVisible(false);
+        Room currentRoomView = _currentRoom != null &&
+                               _roomViews.TryGetValue(_currentRoom, out Room roomView)
+            ? roomView
+            : null;
+        _chestMarkerController.SetCurrentRoom(currentRoomView);
     }
 
     private void UpdateStates()
@@ -296,11 +306,11 @@ public sealed class MinimapController : IDisposable, ITickable
         return new Vector2(localPosition.x / roomHalfSize, localPosition.z / roomHalfSize);
     }
 
-    private static RoomBounds CalculateRoomBounds(Room room)
+    private static MinimapRoomBounds CalculateRoomBounds(Room room)
     {
         Renderer[] renderers = room.GetComponentsInChildren<Renderer>(true);
         if (renderers.Length == 0)
-            return RoomBounds.Default;
+            return MinimapRoomBounds.Default;
 
         bool hasBounds = false;
         float minX = float.PositiveInfinity;
@@ -329,9 +339,9 @@ public sealed class MinimapController : IDisposable, ITickable
         }
 
         if (!hasBounds || maxX - minX <= Mathf.Epsilon || maxZ - minZ <= Mathf.Epsilon)
-            return RoomBounds.Default;
+            return MinimapRoomBounds.Default;
 
-        return new RoomBounds(minX, maxX, minZ, maxZ);
+        return new MinimapRoomBounds(minX, maxX, minZ, maxZ);
     }
 
     private static void Include(Transform rendererTransform, Transform roomTransform,
@@ -349,42 +359,19 @@ public sealed class MinimapController : IDisposable, ITickable
 
     private void ClearRuntimeView()
     {
+        _chestMarkerController.Clear();
+
         if (_view != null)
             _view.Clear();
 
         _icons.Clear();
+        _iconsByRoom.Clear();
         _roomViews.Clear();
         _roomsByPosition.Clear();
         _positionsByRoom.Clear();
         _boundsByRoom.Clear();
+        _boundsByRoomView.Clear();
         _connections.Clear();
-    }
-
-    private readonly struct RoomBounds
-    {
-        public static RoomBounds Default { get; } = new(
-            -LevelView.RoomWorldSize * 0.5f,
-            LevelView.RoomWorldSize * 0.5f,
-            -LevelView.RoomWorldSize * 0.5f,
-            LevelView.RoomWorldSize * 0.5f);
-
-        private readonly float _minX;
-        private readonly float _maxX;
-        private readonly float _minZ;
-        private readonly float _maxZ;
-
-        public RoomBounds(float minX, float maxX, float minZ, float maxZ)
-        {
-            _minX = minX;
-            _maxX = maxX;
-            _minZ = minZ;
-            _maxZ = maxZ;
-        }
-
-        public Vector2 Normalize(Vector3 localPosition) =>
-            new(
-                Mathf.InverseLerp(_minX, _maxX, localPosition.x) * 2f - 1f,
-                Mathf.InverseLerp(_minZ, _maxZ, localPosition.z) * 2f - 1f);
     }
 
     private readonly struct RoomEntry

@@ -18,7 +18,7 @@ namespace Core.Installer
             Application.targetFrameRate = 120;
             
             Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = true;
+            Cursor.visible = false;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (_debugConsolePrefab != null)
@@ -50,6 +50,7 @@ namespace Core.Installer
             
             Container.Bind<CharacterExpConfig>().FromInstance(_characterExpConfig).AsSingle();
             Container.Bind<ICharacterLevelService>().To<CharacterLevelService>().AsSingle();
+            Container.Bind<ICursorService>().To<CursorService>().AsSingle();
             Container.Bind<IPauseService>().To<PauseService>().AsSingle();
             Container.Bind<PauseEntityDistributor>().AsSingle();
         }

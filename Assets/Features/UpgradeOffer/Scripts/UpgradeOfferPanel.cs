@@ -1,10 +1,13 @@
 using Cysharp.Threading.Tasks;
 using UI;
 using UnityEngine;
+using Zenject;
 
 public class UpgradeOfferPanel : MonoBehaviour
 {
     [field: SerializeField] public Transform UpgradesRoot { get; private set; }
+
+    [Inject] private ICursorService _cursorService;
 
     private PanelAnimationsMonoComponent _panelAnimationsMonoComponent;
 
@@ -13,20 +16,19 @@ public class UpgradeOfferPanel : MonoBehaviour
         _panelAnimationsMonoComponent = GetComponent<PanelAnimationsMonoComponent>();
     }
 
-    public UniTask Show()
+    public async UniTask Show()
     {
         gameObject.SetActive(true);
         _panelAnimationsMonoComponent.ForceHide();
-        Cursor.lockState = CursorLockMode.Confined;
-        Cursor.visible = true;
-        return _panelAnimationsMonoComponent.Show();
+        _cursorService.ShowUiCursor();
+        await _panelAnimationsMonoComponent.Show();
+        _cursorService.ShowUiCursor();
     }
 
     public async UniTask Hide()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
         await _panelAnimationsMonoComponent.Hide();
         gameObject.SetActive(false);
+        _cursorService.ShowGameplayCursor();
     }
 }

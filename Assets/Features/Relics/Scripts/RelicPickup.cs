@@ -9,6 +9,10 @@ namespace Features.Relics.Scripts
 {
     public sealed class RelicPickup : MonoBehaviour
     {
+        private const float AutoCollectDuration = 0.45f;
+        private const float AutoCollectArcHeight = 1.1f;
+        private const float AutoCollectTargetHeight = 1.2f;
+
         [Inject] private ICameraService _cameraService;
 
         private InputSystem_Actions _inputActions;
@@ -19,6 +23,7 @@ namespace Features.Relics.Scripts
         private RelicEventBus _eventBus;
         private ICharacterProvider _characterProvider;
         private RoomData _roomData;
+        private Room _room;
         private SpriteRenderer _spriteRenderer;
         private bool _isPicked;
 
@@ -27,7 +32,7 @@ namespace Features.Relics.Scripts
 
         public void Construct(RelicDefinition relic, RelicChestConfiguration configuration,
             RelicManager relicManager, RelicEventBus eventBus, ICharacterProvider characterProvider,
-            RoomData roomData)
+            RoomData roomData, Room room, bool collectImmediately = false)
         {
             _relic = relic;
             _configuration = configuration;
@@ -35,6 +40,7 @@ namespace Features.Relics.Scripts
             _eventBus = eventBus;
             _characterProvider = characterProvider;
             _roomData = roomData;
+            _room = room;
 
             _spriteRenderer = GetComponent<SpriteRenderer>();
             if (_spriteRenderer != null)
@@ -45,7 +51,10 @@ namespace Features.Relics.Scripts
 
             transform.localScale = Vector3.one * 1.15f;
 
-            AnimateDrop();
+            if (collectImmediately)
+                AutoCollect().Forget();
+            else
+                AnimateDrop();
         }
 
         private void OnEnable()
@@ -65,7 +74,7 @@ namespace Features.Relics.Scripts
 
         private void Update()
         {
-            if (_isPicked || _characterProvider?.CharacterFacade == null)
+            if (_isPicked || _configuration == null || _characterProvider?.CharacterFacade == null)
                 return;
 
             Transform character = _characterProvider.CharacterFacade.transform;
@@ -109,13 +118,74 @@ namespace Features.Relics.Scripts
                 return;
 
             _isPicked = true;
+            await ActivateAndDestroy();
+        }
+
+        private async UniTaskVoid AutoCollect()
+        {
+            if (_isPicked)
+                return;
+
+            _isPicked = true;
+            await FlyToCharacter();
+            await ActivateAndDestroy();
+        }
+
+        private async UniTask FlyToCharacter()
+        {
+            Transform character = _characterProvider?.CharacterFacade != null
+                ? _characterProvider.CharacterFacade.transform
+                : null;
+
+            if (character == null)
+                return;
+
+            Vector3 startPosition = transform.position;
+            Tween rotateTween = transform.DORotate(new Vector3(0f, 360f, 0f), AutoCollectDuration,
+                    RotateMode.FastBeyond360)
+                .SetEase(Ease.Linear)
+                .SetLoops(-1)
+                .SetLink(gameObject);
+
+            Tween scaleTween = transform.DOScale(Vector3.one * 1.45f, AutoCollectDuration * 0.45f)
+                .SetEase(Ease.OutBack)
+                .SetLink(gameObject);
+
+            Tween flyTween = DOVirtual.Float(0f, 1f, AutoCollectDuration, progress =>
+                {
+                    if (this == null)
+                        return;
+
+                    Vector3 targetPosition = character.position + Vector3.up * AutoCollectTargetHeight;
+                    Vector3 position = Vector3.LerpUnclamped(startPosition, targetPosition, progress);
+                    position.y += Mathf.Sin(progress * Mathf.PI) * AutoCollectArcHeight;
+                    transform.position = position;
+                })
+                .SetEase(Ease.InCubic)
+                .SetLink(gameObject);
+
+            try
+            {
+                await flyTween.ToUniTask(cancellationToken: this.GetCancellationTokenOnDestroy());
+            }
+            finally
+            {
+                rotateTween.Kill();
+                scaleTween.Kill();
+            }
+        }
+
+        private async UniTask ActivateAndDestroy()
+        {
             if (_relicManager.AddRelic(_relic) == false)
             {
                 _isPicked = false;
                 return;
             }
 
-            _eventBus.PublishChestCollected(_roomData);
+            _eventBus.PublishChestCollected(_roomData, _room);
+            transform.DOKill();
+
             await transform.DOScale(Vector3.one * 1.7f, 0.12f)
                 .SetEase(Ease.OutQuad)
                 .ToUniTask(cancellationToken: this.GetCancellationTokenOnDestroy());

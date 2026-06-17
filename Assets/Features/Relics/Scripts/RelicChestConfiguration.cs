@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Features.Relics.Scripts
 {
@@ -7,7 +8,9 @@ namespace Features.Relics.Scripts
     {
         [field: SerializeField] public GameObject ChestPrefab { get; private set; }
         [field: SerializeField] public GameObject RelicPickupPrefab { get; private set; }
-        [field: SerializeField, Min(0)] public int ChestsPerLevel { get; private set; } = 2;
+        [field: SerializeField, Min(0)] public int MinChestsPerLevel { get; private set; } = 1;
+        [field: FormerlySerializedAs("<ChestsPerLevel>k__BackingField")]
+        [field: SerializeField, Min(0)] public int MaxChestsPerLevel { get; private set; } = 2;
         [field: SerializeField, Min(0f)] public float ChestRoomOffsetRadius { get; private set; } = 4f;
         [field: SerializeField, Min(1)] public int ChestSpawnAttempts { get; private set; } = 24;
         [field: SerializeField, Min(0f)] public float GroundRayStartHeight { get; private set; } = 50f;

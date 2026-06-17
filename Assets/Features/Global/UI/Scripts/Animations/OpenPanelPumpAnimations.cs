@@ -27,6 +27,7 @@ namespace UI
             return DOTween.Sequence()
                 .SetId($"{_canvasGroup.gameObject.name} Pump Show")
                 .SetLink(_pumpRoot.gameObject)
+                .SetUpdate(true)
                 .Append(_pumpRoot.DOScale(1.03f, _showTime).From(0.97f))
                 .Append(_pumpRoot.DOScale(1f, _showTime))
                 .ToUniTask(cancellationToken: GetToken());
@@ -36,6 +37,7 @@ namespace UI
             _canvasGroup
                 .DOFade(0, _hideTime)
                 .SetId($"{_canvasGroup.gameObject.name} Pump Hide")
+                .SetUpdate(true)
                 .ToUniTask(cancellationToken: GetToken());
 
         public void ForceShow()

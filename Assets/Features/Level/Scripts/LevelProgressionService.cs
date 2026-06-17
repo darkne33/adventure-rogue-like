@@ -148,9 +148,9 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         _enemiesProvider.ClearEnemies();
         _runtimeDataService.CurrentIndexLevel = nextLevelIndex;
         sceneProvider.CurrentLevel = nextLevel;
-        _relicChestSpawner.SpawnForLevel(nextLevel);
         _minimapController.SetLevel(nextLevel);
         _runtimeDataService.SetCurrentRoomData(startRoomData);
+        _relicChestSpawner.SpawnForLevel(nextLevel);
 
         sceneProvider.NavMeshSurface.RemoveData();
         sceneProvider.NavMeshSurface.BuildNavMesh();

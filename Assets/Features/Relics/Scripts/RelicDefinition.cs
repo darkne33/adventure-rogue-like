@@ -164,8 +164,8 @@ namespace Features.Relics.Scripts
         public event Action<RelicDamageTakenEvent> DamageTaken;
         public event Action<RelicHealEvent> Heal;
         public event Action<Vector3> ChestOpened;
-        public event Action<RoomData> ChestSpawned;
-        public event Action<RoomData> ChestCollected;
+        public event Action<RoomData, Room, Vector3> ChestSpawned;
+        public event Action<RoomData, Room> ChestCollected;
         public event Action ChestsCleared;
 
         public void PublishHit(RelicHitEvent hitEvent) =>
@@ -183,11 +183,11 @@ namespace Features.Relics.Scripts
         public void PublishChestOpened(Vector3 position) =>
             ChestOpened?.Invoke(position);
 
-        public void PublishChestSpawned(RoomData roomData) =>
-            ChestSpawned?.Invoke(roomData);
+        public void PublishChestSpawned(RoomData roomData, Room room, Vector3 position) =>
+            ChestSpawned?.Invoke(roomData, room, position);
 
-        public void PublishChestCollected(RoomData roomData) =>
-            ChestCollected?.Invoke(roomData);
+        public void PublishChestCollected(RoomData roomData, Room room) =>
+            ChestCollected?.Invoke(roomData, room);
 
         public void PublishChestsCleared() =>
             ChestsCleared?.Invoke();
@@ -827,6 +827,7 @@ namespace Features.Relics.Scripts
             float previousScale = Time.timeScale;
             Time.timeScale = Mathf.Min(Time.timeScale, TimeSlowScale);
             await UniTask.Delay(TimeSpan.FromSeconds(duration), ignoreTimeScale: true);
+            await UniTask.WaitWhile(() => Mathf.Approximately(Time.timeScale, 0f));
 
             if (Mathf.Approximately(Time.timeScale, TimeSlowScale))
                 Time.timeScale = previousScale;
@@ -862,7 +863,10 @@ namespace Features.Relics.Scripts
         private readonly RelicManager _relicManager;
         private readonly RelicEventBus _eventBus;
         private readonly DiContainer _container;
-        private readonly HashSet<DefaultEnemiesRoomData> _spawnedRooms = new();
+        private readonly HashSet<Room> _spawnedRooms = new();
+        private readonly List<RelicChest> _activeChests = new();
+
+        public IReadOnlyList<RelicChest> ActiveChests => _activeChests;
 
         public RelicChestSpawner(ICharacterProvider characterProvider, RelicChestConfiguration configuration,
             LevelsConfiguration levelsConfiguration, RelicPool relicPool, RelicManager relicManager,
@@ -880,10 +884,11 @@ namespace Features.Relics.Scripts
         public void SpawnForLevel(LevelView level)
         {
             _spawnedRooms.Clear();
+            _activeChests.Clear();
             _eventBus.PublishChestsCleared();
 
             if (level == null || _configuration.ChestPrefab == null ||
-                _configuration.RelicPickupPrefab == null || _configuration.ChestsPerLevel <= 0)
+                _configuration.RelicPickupPrefab == null)
                 return;
 
             List<Room> rooms = level.Rooms
@@ -894,14 +899,17 @@ namespace Features.Relics.Scripts
                 return;
 
             Shuffle(rooms);
-            int chestCount = Mathf.Min(_configuration.ChestsPerLevel, rooms.Count);
+            int chestCount = GetRandomChestCount(rooms.Count);
+            if (chestCount <= 0)
+                return;
+
             var excludedRelicIds = new HashSet<string>();
             int spawnedCount = 0;
 
             for (int index = 0; index < rooms.Count && spawnedCount < chestCount; index++)
             {
                 if (rooms[index].RoomData is not DefaultEnemiesRoomData roomData ||
-                    _spawnedRooms.Contains(roomData))
+                    _spawnedRooms.Contains(rooms[index]))
                     continue;
 
                 RelicDefinition relic = _relicPool.Roll(_relicManager.ActiveRelics, excludedRelicIds);
@@ -914,9 +922,25 @@ namespace Features.Relics.Scripts
             }
         }
 
+        private int GetRandomChestCount(int availableRooms)
+        {
+            if (availableRooms <= 0)
+                return 0;
+
+            int min = Mathf.Min(_configuration.MinChestsPerLevel, _configuration.MaxChestsPerLevel);
+            int max = Mathf.Max(_configuration.MinChestsPerLevel, _configuration.MaxChestsPerLevel);
+
+            min = Mathf.Clamp(min, 0, availableRooms);
+            max = Mathf.Clamp(max, 0, availableRooms);
+            if (max <= min)
+                return min;
+
+            return UnityEngine.Random.Range(min, max + 1);
+        }
+
         private bool SpawnChest(Room room, DefaultEnemiesRoomData roomData, RelicDefinition relic)
         {
-            if (_spawnedRooms.Contains(roomData))
+            if (_spawnedRooms.Contains(room))
                 return false;
 
             if (TryGetGroundPoint(room, out Vector3 groundPoint) == false)
@@ -934,10 +958,11 @@ namespace Features.Relics.Scripts
                     $"{_configuration.ChestPrefab.name} must contain RelicChest component.");
 
             AlignBottomToGround(chestObject, groundPoint.y);
-            _spawnedRooms.Add(roomData);
+            _spawnedRooms.Add(room);
+            _activeChests.Add(chest);
             chest.Construct(relic, _configuration, _relicManager, _eventBus, _characterProvider,
-                _container, roomData);
-            _eventBus.PublishChestSpawned(roomData);
+                _container, roomData, room);
+            _eventBus.PublishChestSpawned(roomData, room, chestObject.transform.position);
             return true;
         }
 
@@ -946,21 +971,49 @@ namespace Features.Relics.Scripts
             int attempts = Mathf.Max(1, _configuration.ChestSpawnAttempts);
             List<Collider> groundColliders = GetGroundColliders(room);
 
+            if (TryCreateGroundSpawnBounds(groundColliders, out Bounds spawnBounds))
+            {
+                for (int attempt = 0; attempt < attempts; attempt++)
+                {
+                    Vector3 candidate = GetRandomSpawnCandidate(spawnBounds);
+                    if (TryProjectToGround(room, candidate, out groundPoint) &&
+                        IsObstacleFree(groundPoint) &&
+                        IsAwayFromDoors(room, groundPoint))
+                    {
+                        return true;
+                    }
+                }
+
+                if (TryProjectToGround(room, spawnBounds.center, out groundPoint) &&
+                    IsObstacleFree(groundPoint) &&
+                    IsAwayFromDoors(room, groundPoint))
+                {
+                    return true;
+                }
+            }
+
             for (int attempt = 0; attempt < attempts; attempt++)
             {
                 Vector3 candidate = groundColliders.Count > 0
                     ? GetRandomSpawnCandidate(groundColliders)
                     : GetRandomSpawnCandidate(room);
 
-                if (TryProjectToGround(candidate, out groundPoint) && IsObstacleFree(groundPoint))
+                if (TryProjectToGround(room, candidate, out groundPoint) &&
+                    IsObstacleFree(groundPoint) &&
+                    IsAwayFromDoors(room, groundPoint))
+                {
                     return true;
+                }
             }
 
             foreach (Collider groundCollider in groundColliders.OrderByDescending(GetHorizontalArea))
             {
-                if (TryProjectToGround(groundCollider.bounds.center, out groundPoint) &&
-                    IsObstacleFree(groundPoint))
+                if (TryProjectToGround(room, groundCollider.bounds.center, out groundPoint) &&
+                    IsObstacleFree(groundPoint) &&
+                    IsAwayFromDoors(room, groundPoint))
+                {
                     return true;
+                }
             }
 
             groundPoint = Vector3.zero;
@@ -984,6 +1037,39 @@ namespace Features.Relics.Scripts
 
             return groundColliders;
         }
+
+        private bool TryCreateGroundSpawnBounds(IReadOnlyList<Collider> groundColliders, out Bounds spawnBounds)
+        {
+            if (groundColliders.Count == 0)
+            {
+                spawnBounds = default;
+                return false;
+            }
+
+            spawnBounds = groundColliders[0].bounds;
+            for (int index = 1; index < groundColliders.Count; index++)
+                spawnBounds.Encapsulate(groundColliders[index].bounds);
+
+            float padding = CalculateSpawnPadding(spawnBounds);
+            if (padding <= 0f)
+                return true;
+
+            spawnBounds.Expand(new Vector3(-padding * 2f, 0f, -padding * 2f));
+            return spawnBounds.size.x > Mathf.Epsilon && spawnBounds.size.z > Mathf.Epsilon;
+        }
+
+        private float CalculateSpawnPadding(Bounds bounds)
+        {
+            float requestedPadding = Mathf.Max(5f, _configuration.ObstacleCheckRadius * 4f);
+            float maxPadding = Mathf.Min(bounds.extents.x, bounds.extents.z) - 0.5f;
+            return Mathf.Clamp(requestedPadding, 0f, Mathf.Max(0f, maxPadding));
+        }
+
+        private Vector3 GetRandomSpawnCandidate(Bounds bounds) =>
+            new(
+                UnityEngine.Random.Range(bounds.min.x, bounds.max.x),
+                bounds.max.y,
+                UnityEngine.Random.Range(bounds.min.z, bounds.max.z));
 
         private Vector3 GetRandomSpawnCandidate(IReadOnlyList<Collider> groundColliders)
         {
@@ -1021,11 +1107,18 @@ namespace Features.Relics.Scripts
             return room.transform.TransformPoint(localPosition);
         }
 
-        private bool TryProjectToGround(Vector3 position, out Vector3 groundPoint)
+        private bool TryProjectToGround(Room room, Vector3 position, out Vector3 groundPoint)
         {
             Vector3 rayOrigin = position + Vector3.up * _configuration.GroundRayStartHeight;
             if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit,
                     _configuration.GroundRayDistance, GetGroundLayerMask(), QueryTriggerInteraction.Ignore) == false)
+            {
+                groundPoint = Vector3.zero;
+                return false;
+            }
+
+            if (hit.collider == null || hit.collider.transform.IsChildOf(room.transform) == false ||
+                hit.normal.y < 0.75f)
             {
                 groundPoint = Vector3.zero;
                 return false;
@@ -1044,6 +1137,28 @@ namespace Features.Relics.Scripts
             Collider[] colliders = Physics.OverlapSphere(checkPosition, _configuration.ObstacleCheckRadius,
                 _levelsConfiguration.ObstacleLayer, QueryTriggerInteraction.Ignore);
             return colliders.Length == 0;
+        }
+
+        private bool IsAwayFromDoors(Room room, Vector3 position)
+        {
+            const float MinDoorDistance = 8f;
+
+            if (room.RoomData?.RoomDoors == null)
+                return true;
+
+            float minDoorDistanceSqr = MinDoorDistance * MinDoorDistance;
+            foreach (RoomDoor door in room.RoomData.RoomDoors)
+            {
+                if (door == null)
+                    continue;
+
+                Vector3 offset = door.transform.position - position;
+                offset.y = 0f;
+                if (offset.sqrMagnitude < minDoorDistanceSqr)
+                    return false;
+            }
+
+            return true;
         }
 
         private LayerMask GetGroundLayerMask() =>

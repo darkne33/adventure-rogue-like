@@ -85,15 +85,24 @@ public class RoomDoor : MonoBehaviour
         _rightDoor.gameObject.SetActive(false);
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other) =>
+        TryTransit(other);
+
+    private void OnTriggerStay(Collider other) =>
+        TryTransit(other);
+
+    private void TryTransit(Collider other)
     {
-        CharacterFacade characterFacade = other.GetComponent<CharacterFacade>();
-        if (characterFacade != null && _isOpen)
-        {
-            if (_isLevelExit)
-                _levelProgressionService.TransitToNextLevel();
-            else
-                _transitToRoomService.Transit(_nextRoom, _nextRoomEntryDoor);
-        }
+        if (!_isOpen)
+            return;
+
+        CharacterFacade characterFacade = other.GetComponentInParent<CharacterFacade>();
+        if (characterFacade == null)
+            return;
+
+        if (_isLevelExit)
+            _levelProgressionService.TransitToNextLevel();
+        else
+            _transitToRoomService.Transit(_nextRoom, _nextRoomEntryDoor);
     }
 }

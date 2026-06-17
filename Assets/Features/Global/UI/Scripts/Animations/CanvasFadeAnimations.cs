@@ -26,12 +26,14 @@ namespace UI
                 .From(0)
                 .SetDelay(_delayBeforeShow)
                 .SetId($"{_canvasGroup.gameObject.name} ShowFade")
+                .SetUpdate(true)
                 .ToUniTask(cancellationToken: GetToken());
 
         public UniTask Hide() =>
             _canvasGroup
                 .DOFade(0, _hideTime)
                 .SetId($"{_canvasGroup.gameObject.name} Hide")
+                .SetUpdate(true)
                 .ToUniTask(cancellationToken: GetToken());
 
         public void ForceShow()
