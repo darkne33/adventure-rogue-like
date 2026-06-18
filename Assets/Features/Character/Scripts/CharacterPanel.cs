@@ -1,4 +1,5 @@
 using TMPro;
+using Features.Relics.Scripts;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,4 +13,5 @@ public class CharacterPanel : PanelBase
     [field: SerializeField] public MinimapView MinimapView { get; private set; }
     [field: SerializeField] public Slider ExpProgressBar { get; private set; }
     [field: SerializeField] public UpgradeOfferPanel UpgradeOfferPanel { get; private set; }
+    [field: SerializeField] public RelicInventoryView RelicInventoryViewPrefab { get; private set; }
 }

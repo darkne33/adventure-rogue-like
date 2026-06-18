@@ -11,6 +11,8 @@ public class CharacterStats
     public float CritDamage;
     public float LifeSteal;
     public float ThornsDamage;
+    public float CooldownReduction;
+    public float ProjectileCount;
     
     //Survival
     public float MaxHp;
@@ -22,6 +24,8 @@ public class CharacterStats
     public float GainHp;
     public float Luck;
     public float GainGold;
+    public float XPBonus;
+    public float PickupRange;
     
     //Movement
     public float MovementSpeed;

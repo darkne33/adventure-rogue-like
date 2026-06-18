@@ -3,6 +3,7 @@ using UnityEngine;
 public abstract class CharacterActiveAbility : CharacterAbility
 {
     private const float PERCENT_MULTIPLIER = 0.01f;
+    private const float CooldownReductionCap = 80f;
 
     private CharacterStats _characterStats;
 
@@ -29,7 +30,9 @@ public abstract class CharacterActiveAbility : CharacterAbility
 
         float attackSpeedMultiplier =
             1f + Mathf.Max(0f, _characterStats?.AttackSpeed ?? 0f) * PERCENT_MULTIPLIER;
-        CurrentCooldown = Cooldown / attackSpeedMultiplier;
+        float cooldownReductionMultiplier =
+            1f - Mathf.Clamp(_characterStats?.CooldownReduction ?? 0f, 0f, CooldownReductionCap) * PERCENT_MULTIPLIER;
+        CurrentCooldown = Cooldown * cooldownReductionMultiplier / attackSpeedMultiplier;
     }
 
     public override void OnEquip(CharacterStats characterStats)

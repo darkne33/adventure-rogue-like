@@ -25,8 +25,19 @@ public class EnemyDeathSystem : IDeathSystem
     public void HandleDeath()
     {
         _enemiesProvider.RemoveEnemy(_enemyFacade);
-        _characterLevelService.AddExp(_enemyConfiguration.Exp);
+        _characterLevelService.AddExp(CalculateExpReward(_enemyConfiguration.Exp));
         _characterFacade.HealthSystem.IncreaseCurrentHealth(Mathf.Max(0f, _characterStats.GainHp));
         Object.Destroy(_enemyFacade.gameObject);
+    }
+
+    private int CalculateExpReward(int baseReward)
+    {
+        float scaledReward = baseReward * (1f + Mathf.Max(0f, _characterStats.XPBonus) * 0.01f);
+        int reward = Mathf.FloorToInt(scaledReward);
+
+        if (Random.value < scaledReward - reward)
+            reward++;
+
+        return Mathf.Max(0, reward);
     }
 }

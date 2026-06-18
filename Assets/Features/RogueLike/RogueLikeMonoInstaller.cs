@@ -89,6 +89,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
     private void BindCharacterStats()
     {
         Container.Bind<CharacterStats>().AsSingle();
+        Container.Bind<CharacterStatModifierLayer>().AsSingle();
         Container.Bind<CharacterDamageCalculator>().AsSingle();
     }
 
@@ -108,6 +109,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<RelicEventBus>().AsSingle();
         Container.Bind<RelicUnlockService>().AsSingle();
         Container.Bind<RelicPool>().AsSingle();
+        Container.Bind<IRelicVisualEffectService>().To<RelicVisualEffectService>().AsSingle();
         Container.BindInterfacesAndSelfTo<RelicManager>().AsSingle();
         Container.BindInterfacesAndSelfTo<RelicChestSpawner>().AsSingle();
         Container.BindInterfacesAndSelfTo<MinimapChestMarkerController>().AsSingle();

@@ -14,6 +14,7 @@ namespace Features.Relics.Scripts
         private const float AutoCollectTargetHeight = 1.2f;
 
         [Inject] private ICameraService _cameraService;
+        [Inject] private CharacterStats _characterStats;
 
         private InputSystem_Actions _inputActions;
 
@@ -78,7 +79,7 @@ namespace Features.Relics.Scripts
                 return;
 
             Transform character = _characterProvider.CharacterFacade.transform;
-            if (Vector3.Distance(transform.position, character.position) > _configuration.RelicPickupDistance)
+            if (Vector3.Distance(transform.position, character.position) > GetPickupDistance())
                 return;
 
             if (_inputActions != null && _inputActions.Player.Interact.WasPressedThisFrame())
@@ -193,6 +194,12 @@ namespace Features.Relics.Scripts
                 .SetEase(Ease.InBack)
                 .ToUniTask(cancellationToken: this.GetCancellationTokenOnDestroy());
             Destroy(gameObject);
+        }
+
+        private float GetPickupDistance()
+        {
+            float pickupRangeMultiplier = 1f + Mathf.Max(0f, _characterStats?.PickupRange ?? 0f) * 0.01f;
+            return _configuration.RelicPickupDistance * pickupRangeMultiplier;
         }
     }
 }

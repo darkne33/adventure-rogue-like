@@ -31,5 +31,7 @@ namespace Core.Services
     public enum EffectName
     {
         EnemyPortal = 1,
+        RelicMeteorImpact = 100,
+        RelicExplosiveCrate = 101,
     }
 }

@@ -14,5 +14,13 @@
     GainHp = 12,
     Luck = 13,
     GainGold = 14,
-    MovementSpeed = 15
+    MovementSpeed = 15,
+    XPBonus = 16,
+    PickupRange = 17,
+    ProjectileCount = 18,
+    CooldownReduction = 19,
+    MovementAcceleration = 20,
+    JumpForce = 21,
+    RotationSpeed = 22,
+    GravityMultiplier = 23
 }

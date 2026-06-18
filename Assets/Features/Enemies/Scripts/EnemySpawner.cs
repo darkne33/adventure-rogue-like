@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Features.Enemies.Scripts;
+using Features.Relics.Scripts;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -12,6 +13,7 @@ public class EnemySpawner
     private readonly LevelsConfiguration _levelsConfiguration;
     private readonly IEnemiesProvider _enemiesProvider;
     private readonly IEffectsService _effectsService;
+    private readonly RelicEventBus _relicEventBus;
 
     private readonly Vector2 _spawnRadius = new Vector2(0, 40f);
 
@@ -23,13 +25,15 @@ public class EnemySpawner
     private const float ObstacleCheckHeight = 1f;
 
     public EnemySpawner(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IEnemyFactory enemyFactory,
-        LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider, IEffectsService effectsService)
+        LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider, IEffectsService effectsService,
+        RelicEventBus relicEventBus)
     {
         _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
         _enemyFactory = enemyFactory;
         _levelsConfiguration = levelsConfiguration;
         _enemiesProvider = enemiesProvider;
         _effectsService = effectsService;
+        _relicEventBus = relicEventBus;
     }
 
     public void TrySpawnEnemies(CharacterFacade characterFacade, int currentWave)
@@ -79,6 +83,9 @@ public class EnemySpawner
         Vector3 underGroundPosition = spawnPosition + Vector3.down * offsetDown;
         EnemyFacade enemyFacade = _enemyFactory.Create(enemy, underGroundPosition, spawnPosition);
         _enemiesProvider.AddEnemy(enemyFacade);
+
+        if (enemyFacade.Configuration?.EnemyRank == EnemyRank.Boss)
+            _relicEventBus.PublishBossSpawned(new RelicBossSpawnEvent(enemyFacade, spawnPosition));
 
         var portalEffect = _effectsService.GetEffect(EffectName.EnemyPortal);
         var defaultScaleEffect = portalEffect.transform.localScale;

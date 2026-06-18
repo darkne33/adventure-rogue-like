@@ -20,13 +20,14 @@ namespace Core
         private readonly CharacterStats _characterStats;
         private readonly MinimapController _minimapController;
         private readonly RelicChestSpawner _relicChestSpawner;
+        private readonly RelicEventBus _relicEventBus;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
             ISceneService<RogueLikeSceneProvider> sceneService, ICharacterProvider characterProvider,
             ILevelFactory levelFactory, IPanelService panelService,
             IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IAbilityChoiceProvider abilityChoiceProvider,
             ICameraService cameraService, IUpgradeOfferHandler upgradeOfferHandler, CharacterStats characterStats,
-            MinimapController minimapController, RelicChestSpawner relicChestSpawner)
+            MinimapController minimapController, RelicChestSpawner relicChestSpawner, RelicEventBus relicEventBus)
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
@@ -39,6 +40,7 @@ namespace Core
             _characterStats = characterStats;
             _minimapController = minimapController;
             _relicChestSpawner = relicChestSpawner;
+            _relicEventBus = relicEventBus;
         }
 
         public override async UniTask Enter(CancellationToken cts)
@@ -79,6 +81,8 @@ namespace Core
             _characterProvider.CharacterFacade =
                 await _characterFactory.CreatePlayer(startRoomData.StartPoint, cts);
             _characterProvider.CharacterFacade.Initialize();
+            _relicEventBus.PublishRoomStarted(new RelicRoomEvent(startRoomData, currentLevel.StartRoom,
+                _characterProvider.CharacterFacade.transform.position));
 
             _characterProvider.CharacterFacade.CharacterAbilitySystem.AddAbility(
                 _abilityChoiceProvider.GetAbility(AbilityName.RabbitBoomerang), _characterStats);

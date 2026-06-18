@@ -19,6 +19,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
     private readonly IGameModeService _gameModeService;
     private readonly MinimapController _minimapController;
     private readonly RelicChestSpawner _relicChestSpawner;
+    private readonly RelicEventBus _relicEventBus;
 
     private bool _isTransitioning;
     private bool _isRunCompleted;
@@ -28,7 +29,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
         IRoomTransitionService roomTransitionService, EnemiesWaveObserver enemiesWaveObserver,
         IGameModeService gameModeService, MinimapController minimapController,
-        RelicChestSpawner relicChestSpawner)
+        RelicChestSpawner relicChestSpawner, RelicEventBus relicEventBus)
     {
         _levelsConfiguration = levelsConfiguration;
         _levelFactory = levelFactory;
@@ -41,6 +42,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         _gameModeService = gameModeService;
         _minimapController = minimapController;
         _relicChestSpawner = relicChestSpawner;
+        _relicEventBus = relicEventBus;
 
         _enemiesWaveObserver.RoomCompleted += HandleRoomCompleted;
     }
@@ -165,6 +167,8 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         character.Rigidbody.angularVelocity = Vector3.zero;
         character.transform.SetPositionAndRotation(startRoomData.StartPoint.position,
             startRoomData.StartPoint.rotation);
+        _relicEventBus.PublishRoomStarted(new RelicRoomEvent(startRoomData, nextLevel.StartRoom,
+            character.transform.position));
 
         return UniTask.CompletedTask;
     }

@@ -12,6 +12,8 @@ public class CharacterSettingsConfiguration : ScriptableObject
     [field: SerializeField] public float CritDamage { get; private set; }
     [field: SerializeField] public float LifeSteal { get; private set; }
     [field: SerializeField] public float ThornsDamage { get; private set; }
+    [field: SerializeField] public float CooldownReduction { get; private set; }
+    [field: SerializeField] public float ProjectileCount { get; private set; }
 
     [field: Header("Survival")]
     [field: SerializeField] public int MaxHp { get; private set; } = 54;
@@ -23,6 +25,8 @@ public class CharacterSettingsConfiguration : ScriptableObject
     [field: SerializeField] public float GainHp { get; private set; }
     [field: SerializeField] public float Luck { get; private set; }
     [field: SerializeField] public float GainGold { get; private set; }
+    [field: SerializeField] public float XPBonus { get; private set; }
+    [field: SerializeField] public float PickupRange { get; private set; }
 
     [field: Header("Movement Settings")] 
     [field: SerializeField] public float MovementSpeed { get; private set; } = 10;

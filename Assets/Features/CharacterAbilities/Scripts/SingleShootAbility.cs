@@ -8,6 +8,8 @@ using UnityEngine;
 
 public class SingleShootAbility : CharacterActiveAbility
 {
+    private const float ProjectileSpreadOffset = 0.35f;
+
     private int _damage;
 
     private ShootableAbilityConfiguration _abilityConfig;
@@ -60,14 +62,23 @@ public class SingleShootAbility : CharacterActiveAbility
 
     protected override void OnUse(CharacterFacade character)
     {
+        int projectileCount = CalculateProjectileCount();
+        for (int index = 0; index < projectileCount; index++)
+            ShootProjectile(character, index, projectileCount);
+    }
+
+    private void ShootProjectile(CharacterFacade character, int projectileIndex, int projectileCount)
+    {
         EnemyFacade randomEnemy = _enemiesProvider.GetRandomClosestEnemyByCharacter(character.transform, 100);
 
         if (randomEnemy == null)
             return;
 
         var randomEnemyPosition = randomEnemy.TargetToShootDamage.position;
+        Vector3 spawnPosition = character.transform.position +
+                                GetProjectileSpawnOffset(character.transform, projectileIndex, projectileCount);
 
-        var shootObj = Object.Instantiate(_abilityConfig.Prefab, character.transform.position, Quaternion.identity);
+        var shootObj = Object.Instantiate(_abilityConfig.Prefab, spawnPosition, Quaternion.identity);
         shootObj.transform.rotation =
             Quaternion.LookRotation(shootObj.transform.position - randomEnemyPosition);
 
@@ -86,6 +97,12 @@ public class SingleShootAbility : CharacterActiveAbility
 
     private void DamageDeal(CharacterFacade character, GameObject shootObj, EnemyFacade enemyFacade)
     {
+        if (enemyFacade == null || enemyFacade.HealthSystem.IsDead)
+        {
+            DestroyShoot(shootObj);
+            return;
+        }
+
         CharacterDamageResult damageResult = _damageCalculator.Calculate(_damage);
         int finalDamage = _relicManager.ModifyOutgoingDamage(damageResult.Damage, enemyFacade);
         int appliedDamage = enemyFacade.HealthSystem.GetDamage(finalDamage, damageResult.IsCritical);
@@ -112,6 +129,28 @@ public class SingleShootAbility : CharacterActiveAbility
         }
 
         DestroyShoot(shootObj);
+    }
+
+    private int CalculateProjectileCount()
+    {
+        float projectileBonus = Mathf.Max(0f, _characterStats.ProjectileCount);
+        int projectileCount = 1 + Mathf.FloorToInt(projectileBonus);
+        float fractionalProjectile = projectileBonus - Mathf.Floor(projectileBonus);
+
+        if (Random.value < fractionalProjectile)
+            projectileCount++;
+
+        return Mathf.Max(1, projectileCount);
+    }
+
+    private static Vector3 GetProjectileSpawnOffset(Transform characterTransform, int projectileIndex,
+        int projectileCount)
+    {
+        if (projectileCount <= 1)
+            return Vector3.zero;
+
+        float centeredIndex = projectileIndex - (projectileCount - 1) * 0.5f;
+        return characterTransform.right * centeredIndex * ProjectileSpreadOffset;
     }
 
     private void DestroyShoot(GameObject shootObj)

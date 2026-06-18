@@ -1,5 +1,6 @@
 ﻿using Core;
 using Cysharp.Threading.Tasks;
+using Features.Relics.Scripts;
 using UnityEngine;
 
 namespace Features.Enemies.Scripts.Level.Scripts
@@ -10,16 +11,18 @@ namespace Features.Enemies.Scripts.Level.Scripts
         private readonly ICharacterProvider _characterProvider;
         private readonly IGameModeService _gameModeService;
         private readonly IRoomTransitionService _roomTransitionService;
+        private readonly RelicEventBus _relicEventBus;
         private bool _isTransitioning;
 
         public TransitToRoomService(IRogueLikeRuntimeDataService runtimeDataService,
             ICharacterProvider characterProvider, IGameModeService gameModeService,
-            IRoomTransitionService roomTransitionService)
+            IRoomTransitionService roomTransitionService, RelicEventBus relicEventBus)
         {
             _runtimeDataService = runtimeDataService;
             _characterProvider = characterProvider;
             _gameModeService = gameModeService;
             _roomTransitionService = roomTransitionService;
+            _relicEventBus = relicEventBus;
         }
 
         public void Transit(Room nextRoom, RoomDoor entryDoor)
@@ -46,10 +49,10 @@ namespace Features.Enemies.Scripts.Level.Scripts
 
             _isTransitioning = true;
             CloseRoomDoors(_runtimeDataService.CurrentRoomData);
-            TransitAsync(roomData, entryDoor).Forget();
+            TransitAsync(nextRoom, roomData, entryDoor).Forget();
         }
 
-        private async UniTask TransitAsync(RoomData roomData, RoomDoor entryDoor)
+        private async UniTask TransitAsync(Room nextRoom, RoomData roomData, RoomDoor entryDoor)
         {
             try
             {
@@ -63,6 +66,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
 
                     TeleportCharacter(characterPosition);
                     entryDoor.Close();
+                    _relicEventBus.PublishRoomStarted(new RelicRoomEvent(roomData, nextRoom, characterPosition));
 
                     if (roomData is DefaultEnemiesRoomData)
                     {
