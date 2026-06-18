@@ -219,12 +219,15 @@ namespace Features.Relics.Scripts
         public CharacterFacade Killer { get; }
         public EnemyFacade Target { get; }
         public Vector3 Position { get; }
+        public string SourceId { get; }
 
-        public RelicKillEvent(CharacterFacade killer, EnemyFacade target, Vector3 position)
+        public RelicKillEvent(CharacterFacade killer, EnemyFacade target, Vector3 position,
+            string sourceId = null)
         {
             Killer = killer;
             Target = target;
             Position = position;
+            SourceId = sourceId;
         }
     }
 
@@ -360,6 +363,11 @@ namespace Features.Relics.Scripts
         private const float TimeSlowScale = 0.2f;
         private const float TimeSlowDuration = 3f;
         private const float FatalInvulnerabilityDuration = 1.5f;
+        private const string EliteBossDamageEffectId = "elite_boss_damage";
+        private const string ExplosiveCrateEffectId = "explosive_crate";
+        private const string HexDotStatusId = "hex_dot";
+        private const string MeteorEffectId = "meteor";
+        private const string StillnessHealStatusId = "stillness_heal";
 
         private readonly CharacterStats _characterStats;
         private readonly RelicEventBus _eventBus;
@@ -399,7 +407,7 @@ namespace Features.Relics.Scripts
             {
                 foreach (RelicEffectDefinition effect in state.Definition.Effects ?? Array.Empty<RelicEffectDefinition>())
                 {
-                    if (effect.StatusEffectId != "stillness_heal" || state.IsBroken)
+                    if (effect.StatusEffectId != StillnessHealStatusId || state.IsBroken)
                         continue;
 
                     stillnessHeal += effect.Value * state.StackCount;
@@ -514,7 +522,7 @@ namespace Features.Relics.Scripts
                 {
                     if (effect.TriggerType != RelicTriggerType.PassiveStat ||
                         effect.StatType != RelicStatType.DamageMultiplier ||
-                        effect.EffectPrefabId != "elite_boss_damage")
+                        effect.EffectPrefabId != EliteBossDamageEffectId)
                         continue;
 
                     if (IsEliteOrBoss(target))
@@ -620,17 +628,18 @@ namespace Features.Relics.Scripts
             if (hitEvent.Target == null || hitEvent.Target.HealthSystem.IsDead)
                 return;
 
-            if (effect.StatusEffectId == "hex_dot")
+            if (effect.StatusEffectId == HexDotStatusId)
             {
                 ApplyHexDamage(effect, hitEvent).Forget();
                 return;
             }
 
-            if (effect.EffectPrefabId == "meteor")
+            if (effect.EffectPrefabId == MeteorEffectId)
             {
                 PlayMeteorEffect(hitEvent.HitPosition, effect.Radius).Forget();
                 DealAreaDamage(hitEvent.HitPosition, Mathf.Max(1f, effect.Radius),
-                    Mathf.Max(1, Mathf.RoundToInt(hitEvent.Damage * effect.Value)));
+                    Mathf.Max(1, Mathf.RoundToInt(hitEvent.Damage * effect.Value)),
+                    MeteorEffectId);
                 return;
             }
         }
@@ -638,7 +647,8 @@ namespace Features.Relics.Scripts
         private void ApplyOnKillEffect(RelicRuntimeState state, RelicEffectDefinition effect,
             RelicKillEvent killEvent)
         {
-            if (effect.EffectPrefabId != "explosive_crate")
+            if (effect.EffectPrefabId != ExplosiveCrateEffectId ||
+                killEvent.SourceId == ExplosiveCrateEffectId)
                 return;
 
             SpawnExplosiveCrate(killEvent.Position, Mathf.Max(1f, effect.Radius),
@@ -667,8 +677,9 @@ namespace Features.Relics.Scripts
                     : effect.Value;
                 float maxHealthDamage = target.HealthSystem.MaxHealth * Mathf.Max(0f, value);
                 int damage = Mathf.Max(1, Mathf.RoundToInt(maxHealthDamage));
-                target.HealthSystem.GetDamage(damage);
+                int appliedDamage = target.HealthSystem.GetDamage(damage);
                 target.EffectsSystem.DealDamage(0.04f);
+                PublishRelicKillIfDead(target, HexDotStatusId, appliedDamage);
             }
         }
 
@@ -701,7 +712,7 @@ namespace Features.Relics.Scripts
             {
                 if (effect.TriggerType == RelicTriggerType.PassiveStat)
                 {
-                    if (effect.EffectPrefabId == "elite_boss_damage")
+                    if (effect.EffectPrefabId == EliteBossDamageEffectId)
                         continue;
 
                     ApplyStat(effect.StatType, effect.Value, effect.ScalingType, stackDelta);
@@ -762,7 +773,7 @@ namespace Features.Relics.Scripts
             }
         }
 
-        private void DealAreaDamage(Vector3 center, float radius, int damage)
+        private void DealAreaDamage(Vector3 center, float radius, int damage, string sourceId)
         {
             EnemyFacade[] enemies = UnityEngine.Object.FindObjectsByType<EnemyFacade>(FindObjectsSortMode.None);
             foreach (EnemyFacade enemy in enemies)
@@ -773,9 +784,25 @@ namespace Features.Relics.Scripts
                 if ((enemy.transform.position - center).sqrMagnitude > radius * radius)
                     continue;
 
-                enemy.HealthSystem.GetDamage(damage);
+                int appliedDamage = enemy.HealthSystem.GetDamage(damage);
+                if (appliedDamage <= 0)
+                    continue;
+
                 enemy.EffectsSystem.DealDamage(0.06f);
+                PublishRelicKillIfDead(enemy, sourceId, appliedDamage);
             }
+        }
+
+        private void PublishRelicKillIfDead(EnemyFacade enemy, string sourceId, int appliedDamage)
+        {
+            if (enemy == null || appliedDamage <= 0 || enemy.HealthSystem.IsDead == false)
+                return;
+
+            CharacterFacade character = _characterProvider.CharacterFacade;
+            if (character == null)
+                return;
+
+            _eventBus.PublishKill(new RelicKillEvent(character, enemy, enemy.transform.position, sourceId));
         }
 
         private async UniTaskVoid PlayMeteorEffect(Vector3 position, float radius)
@@ -815,7 +842,7 @@ namespace Features.Relics.Scripts
             await UniTask.Delay(TimeSpan.FromSeconds(1f),
                 cancellationToken: crate.GetCancellationTokenOnDestroy());
 
-            DealAreaDamage(crate.transform.position, radius, damage);
+            DealAreaDamage(crate.transform.position, radius, damage, ExplosiveCrateEffectId);
             _ = crate.transform.DOScale(Vector3.one * radius, 0.15f).SetEase(Ease.OutQuad);
             await UniTask.Delay(TimeSpan.FromSeconds(0.16f),
                 cancellationToken: crate.GetCancellationTokenOnDestroy());

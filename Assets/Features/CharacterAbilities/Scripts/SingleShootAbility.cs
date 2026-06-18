@@ -89,6 +89,7 @@ public class SingleShootAbility : CharacterActiveAbility
         CharacterDamageResult damageResult = _damageCalculator.Calculate(_damage);
         int finalDamage = _relicManager.ModifyOutgoingDamage(damageResult.Damage, enemyFacade);
         int appliedDamage = enemyFacade.HealthSystem.GetDamage(finalDamage, damageResult.IsCritical);
+        bool killedByDirectHit = enemyFacade.HealthSystem.IsDead;
 
         if (appliedDamage > 0)
         {
@@ -105,7 +106,7 @@ public class SingleShootAbility : CharacterActiveAbility
             _relicEventBus.PublishHit(new RelicHitEvent(character, enemyFacade, appliedDamage,
                 damageResult.IsCritical, _abilityConfig.AbilityName.ToString(), enemyFacade.transform.position));
 
-            if (enemyFacade.HealthSystem.IsDead)
+            if (killedByDirectHit)
                 _relicEventBus.PublishKill(new RelicKillEvent(character, enemyFacade,
                     enemyFacade.transform.position));
         }
