@@ -871,13 +871,10 @@ namespace Features.Relics.Scripts
 
         private static bool IsEliteOrBoss(EnemyFacade target)
         {
-            string targetName = target.name.ToLowerInvariant();
-            string configurationName = target.Configuration != null
-                ? target.Configuration.name.ToLowerInvariant()
-                : string.Empty;
+            if (target.Configuration == null)
+                return false;
 
-            return targetName.Contains("elite") || targetName.Contains("boss") ||
-                   configurationName.Contains("elite") || configurationName.Contains("boss");
+            return target.Configuration.EnemyRank is EnemyRank.Elite or EnemyRank.Boss;
         }
     }
 
