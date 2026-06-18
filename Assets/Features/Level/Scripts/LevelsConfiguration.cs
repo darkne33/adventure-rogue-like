@@ -7,6 +7,8 @@ public class LevelsConfiguration : ScriptableObject
 {
     [field: SerializeField] public LayerMask GroundLayer { get; private set; }
     [field: SerializeField] public LayerMask ObstacleLayer { get; private set; }
+    [field: SerializeField] public EnemyWaveScalingConfiguration EnemyWaveScalingConfiguration { get; private set; }
+    [field: SerializeField] public EnemyHealthScalingConfiguration EnemyHealthScalingConfiguration { get; private set; }
     [field: SerializeField] public List<LevelSettings> Levels { get; private set; }
 
     public bool HasLevel(int levelIndex) =>
@@ -23,6 +25,22 @@ public class LevelsConfiguration : ScriptableObject
             throw new InvalidOperationException($"Level configuration at index {levelIndex} is null.");
 
         return level;
+    }
+
+    public EnemyWaveScalingConfiguration GetEnemyWaveScalingConfiguration()
+    {
+        if (EnemyWaveScalingConfiguration == null)
+            throw new InvalidOperationException("Enemy wave scaling configuration is missing.");
+
+        return EnemyWaveScalingConfiguration;
+    }
+
+    public EnemyHealthScalingConfiguration GetEnemyHealthScalingConfiguration()
+    {
+        if (EnemyHealthScalingConfiguration == null)
+            throw new InvalidOperationException("Enemy health scaling configuration is missing.");
+
+        return EnemyHealthScalingConfiguration;
     }
 }
 

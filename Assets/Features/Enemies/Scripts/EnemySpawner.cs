@@ -1,8 +1,10 @@
 ﻿using Core.Services;
+using Core;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -14,6 +16,7 @@ public class EnemySpawner
     private readonly IEnemiesProvider _enemiesProvider;
     private readonly IEffectsService _effectsService;
     private readonly RelicEventBus _relicEventBus;
+    private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
 
     private readonly Vector2 _spawnRadius = new Vector2(0, 40f);
 
@@ -26,7 +29,7 @@ public class EnemySpawner
 
     public EnemySpawner(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IEnemyFactory enemyFactory,
         LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider, IEffectsService effectsService,
-        RelicEventBus relicEventBus)
+        RelicEventBus relicEventBus, ISceneService<RogueLikeSceneProvider> sceneService)
     {
         _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
         _enemyFactory = enemyFactory;
@@ -34,6 +37,7 @@ public class EnemySpawner
         _enemiesProvider = enemiesProvider;
         _effectsService = effectsService;
         _relicEventBus = relicEventBus;
+        _sceneService = sceneService;
     }
 
     public void TrySpawnEnemies(CharacterFacade characterFacade, int currentWave)
@@ -61,9 +65,18 @@ public class EnemySpawner
             throw new System.InvalidOperationException(
                 "Enemy factory configuration is missing for the current level.");
 
-        for (int i = 0; i < wave.EnemyTypes.Length; i++)
+        LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
+        if (currentLevel == null)
+            throw new System.InvalidOperationException("Current level view is not available.");
+
+        int roomIndex = currentLevel.GetEnemyRoomIndex(currentRoomData);
+        EnemyWaveScalingConfiguration scalingConfiguration =
+            _levelsConfiguration.GetEnemyWaveScalingConfiguration();
+        List<EnemyType> enemyTypes = BuildSpawnQueue(scalingConfiguration, wave,
+            _rogueLikeRuntimeDataService.CurrentIndexLevel, roomIndex, currentWave);
+        for (int i = 0; i < enemyTypes.Count; i++)
         {
-            var enemyType = wave.EnemyTypes[i];
+            var enemyType = enemyTypes[i];
 
             if (!TryFindValidSpawnPosition(characterFacade.transform.position, out var spawnPosition))
             {
@@ -75,6 +88,28 @@ public class EnemySpawner
 
             SpawnEnemy(enemy, spawnPosition).Forget();
         }
+    }
+
+    private static List<EnemyType> BuildSpawnQueue(EnemyWaveScalingConfiguration scalingConfiguration,
+        EnemyWavesConfiguration wave, int levelIndex, int roomIndex, int currentWave)
+    {
+        var baseEnemyTypes = new List<EnemyType>(wave.EnemyTypes.Length);
+        for (int i = 0; i < wave.EnemyTypes.Length; i++)
+        {
+            if (wave.EnemyTypes[i] != EnemyType.None)
+                baseEnemyTypes.Add(wave.EnemyTypes[i]);
+        }
+
+        if (baseEnemyTypes.Count == 0)
+            throw new System.InvalidOperationException($"Wave {currentWave} does not contain spawnable enemy types.");
+
+        int enemyCount = scalingConfiguration.GetEnemyCount(baseEnemyTypes.Count,
+            levelIndex, roomIndex, currentWave);
+        var spawnQueue = new List<EnemyType>(enemyCount);
+        for (int i = 0; i < enemyCount; i++)
+            spawnQueue.Add(baseEnemyTypes[i % baseEnemyTypes.Count]);
+
+        return spawnQueue;
     }
 
     private async UniTask SpawnEnemy(GameObject enemy, Vector3 spawnPosition)

@@ -172,6 +172,20 @@ public class LevelView : MonoBehaviour
         roomData != null && _rooms.Any(roomNode =>
             roomNode.IsLevelExit && ReferenceEquals(roomNode.Room.RoomData, roomData));
 
+    public int GetEnemyRoomIndex(RoomData roomData)
+    {
+        if (roomData == null)
+            throw new ArgumentNullException(nameof(roomData));
+
+        for (int i = 0; i < _rooms.Length; i++)
+        {
+            if (ReferenceEquals(_rooms[i]?.Room?.RoomData, roomData))
+                return i;
+        }
+
+        throw new InvalidOperationException($"{name} does not contain the provided enemy room data.");
+    }
+
     private static void ResetDoors(IEnumerable<Room> rooms)
     {
         foreach (Room room in rooms)

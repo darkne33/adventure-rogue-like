@@ -1,4 +1,5 @@
 using System;
+using Core;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -10,14 +11,22 @@ namespace Features.Enemies.Scripts
         private readonly IEnemiesProvider _enemiesProvider;
         private readonly ICharacterLevelService _characterLevelService;
         private readonly CharacterStats _characterStats;
+        private readonly IRogueLikeRuntimeDataService _runtimeDataService;
+        private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
+        private readonly LevelsConfiguration _levelsConfiguration;
 
         public EnemySystemsFactory(ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
-            ICharacterLevelService characterLevelService, CharacterStats characterStats)
+            ICharacterLevelService characterLevelService, CharacterStats characterStats,
+            IRogueLikeRuntimeDataService runtimeDataService, ISceneService<RogueLikeSceneProvider> sceneService,
+            LevelsConfiguration levelsConfiguration)
         {
             _characterProvider = characterProvider;
             _enemiesProvider = enemiesProvider;
             _characterLevelService = characterLevelService;
             _characterStats = characterStats;
+            _runtimeDataService = runtimeDataService;
+            _sceneService = sceneService;
+            _levelsConfiguration = levelsConfiguration;
         }
 
         public void Create(EnemyFacade facade)
@@ -36,7 +45,8 @@ namespace Features.Enemies.Scripts
                 facade.GetComponent<EnemyDashView>());
             var deathSystem = new EnemyDeathSystem(_enemiesProvider, facade, _characterLevelService, configuration,
                 _characterStats, character);
-            var healthSystem = new HealthSystem(configuration.MaxHealth,
+            int maxHealth = GetScaledMaxHealth(configuration.MaxHealth);
+            var healthSystem = new HealthSystem(maxHealth,
                 new IHealthView[] { facade.GetComponent<EnemyHealthView>() }, deathSystem,
                 new IDamageView[] { facade.GetComponent<EnemyDamageNumberView>() });
             var effectsSystem = new DealDamageEffectSystem(facade.MeshRenderers);
@@ -76,5 +86,19 @@ namespace Features.Enemies.Scripts
                 _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyMovementType),
                     configuration.EnemyMovementType, "Enemy movement type is not supported.")
             };
+
+        private int GetScaledMaxHealth(int baseHealth)
+        {
+            if (_runtimeDataService.CurrentRoomData is not DefaultEnemiesRoomData currentRoomData)
+                return baseHealth;
+
+            LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
+            if (currentLevel == null)
+                throw new InvalidOperationException("Current level view is not available.");
+
+            int roomIndex = currentLevel.GetEnemyRoomIndex(currentRoomData);
+            return _levelsConfiguration.GetEnemyHealthScalingConfiguration()
+                .GetMaxHealth(baseHealth, _runtimeDataService.CurrentIndexLevel, roomIndex);
+        }
     }
 }
