@@ -31,6 +31,7 @@ public class LevelView : MonoBehaviour
             return;
 
         ResolveRoomReferences();
+        ResetRoomProgress();
         Dictionary<Vector2Int, Room> roomsByPosition = ValidateAndBuildRoomMap(hasNextLevel);
         ResetDoors(roomsByPosition.Values);
         ConnectAdjacentRooms(roomsByPosition);
@@ -184,6 +185,15 @@ public class LevelView : MonoBehaviour
         }
 
         throw new InvalidOperationException($"{name} does not contain the provided enemy room data.");
+    }
+
+    private void ResetRoomProgress()
+    {
+        foreach (LevelRoomNode roomNode in _rooms)
+        {
+            if (roomNode?.Room?.RoomData is DefaultEnemiesRoomData roomData)
+                roomData.ResetProgress();
+        }
     }
 
     private static void ResetDoors(IEnumerable<Room> rooms)

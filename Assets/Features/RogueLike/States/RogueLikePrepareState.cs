@@ -68,8 +68,8 @@ namespace Core
             if (startRoomData.RoomDoors == null)
                 throw new System.InvalidOperationException("The start room doors are not configured.");
 
-            _minimapController.SetLevel(currentLevel);
             _rogueLikeRuntimeDataService.SetCurrentRoomData(startRoomData);
+            _minimapController.SetLevel(currentLevel);
             _relicChestSpawner.SpawnForLevel(currentLevel);
 
             _sceneService.GameSceneComponentsService.NavMeshSurface.RemoveData();

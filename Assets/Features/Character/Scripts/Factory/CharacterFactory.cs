@@ -19,6 +19,8 @@ public class CharacterFactory : ICharacterFactory
         await _characterConfiguration.CharacterContainer.Load(cancellationToken);
         var character =
             _container.InstantiatePrefabForComponent<CharacterFacade>(_characterConfiguration.CharacterContainer.Get(), spawnPoint);
+        character.transform.SetParent(null, true);
+        character.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
         return character;
     }
 }

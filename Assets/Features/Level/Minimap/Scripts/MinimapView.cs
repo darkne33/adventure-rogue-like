@@ -29,5 +29,8 @@ public sealed class MinimapView : MonoBehaviour
     {
         for (int index = _content.childCount - 1; index >= 0; index--)
             Destroy(_content.GetChild(index).gameObject);
+
+        _content.anchoredPosition = Vector2.zero;
+        _content.localRotation = Quaternion.identity;
     }
 }

@@ -143,6 +143,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         LevelView previousLevel = sceneProvider.CurrentLevel;
         if (previousLevel != null)
         {
+            character.transform.SetParent(null, true);
             previousLevel.gameObject.SetActive(false);
             UnityEngine.Object.Destroy(previousLevel.gameObject);
         }
@@ -150,8 +151,15 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         _enemiesProvider.ClearEnemies();
         _runtimeDataService.CurrentIndexLevel = nextLevelIndex;
         sceneProvider.CurrentLevel = nextLevel;
-        _minimapController.SetLevel(nextLevel);
+
+        character.Rigidbody.linearVelocity = Vector3.zero;
+        character.Rigidbody.angularVelocity = Vector3.zero;
+        character.transform.SetPositionAndRotation(startRoomData.StartPoint.position,
+            startRoomData.StartPoint.rotation);
+        Physics.SyncTransforms();
+
         _runtimeDataService.SetCurrentRoomData(startRoomData);
+        _minimapController.SetLevel(nextLevel);
         _relicChestSpawner.SpawnForLevel(nextLevel);
 
         sceneProvider.NavMeshSurface.RemoveData();
@@ -163,10 +171,6 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
                 roomDoor.Open();
         }
 
-        character.Rigidbody.linearVelocity = Vector3.zero;
-        character.Rigidbody.angularVelocity = Vector3.zero;
-        character.transform.SetPositionAndRotation(startRoomData.StartPoint.position,
-            startRoomData.StartPoint.rotation);
         _relicEventBus.PublishRoomStarted(new RelicRoomEvent(startRoomData, nextLevel.StartRoom,
             character.transform.position));
 
