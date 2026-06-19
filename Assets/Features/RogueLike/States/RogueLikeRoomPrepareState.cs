@@ -10,12 +10,17 @@ namespace Core
     {
         private readonly IRogueLikeRuntimeDataService _rogueLikeRuntimeDataService;
         private readonly EnemiesWaveObserver _enemiesWaveObserver;
+        private readonly EnemySpawner _enemySpawner;
+        private readonly ICharacterProvider _characterProvider;
 
         public RogueLikeRoomPrepareState(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService,
-            EnemiesWaveObserver enemiesWaveObserver)
+            EnemiesWaveObserver enemiesWaveObserver, EnemySpawner enemySpawner,
+            ICharacterProvider characterProvider)
         {
             _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
             _enemiesWaveObserver = enemiesWaveObserver;
+            _enemySpawner = enemySpawner;
+            _characterProvider = characterProvider;
         }
 
         public override async UniTask Enter(CancellationToken cts)
@@ -33,6 +38,7 @@ namespace Core
                 return;
 
             _enemiesWaveObserver.StartRoom();
+            await _enemySpawner.LoadEnemyPrefabs(cts);
 
             foreach (var roomDoor in currentRoomData.RoomDoors)
             {
@@ -40,7 +46,8 @@ namespace Core
                     roomDoor.Close();
             }
 
-            await StateMachine.EnterState<RogueLikeSpawnEnemyWaveState>();
+            _enemySpawner.TrySpawnEnemies(_characterProvider.CharacterFacade,
+                _enemiesWaveObserver.CurrentWave);
         }
     }
 }

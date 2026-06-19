@@ -560,6 +560,7 @@ GameObject:
   - component: {fileID: 6894031882259052635}
   - component: {fileID: 7638345952138939103}
   - component: {fileID: 5148748502717950382}
+  - component: {fileID: 6154003581210548962}
   m_Layer: 6
   m_Name: Chest_cup
   m_TagString: Untagged
@@ -639,6 +640,28 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6154003581210548961}
   m_Mesh: {fileID: -1554437007790259354, guid: 6d47dd76b45ad7f4ea7f861a3eed44d6, type: 3}
+--- !u!95 &6154003581210548962
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6154003581210548961}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 8349d30cb0c9490b83be355a77509549, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage:
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &7387248207753150389
 GameObject:
   m_ObjectHideFlags: 0
@@ -714,6 +737,9 @@ MonoBehaviour:
   _interactionPromptTransform: {fileID: 870000051}
   _promptShowDuration: 0.14
   _promptHideDuration: 0.12
+  _animator: {fileID: 6154003581210548962}
+  _openAnimationTrigger: Open
+  _openPickupDelay: 0.36
 --- !u!114 &7387248207753150391
 MonoBehaviour:
   m_ObjectHideFlags: 0

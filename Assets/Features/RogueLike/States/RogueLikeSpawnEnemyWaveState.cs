@@ -11,20 +11,15 @@ namespace Core
 {
     public class RogueLikeSpawnEnemyWaveState : State
     {
-        private readonly LevelsConfiguration _levelsConfiguration;
         private readonly EnemySpawner _enemySpawner;
-        private readonly IRogueLikeRuntimeDataService _rogueLikeRuntimeDataService;
         private readonly ICharacterProvider _characterProvider;
         private readonly EnemiesWaveObserver _enemiesWaveObserver;
         private readonly IPanelService _panelService;
 
-        public RogueLikeSpawnEnemyWaveState(LevelsConfiguration levelsConfiguration, EnemySpawner enemySpawner,
-            IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, ICharacterProvider characterProvider,
+        public RogueLikeSpawnEnemyWaveState(EnemySpawner enemySpawner, ICharacterProvider characterProvider,
             EnemiesWaveObserver enemiesWaveObserver, IPanelService panelService)
         {
-            _levelsConfiguration = levelsConfiguration;
             _enemySpawner = enemySpawner;
-            _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
             _characterProvider = characterProvider;
             _enemiesWaveObserver = enemiesWaveObserver;
             _panelService = panelService;
@@ -34,13 +29,7 @@ namespace Core
         {
             Log.Gameplay.Info("RogueLikeSpawnEnemyWaveState Completed");
 
-            LevelSettings levelSettings =
-                _levelsConfiguration.GetLevel(_rogueLikeRuntimeDataService.CurrentIndexLevel);
-            if (levelSettings.EnemyFactoryConfiguration == null)
-                throw new InvalidOperationException("Enemy factory configuration is missing for the current level.");
-
-            foreach (var enemyPrefabData in levelSettings.EnemyFactoryConfiguration.EnemyPrefabs)
-                await enemyPrefabData.WavesConfigurationContainer.Load(cts);
+            await _enemySpawner.LoadEnemyPrefabs(cts);
 
             var characterPanel =  _panelService.GetPanelPresenter<CharacterPanelPresenter>(PanelName.CharacterPanel).Panel;
             characterPanel.WaveAlertText.text = $"Wave {_enemiesWaveObserver.CurrentWave + 1}";

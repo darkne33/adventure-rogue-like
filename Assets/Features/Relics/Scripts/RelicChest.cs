@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -19,6 +20,9 @@ namespace Features.Relics.Scripts
         [SerializeField] private Transform _interactionPromptTransform;
         [SerializeField, Min(0f)] private float _promptShowDuration = 0.14f;
         [SerializeField, Min(0f)] private float _promptHideDuration = 0.12f;
+        [SerializeField] private Animator _animator;
+        [SerializeField] private string _openAnimationTrigger = "Open";
+        [SerializeField, Min(0f)] private float _openPickupDelay = 0.36f;
 
         private RelicDefinition _relic;
         private RelicChestConfiguration _configuration;
@@ -30,7 +34,7 @@ namespace Features.Relics.Scripts
         private Room _room;
         private bool _isOpened;
         private bool _isInteractionAvailable;
-        private Transform _lid;
+        private int _openAnimationTriggerHash;
         private Vector3 _promptVisibleScale = Vector3.one;
         private Vector3 _promptHiddenScale = Vector3.one * 0.82f;
 
@@ -44,6 +48,9 @@ namespace Features.Relics.Scripts
                 _promptHiddenScale = _promptVisibleScale * 0.82f;
             }
 
+            _openAnimationTriggerHash = string.IsNullOrWhiteSpace(_openAnimationTrigger)
+                ? 0
+                : Animator.StringToHash(_openAnimationTrigger);
             SetInteractionVisuals(false, true);
         }
 
@@ -59,8 +66,6 @@ namespace Features.Relics.Scripts
             _container = container;
             _roomData = roomData;
             _room = room;
-            _lid = transform.GetComponentsInChildren<Transform>(true)
-                .FirstOrDefaultByName("Chest_cap");
         }
 
         private void OnEnable()
@@ -143,14 +148,23 @@ namespace Features.Relics.Scripts
             SetInteractionVisuals(false);
             _eventBus.PublishChestOpened(transform.position);
 
-            Sequence sequence = DOTween.Sequence();
-            _ = sequence.Append(transform.DOPunchScale(Vector3.one * 0.18f, 0.22f, 5, 0.75f));
-            if (_lid != null)
-                _ = sequence.Join(_lid.DOLocalRotate(new Vector3(-55f, 0f, 0f), 0.35f,
-                    RotateMode.LocalAxisAdd).SetEase(Ease.OutBack));
-
-            await sequence.ToUniTask(cancellationToken: this.GetCancellationTokenOnDestroy());
+            await PlayOpenAnimation();
             SpawnPickup();
+        }
+
+        private async UniTask PlayOpenAnimation()
+        {
+            if (_animator != null && !string.IsNullOrWhiteSpace(_openAnimationTrigger))
+            {
+                _animator.ResetTrigger(_openAnimationTriggerHash);
+                _animator.SetTrigger(_openAnimationTriggerHash);
+            }
+
+            if (_openPickupDelay <= 0f)
+                return;
+
+            await UniTask.Delay(TimeSpan.FromSeconds(_openPickupDelay),
+                cancellationToken: this.GetCancellationTokenOnDestroy());
         }
 
         private void SpawnPickup()
@@ -163,20 +177,6 @@ namespace Features.Relics.Scripts
             pickup.name = $"RelicPickup_{_relic.Id}";
             pickup.Construct(_relic, _configuration, _relicManager, _eventBus, _characterProvider,
                 _roomData, _room, true);
-        }
-    }
-
-    internal static class TransformSearchExtensions
-    {
-        public static Transform FirstOrDefaultByName(this Transform[] transforms, string objectName)
-        {
-            foreach (Transform item in transforms)
-            {
-                if (item.name == objectName)
-                    return item;
-            }
-
-            return null;
         }
     }
 }

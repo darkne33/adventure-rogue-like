@@ -42,7 +42,7 @@ namespace Features.Enemies.Scripts
             IEnemyMovementSystem movementSystem = CreateMovementSystem(configuration, facade, character,
                 navMeshAgent, animationSystem);
             IEnemyDamageSystem damageSystem = CreateDamageSystem(configuration, facade, character,
-                facade.GetComponent<EnemyDashView>());
+                facade.GetComponent<EnemyDashView>(), facade.GetComponent<EnemyRangedAttackView>());
             var deathSystem = new EnemyDeathSystem(_enemiesProvider, facade, _characterLevelService, configuration,
                 _characterStats, character);
             int maxHealth = GetScaledMaxHealth(configuration.MaxHealth);
@@ -61,16 +61,19 @@ namespace Features.Enemies.Scripts
             {
                 EnemyAnimationType.Bun => new BunEnemyAnimation(animator),
                 EnemyAnimationType.Dummy => new DummyEnemyAnimation(animator),
+                EnemyAnimationType.Skeleton => new SkeletonEnemyAnimation(animator),
                 _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyAnimationType),
                     configuration.EnemyAnimationType, "Enemy animation type is not supported.")
             };
 
         private IEnemyDamageSystem CreateDamageSystem(EnemyConfiguration configuration, EnemyFacade facade,
-            CharacterFacade character, EnemyDashView dashView) =>
+            CharacterFacade character, EnemyDashView dashView, EnemyRangedAttackView rangedAttackView) =>
             configuration.EnemyDamageType switch
             {
                 EnemyDamageType.Melee => new EnemyDamageMeleeSystem(facade, character, configuration),
                 EnemyDamageType.Dash => new EnemyDashAttackSystem(character, configuration, facade, dashView),
+                EnemyDamageType.RangeArea => new EnemyRangedAttackSystem(character, configuration, facade, rangedAttackView),
+                EnemyDamageType.RangeDirection => new EnemyRangedAttackSystem(character, configuration, facade, rangedAttackView),
                 _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyDamageType),
                     configuration.EnemyDamageType, "Enemy damage type is not supported.")
             };

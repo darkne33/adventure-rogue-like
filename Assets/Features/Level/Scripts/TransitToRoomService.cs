@@ -56,7 +56,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
         {
             try
             {
-                await _roomTransitionService.Play(() =>
+                await _roomTransitionService.Play(async () =>
                 {
                     _runtimeDataService.SetCurrentRoomData(roomData);
 
@@ -70,8 +70,8 @@ namespace Features.Enemies.Scripts.Level.Scripts
 
                     if (roomData is DefaultEnemiesRoomData)
                     {
-                        _gameModeService.Get<RogueLikeStateMachine>()
-                            .EnterState<RogueLikeRoomPrepareState>().Forget();
+                        await _gameModeService.Get<RogueLikeStateMachine>()
+                            .EnterState<RogueLikeRoomPrepareState>();
                     }
                     else
                     {
@@ -82,7 +82,6 @@ namespace Features.Enemies.Scripts.Level.Scripts
                         }
                     }
 
-                    return UniTask.CompletedTask;
                 });
             }
             finally

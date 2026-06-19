@@ -5,6 +5,7 @@ using DG.Tweening;
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -38,6 +39,18 @@ public class EnemySpawner
         _effectsService = effectsService;
         _relicEventBus = relicEventBus;
         _sceneService = sceneService;
+    }
+
+    public async UniTask LoadEnemyPrefabs(CancellationToken cts)
+    {
+        LevelSettings levelSettings =
+            _levelsConfiguration.GetLevel(_rogueLikeRuntimeDataService.CurrentIndexLevel);
+        if (levelSettings.EnemyFactoryConfiguration == null)
+            throw new System.InvalidOperationException(
+                "Enemy factory configuration is missing for the current level.");
+
+        foreach (var enemyPrefabData in levelSettings.EnemyFactoryConfiguration.EnemyPrefabs)
+            await enemyPrefabData.WavesConfigurationContainer.Load(cts);
     }
 
     public void TrySpawnEnemies(CharacterFacade characterFacade, int currentWave)
