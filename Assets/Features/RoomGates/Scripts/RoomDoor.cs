@@ -10,11 +10,14 @@ public class RoomDoor : MonoBehaviour
     [SerializeField] private Transform _rightDoor;
     [SerializeField] private RoomDirection _direction;
     [SerializeField] private Room _nextRoom;
+    [SerializeField] private bool _isRewardGate;
 
     [Inject] private ITransitToRoomService _transitToRoomService;
     [Inject] private ILevelProgressionService _levelProgressionService;
 
     public RoomDirection Direction => _direction;
+    public Room NextRoom => _nextRoom;
+    public bool IsRewardGate => _isRewardGate;
 
     private RoomDoor _nextRoomEntryDoor;
     private bool _isLevelExit;

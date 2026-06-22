@@ -14,6 +14,7 @@ namespace Features.Enemies.Scripts
         private readonly IRogueLikeRuntimeDataService _runtimeDataService;
         private readonly IGameModeService _gameModeService;
         private readonly HashSet<DefaultEnemiesRoomData> _completedRooms = new();
+        private bool _isEnemySpawningActive;
 
         public event Action<DefaultEnemiesRoomData> RoomCompleted;
 
@@ -29,14 +30,23 @@ namespace Features.Enemies.Scripts
             if (enemies == null)
                 throw new System.ArgumentNullException(nameof(enemies));
 
-            if (enemies.Count == 0)
-                CompleteCurrentWave();
+            if (enemies.Count == 0 && _isEnemySpawningActive == false)
+                CompleteCurrentRoom();
         }
 
-        public void StartRoom()
+        public void StartRoom(bool waitForEnemySpawning = false)
         {
             CurrentWave = 0;
             IsRoomCompleted = false;
+            _isEnemySpawningActive = waitForEnemySpawning;
+        }
+
+        public void FinishEnemySpawning(int activeEnemyCount)
+        {
+            _isEnemySpawningActive = false;
+
+            if (activeEnemyCount <= 0)
+                CompleteCurrentRoom();
         }
 
         public bool RestoreCompletedRoom()
@@ -49,6 +59,7 @@ namespace Features.Enemies.Scripts
                 ? 0
                 : System.Math.Max(0, currentRoomData.EnemyWavesConfiguration.Length - 1);
             IsRoomCompleted = true;
+            _isEnemySpawningActive = false;
 
             OpenRoomDoors(currentRoomData);
             return true;
@@ -65,6 +76,8 @@ namespace Features.Enemies.Scripts
             DefaultEnemiesRoomData currentRoomData = GetCurrentRoomData();
             if (IsRoomCompleted)
                 return;
+
+            _isEnemySpawningActive = false;
 
             if (currentRoomData.EnemyWavesConfiguration == null ||
                 currentRoomData.EnemyWavesConfiguration.Length == 0)
@@ -88,6 +101,8 @@ namespace Features.Enemies.Scripts
         {
             if (IsRoomCompleted)
                 return;
+
+            _isEnemySpawningActive = false;
 
             DefaultEnemiesRoomData currentRoomData = GetCurrentRoomData();
             if (currentRoomData.RoomDoors == null)

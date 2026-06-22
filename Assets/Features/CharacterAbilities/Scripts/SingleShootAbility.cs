@@ -174,7 +174,7 @@ public class SingleShootAbility : CharacterActiveAbility
 
         if (enemyFacade.HealthSystem.IsDead)
         {
-            TryBounceBoomerang(character, shootObj, collisionDetector, hitEnemies);
+            DestroyShoot(shootObj);
             return;
         }
 
@@ -207,7 +207,7 @@ public class SingleShootAbility : CharacterActiveAbility
 
         int goldReward = CalculateGoldReward(1);
         _characterPanel.CharacterGoldView.ShowGold(goldReward);
-        _characterWallet.Money.Add(goldReward);
+        _characterWallet.Gold.Add(goldReward);
 
         enemyFacade.EffectsSystem.DealDamage();
         _relicEventBus.PublishHit(new RelicHitEvent(character, enemyFacade, appliedDamage,
@@ -275,7 +275,7 @@ public class SingleShootAbility : CharacterActiveAbility
         shootObj.transform.DOKill();
         shootObj.transform.DOMove(targetPosition, _abilityConfig.Speed).SetSpeedBased().SetLink(shootObj)
             .SetId($"Shoot Ability {shootObj.name}")
-            .OnComplete(() => DamageDeal(character, shootObj, nextEnemy, collisionDetector, hitEnemies));
+            .OnComplete(() => DestroyShoot(shootObj));
     }
 
     private static Vector3 GetEnemyTargetPosition(EnemyFacade enemy) =>

@@ -10,8 +10,7 @@ public sealed class MinimapChestMarkerController : IDisposable
 
     private IReadOnlyDictionary<Room, MinimapRoomIcon> _iconsByRoom =
         new Dictionary<Room, MinimapRoomIcon>();
-    private IReadOnlyDictionary<Room, MinimapRoomBounds> _boundsByRoom =
-        new Dictionary<Room, MinimapRoomBounds>();
+    private readonly HashSet<RoomData> _visitedRooms = new();
     private Room _currentRoom;
 
     public MinimapChestMarkerController(RelicChestSpawner relicChestSpawner,
@@ -22,13 +21,13 @@ public sealed class MinimapChestMarkerController : IDisposable
         _relicEventBus.ChestsCleared += HandleChestsCleared;
         _relicEventBus.ChestSpawned += HandleChestChanged;
         _relicEventBus.ChestCollected += HandleChestCollected;
+        _relicEventBus.RoomStarted += HandleRoomStarted;
     }
 
     public void SetRooms(IReadOnlyDictionary<Room, MinimapRoomIcon> iconsByRoom,
         IReadOnlyDictionary<Room, MinimapRoomBounds> boundsByRoom)
     {
         _iconsByRoom = iconsByRoom ?? new Dictionary<Room, MinimapRoomIcon>();
-        _boundsByRoom = boundsByRoom ?? new Dictionary<Room, MinimapRoomBounds>();
         Refresh();
     }
 
@@ -39,6 +38,9 @@ public sealed class MinimapChestMarkerController : IDisposable
     }
 
     public void Clear()
+        => ClearMarkers();
+
+    private void ClearMarkers()
     {
         foreach (MinimapRoomIcon icon in _iconsByRoom.Values)
         {
@@ -49,13 +51,7 @@ public sealed class MinimapChestMarkerController : IDisposable
 
     public void Refresh()
     {
-        Clear();
-
-        if (_currentRoom == null ||
-            _iconsByRoom.TryGetValue(_currentRoom, out MinimapRoomIcon currentIcon) == false)
-        {
-            return;
-        }
+        ClearMarkers();
 
         IReadOnlyList<RelicChest> activeChests = _relicChestSpawner.ActiveChests;
         for (int index = 0; index < activeChests.Count; index++)
@@ -64,14 +60,16 @@ public sealed class MinimapChestMarkerController : IDisposable
             if (chest == null || chest.IsOpened || chest.gameObject.activeInHierarchy == false)
                 continue;
 
-            if (TryGetChestMarkerPlacement(chest, out Room chestRoom,
-                    out Vector2 normalizedPosition) == false)
+            Room chestRoom = chest.Room;
+            RoomData chestRoomData = chest.RoomData;
+            if (chestRoom == null || chestRoomData == null ||
+                _iconsByRoom.TryGetValue(chestRoom, out MinimapRoomIcon icon) == false)
                 continue;
 
-            if (ReferenceEquals(chestRoom, _currentRoom) == false)
+            if (ReferenceEquals(chestRoom, _currentRoom) || _visitedRooms.Contains(chestRoomData))
                 continue;
 
-            currentIcon.SetChestPosition(normalizedPosition);
+            icon.SetChestVisible(true);
         }
     }
 
@@ -80,10 +78,14 @@ public sealed class MinimapChestMarkerController : IDisposable
         _relicEventBus.ChestsCleared -= HandleChestsCleared;
         _relicEventBus.ChestSpawned -= HandleChestChanged;
         _relicEventBus.ChestCollected -= HandleChestCollected;
+        _relicEventBus.RoomStarted -= HandleRoomStarted;
     }
 
-    private void HandleChestsCleared() =>
-        Clear();
+    private void HandleChestsCleared()
+    {
+        _visitedRooms.Clear();
+        ClearMarkers();
+    }
 
     private void HandleChestChanged(RoomData roomData, Room room, Vector3 worldPosition) =>
         Refresh();
@@ -91,68 +93,11 @@ public sealed class MinimapChestMarkerController : IDisposable
     private void HandleChestCollected(RoomData roomData, Room room) =>
         Refresh();
 
-    private bool TryGetChestMarkerPlacement(RelicChest chest, out Room room,
-        out Vector2 normalizedPosition)
+    private void HandleRoomStarted(RelicRoomEvent roomEvent)
     {
-        room = null;
-        normalizedPosition = Vector2.zero;
+        if (roomEvent.RoomData != null)
+            _visitedRooms.Add(roomEvent.RoomData);
 
-        if (TryFindRoomAtWorldPosition(chest.transform.position, out room) == false)
-            room = chest.Room;
-
-        if (room == null || _iconsByRoom.ContainsKey(room) == false)
-            return false;
-
-        Vector3 localPosition = room.transform.InverseTransformPoint(chest.transform.position);
-        MinimapRoomBounds bounds = _boundsByRoom.TryGetValue(room, out MinimapRoomBounds roomBounds)
-            ? roomBounds
-            : MinimapRoomBounds.Default;
-        normalizedPosition = bounds.Normalize(localPosition);
-        return true;
-    }
-
-    private bool TryFindRoomAtWorldPosition(Vector3 worldPosition, out Room resolvedRoom)
-    {
-        resolvedRoom = null;
-        float closestDistanceSqr = float.PositiveInfinity;
-
-        foreach (Room room in _iconsByRoom.Keys)
-        {
-            if (room == null)
-                continue;
-
-            Vector3 localPosition = room.transform.InverseTransformPoint(worldPosition);
-            MinimapRoomBounds bounds = _boundsByRoom.TryGetValue(room, out MinimapRoomBounds roomBounds)
-                ? roomBounds
-                : MinimapRoomBounds.Default;
-
-            if (bounds.Contains(localPosition, 1f) == false)
-                continue;
-
-            float distanceSqr = (room.transform.position - worldPosition).sqrMagnitude;
-            if (distanceSqr >= closestDistanceSqr)
-                continue;
-
-            closestDistanceSqr = distanceSqr;
-            resolvedRoom = room;
-        }
-
-        if (resolvedRoom != null)
-            return true;
-
-        foreach (Room room in _iconsByRoom.Keys)
-        {
-            if (room == null)
-                continue;
-
-            float distanceSqr = (room.transform.position - worldPosition).sqrMagnitude;
-            if (distanceSqr >= closestDistanceSqr)
-                continue;
-
-            closestDistanceSqr = distanceSqr;
-            resolvedRoom = room;
-        }
-
-        return resolvedRoom != null;
+        Refresh();
     }
 }

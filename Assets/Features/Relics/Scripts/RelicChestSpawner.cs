@@ -9,6 +9,19 @@ namespace Features.Relics.Scripts
 {
     public sealed class RelicChestSpawner
     {
+        private static readonly Vector2[] PreferredChestOffsets =
+        {
+            Vector2.zero,
+            new Vector2(-1f, 0f),
+            new Vector2(1f, 0f),
+            new Vector2(0f, -1f),
+            new Vector2(0f, 1f),
+            new Vector2(-1f, -1f),
+            new Vector2(1f, -1f),
+            new Vector2(-1f, 1f),
+            new Vector2(1f, 1f)
+        };
+
         private readonly ICharacterProvider _characterProvider;
         private readonly RelicChestConfiguration _configuration;
         private readonly LevelsConfiguration _levelsConfiguration;
@@ -16,7 +29,6 @@ namespace Features.Relics.Scripts
         private readonly RelicManager _relicManager;
         private readonly RelicEventBus _eventBus;
         private readonly DiContainer _container;
-        private readonly HashSet<Room> _spawnedRooms = new();
         private readonly List<RelicChest> _activeChests = new();
 
         public IReadOnlyList<RelicChest> ActiveChests => _activeChests;
@@ -36,7 +48,6 @@ namespace Features.Relics.Scripts
 
         public void SpawnForLevel(LevelView level)
         {
-            _spawnedRooms.Clear();
             _activeChests.Clear();
             _eventBus.PublishChestsCleared();
 
@@ -44,58 +55,47 @@ namespace Features.Relics.Scripts
                 _configuration.RelicPickupPrefab == null)
                 return;
 
-            List<Room> rooms = level.Rooms
-                .Where(node => node?.Room?.RoomData is DefaultEnemiesRoomData)
-                .Select(node => (Room)node.Room)
-                .ToList();
+            Physics.SyncTransforms();
+
+            List<Room> rooms = GetRewardRooms(level);
             if (rooms.Count == 0)
                 return;
 
             Shuffle(rooms);
-            int chestCount = GetRandomChestCount(rooms.Count);
-            if (chestCount <= 0)
-                return;
 
             var excludedRelicIds = new HashSet<string>();
-            int spawnedCount = 0;
-
-            for (int index = 0; index < rooms.Count && spawnedCount < chestCount; index++)
+            for (int index = 0; index < rooms.Count; index++)
             {
-                if (rooms[index].RoomData is not DefaultEnemiesRoomData roomData ||
-                    _spawnedRooms.Contains(rooms[index]))
+                Room room = rooms[index];
+                if (room == null || room.RoomData is not RewardRoomData roomData)
                     continue;
 
-                RelicDefinition relic = _relicPool.Roll(_relicManager.ActiveRelics, excludedRelicIds);
-                if (relic == null)
-                    return;
+                int chestCount = GetChestCount(roomData);
+                for (int chestIndex = 0; chestIndex < chestCount; chestIndex++)
+                {
+                    RelicDefinition relic = _relicPool.Roll(_relicManager.ActiveRelics, excludedRelicIds);
+                    if (relic == null)
+                        return;
 
-                excludedRelicIds.Add(relic.Id);
-                if (SpawnChest(rooms[index], roomData, relic))
-                    spawnedCount++;
+                    excludedRelicIds.Add(relic.Id);
+                    SpawnChest(room, roomData, relic);
+                }
             }
         }
 
-        private int GetRandomChestCount(int availableRooms)
+        private static int GetChestCount(RewardRoomData roomData) =>
+            roomData.GetChestCount();
+
+        private static List<Room> GetRewardRooms(LevelView level)
         {
-            if (availableRooms <= 0)
-                return 0;
-
-            int min = Mathf.Min(_configuration.MinChestsPerLevel, _configuration.MaxChestsPerLevel);
-            int max = Mathf.Max(_configuration.MinChestsPerLevel, _configuration.MaxChestsPerLevel);
-
-            min = Mathf.Clamp(min, 0, availableRooms);
-            max = Mathf.Clamp(max, 0, availableRooms);
-            if (max <= min)
-                return min;
-
-            return UnityEngine.Random.Range(min, max + 1);
+            return level.Rooms
+                .Where(node => node?.Room?.RoomData is RewardRoomData)
+                .Select(node => (Room)node.Room)
+                .ToList();
         }
 
-        private bool SpawnChest(Room room, DefaultEnemiesRoomData roomData, RelicDefinition relic)
+        private bool SpawnChest(Room room, RoomData roomData, RelicDefinition relic)
         {
-            if (_spawnedRooms.Contains(room))
-                return false;
-
             if (TryGetGroundPoint(room, out Vector3 groundPoint) == false)
             {
                 Debug.LogWarning($"Could not find grounded spawn position for relic chest in {room.name}.");
@@ -111,7 +111,6 @@ namespace Features.Relics.Scripts
                     $"{_configuration.ChestPrefab.name} must contain RelicChest component.");
 
             AlignBottomToGround(chestObject, groundPoint.y);
-            _spawnedRooms.Add(room);
             _activeChests.Add(chest);
             chest.Construct(relic, _configuration, _relicManager, _eventBus, _characterProvider,
                 _container, roomData, room);
@@ -124,25 +123,20 @@ namespace Features.Relics.Scripts
             int attempts = Mathf.Max(1, _configuration.ChestSpawnAttempts);
             List<Collider> groundColliders = GetGroundColliders(room);
 
+            if (TryGetPreferredGroundPoint(room, groundColliders, out groundPoint))
+                return true;
+
             if (TryCreateGroundSpawnBounds(groundColliders, out Bounds spawnBounds))
             {
                 for (int attempt = 0; attempt < attempts; attempt++)
                 {
                     Vector3 candidate = GetRandomSpawnCandidate(spawnBounds);
-                    if (TryProjectToGround(room, candidate, out groundPoint) &&
-                        IsObstacleFree(groundPoint) &&
-                        IsAwayFromDoors(room, groundPoint))
-                    {
+                    if (IsValidGroundSpawnPoint(room, candidate, out groundPoint))
                         return true;
-                    }
                 }
 
-                if (TryProjectToGround(room, spawnBounds.center, out groundPoint) &&
-                    IsObstacleFree(groundPoint) &&
-                    IsAwayFromDoors(room, groundPoint))
-                {
+                if (IsValidGroundSpawnPoint(room, spawnBounds.center, out groundPoint))
                     return true;
-                }
             }
 
             for (int attempt = 0; attempt < attempts; attempt++)
@@ -151,27 +145,48 @@ namespace Features.Relics.Scripts
                     ? GetRandomSpawnCandidate(groundColliders)
                     : GetRandomSpawnCandidate(room);
 
-                if (TryProjectToGround(room, candidate, out groundPoint) &&
-                    IsObstacleFree(groundPoint) &&
-                    IsAwayFromDoors(room, groundPoint))
-                {
+                if (IsValidGroundSpawnPoint(room, candidate, out groundPoint))
                     return true;
-                }
             }
 
             foreach (Collider groundCollider in groundColliders.OrderByDescending(GetHorizontalArea))
             {
-                if (TryProjectToGround(room, groundCollider.bounds.center, out groundPoint) &&
-                    IsObstacleFree(groundPoint) &&
-                    IsAwayFromDoors(room, groundPoint))
-                {
+                if (IsValidGroundSpawnPoint(room, groundCollider.bounds.center, out groundPoint))
                     return true;
-                }
             }
 
             groundPoint = Vector3.zero;
             return false;
         }
+
+        private bool TryGetPreferredGroundPoint(Room room, IReadOnlyList<Collider> groundColliders,
+            out Vector3 groundPoint)
+        {
+            groundPoint = Vector3.zero;
+            Collider mainGround = GetLargestGroundCollider(groundColliders);
+            if (mainGround == null)
+                return false;
+
+            Bounds bounds = mainGround.bounds;
+            Vector3 center = bounds.center;
+            float spacing = Mathf.Max(3f, _configuration.InteractDistance);
+
+            foreach (Vector2 offset in PreferredChestOffsets)
+            {
+                Vector2 scaledOffset = offset * spacing;
+                Vector3 candidate = new Vector3(center.x + scaledOffset.x, bounds.max.y, center.z + scaledOffset.y);
+                if (IsValidGroundSpawnPoint(room, candidate, out groundPoint))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool IsValidGroundSpawnPoint(Room room, Vector3 candidate, out Vector3 groundPoint) =>
+            TryProjectToGround(room, candidate, out groundPoint) &&
+            IsObstacleFree(groundPoint) &&
+            IsAwayFromExistingChests(room, groundPoint) &&
+            IsAwayFromDoors(room, groundPoint);
 
         private List<Collider> GetGroundColliders(Room room)
         {
@@ -314,6 +329,25 @@ namespace Features.Relics.Scripts
             return true;
         }
 
+        private bool IsAwayFromExistingChests(Room room, Vector3 position)
+        {
+            float minDistance = Mathf.Max(3f, _configuration.InteractDistance);
+            float minDistanceSqr = minDistance * minDistance;
+
+            foreach (RelicChest chest in _activeChests)
+            {
+                if (chest == null || ReferenceEquals(chest.Room, room) == false)
+                    continue;
+
+                Vector3 offset = chest.transform.position - position;
+                offset.y = 0f;
+                if (offset.sqrMagnitude < minDistanceSqr)
+                    return false;
+            }
+
+            return true;
+        }
+
         private LayerMask GetGroundLayerMask() =>
             _levelsConfiguration.GroundLayer.value == 0
                 ? Physics.DefaultRaycastLayers
@@ -324,6 +358,27 @@ namespace Features.Relics.Scripts
 
         private static float GetHorizontalArea(Collider collider) =>
             collider.bounds.size.x * collider.bounds.size.z;
+
+        private static Collider GetLargestGroundCollider(IReadOnlyList<Collider> groundColliders)
+        {
+            Collider largestCollider = null;
+            float largestArea = 0f;
+
+            foreach (Collider groundCollider in groundColliders)
+            {
+                if (groundCollider == null)
+                    continue;
+
+                float area = GetHorizontalArea(groundCollider);
+                if (area <= largestArea)
+                    continue;
+
+                largestArea = area;
+                largestCollider = groundCollider;
+            }
+
+            return largestCollider;
+        }
 
         private static void AlignBottomToGround(GameObject chestObject, float groundY)
         {

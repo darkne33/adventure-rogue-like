@@ -90,9 +90,10 @@ public class LevelView : MonoBehaviour
             if (roomNode?.Room == null)
                 throw new InvalidOperationException($"{name} contains a missing room node.");
 
-            if (roomNode.Room.RoomData is not DefaultEnemiesRoomData)
+            if (roomNode.Room.RoomData is not DefaultEnemiesRoomData &&
+                roomNode.Room.RoomData is not RewardRoomData)
                 throw new InvalidOperationException(
-                    $"{roomNode.Room.name} must contain DefaultEnemiesRoomData.");
+                    $"{roomNode.Room.name} must contain DefaultEnemiesRoomData or RewardRoomData.");
 
             ValidateRoomDoors(roomNode.Room);
 
@@ -191,8 +192,15 @@ public class LevelView : MonoBehaviour
     {
         foreach (LevelRoomNode roomNode in _rooms)
         {
-            if (roomNode?.Room?.RoomData is DefaultEnemiesRoomData roomData)
-                roomData.ResetProgress();
+            switch (roomNode?.Room?.RoomData)
+            {
+                case DefaultEnemiesRoomData enemiesRoomData:
+                    enemiesRoomData.ResetProgress();
+                    break;
+                case RewardRoomData rewardRoomData:
+                    rewardRoomData.ResetProgress();
+                    break;
+            }
         }
     }
 

@@ -30,17 +30,15 @@ public class CharacterGoldView : MonoBehaviour
     
     public void ShowGold(int amount)
     {
+        if (amount <= 0)
+            return;
+
         _currentAmount += amount;
 
         if (!_isActive)
-        {
             StartDisplay();
-        }
         else
-        {
-            UpdateText();
             RestartPump();
-        }
     }
 
     private void StartDisplay()
@@ -64,6 +62,7 @@ public class CharacterGoldView : MonoBehaviour
     {
         _currentSequence?.Kill();
 
+        UpdateText();
         _goldText.rectTransform.localScale = Vector3.one;
         _goldText.color = _activeColor;
 

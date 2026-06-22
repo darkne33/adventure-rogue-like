@@ -252,6 +252,9 @@ public sealed class MinimapController : IDisposable, ITickable
             MinimapRoomState state = GetState(entry.Key);
             states.Add(entry.Key, state);
             entry.Value.SetState(state);
+            entry.Value.SetCombatRoomMarkerVisible(
+                state == MinimapRoomState.Available &&
+                entry.Key is DefaultEnemiesRoomData { IsCompleted: false });
         }
 
         foreach (ConnectionEntry connection in _connections)

@@ -40,7 +40,9 @@ namespace Features.Enemies.Scripts.Level.Scripts
                                 throw new System.InvalidOperationException(
                                     $"{nextRoom.name} does not contain room data.");
 
-            if (roomData is not DefaultEnemiesRoomData && roomData is not StartRoomData)
+            if (roomData is not DefaultEnemiesRoomData &&
+                roomData is not RewardRoomData &&
+                roomData is not StartRoomData)
                 throw new System.InvalidOperationException(
                     $"Room transition does not support {roomData.GetType().Name}.");
 
@@ -75,6 +77,9 @@ namespace Features.Enemies.Scripts.Level.Scripts
                     }
                     else
                     {
+                        if (roomData is RewardRoomData rewardRoomData)
+                            rewardRoomData.MarkCompleted();
+
                         foreach (RoomDoor roomDoor in roomData.RoomDoors)
                         {
                             if (roomDoor != null)

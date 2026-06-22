@@ -9,6 +9,7 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     [SerializeField] private Image _startMarker;
     [SerializeField] private Image _exitMarker;
     [SerializeField] private Image _chestMarker;
+    [SerializeField] private Image _combatRoomMarker;
     [SerializeField] private RectTransform _playerMarker;
     [SerializeField] private RectTransform _enemyMarkerRoot;
     [SerializeField] private RectTransform _enemyMarkerPrefab;
@@ -60,6 +61,12 @@ public sealed class MinimapRoomIcon : MonoBehaviour
 
         if (_chestMarker != null)
             _chestMarker.gameObject.SetActive(isVisible);
+    }
+
+    public void SetCombatRoomMarkerVisible(bool isVisible)
+    {
+        if (_combatRoomMarker != null)
+            _combatRoomMarker.gameObject.SetActive(isVisible);
     }
 
     public void SetChestPosition(Vector2 normalizedPosition)

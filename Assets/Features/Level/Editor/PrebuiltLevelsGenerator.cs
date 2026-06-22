@@ -17,6 +17,8 @@ public static class PrebuiltLevelsGenerator
         "Assets/Features/Level/Level_1/Rooms/RoomStart.prefab";
     private const string DoorPrefabPath =
         "Assets/Features/RoomGates/Prefabs/DefaultRoom.prefab";
+    private const string CoinDoorPrefabPath =
+        "Assets/Features/RoomGates/Prefabs/CoinRoomGate.prefab";
     private const string ConfigurationPath =
         "Assets/Features/Level/LevelsConfiguration.asset";
 
@@ -48,6 +50,7 @@ public static class PrebuiltLevelsGenerator
     };
 
     private static readonly int[] ExitRoomIndices = { 3, 3, 3 };
+    private static readonly int[] RewardRoomIndices = { 1, 1, 1 };
     private static readonly RoomDirection[] ExitDirections =
     {
         RoomDirection.Up,
@@ -283,6 +286,11 @@ public static class PrebuiltLevelsGenerator
         IReadOnlyList<GameObject> roomPrefabs, int levelNumber)
     {
         var levelRoot = new GameObject($"Level_{levelNumber}");
+        GameObject defaultDoorPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(DoorPrefabPath);
+        GameObject coinDoorPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CoinDoorPrefabPath);
+
+        if (defaultDoorPrefab == null || coinDoorPrefab == null)
+            throw new InvalidOperationException("Default or coin room door prefab is missing.");
 
         try
         {
@@ -310,6 +318,8 @@ public static class PrebuiltLevelsGenerator
             {
                 bool isLevelExit =
                     roomIndex == ExitRoomIndices[levelNumber - 1];
+                bool isRewardRoom =
+                    roomIndex == RewardRoomIndices[levelNumber - 1];
                 roomNodes[roomIndex] = new LevelRoomNode(
                     rooms[roomIndex],
                     layout[roomIndex],
@@ -318,10 +328,19 @@ public static class PrebuiltLevelsGenerator
 
                 RemoveUnusedDoors(rooms[roomIndex], layout[roomIndex], roomPositions,
                     hasNextLevel && isLevelExit, ExitDirections[levelNumber - 1]);
+                ConfigureRoomKind(rooms[roomIndex], isRewardRoom);
             }
 
             RemoveUnusedDoors(startRoom, StartRoomGridPosition, roomPositions,
                 isLevelExit: false, default);
+            ApplyDestinationDoorPrefabs(startRoom, StartRoomGridPosition, layout,
+                defaultDoorPrefab, coinDoorPrefab, levelNumber);
+            for (int roomIndex = 0; roomIndex < rooms.Length; roomIndex++)
+            {
+                ApplyDestinationDoorPrefabs(rooms[roomIndex], layout[roomIndex], layout,
+                    defaultDoorPrefab, coinDoorPrefab, levelNumber);
+            }
+
             levelView.Configure(startRoom, StartRoomGridPosition, roomNodes);
 
             string levelPath = GetLevelPath(levelNumber);
@@ -386,6 +405,100 @@ public static class PrebuiltLevelsGenerator
         PrefabUtility.RecordPrefabInstancePropertyModifications(room);
     }
 
+    private static void ConfigureRoomKind(DefaultRoom room, bool isRewardRoom)
+    {
+        if (room.RoomData?.RoomDoors == null)
+            throw new InvalidOperationException($"{room.name} does not contain configured doors.");
+
+        if (isRewardRoom)
+        {
+            room.SetEditorRoomData(new RewardRoomData
+            {
+                RoomDoors = room.RoomData.RoomDoors
+            });
+            PrefabUtility.RecordPrefabInstancePropertyModifications(room);
+            return;
+        }
+
+        if (room.RoomData is not DefaultEnemiesRoomData)
+            throw new InvalidOperationException($"{room.name} must contain DefaultEnemiesRoomData.");
+    }
+
+    private static void ApplyDestinationDoorPrefabs(Room room, Vector2Int gridPosition,
+        IReadOnlyList<Vector2Int> layout, GameObject defaultDoorPrefab,
+        GameObject coinDoorPrefab, int levelNumber)
+    {
+        RoomDoor[] doors = room.RoomData.RoomDoors;
+        if (doors == null)
+            throw new InvalidOperationException($"{room.name} does not contain configured doors.");
+
+        var updatedDoors = new List<RoomDoor>(doors.Length);
+        foreach (RoomDoor door in doors)
+        {
+            if (door == null)
+                continue;
+
+            Vector2Int destination = gridPosition + door.Direction.ToGridOffset();
+            bool destinationIsReward = TryGetRoomIndex(layout, destination,
+                                           out int destinationRoomIndex) &&
+                                       destinationRoomIndex == RewardRoomIndices[levelNumber - 1];
+            GameObject desiredPrefab = destinationIsReward ? coinDoorPrefab : defaultDoorPrefab;
+            updatedDoors.Add(ReplaceDoorPrefabIfNeeded(door, desiredPrefab));
+        }
+
+        room.RoomData.RoomDoors = OrderDoors(updatedDoors);
+        PrefabUtility.RecordPrefabInstancePropertyModifications(room);
+    }
+
+    private static RoomDoor ReplaceDoorPrefabIfNeeded(RoomDoor door, GameObject desiredPrefab)
+    {
+        string desiredPath = AssetDatabase.GetAssetPath(desiredPrefab);
+        UnityEngine.Object source = PrefabUtility.GetCorrespondingObjectFromOriginalSource(door.gameObject);
+        if (source != null && AssetDatabase.GetAssetPath(source) == desiredPath)
+            return door;
+
+        Transform doorTransform = door.transform;
+        Transform parent = doorTransform.parent;
+        Vector3 localPosition = doorTransform.localPosition;
+        Quaternion localRotation = doorTransform.localRotation;
+        Vector3 localScale = doorTransform.localScale;
+        string doorName = door.gameObject.name;
+        RoomDirection direction = door.Direction;
+
+        GameObject replacement =
+            PrefabUtility.InstantiatePrefab(desiredPrefab, parent) as GameObject;
+        if (replacement == null)
+            throw new InvalidOperationException($"Could not instantiate door prefab {desiredPrefab.name}.");
+
+        replacement.name = doorName;
+        replacement.transform.SetLocalPositionAndRotation(localPosition, localRotation);
+        replacement.transform.localScale = localScale;
+
+        RoomDoor replacementDoor = replacement.GetComponent<RoomDoor>();
+        if (replacementDoor == null)
+            throw new InvalidOperationException($"{desiredPrefab.name} does not contain RoomDoor.");
+
+        replacementDoor.SetDirection(direction);
+        UnityEngine.Object.DestroyImmediate(door.gameObject);
+        return replacementDoor;
+    }
+
+    private static bool TryGetRoomIndex(IReadOnlyList<Vector2Int> layout, Vector2Int position,
+        out int roomIndex)
+    {
+        for (int index = 0; index < layout.Count; index++)
+        {
+            if (layout[index] != position)
+                continue;
+
+            roomIndex = index;
+            return true;
+        }
+
+        roomIndex = -1;
+        return false;
+    }
+
     private static void ValidateStartRoom(LevelView levelView, int levelNumber)
     {
         levelView.ResolveRoomReferences();
@@ -417,13 +530,25 @@ public static class PrebuiltLevelsGenerator
 
         foreach (LevelRoomNode node in levelView.Rooms)
         {
-            if (node?.Room?.RoomData is not DefaultEnemiesRoomData roomData ||
-                roomData.RoomDoors == null ||
-                roomData.RoomDoors.Length == 0 ||
-                roomData.EnemyWavesConfiguration == null ||
-                roomData.EnemyWavesConfiguration.Length == 0)
+            if (node?.Room?.RoomData is not DefaultEnemiesRoomData &&
+                node?.Room?.RoomData is not RewardRoomData)
+            {
+                throw new InvalidOperationException(
+                    $"Level {levelNumber} contains an invalid room.");
+            }
+
+            RoomData roomData = node.Room.RoomData;
+            if (roomData.RoomDoors == null || roomData.RoomDoors.Length == 0)
+                throw new InvalidOperationException(
+                    $"Level {levelNumber} contains a room without doors.");
+
+            if (roomData is DefaultEnemiesRoomData enemiesRoomData &&
+                (enemiesRoomData.EnemyWavesConfiguration == null ||
+                 enemiesRoomData.EnemyWavesConfiguration.Length == 0))
+            {
                 throw new InvalidOperationException(
                     $"Level {levelNumber} contains an invalid enemy room.");
+            }
 
             if (!positions.Add(node.GridPosition))
                 throw new InvalidOperationException(

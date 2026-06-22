@@ -352,6 +352,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelDoor
   _leftDoor: {fileID: 4739101954903003179}
   _rightDoor: {fileID: 619849969958908448}
+  _direction: 0
   _nextRoom: {fileID: 0}
 --- !u!65 &9176366286788703104
 BoxCollider:
@@ -372,5 +373,5 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 7, y: 7.85, z: 2}
-  m_Center: {x: 0, y: 0, z: 2}
+  m_Size: {x: 7, y: 7.1328487, z: 2}
+  m_Center: {x: 0, y: 3.5998278, z: 2}

@@ -3,6 +3,7 @@
 public class CharacterLevelService : ICharacterLevelService
 {
     public event Action<int, int> OnUpdateAddExpView;
+    public event Action<int> OnExpAdded;
     public event Action<int> OnLevelUp;
     
     public int GetCurrentExp => _characterExpData.CurrentExp;
@@ -39,6 +40,7 @@ public class CharacterLevelService : ICharacterLevelService
             _characterExpData.CurrentExp =
                 Math.Min(_characterExpData.CurrentExp, _characterExpData.MaxExp);
 
+        OnExpAdded?.Invoke(amount);
         OnUpdateAddExpView?.Invoke(_characterExpData.CurrentExp, _characterExpData.MaxExp);
     }
 
