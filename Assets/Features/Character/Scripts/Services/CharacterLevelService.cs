@@ -27,18 +27,13 @@ public class CharacterLevelService : ICharacterLevelService
 
         _characterExpData.CurrentExp += amount;
 
-        while (_characterExpData.CurrentExp >= _characterExpData.MaxExp &&
-               _characterExpData.Level < _characterExpConfig.MaxLevel)
+        while (_characterExpData.CurrentExp >= _characterExpData.MaxExp)
         {
             _characterExpData.CurrentExp -= _characterExpData.MaxExp;
             _characterExpData.Level++;
             _characterExpData.MaxExp = _characterExpConfig.GetMaxExpByLevel(_characterExpData.Level);
             OnLevelUp?.Invoke(_characterExpData.Level);
         }
-
-        if (_characterExpData.Level >= _characterExpConfig.MaxLevel)
-            _characterExpData.CurrentExp =
-                Math.Min(_characterExpData.CurrentExp, _characterExpData.MaxExp);
 
         OnExpAdded?.Invoke(amount);
         OnUpdateAddExpView?.Invoke(_characterExpData.CurrentExp, _characterExpData.MaxExp);
