@@ -50,8 +50,26 @@ public class RogueLikePrepareStatsState : State
         _characterStats.MovementSpeed = _characterSettingsConfiguration.MovementSpeed;
         _characterStats.MovementAcceleration = _characterSettingsConfiguration.Acceleration;
         _characterStats.JumpForce = _characterSettingsConfiguration.JumpForce;
+        _characterStats.JumpForwardImpulse = _characterSettingsConfiguration.JumpForwardImpulse;
+        _characterStats.JumpInertiaDuration = _characterSettingsConfiguration.JumpInertiaDuration;
+        _characterStats.JumpInertiaAirControl = _characterSettingsConfiguration.JumpInertiaAirControl;
         _characterStats.RotationSpeed = _characterSettingsConfiguration.RotationSpeed;
         _characterStats.GravityMultiplier = _characterSettingsConfiguration.GravityMultiplier;
+        _characterStats.CoyoteTime = _characterSettingsConfiguration.CoyoteTime;
+        _characterStats.BunnyHopResetDelay = _characterSettingsConfiguration.BunnyHopResetDelay;
+        _characterStats.BunnyHopSpeedBonusPerJump = _characterSettingsConfiguration.BunnyHopSpeedBonusPerJump;
+        _characterStats.MaxBunnyHopSpeedBonus = _characterSettingsConfiguration.MaxBunnyHopSpeedBonus;
+        _characterStats.BunnyHopCameraAlignment = _characterSettingsConfiguration.BunnyHopCameraAlignment;
+        _characterStats.BunnyHopCameraTurnSlowdownSpeed =
+            _characterSettingsConfiguration.BunnyHopCameraTurnSlowdownSpeed;
+        _characterStats.BunnyHopCameraTurnSlowdownStrength =
+            _characterSettingsConfiguration.BunnyHopCameraTurnSlowdownStrength;
+        _characterStats.DefaultAirAcceleration = _characterSettingsConfiguration.DefaultAirAcceleration;
+        _characterStats.DefaultAirDeceleration = _characterSettingsConfiguration.DefaultAirDeceleration;
+        _characterStats.LandingSlideDuration = _characterSettingsConfiguration.LandingSlideDuration;
+        _characterStats.LandingSlideDeceleration = _characterSettingsConfiguration.LandingSlideDeceleration;
+        _characterStats.LandingSlideSpeedMultiplier = _characterSettingsConfiguration.LandingSlideSpeedMultiplier;
+        _characterStats.LandingSlideInputCarry = _characterSettingsConfiguration.LandingSlideInputCarry;
 
         _statModifierLayer.Reset();
     }

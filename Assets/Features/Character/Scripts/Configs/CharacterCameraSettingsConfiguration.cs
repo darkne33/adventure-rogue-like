@@ -21,5 +21,8 @@ public class CharacterCameraSettingsConfiguration : ScriptableObject
 
     [field: SerializeField] public float CameraSmoothness { get; private set; } = 0.2f;
 
- 
+    [Header("Camera Shake")]
+    [field: SerializeField] public float LandingShakeDuration { get; private set; } = 0.12f;
+    [field: SerializeField] public float LandingShakeStrength { get; private set; } = 1.6f;
+    [field: SerializeField] public float LandingShakeFrequency { get; private set; } = 1.15f;
 }

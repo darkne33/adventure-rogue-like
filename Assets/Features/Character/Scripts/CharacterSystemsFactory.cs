@@ -31,10 +31,11 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         PauseEntity pauseEntity = _pauseEntityDistributor.EntityDistribute();
 
         var animationSystem = new CharacterAnimationSystem(animator);
+        var cameraSystem = new CharacterCameraMoveSystem(
+            facade.CameraPivot, _cameraSettings, _cameraService, pauseEntity);
         var moveSystem = new CharacterMoveSystem(rigidbody, _cameraService, _characterStats, fxSystem,
-            facade.CharacterModel, animationSystem, pauseEntity);
+            facade.CharacterModel, animationSystem, cameraSystem, pauseEntity);
         var abilitySystem = new CharacterAbilitySystem();
-        var cameraSystem = new CharacterCameraMoveSystem(facade.CameraPivot, _cameraSettings, pauseEntity);
         var damageEffectSystem = new DealDamageEffectSystem(facade.MeshRenderers);
 
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);

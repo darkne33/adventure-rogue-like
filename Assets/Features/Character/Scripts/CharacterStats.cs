@@ -31,6 +31,22 @@ public class CharacterStats
     public float MovementSpeed;
     public float MovementAcceleration;
     public float JumpForce;
+    public float JumpForwardImpulse;
+    public float JumpInertiaDuration;
+    public float JumpInertiaAirControl;
     public float RotationSpeed;
     public float GravityMultiplier;
+    public float CoyoteTime;
+    public float BunnyHopResetDelay;
+    public float BunnyHopSpeedBonusPerJump;
+    public float MaxBunnyHopSpeedBonus;
+    public float BunnyHopCameraAlignment;
+    public float BunnyHopCameraTurnSlowdownSpeed;
+    public float BunnyHopCameraTurnSlowdownStrength;
+    public float DefaultAirAcceleration;
+    public float DefaultAirDeceleration;
+    public float LandingSlideDuration;
+    public float LandingSlideDeceleration;
+    public float LandingSlideSpeedMultiplier;
+    public float LandingSlideInputCarry;
 }

@@ -70,7 +70,10 @@ public class CharacterFacade : MonoBehaviour
     {
         if (collision.gameObject.GetComponent<Wall>() != null ||
             collision.gameObject.GetComponent<Obstacle>() != null)
+        {
             _moveSystem.CanMove(true);
+            _moveSystem.ResetBunnyHopBonus();
+        }
     }
 
     public void Initialize()
@@ -128,6 +131,7 @@ public class CharacterFacade : MonoBehaviour
         if (appliedDamage <= 0)
             return false;
 
+        _moveSystem.ResetBunnyHopBonus();
         _damageEffectSystem.DealDamage();
         _relicEventBus?.PublishDamageTaken(new RelicDamageTakenEvent(this, source, appliedDamage, "Enemy"));
 
