@@ -31,6 +31,9 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     [SerializeField, Min(0f)] private float _exitMarkerDistance = 38f;
 
     private readonly List<RectTransform> _enemyMarkers = new();
+    private MinimapRoomKind _kind;
+    private RoomDirection? _exitDirection;
+    private bool _isRoomKindMarkerVisible = true;
 
     public void Configure(Image fill, Image outline, Image startMarker,
         Image exitMarker, Image chestMarker, RectTransform playerMarker, CanvasGroup canvasGroup)
@@ -46,12 +49,20 @@ public sealed class MinimapRoomIcon : MonoBehaviour
 
     public void SetKind(MinimapRoomKind kind, RoomDirection? exitDirection)
     {
-        _startMarker.gameObject.SetActive(kind == MinimapRoomKind.Start);
-        _exitMarker.gameObject.SetActive(kind == MinimapRoomKind.Exit);
+        _kind = kind;
+        _exitDirection = exitDirection;
 
-        if (kind == MinimapRoomKind.Exit && exitDirection.HasValue)
+        if (_kind == MinimapRoomKind.Exit && _exitDirection.HasValue)
             _exitMarker.rectTransform.anchoredPosition =
-                GetDirection(exitDirection.Value) * _exitMarkerDistance;
+                GetDirection(_exitDirection.Value) * _exitMarkerDistance;
+
+        RefreshRoomKindMarkers();
+    }
+
+    public void SetRoomKindMarkerVisible(bool isVisible)
+    {
+        _isRoomKindMarkerVisible = isVisible;
+        RefreshRoomKindMarkers();
     }
 
     public void SetChestVisible(bool isVisible)
@@ -147,6 +158,17 @@ public sealed class MinimapRoomIcon : MonoBehaviour
             marker.gameObject.SetActive(false);
             _enemyMarkers.Add(marker);
         }
+    }
+
+    private void RefreshRoomKindMarkers()
+    {
+        if (_startMarker != null)
+            _startMarker.gameObject.SetActive(
+                _isRoomKindMarkerVisible && _kind == MinimapRoomKind.Start);
+
+        if (_exitMarker != null)
+            _exitMarker.gameObject.SetActive(
+                _isRoomKindMarkerVisible && _kind == MinimapRoomKind.Exit);
     }
 
     private static Vector2 GetDirection(RoomDirection direction) =>

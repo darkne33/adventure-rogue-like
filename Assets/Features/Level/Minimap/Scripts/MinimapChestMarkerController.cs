@@ -11,6 +11,7 @@ public sealed class MinimapChestMarkerController : IDisposable
     private IReadOnlyDictionary<Room, MinimapRoomIcon> _iconsByRoom =
         new Dictionary<Room, MinimapRoomIcon>();
     private readonly HashSet<RoomData> _visitedRooms = new();
+    private readonly HashSet<RoomData> _visibleRooms = new();
     private Room _currentRoom;
 
     public MinimapChestMarkerController(RelicChestSpawner relicChestSpawner,
@@ -37,8 +38,27 @@ public sealed class MinimapChestMarkerController : IDisposable
         Refresh();
     }
 
+    public void SetVisibleRooms(IEnumerable<RoomData> visibleRooms)
+    {
+        _visibleRooms.Clear();
+
+        if (visibleRooms != null)
+        {
+            foreach (RoomData roomData in visibleRooms)
+            {
+                if (roomData != null)
+                    _visibleRooms.Add(roomData);
+            }
+        }
+
+        Refresh();
+    }
+
     public void Clear()
-        => ClearMarkers();
+    {
+        _visibleRooms.Clear();
+        ClearMarkers();
+    }
 
     private void ClearMarkers()
     {
@@ -69,6 +89,9 @@ public sealed class MinimapChestMarkerController : IDisposable
             if (ReferenceEquals(chestRoom, _currentRoom) || _visitedRooms.Contains(chestRoomData))
                 continue;
 
+            if (_visibleRooms.Contains(chestRoomData) == false)
+                continue;
+
             icon.SetChestVisible(true);
         }
     }
@@ -84,6 +107,7 @@ public sealed class MinimapChestMarkerController : IDisposable
     private void HandleChestsCleared()
     {
         _visitedRooms.Clear();
+        _visibleRooms.Clear();
         ClearMarkers();
     }
 

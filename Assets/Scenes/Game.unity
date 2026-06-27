@@ -235,6 +235,8 @@ MonoBehaviour:
   _upgradeOfferConfiguration: {fileID: 11400000, guid: 244cc95a28f755744b05647eff6a36ae, type: 2}
   _levelsConfiguration: {fileID: 11400000, guid: 504fff6e5ab243b45bbf880dbfb12ef0, type: 2}
   _abilitiesConfiguration: {fileID: 11400000, guid: 95689d23e4162724db50e9057f9f3493, type: 2}
+  _relicPoolConfiguration: {fileID: 11400000, guid: ec0f1ce1254e4368ad2b72ec676faafd, type: 2}
+  _relicChestConfiguration: {fileID: 11400000, guid: b02a631e2a1543aeaf760d0cfcde96fa, type: 2}
   _sceneNameType: 1
 --- !u!114 &103235139
 MonoBehaviour:
@@ -282,7 +284,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RogueLikeSceneProvider
   <LevelSpawnPoint>k__BackingField: {fileID: 570693709}
   <NavMeshSurface>k__BackingField: {fileID: 570693710}
-  <SceneContext>k__BackingField: {fileID: 103235139}
 --- !u!4 &103235141
 Transform:
   m_ObjectHideFlags: 0

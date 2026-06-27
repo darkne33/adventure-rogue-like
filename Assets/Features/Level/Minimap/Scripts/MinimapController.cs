@@ -20,6 +20,7 @@ public sealed class MinimapController : IDisposable, ITickable
     private readonly Dictionary<RoomData, MinimapRoomBounds> _boundsByRoom = new();
     private readonly Dictionary<Room, MinimapRoomBounds> _boundsByRoomView = new();
     private readonly HashSet<RoomData> _visitedRooms = new();
+    private readonly HashSet<RoomData> _visibleIconRooms = new();
     private readonly List<ConnectionEntry> _connections = new();
 
     private MinimapView _view;
@@ -247,15 +248,26 @@ public sealed class MinimapController : IDisposable, ITickable
             return;
 
         var states = new Dictionary<RoomData, MinimapRoomState>();
+        _visibleIconRooms.Clear();
+
         foreach (KeyValuePair<RoomData, MinimapRoomIcon> entry in _icons)
         {
             MinimapRoomState state = GetState(entry.Key);
+            bool canShowRoomIcons = CanShowRoomIcons(entry.Key);
+
+            if (canShowRoomIcons)
+                _visibleIconRooms.Add(entry.Key);
+
             states.Add(entry.Key, state);
             entry.Value.SetState(state);
+            entry.Value.SetRoomKindMarkerVisible(canShowRoomIcons);
             entry.Value.SetCombatRoomMarkerVisible(
+                canShowRoomIcons &&
                 state == MinimapRoomState.Available &&
                 entry.Key is DefaultEnemiesRoomData { IsCompleted: false });
         }
+
+        _chestMarkerController.SetVisibleRooms(_visibleIconRooms);
 
         foreach (ConnectionEntry connection in _connections)
         {
@@ -279,6 +291,38 @@ public sealed class MinimapController : IDisposable, ITickable
             return MinimapRoomState.Visited;
 
         return MinimapRoomState.Available;
+    }
+
+    private bool CanShowRoomIcons(RoomData room)
+    {
+        if (_currentRoom == null || room == null)
+            return false;
+
+        if (ReferenceEquals(room, _currentRoom))
+            return true;
+
+        return IsConnectedToCurrentRoom(room);
+    }
+
+    private bool IsConnectedToCurrentRoom(RoomData room)
+    {
+        foreach (ConnectionEntry connection in _connections)
+        {
+            if (connection.To == null)
+                continue;
+
+            bool fromCurrentToRoom =
+                ReferenceEquals(connection.From, _currentRoom) &&
+                ReferenceEquals(connection.To, room);
+            bool fromRoomToCurrent =
+                ReferenceEquals(connection.From, room) &&
+                ReferenceEquals(connection.To, _currentRoom);
+
+            if (fromCurrentToRoom || fromRoomToCurrent)
+                return true;
+        }
+
+        return false;
     }
 
     private Vector2 ToUiPosition(Vector2Int gridPosition, Vector2 center) =>
@@ -374,6 +418,7 @@ public sealed class MinimapController : IDisposable, ITickable
         _positionsByRoom.Clear();
         _boundsByRoom.Clear();
         _boundsByRoomView.Clear();
+        _visibleIconRooms.Clear();
         _connections.Clear();
     }
 

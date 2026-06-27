@@ -83,7 +83,7 @@ Camera:
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
-  m_AllowMSAA: 1
+  m_AllowMSAA: 0
   m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
@@ -207,11 +207,11 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
-  m_Dithering: 0
+  m_Dithering: 1
   m_ClearDepth: 1
   m_AllowXRRendering: 1
   m_AllowHDROutput: 1
@@ -244,4 +244,4 @@ MonoBehaviour:
   FocusTracking: 0
   FocusTarget: {fileID: 0}
   FocusOffset: 0
-  Profile: {fileID: 11400000, guid: bf322887d384df049a1b01fb7be18278, type: 2}
+  Profile: {fileID: 11400000, guid: e83ac7f5fe714d66a8a1a75d2db3906d, type: 2}
