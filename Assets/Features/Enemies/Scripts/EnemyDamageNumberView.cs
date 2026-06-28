@@ -9,13 +9,10 @@ namespace Features.Enemies.Scripts
     public class EnemyDamageNumberView : MonoBehaviour, IDamageView
     {
         private const int POOL_SIZE = 6;
+        private static readonly Color32 TextOutlineColor = new(35, 8, 8, 230);
 
         [SerializeField] private Canvas _worldCanvas;
         [SerializeField] private TMP_FontAsset _fontAsset;
-        [SerializeField] private Color _lowDamageColor = new(1f, 1f, 1f, 1f);
-        [SerializeField] private Color _mediumDamageColor = new(1f, 0.72f, 0.15f, 1f);
-        [SerializeField] private Color _highDamageColor = new(1f, 0.2f, 0.08f, 1f);
-        [SerializeField] private Color _criticalDamageColor = new(1f, 0.35f, 0.05f, 1f);
 
         [Inject] private DiContainer _container;
 
@@ -42,10 +39,8 @@ namespace Features.Enemies.Scripts
             number.Sequence?.Kill();
             number.Text.text = isCritical ? $"{damage}!" : damage.ToString();
             number.Text.fontSize = isCritical ? 1.25f : 1.05f;
-            number.Text.color = isCritical ? Color.white : GetDamageColor(damageRatio);
-            number.Text.outlineColor = isCritical
-                ? new Color32(90, 12, 0, 255)
-                : new Color32(35, 8, 8, 230);
+            number.Text.color = Color.white;
+            number.Text.outlineColor = TextOutlineColor;
             number.CanvasGroup.alpha = 1f;
 
             float scale = Mathf.Lerp(0.85f, 1.35f, Mathf.InverseLerp(0.02f, 0.35f, damageRatio));
@@ -69,8 +64,7 @@ namespace Features.Enemies.Scripts
                 number.Sequence
                     .Append(number.RectTransform.DOScale(scale, 0.24f).SetEase(Ease.OutElastic, 1.15f, 0.35f))
                     .Join(number.RectTransform.DOPunchRotation(
-                        new Vector3(0f, 0f, Random.Range(-14f, 14f)), 0.28f, 7, 0.55f))
-                    .Join(number.Text.DOColor(_criticalDamageColor, 0.11f).SetEase(Ease.OutQuad));
+                        new Vector3(0f, 0f, Random.Range(-14f, 14f)), 0.28f, 7, 0.55f));
             }
             else
             {
@@ -119,7 +113,7 @@ namespace Features.Enemies.Scripts
                 text.raycastTarget = false;
                 text.textWrappingMode = TextWrappingModes.NoWrap;
                 text.outlineWidth = 0.18f;
-                text.outlineColor = new Color32(35, 8, 8, 230);
+                text.outlineColor = TextOutlineColor;
 
                 DamageNumber number = new(numberObject, rectTransform, numberObject.GetComponent<CanvasGroup>(), text);
                 _numbers.Add(number);
@@ -160,15 +154,6 @@ namespace Features.Enemies.Scripts
             number.GameObject.SetActive(false);
             number.Sequence = null;
             _availableNumbers.Enqueue(number);
-        }
-
-        private Color GetDamageColor(float damageRatio)
-        {
-            if (damageRatio <= 0.1f)
-                return Color.Lerp(_lowDamageColor, _mediumDamageColor, damageRatio / 0.1f);
-
-            return Color.Lerp(_mediumDamageColor, _highDamageColor,
-                Mathf.InverseLerp(0.1f, 0.35f, damageRatio));
         }
 
         private void OnDestroy()
