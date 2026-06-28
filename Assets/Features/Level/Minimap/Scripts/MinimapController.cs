@@ -20,6 +20,7 @@ public sealed class MinimapController : IDisposable, ITickable
     private readonly Dictionary<RoomData, MinimapRoomBounds> _boundsByRoom = new();
     private readonly Dictionary<Room, MinimapRoomBounds> _boundsByRoomView = new();
     private readonly HashSet<RoomData> _visitedRooms = new();
+    private readonly HashSet<RoomData> _discoveredIconRooms = new();
     private readonly HashSet<RoomData> _visibleIconRooms = new();
     private readonly List<ConnectionEntry> _connections = new();
 
@@ -62,6 +63,7 @@ public sealed class MinimapController : IDisposable, ITickable
         _level = level != null ? level : throw new ArgumentNullException(nameof(level));
         _currentRoom = null;
         _visitedRooms.Clear();
+        _discoveredIconRooms.Clear();
 
         if (_view != null)
             Build();
@@ -253,7 +255,10 @@ public sealed class MinimapController : IDisposable, ITickable
         foreach (KeyValuePair<RoomData, MinimapRoomIcon> entry in _icons)
         {
             MinimapRoomState state = GetState(entry.Key);
-            bool canShowRoomIcons = CanShowRoomIcons(entry.Key);
+            if (CanDiscoverRoomIcons(entry.Key))
+                _discoveredIconRooms.Add(entry.Key);
+
+            bool canShowRoomIcons = _discoveredIconRooms.Contains(entry.Key);
 
             if (canShowRoomIcons)
                 _visibleIconRooms.Add(entry.Key);
@@ -293,7 +298,7 @@ public sealed class MinimapController : IDisposable, ITickable
         return MinimapRoomState.Available;
     }
 
-    private bool CanShowRoomIcons(RoomData room)
+    private bool CanDiscoverRoomIcons(RoomData room)
     {
         if (_currentRoom == null || room == null)
             return false;
