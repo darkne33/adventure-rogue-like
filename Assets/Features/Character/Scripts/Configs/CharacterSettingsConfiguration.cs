@@ -35,21 +35,22 @@ public class CharacterSettingsConfiguration : ScriptableObject
     [field: SerializeField] public float Acceleration { get; private set; }
     [field: SerializeField] public float Deceleration { get; private set; }
     [field: SerializeField] public float JumpForce { get; private set; }
-    [field: SerializeField] public float JumpForwardImpulse { get; private set; } = 1.2f;
-    [field: SerializeField] public float JumpInertiaDuration { get; private set; } = 0.45f;
-    [field: SerializeField, Range(0f, 1f)] public float JumpInertiaAirControl { get; private set; } = 0.25f;
+    [field: SerializeField] public float JumpForwardImpulse { get; private set; } = 1.35f;
+    [field: SerializeField] public float JumpInertiaDuration { get; private set; } = 0.65f;
+    [field: SerializeField, Range(0f, 1f)] public float JumpInertiaAirControl { get; private set; } = 0.18f;
     [field: SerializeField] public float GravityMultiplier { get; private set; }
     [field: SerializeField] public float CoyoteTime { get; private set; } = 0.12f;
     [field: SerializeField] public float BunnyHopResetDelay { get; private set; } = 0.25f;
-    [field: SerializeField] public float BunnyHopSpeedBonusPerJump { get; private set; } = 0.04f;
-    [field: SerializeField] public float MaxBunnyHopSpeedBonus { get; private set; } = 0.16f;
+    [field: SerializeField] public float BunnyHopSpeedBonusPerJump { get; private set; } = 0.045f;
+    [field: SerializeField] public float MaxBunnyHopSpeedBonus { get; private set; } = 0.18f;
     [field: SerializeField, Range(-1f, 1f)] public float BunnyHopCameraAlignment { get; private set; } = 0.25f;
-    [field: SerializeField] public float BunnyHopCameraTurnSlowdownSpeed { get; private set; } = 220f;
-    [field: SerializeField] public float BunnyHopCameraTurnSlowdownStrength { get; private set; } = 0.45f;
-    [field: SerializeField] public float DefaultAirAcceleration { get; private set; } = 30f;
-    [field: SerializeField] public float DefaultAirDeceleration { get; private set; } = 24f;
-    [field: SerializeField] public float LandingSlideDuration { get; private set; } = 0.18f;
-    [field: SerializeField] public float LandingSlideDeceleration { get; private set; } = 18f;
-    [field: SerializeField] public float LandingSlideSpeedMultiplier { get; private set; } = 1.12f;
-    [field: SerializeField, Range(0f, 1f)] public float LandingSlideInputCarry { get; private set; } = 0.25f;
+    [field: SerializeField] public float BunnyHopCameraTurnSlowdownSpeed { get; private set; } = 260f;
+    [field: SerializeField] public float BunnyHopCameraTurnSlowdownStrength { get; private set; } = 0.35f;
+    [field: SerializeField] public float DefaultAirAcceleration { get; private set; } = 22f;
+    [field: SerializeField] public float AirTurnSpeed { get; private set; } = 210f;
+    [field: SerializeField] public float DefaultAirDeceleration { get; private set; } = 16f;
+    [field: SerializeField] public float LandingSlideDuration { get; private set; } = 0.16f;
+    [field: SerializeField] public float LandingSlideDeceleration { get; private set; } = 8f;
+    [field: SerializeField] public float LandingSlideSpeedMultiplier { get; private set; } = 1.04f;
+    [field: SerializeField, Range(0f, 1f)] public float LandingSlideInputCarry { get; private set; } = 0.45f;
 }

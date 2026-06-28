@@ -22,6 +22,10 @@ MonoBehaviour:
   <MinVerticalAngle>k__BackingField: 0
   <MaxVerticalAngle>k__BackingField: 60
   <CameraSmoothness>k__BackingField: 2.73
-  <LandingShakeDuration>k__BackingField: 0.12
-  <LandingShakeStrength>k__BackingField: 1.6
-  <LandingShakeFrequency>k__BackingField: 1.15
+  <FollowDamping>k__BackingField: {x: 0, y: 0.2, z: 0}
+  <FollowShoulderOffset>k__BackingField: {x: 0, y: 0.15, z: 0}
+  <FollowVerticalArmLength>k__BackingField: 0
+  <FollowCameraDistance>k__BackingField: 14
+  <LandingShakeDuration>k__BackingField: 0.8
+  <LandingShakeStrength>k__BackingField: 0.05
+  <LandingShakePitchStrength>k__BackingField: 1

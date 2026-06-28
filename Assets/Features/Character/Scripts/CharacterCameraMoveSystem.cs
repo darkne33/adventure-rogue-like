@@ -10,7 +10,8 @@ public class CharacterCameraMoveSystem
     private readonly ICameraService _cameraService;
     private readonly InputSystem_Actions _inputActions;
     private readonly PauseEntity _pauseEntity;
-    private CinemachineBasicMultiChannelPerlin _landingShakeNoise;
+    private readonly Vector3 _baseCameraPivotLocalPosition;
+    private CinemachineBasicMultiChannelPerlin _cinemachineNoise;
 
     private float _yaw;
     private float _pitch;
@@ -20,6 +21,8 @@ public class CharacterCameraMoveSystem
     private float _landingShakeTimer;
     private float _landingShakeDuration;
     private float _landingShakeStrength;
+    private float _landingShakeVerticalOffset;
+    private float _landingShakePitchOffset;
 
     private readonly float _topClamp = 70f;
     private readonly float _bottomClamp = -30f;
@@ -44,7 +47,10 @@ public class CharacterCameraMoveSystem
 
         _yaw = _cameraPivot.eulerAngles.y;
         _pitch = NormalizeAngle(_cameraPivot.eulerAngles.x);
-        ResetLandingShakeNoise();
+        _baseCameraPivotLocalPosition = _cameraPivot.localPosition;
+        ApplyCinemachineFollowSettings();
+        ResetLandingShakeBump();
+        ResetCinemachineNoise();
     }
 
     public void PlayLandingShake()
@@ -54,17 +60,16 @@ public class CharacterCameraMoveSystem
         if (duration <= 0f || strength <= 0f)
             return;
 
-        CinemachineBasicMultiChannelPerlin noise = ResolveLandingShakeNoise();
-        if (noise == null)
-            return;
-
         _landingShakeDuration = duration;
         _landingShakeTimer = duration;
         _landingShakeStrength = strength;
+    }
 
-        noise.ReSeed();
-        noise.AmplitudeGain = _landingShakeStrength;
-        noise.FrequencyGain = Mathf.Max(0f, _settings.LandingShakeFrequency);
+    public void StopLandingShake()
+    {
+        ResetLandingShakeBump();
+        if (_cameraPivot != null)
+            _cameraPivot.localPosition = _baseCameraPivotLocalPosition;
     }
 
     public void Move()
@@ -96,8 +101,9 @@ public class CharacterCameraMoveSystem
 
         _pitch = Mathf.Clamp(_pitch, _bottomClamp, _topClamp);
 
-        UpdateLandingShakeNoise();
-        _cameraPivot.rotation = Quaternion.Euler(_pitch, _yaw, 0f);
+        UpdateLandingShakeBump();
+        _cameraPivot.localPosition = _baseCameraPivotLocalPosition + Vector3.up * _landingShakeVerticalOffset;
+        _cameraPivot.rotation = Quaternion.Euler(_pitch + _landingShakePitchOffset, _yaw, 0f);
     }
 
     private bool IsMouseInput()
@@ -118,37 +124,101 @@ public class CharacterCameraMoveSystem
         return angle;
     }
 
-    private void UpdateLandingShakeNoise()
+    private void UpdateLandingShakeBump()
     {
         if (_landingShakeTimer <= 0f)
             return;
-
-        CinemachineBasicMultiChannelPerlin noise = ResolveLandingShakeNoise();
-        if (noise == null)
-        {
-            _landingShakeTimer = 0f;
-            return;
-        }
 
         _landingShakeTimer = Mathf.Max(0f, _landingShakeTimer - Time.deltaTime);
 
         float duration = Mathf.Max(Time.deltaTime, _landingShakeDuration);
         float elapsed = duration - _landingShakeTimer;
         float progress = Mathf.Clamp01(elapsed / duration);
-        float damping = 1f - progress;
-        damping *= damping;
 
-        noise.AmplitudeGain = _landingShakeStrength * damping;
-        noise.FrequencyGain = Mathf.Max(0f, _settings.LandingShakeFrequency);
+        _landingShakeVerticalOffset = EvaluateLandingBumpOffset(progress) * _landingShakeStrength;
+        _landingShakePitchOffset = EvaluateLandingBumpPitch(progress) * _settings.LandingShakePitchStrength;
 
         if (_landingShakeTimer <= 0f)
-            ResetLandingShakeNoise();
+            ResetLandingShakeBump();
     }
 
-    private CinemachineBasicMultiChannelPerlin ResolveLandingShakeNoise()
+    private float EvaluateLandingBumpOffset(float progress)
     {
-        if (_landingShakeNoise != null)
-            return _landingShakeNoise;
+        if (progress < 0.34f)
+            return -SmootherStep(progress / 0.34f);
+
+        if (progress < 0.62f)
+            return Mathf.Lerp(-1f, 0.28f, SmootherStep((progress - 0.34f) / 0.28f));
+
+        return Mathf.Lerp(0.28f, 0f, SmootherStep((progress - 0.62f) / 0.38f));
+    }
+
+    private float EvaluateLandingBumpPitch(float progress)
+    {
+        if (progress < 0.32f)
+            return SmootherStep(progress / 0.32f);
+
+        if (progress < 0.6f)
+            return Mathf.Lerp(1f, -0.24f, SmootherStep((progress - 0.32f) / 0.28f));
+
+        return Mathf.Lerp(-0.24f, 0f, SmootherStep((progress - 0.6f) / 0.4f));
+    }
+
+    private float SmootherStep(float value)
+    {
+        value = Mathf.Clamp01(value);
+        return value * value * value * (value * (value * 6f - 15f) + 10f);
+    }
+
+    private void ResetLandingShakeBump()
+    {
+        _landingShakeTimer = 0f;
+        _landingShakeVerticalOffset = 0f;
+        _landingShakePitchOffset = 0f;
+    }
+
+
+    private void ApplyCinemachineFollowSettings()
+    {
+        CinemachineThirdPersonFollow follow = ResolveThirdPersonFollow();
+        if (follow == null)
+            return;
+
+        follow.Damping = _settings.FollowDamping;
+        follow.ShoulderOffset = _settings.FollowShoulderOffset;
+        follow.VerticalArmLength = Mathf.Max(0f, _settings.FollowVerticalArmLength);
+        follow.CameraDistance = Mathf.Max(0f, _settings.FollowCameraDistance);
+    }
+
+    private CinemachineThirdPersonFollow ResolveThirdPersonFollow()
+    {
+        CinemachineVirtualCameraBase mainCamera = _cameraService.MainCamera;
+        if (mainCamera == null)
+            return null;
+
+        if (mainCamera is CinemachineCamera cinemachineCamera)
+        {
+            return cinemachineCamera.GetCinemachineComponent(CinemachineCore.Stage.Body) as
+                CinemachineThirdPersonFollow;
+        }
+
+        return mainCamera.GetComponent<CinemachineThirdPersonFollow>();
+    }
+
+    private void ResetCinemachineNoise()
+    {
+        CinemachineBasicMultiChannelPerlin noise = ResolveCinemachineNoise();
+        if (noise == null)
+            return;
+
+        noise.AmplitudeGain = 0f;
+        noise.FrequencyGain = 1f;
+    }
+
+    private CinemachineBasicMultiChannelPerlin ResolveCinemachineNoise()
+    {
+        if (_cinemachineNoise != null)
+            return _cinemachineNoise;
 
         CinemachineVirtualCameraBase mainCamera = _cameraService.MainCamera;
         if (mainCamera == null)
@@ -156,24 +226,13 @@ public class CharacterCameraMoveSystem
 
         if (mainCamera is CinemachineCamera cinemachineCamera)
         {
-            _landingShakeNoise =
+            _cinemachineNoise =
                 cinemachineCamera.GetCinemachineComponent(CinemachineCore.Stage.Noise) as
                     CinemachineBasicMultiChannelPerlin;
-            return _landingShakeNoise;
+            return _cinemachineNoise;
         }
 
-        _landingShakeNoise = mainCamera.GetComponent<CinemachineBasicMultiChannelPerlin>();
-        return _landingShakeNoise;
-    }
-
-    private void ResetLandingShakeNoise()
-    {
-        _landingShakeTimer = 0f;
-        CinemachineBasicMultiChannelPerlin noise = ResolveLandingShakeNoise();
-        if (noise == null)
-            return;
-
-        noise.AmplitudeGain = 0f;
-        noise.FrequencyGain = Mathf.Max(0f, _settings.LandingShakeFrequency);
+        _cinemachineNoise = mainCamera.GetComponent<CinemachineBasicMultiChannelPerlin>();
+        return _cinemachineNoise;
     }
 }

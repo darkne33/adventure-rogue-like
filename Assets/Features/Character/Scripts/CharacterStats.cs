@@ -44,6 +44,7 @@ public class CharacterStats
     public float BunnyHopCameraTurnSlowdownSpeed;
     public float BunnyHopCameraTurnSlowdownStrength;
     public float DefaultAirAcceleration;
+    public float AirTurnSpeed;
     public float DefaultAirDeceleration;
     public float LandingSlideDuration;
     public float LandingSlideDeceleration;

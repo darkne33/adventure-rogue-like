@@ -21,8 +21,14 @@ public class CharacterCameraSettingsConfiguration : ScriptableObject
 
     [field: SerializeField] public float CameraSmoothness { get; private set; } = 0.2f;
 
+    [Header("Cinemachine Follow")]
+    [field: SerializeField] public Vector3 FollowDamping { get; private set; } = new(0.14f, 0.26f, 0.18f);
+    [field: SerializeField] public Vector3 FollowShoulderOffset { get; private set; } = new(0f, 0.18f, 0f);
+    [field: SerializeField] public float FollowVerticalArmLength { get; private set; } = 0f;
+    [field: SerializeField] public float FollowCameraDistance { get; private set; } = 14f;
+
     [Header("Camera Shake")]
-    [field: SerializeField] public float LandingShakeDuration { get; private set; } = 0.12f;
-    [field: SerializeField] public float LandingShakeStrength { get; private set; } = 1.6f;
-    [field: SerializeField] public float LandingShakeFrequency { get; private set; } = 1.15f;
+    [field: SerializeField] public float LandingShakeDuration { get; private set; } = 0.26f;
+    [field: SerializeField] public float LandingShakeStrength { get; private set; } = 0.32f;
+    [field: SerializeField] public float LandingShakePitchStrength { get; private set; } = 1.45f;
 }

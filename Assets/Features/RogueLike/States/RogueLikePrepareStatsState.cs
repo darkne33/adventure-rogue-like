@@ -65,6 +65,7 @@ public class RogueLikePrepareStatsState : State
         _characterStats.BunnyHopCameraTurnSlowdownStrength =
             _characterSettingsConfiguration.BunnyHopCameraTurnSlowdownStrength;
         _characterStats.DefaultAirAcceleration = _characterSettingsConfiguration.DefaultAirAcceleration;
+        _characterStats.AirTurnSpeed = _characterSettingsConfiguration.AirTurnSpeed;
         _characterStats.DefaultAirDeceleration = _characterSettingsConfiguration.DefaultAirDeceleration;
         _characterStats.LandingSlideDuration = _characterSettingsConfiguration.LandingSlideDuration;
         _characterStats.LandingSlideDeceleration = _characterSettingsConfiguration.LandingSlideDeceleration;

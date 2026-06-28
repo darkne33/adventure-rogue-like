@@ -115,19 +115,13 @@ public class CharacterMoveSystem
                 }
                 else
                 {
-                    float dot = Vector3.Dot(currentHorizontal.normalized, moveDirection);
-
-                    if (dot < 0f && IsJumpInertiaActive() == false)
-                    {
-                        ApplyAirDeceleration(currentHorizontal, _characterStats.DefaultAirDeceleration);
-                    }
-                    else
-                    {
-                        float airControlSpeed = GetMovementSpeed();
-                        Vector3 desiredAirVelocity = moveDirection * airControlSpeed;
-                        ApplyJumpInertiaAirControl(currentHorizontal, desiredAirVelocity);
-                    }
+                    ApplyAirSteering(currentHorizontal, moveDirection, currentSpeed);
                 }
+            }
+            else if (moveDirection != Vector3.zero)
+            {
+                Vector3 desiredAirVelocity = moveDirection * GetMovementSpeed();
+                ApplyJumpInertiaAirControl(Vector3.zero, desiredAirVelocity);
             }
 
             _direction = moveDirection;
@@ -217,6 +211,7 @@ public class CharacterMoveSystem
             return;
 
         _jumpInputBufferTimer = 0f;
+        _cameraMoveSystem.StopLandingShake();
         _rigidbody.AddForce(Vector3.up * _characterStats.JumpForce, ForceMode.Force);
         ApplyJumpForwardImpulse();
         StartJumpInertia();
@@ -434,6 +429,23 @@ public class CharacterMoveSystem
         float airAcceleration = Mathf.Max(0f, _characterStats.DefaultAirAcceleration);
         if (velocityDiff.magnitude > 0.01f)
             _rigidbody.AddForce(velocityDiff * airAcceleration, ForceMode.Acceleration);
+    }
+
+    private void ApplyAirSteering(
+        Vector3 currentHorizontalVelocity, Vector3 moveDirection, float currentSpeed)
+    {
+        Vector3 currentDirection = currentHorizontalVelocity.normalized;
+        float turnRadians = Mathf.Max(0f, _characterStats.AirTurnSpeed) *
+                            Mathf.Deg2Rad * Time.fixedDeltaTime;
+        Vector3 steeredDirection = Vector3.RotateTowards(
+            currentDirection,
+            moveDirection,
+            turnRadians,
+            0f);
+
+        float targetSpeed = Mathf.Max(currentSpeed, GetMovementSpeed());
+        Vector3 desiredAirVelocity = steeredDirection.normalized * targetSpeed;
+        ApplyJumpInertiaAirControl(currentHorizontalVelocity, desiredAirVelocity);
     }
 
     private Vector3 ApplyJumpInertiaToDesiredVelocity(Vector3 desiredAirVelocity)
