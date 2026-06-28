@@ -33,11 +33,11 @@ RectTransform:
   - {fileID: 220001}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 18, y: -390}
-  m_SizeDelta: {x: 520, y: 160}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: 235}
+  m_SizeDelta: {x: 540, y: 160}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &200004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -53,8 +53,7 @@ MonoBehaviour:
   _slotsRoot: {fileID: 210001}
   _slotPrefab: {fileID: 100004, guid: 8c6b5dc1b9944a21ab49cb8187ed4f5a, type: 3}
   _tooltipView: {fileID: 220004}
-  _slotSize: {x: 48, y: 48}
-  _slotSpacing: 6
+  _gridLayoutGroup: {fileID: 210002}
 --- !u!1 &210000
 GameObject:
   m_ObjectHideFlags: 0
@@ -64,6 +63,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 210001}
+  - component: {fileID: 210002}
   m_Layer: 5
   m_Name: SlotsRoot
   m_TagString: Untagged
@@ -88,8 +88,32 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 520, y: 52}
+  m_SizeDelta: {x: 540, y: 110}
   m_Pivot: {x: 0, y: 1}
+--- !u!114 &210002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 210000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GridLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 1
+  m_StartCorner: 0
+  m_StartAxis: 0
+  m_CellSize: {x: 48, y: 48}
+  m_Spacing: {x: 6, y: 6}
+  m_Constraint: 1
+  m_ConstraintCount: 10
 --- !u!1 &220000
 GameObject:
   m_ObjectHideFlags: 0

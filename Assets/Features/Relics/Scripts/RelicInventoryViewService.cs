@@ -20,21 +20,19 @@ namespace Features.Relics.Scripts
             if (panel == null || _view != null)
                 return;
 
-            if (panel.RelicInventoryViewPrefab == null)
+            if (panel.RelicInventoryView == null)
             {
-                Debug.LogWarning($"{nameof(CharacterPanel)} has no {nameof(CharacterPanel.RelicInventoryViewPrefab)}.");
+                Debug.LogWarning($"{nameof(CharacterPanel)} has no {nameof(CharacterPanel.RelicInventoryView)}.");
                 return;
             }
 
-            _view = UnityEngine.Object.Instantiate(panel.RelicInventoryViewPrefab, panel.transform);
-            _view.name = panel.RelicInventoryViewPrefab.name;
+            _view = panel.RelicInventoryView;
             Refresh();
         }
 
         public void Detach()
         {
-            if (_view != null)
-                UnityEngine.Object.Destroy(_view.gameObject);
+            _view?.ClearSlots();
 
             _view = null;
         }

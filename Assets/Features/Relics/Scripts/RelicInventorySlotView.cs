@@ -6,8 +6,9 @@ namespace Features.Relics.Scripts
 {
     public sealed class RelicInventorySlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        [SerializeField] private Image _borderImage;
+        [SerializeField] private Image _slotBackgroundImage;
         [SerializeField] private Image _iconImage;
+        [SerializeField] private UnityEngine.UI.Outline _iconOutline;
         [SerializeField] private Text _stackText;
 
         private RelicRuntimeState _state;
@@ -18,13 +19,19 @@ namespace Features.Relics.Scripts
             _state = state;
             _tooltipView = tooltipView;
 
-            if (_borderImage != null)
-                _borderImage.color = GetRarityColor(state.Definition.Rarity);
+            if (_slotBackgroundImage != null)
+                _slotBackgroundImage.color = Color.clear;
 
             if (_iconImage != null)
             {
                 _iconImage.sprite = state.Definition.Icon;
                 _iconImage.preserveAspect = true;
+            }
+
+            if (_iconOutline != null)
+            {
+                _iconOutline.effectColor = GetRarityColor(state.Definition.Rarity);
+                _iconOutline.effectDistance = GetOutlineDistance(state.Definition.Rarity);
             }
 
             if (_stackText != null)
@@ -46,10 +53,12 @@ namespace Features.Relics.Scripts
             _tooltipView?.Hide();
 
 #if UNITY_EDITOR
-        public void SetEditorReferences(Image borderImage, Image iconImage, Text stackText)
+        public void SetEditorReferences(Image slotBackgroundImage, Image iconImage,
+            UnityEngine.UI.Outline iconOutline, Text stackText)
         {
-            _borderImage = borderImage;
+            _slotBackgroundImage = slotBackgroundImage;
             _iconImage = iconImage;
+            _iconOutline = iconOutline;
             _stackText = stackText;
         }
 #endif
@@ -62,6 +71,16 @@ namespace Features.Relics.Scripts
                 RelicRarity.Rare => new Color(0.85f, 0.25f, 1f),
                 RelicRarity.Legendary => new Color(1f, 0.75f, 0.12f),
                 _ => Color.white
+            };
+
+        private static Vector2 GetOutlineDistance(RelicRarity rarity) =>
+            rarity switch
+            {
+                RelicRarity.Common => new Vector2(1f, -1f),
+                RelicRarity.Uncommon => new Vector2(1.35f, -1.35f),
+                RelicRarity.Rare => new Vector2(1.7f, -1.7f),
+                RelicRarity.Legendary => new Vector2(2.1f, -2.1f),
+                _ => new Vector2(1f, -1f)
             };
     }
 }
