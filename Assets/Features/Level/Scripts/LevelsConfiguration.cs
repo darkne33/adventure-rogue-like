@@ -9,6 +9,7 @@ public class LevelsConfiguration : ScriptableObject
     [field: SerializeField] public LayerMask ObstacleLayer { get; private set; }
     [field: SerializeField] public EnemyWaveScalingConfiguration EnemyWaveScalingConfiguration { get; private set; }
     [field: SerializeField] public EnemyHealthScalingConfiguration EnemyHealthScalingConfiguration { get; private set; }
+    [field: SerializeField] public EnemyTimedSpawnScalingConfiguration EnemyTimedSpawnScalingConfiguration { get; private set; }
     [field: SerializeField] public List<LevelSettings> Levels { get; private set; }
 
     public bool HasLevel(int levelIndex) =>
@@ -41,6 +42,14 @@ public class LevelsConfiguration : ScriptableObject
             throw new InvalidOperationException("Enemy health scaling configuration is missing.");
 
         return EnemyHealthScalingConfiguration;
+    }
+
+    public EnemyTimedSpawnScalingConfiguration GetEnemyTimedSpawnScalingConfiguration()
+    {
+        if (EnemyTimedSpawnScalingConfiguration == null)
+            throw new InvalidOperationException("Enemy timed spawn scaling configuration is missing.");
+
+        return EnemyTimedSpawnScalingConfiguration;
     }
 }
 

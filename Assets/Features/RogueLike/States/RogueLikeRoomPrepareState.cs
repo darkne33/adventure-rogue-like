@@ -16,11 +16,12 @@ namespace Core
         private readonly ICharacterProvider _characterProvider;
         private readonly IEnemiesProvider _enemiesProvider;
         private readonly IPanelService _panelService;
+        private readonly LevelsConfiguration _levelsConfiguration;
 
         public RogueLikeRoomPrepareState(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService,
             EnemiesWaveObserver enemiesWaveObserver, EnemySpawner enemySpawner,
             ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
-            IPanelService panelService)
+            IPanelService panelService, LevelsConfiguration levelsConfiguration)
         {
             _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
             _enemiesWaveObserver = enemiesWaveObserver;
@@ -28,6 +29,7 @@ namespace Core
             _characterProvider = characterProvider;
             _enemiesProvider = enemiesProvider;
             _panelService = panelService;
+            _levelsConfiguration = levelsConfiguration;
         }
 
         public override async UniTask Enter(CancellationToken cts)
@@ -60,7 +62,10 @@ namespace Core
         private async UniTask RunTimedAdditionalSpawning(DefaultEnemiesRoomData roomData,
             CancellationToken cancellationToken)
         {
-            float duration = Mathf.Max(0f, roomData.TimedSpawnDuration);
+            EnemyTimedSpawnScalingConfiguration scalingConfiguration =
+                _levelsConfiguration.GetEnemyTimedSpawnScalingConfiguration();
+            float duration = scalingConfiguration.GetDuration(roomData.TimedSpawnDuration,
+                _enemiesWaveObserver.CompletedRooms);
             if (duration <= 0f)
             {
                 _enemiesWaveObserver.FinishEnemySpawning(_enemiesProvider.Count);
