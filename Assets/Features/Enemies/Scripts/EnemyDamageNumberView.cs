@@ -9,7 +9,7 @@ namespace Features.Enemies.Scripts
     public class EnemyDamageNumberView : MonoBehaviour, IDamageView
     {
         private const int POOL_SIZE = 6;
-        private static readonly Color32 TextOutlineColor = new(35, 8, 8, 230);
+        private static readonly Color32 TextOutlineColor = new(0, 0, 0, 255);
 
         [SerializeField] private Canvas _worldCanvas;
         [SerializeField] private TMP_FontAsset _fontAsset;
@@ -156,7 +156,7 @@ namespace Features.Enemies.Scripts
             _availableNumbers.Enqueue(number);
         }
 
-        private void OnDestroy()
+        public void OnDisable()
         {
             if (_root != null)
                 Destroy(_root.gameObject, 1.5f);
