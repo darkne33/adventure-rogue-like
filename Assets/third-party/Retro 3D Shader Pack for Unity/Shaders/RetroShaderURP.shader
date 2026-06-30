@@ -10,6 +10,9 @@
         _DrawDist("Draw Distance", Float) = 0
 
         _ReceiveShadows("Receive Shadows", Range(0,1)) = 1
+        _AmbientStrength("Ambient Strength", Range(0,2)) = 1
+        _DirectLightStrength("Directional Light Strength", Range(0,2)) = 1
+        _MinLight("Minimum Light", Range(0,1)) = 0.35
 
         _HitColor("Hit Color", Color) = (1,0,0,1)
         _HitPower("Hit Power", Range(0,1)) = 0
@@ -39,7 +42,8 @@
             #pragma fragment frag
 
             #pragma multi_compile_fog
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -56,6 +60,9 @@
             float _AffineMapIntensity;
             float _DrawDist;
             float _ReceiveShadows;
+            float _AmbientStrength;
+            float _DirectLightStrength;
+            float _MinLight;
 
             float4 _HitColor;
             float _HitPower;
@@ -122,8 +129,11 @@
                 OUT.uv_affine =
                     float3(IN.uv * wVal, wVal);
 
-                OUT.shadowCoord =
-                    TransformWorldToShadowCoord(worldPos);
+                #if defined(_MAIN_LIGHT_SHADOWS_SCREEN)
+                    OUT.shadowCoord = ComputeScreenPos(clipPos);
+                #else
+                    OUT.shadowCoord = TransformWorldToShadowCoord(worldPos);
+                #endif
 
                 OUT.fogFactor =
                     ComputeFogFactor(clipPos.z);
@@ -160,17 +170,25 @@
 
                 half NdotL =
                     saturate(dot(normalWS,
-                                 mainLight.direction));
+                                 mainLight.direction) * 0.5 + 0.5);
 
                 half shadow =
                     lerp(1.0,
                          mainLight.shadowAttenuation,
                          _ReceiveShadows);
 
-                float lighting =
-                    NdotL * shadow + 0.25;
+                half3 ambient =
+                    max(SampleSH(normalWS) * _AmbientStrength,
+                        half3(_MinLight, _MinLight, _MinLight));
 
-                tex.rgb *= lighting;
+                half3 directLighting =
+                    mainLight.color *
+                    (NdotL *
+                     shadow *
+                     mainLight.distanceAttenuation *
+                     _DirectLightStrength);
+
+                tex.rgb *= ambient + directLighting;
 
                 tex.rgb =
                     lerp(tex.rgb,
