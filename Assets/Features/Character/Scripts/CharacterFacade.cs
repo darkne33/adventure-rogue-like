@@ -47,7 +47,6 @@ public class CharacterFacade : MonoBehaviour
     {
         UpdateHealth(Time.deltaTime);
         _moveSystem.CaptureJumpInput(Time.deltaTime);
-        _moveSystem.UpdateDash(Time.deltaTime);
         _moveSystem.Rotate(Time.deltaTime);
 
         if (_pauseEntity.IsPauseEntity == false)

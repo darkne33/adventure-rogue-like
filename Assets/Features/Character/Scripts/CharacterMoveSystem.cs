@@ -167,6 +167,7 @@ public class CharacterMoveSystem
             _canJump = true;
             if (_hasJumpedSinceGrounded)
             {
+                _characterFxSystem.CompletedJump();
                 _cameraMoveSystem.PlayLandingShake();
                 StartLandingSlide();
             }
@@ -241,15 +242,6 @@ public class CharacterMoveSystem
                 rotationSpeed * deltaTime
             );
         }
-    }
-
-    public void UpdateDash(float deltaTime)
-    {
-        if (_pauseEntity.IsPauseEntity)
-            return;
-
-        if (_dashCooldownTimer > 0f)
-            _dashCooldownTimer -= deltaTime;
     }
 
     private void ApplyEnhancedGravity()
