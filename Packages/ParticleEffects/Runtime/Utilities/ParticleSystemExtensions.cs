@@ -80,6 +80,7 @@ namespace Coffee.UIParticleInternal
             return GetActualSimulationSpace(self) == ParticleSystemSimulationSpace.World;
         }
 
+        [Obsolete("Obsolete")]
         public static void SortForRendering(this List<ParticleSystem> self, Transform transform, bool sortByMaterial)
         {
             self.Sort((a, b) =>
@@ -131,6 +132,7 @@ namespace Coffee.UIParticleInternal
             });
         }
 
+        [Obsolete("Obsolete")]
         private static int GetIndex(IList<ParticleSystem> list, Object ps)
         {
             for (var i = 0; i < list.Count; i++)

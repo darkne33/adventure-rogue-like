@@ -913,6 +913,7 @@ namespace Asset_Cleaner {
         class ResultComp : IEqualityComparer<Result> {
             public static ResultComp Instance { get; } = new ResultComp();
             public bool Equals(Result x, Result y) => GetHashCode(x) == GetHashCode(y);
+            [Obsolete("Obsolete")]
             public int GetHashCode(Result obj) => obj.RootGo.GetInstanceID();
         }
 

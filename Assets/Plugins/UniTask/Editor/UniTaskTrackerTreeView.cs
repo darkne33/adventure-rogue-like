@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 
 namespace Cysharp.Threading.Tasks.Editor
 {
+    [Obsolete("Obsolete")]
     public class UniTaskTrackerViewItem : TreeViewItem
     {
         static Regex removeHref = new Regex("<a href.+>(.+)</a>", RegexOptions.Compiled);
@@ -55,6 +56,7 @@ namespace Cysharp.Threading.Tasks.Editor
         }
     }
 
+    [Obsolete("Obsolete")]
     public class UniTaskTrackerTreeView : TreeView
     {
         const string sortedColumnIndexStateKey = "UniTaskTrackerTreeView_sortedColumnIndex";

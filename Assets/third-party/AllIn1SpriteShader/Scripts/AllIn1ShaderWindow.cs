@@ -1,7 +1,9 @@
 ﻿#if UNITY_EDITOR
+using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 using ShaderType = AllIn1SpriteShader.AllIn1Shader.ShaderTypes;
 
 namespace AllIn1SpriteShader
@@ -416,6 +418,7 @@ namespace AllIn1SpriteShader
             }
         }
 
+        [Obsolete("Obsolete")]
         private static bool IsAssetAFolder(Object obj)
         {
             string path = "";

@@ -99,7 +99,7 @@ namespace MackySoft.SerializeReferenceExtensions.Editor {
 		}
 
 		static AdvancedDropdownItem GetItem (AdvancedDropdownItem parent,string name) {
-			foreach (AdvancedDropdownItem item in parent.children) {
+			foreach (AdvancedDropdownItem item in parent.childList) {
 				if (item.name == name) {
 					return item;
 				}

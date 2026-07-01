@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Coffee.UIEffectInternal;
 using UnityEngine;
 
@@ -99,6 +100,7 @@ namespace Coffee.UIEffects
 
         public override bool canModifyShape => m_AllowToModifyMeshShape;
 
+        [Obsolete("Obsolete")]
         public override uint effectId => target
             ? target.effectId
             : preset

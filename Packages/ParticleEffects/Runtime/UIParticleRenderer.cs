@@ -186,6 +186,7 @@ namespace Coffee.UIExtensions
         /// <summary>
         /// Perform material modification in this function.
         /// </summary>
+        [Obsolete("Obsolete")]
         public override Material GetModifiedMaterial(Material baseMaterial)
         {
             if (!IsActive() || !_parent)

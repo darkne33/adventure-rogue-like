@@ -37,7 +37,7 @@ namespace Coffee.UIEffects
 
         public Material effectMaterial => _material;
         public Graphic graphic => _graphic ? _graphic : _graphic = GetComponent<Graphic>();
-        public virtual uint effectId => (uint)GetInstanceID();
+        [Obsolete("Obsolete")] public virtual uint effectId => (uint)GetInstanceID();
         public virtual float actualSamplingScale => 1;
         public virtual bool canModifyShape => true;
 
@@ -177,6 +177,7 @@ namespace Coffee.UIEffects
             return !Mathf.Approximately(scale1.x * scale1.y * scale2.x * scale2.y, 0);
         }
 
+        [Obsolete("Obsolete")]
         public virtual Material GetModifiedMaterial(Material baseMaterial)
         {
             if (baseMaterial == null || !isActiveAndEnabled || context == null || !context.willModifyMaterial)

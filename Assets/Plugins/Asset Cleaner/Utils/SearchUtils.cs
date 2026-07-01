@@ -31,6 +31,7 @@ namespace Asset_Cleaner {
 			}
 		}
 
+		[Obsolete("Obsolete")]
 		public static void Init(SearchArg arg, Object target, Scene scene = default) {
 			Asr.IsNotNull(target, "Asset you're trying to search is corrupted");
 
@@ -85,6 +86,7 @@ namespace Asset_Cleaner {
 			}
 		}
 
+		[Obsolete("Obsolete")]
 		static bool SearchInChildProperties(SearchArg arg, Object suspect, bool scene, out EcsEntity entity) {
 			if (IsTargetOrNested(arg, suspect)) {
 				entity = default;
@@ -408,6 +410,7 @@ namespace Asset_Cleaner {
 		}
 #endif
 
+		[Obsolete("Obsolete")]
 		static bool IsTargetOrNested(SearchArg target, Object suspect) {
 			if (!suspect)
 				return false;

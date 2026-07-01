@@ -63,6 +63,7 @@ namespace Coffee.UIEffectInternal
         public ShaderVariantCollection shaderVariantCollection => m_Asset;
         public Func<string, bool> onShaderRequested;
 
+        [Obsolete("Obsolete")]
         public Shader FindOptionalShader(Shader shader,
             string requiredName,
             string format,
@@ -251,6 +252,7 @@ namespace Coffee.UIEffectInternal
             Profiler.EndSample();
         }
 
+        [Obsolete("Obsolete")]
         private (ShaderVariantCollection.ShaderVariant, StringPair) GetVariant(Material material)
         {
             Profiler.BeginSample("(EDITOR/COF)[ShaderVariantRegistry] GetVariant");

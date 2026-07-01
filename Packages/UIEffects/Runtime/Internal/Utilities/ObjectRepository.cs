@@ -114,6 +114,7 @@ namespace Coffee.UIEffectInternal
             return false;
         }
 
+        [Obsolete("Obsolete")]
         private void Add(Hash128 hash, ref T obj, T newObject)
         {
             if (!newObject)
@@ -140,6 +141,7 @@ namespace Coffee.UIEffectInternal
         /// <summary>
         /// Release a object.
         /// </summary>
+        [Obsolete("Obsolete")]
         public void Release(ref T obj)
         {
             if (ReferenceEquals(obj, null)) return;
@@ -169,6 +171,7 @@ namespace Coffee.UIEffectInternal
             Profiler.EndSample();
         }
 
+        [Obsolete("Obsolete")]
         private void Remove(Entry entry)
         {
             if (ReferenceEquals(entry, null)) return;
