@@ -18,6 +18,7 @@ namespace Features.Enemies.Scripts
         public EnemyCollisionDetector EnemyCollisionDetector => _collisionDetector;
         public IEnemyAnimationSystem AnimationSystem => _animationSystem;
         public bool IsStopped => _navMeshAgent.isStopped;
+        public bool IsDead => _healthSystem?.IsDead == true;
 
         public EnemyConfiguration Configuration => _enemyConfiguration;
         public Renderer[] MeshRenderers => _meshRenderers;
@@ -78,6 +79,9 @@ namespace Features.Enemies.Scripts
 
         public void SetStop(bool state)
         {
+            if (state == false && IsDead)
+                return;
+
             _navMeshAgent.isStopped = state;
 
             if (state == false)

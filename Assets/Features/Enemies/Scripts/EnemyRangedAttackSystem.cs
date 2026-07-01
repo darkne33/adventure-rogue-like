@@ -42,6 +42,9 @@ namespace Features.Enemies.Scripts
 
         public async UniTask Execute(CancellationToken cancellationToken)
         {
+            if (_enemyFacade.IsDead)
+                return;
+
             Transform enemyTransform = _enemyFacade.transform;
             Rigidbody rigidbody = _enemyFacade.Rigidbody;
 
@@ -55,10 +58,16 @@ namespace Features.Enemies.Scripts
                 float elapsed = 0f;
                 while (elapsed < _attackView.WindupDuration)
                 {
+                    if (_enemyFacade.IsDead)
+                        return;
+
                     RotateTowardsCharacter(enemyTransform);
                     elapsed += Time.deltaTime;
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
+
+                if (_enemyFacade.IsDead)
+                    return;
 
                 RotateTowardsCharacter(enemyTransform, true);
                 SpawnProjectile(cancellationToken);
@@ -84,7 +93,8 @@ namespace Features.Enemies.Scripts
                 float distanceToCharacter = GetFlatDistanceToCharacter();
                 _cooldown -= Time.deltaTime;
 
-                if (_enemyFacade.IsStopped == false &&
+                if (_enemyFacade.IsDead == false &&
+                    _enemyFacade.IsStopped == false &&
                     _cooldown <= 0f &&
                     distanceToCharacter >= _minimumDistanceExecuteDamage &&
                     distanceToCharacter <= _distanceExecuteDamage)

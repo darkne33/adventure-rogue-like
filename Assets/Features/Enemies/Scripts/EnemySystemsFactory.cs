@@ -43,13 +43,13 @@ namespace Features.Enemies.Scripts
                 navMeshAgent, animationSystem);
             IEnemyDamageSystem damageSystem = CreateDamageSystem(configuration, facade, character,
                 facade.GetComponent<EnemyDashView>(), facade.GetComponent<EnemyRangedAttackView>());
+            var effectsSystem = new DealDamageEffectSystem(facade.MeshRenderers);
             var deathSystem = new EnemyDeathSystem(_enemiesProvider, facade, _characterLevelService, configuration,
-                _characterStats, character);
+                _characterStats, character, effectsSystem);
             int maxHealth = GetScaledMaxHealth(configuration.MaxHealth);
             var healthSystem = new HealthSystem(maxHealth,
                 new IHealthView[] { facade.GetComponent<EnemyHealthView>() }, deathSystem,
                 new IDamageView[] { facade.GetComponent<EnemyDamageNumberView>() });
-            var effectsSystem = new DealDamageEffectSystem(facade.MeshRenderers);
 
             facade.Construct(rigidbody, navMeshAgent, collisionDetector, animationSystem, movementSystem,
                 damageSystem, healthSystem, effectsSystem);

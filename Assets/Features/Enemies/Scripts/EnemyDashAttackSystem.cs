@@ -41,6 +41,9 @@ namespace Features.Enemies.Scripts
 
         public async UniTask Execute(CancellationToken cancellationToken)
         {
+            if (_enemyFacade.IsDead)
+                return;
+
             Transform enemyTransform = _enemyFacade.transform;
             Rigidbody rigidbody = _enemyFacade.Rigidbody;
             Vector3 dashDirection = GetDirectionToCharacter(enemyTransform);
@@ -53,6 +56,9 @@ namespace Features.Enemies.Scripts
                 float elapsed = 0f;
                 while (elapsed < WindupDuration)
                 {
+                    if (_enemyFacade.IsDead)
+                        return;
+
                     dashDirection = GetDirectionToCharacter(enemyTransform);
                     RotateTowards(enemyTransform, dashDirection);
 
@@ -104,7 +110,8 @@ namespace Features.Enemies.Scripts
                     Vector3.Distance(_characterFacade.transform.position, _enemyFacade.transform.position);
                 _cooldown -= Time.deltaTime;
 
-                if (_enemyFacade.IsStopped == false &&
+                if (_enemyFacade.IsDead == false &&
+                    _enemyFacade.IsStopped == false &&
                     _cooldown <= 0f &&
                     distanceToCharacter <= _distanceExecuteDamage)
                 {
@@ -118,7 +125,7 @@ namespace Features.Enemies.Scripts
 
         private void ApplyDamage()
         {
-            if (_canDamage == false)
+            if (_canDamage == false || _enemyFacade.IsDead)
                 return;
 
             _canDamage = false;

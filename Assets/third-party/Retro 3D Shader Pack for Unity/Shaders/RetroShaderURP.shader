@@ -5,6 +5,10 @@
         _MainTex("Albedo Texture", 2D) = "white" {}
         _Color("Color Tint", Color) = (1,1,1,1)
 
+        [Enum(UnityEngine.Rendering.BlendMode)]_BlendSrc("Blend mode Source", Float) = 1
+        [Enum(UnityEngine.Rendering.BlendMode)]_BlendDst("Blend mode Destination", Float) = 0
+        [Enum(Off, 0, On, 1)]_ZWrite("Depth Write", Float) = 1
+
         _VertJitter("Vertex Jitter", Range(0,1)) = 0
         _AffineMapIntensity("Affine Mapping", Range(0,1)) = 1
         _DrawDist("Draw Distance", Float) = 0
@@ -16,6 +20,16 @@
 
         _HitColor("Hit Color", Color) = (1,0,0,1)
         _HitPower("Hit Power", Range(0,1)) = 0
+
+        // Fade
+        [Toggle(_FADE_ON)]_FadeOn("Fade", Float) = 0
+        _FadeTex("Fade Tex", 2D) = "white" {}
+        _FadeAmount("Fade Amount", Range(0, 1)) = 0.0
+        _FadePower("Fade Power", Range(0.25, 4.0)) = 1.0
+        _FadeTransition("Fade Transition", Range(0, 0.4)) = 0.2
+        [Toggle(_FADE_BURN_ON)]_FadeBurnOn("Use Fade Burn Color?", Float) = 0.0
+        [HDR]_FadeBurnColor("Fade Burn Color", Color) = (1,1,0,1)
+        _FadeBurnWidth("Fade Burn Width", Range(0, 0.2)) = 0.01
     }
 
     SubShader
@@ -33,7 +47,8 @@
             Tags { "LightMode"="UniversalForward" }
 
             Cull Back
-            ZWrite On
+            Blend [_BlendSrc] [_BlendDst]
+            ZWrite [_ZWrite]
             ZTest LEqual
 
             HLSLPROGRAM
@@ -44,17 +59,24 @@
             #pragma multi_compile_fog
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma shader_feature_local _FADE_ON
+            #pragma shader_feature_local _FADE_BURN_ON
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
+            TEXTURE2D(_FadeTex);
+            SAMPLER(sampler_FadeTex);
 
             CBUFFER_START(UnityPerMaterial)
 
             float4 _MainTex_ST;
             float4 _Color;
+            float _BlendSrc;
+            float _BlendDst;
+            float _ZWrite;
 
             float _VertJitter;
             float _AffineMapIntensity;
@@ -66,6 +88,13 @@
 
             float4 _HitColor;
             float _HitPower;
+
+            float4 _FadeTex_ST;
+            float _FadeAmount;
+            float _FadePower;
+            float _FadeTransition;
+            float4 _FadeBurnColor;
+            float _FadeBurnWidth;
 
             CBUFFER_END
 
@@ -141,6 +170,62 @@
                 return OUT;
             }
 
+            #if defined(_FADE_ON)
+            half4 ApplyFade(half4 inputColor, float2 uv)
+            {
+                half4 res = inputColor;
+
+                float2 fadeUV =
+                    TRANSFORM_TEX(uv, _FadeTex);
+
+                float fadeSample =
+                    SAMPLE_TEXTURE2D(
+                        _FadeTex,
+                        sampler_FadeTex,
+                        fadeUV
+                    ).r;
+
+                fadeSample =
+                    pow(saturate(fadeSample), _FadePower);
+
+                #if defined(_FADE_BURN_ON)
+                    float fadeAmount =
+                        lerp(_FadeAmount - _FadeTransition - _FadeBurnWidth,
+                             1.0,
+                             _FadeAmount);
+
+                    float fade =
+                        smoothstep(fadeAmount,
+                                   fadeAmount + _FadeTransition,
+                                   fadeSample);
+
+                    float fadePlusBurn =
+                        smoothstep(fadeAmount + _FadeBurnWidth,
+                                   fadeAmount + _FadeBurnWidth + _FadeTransition,
+                                   fadeSample);
+
+                    float diff =
+                        saturate(fade - fadePlusBurn);
+
+                    res.rgb += diff * _FadeBurnColor.rgb;
+                #else
+                    float fadeAmount =
+                        lerp(_FadeAmount - _FadeTransition,
+                             1.0,
+                             _FadeAmount);
+
+                    float fade =
+                        smoothstep(fadeAmount,
+                                   fadeAmount + _FadeTransition,
+                                   fadeSample);
+                #endif
+
+                res.a *= fade;
+
+                return res;
+            }
+            #endif
+
             half4 frag(Varyings IN) : SV_Target
             {
                 float2 correctUV =
@@ -194,6 +279,11 @@
                     lerp(tex.rgb,
                          _HitColor.rgb,
                          _HitPower);
+
+                #if defined(_FADE_ON)
+                    tex = ApplyFade(tex, finalUV);
+                    clip(tex.a - 0.001);
+                #endif
 
                 tex.rgb =
                     MixFog(tex.rgb, IN.fogFactor);

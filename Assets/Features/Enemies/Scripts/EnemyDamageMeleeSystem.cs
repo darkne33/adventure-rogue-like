@@ -26,10 +26,16 @@ namespace Features.Enemies.Scripts
 
         public async UniTask Execute(CancellationToken cancellationToken)
         {
+            if (_enemyFacade.IsDead)
+                return;
+
             _enemyFacade.StartDelayMovementTimer(1).Forget();
             _enemyFacade.AnimationSystem.AttackAnimation();
             
             await UniTask.Delay(TimeSpan.FromSeconds(0.5f), cancellationToken: cancellationToken);
+
+            if (_enemyFacade.IsDead)
+                return;
 
             var enemyTransform = _enemyFacade.transform;
             if (_characterFacade.ReceiveDamage(_enemyConfiguration.Damage, _enemyFacade) == false)
@@ -49,7 +55,8 @@ namespace Features.Enemies.Scripts
                 var distanceToCharacter =
                     Vector3.Distance(_characterFacade.transform.position, _enemyFacade.transform.position);
                 _cooldown -= Time.deltaTime;
-                if (_enemyFacade.IsStopped == false &&
+                if (_enemyFacade.IsDead == false &&
+                    _enemyFacade.IsStopped == false &&
                     _cooldown <= 0 &&
                     distanceToCharacter <= _distanceExecuteDamage)
                 {

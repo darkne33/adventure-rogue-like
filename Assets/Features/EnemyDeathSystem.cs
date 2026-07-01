@@ -1,18 +1,22 @@
-﻿using Features.Enemies.Scripts;
+using DG.Tweening;
+using Features.Enemies.Scripts;
 using UnityEngine;
 
 public class EnemyDeathSystem : IDeathSystem
 {
+    private const float DEATH_FADE_DURATION = 0.25f;
+
     private readonly EnemyFacade _enemyFacade;
     private readonly IEnemiesProvider _enemiesProvider;
     private readonly ICharacterLevelService _characterLevelService;
     private readonly EnemyConfiguration _enemyConfiguration;
     private readonly CharacterStats _characterStats;
     private readonly CharacterFacade _characterFacade;
+    private readonly DealDamageEffectSystem _effectsSystem;
 
     public EnemyDeathSystem(IEnemiesProvider enemiesProvider, EnemyFacade enemyFacade,
         ICharacterLevelService characterLevelService, EnemyConfiguration enemyConfiguration,
-        CharacterStats characterStats, CharacterFacade characterFacade)
+        CharacterStats characterStats, CharacterFacade characterFacade, DealDamageEffectSystem effectsSystem)
     {
         _enemyFacade = enemyFacade;
         _characterLevelService = characterLevelService;
@@ -20,6 +24,7 @@ public class EnemyDeathSystem : IDeathSystem
         _enemiesProvider = enemiesProvider;
         _characterStats = characterStats;
         _characterFacade = characterFacade;
+        _effectsSystem = effectsSystem;
     }
 
     public void HandleDeath()
@@ -27,7 +32,43 @@ public class EnemyDeathSystem : IDeathSystem
         _enemiesProvider.RemoveEnemy(_enemyFacade);
         _characterLevelService.AddExp(CalculateExpReward(_enemyConfiguration.Exp));
         _characterFacade.HealthSystem.IncreaseCurrentHealth(Mathf.Max(0f, _characterStats.GainHp));
-        Object.Destroy(_enemyFacade.gameObject);
+
+        PrepareForDeathAnimation();
+
+        Tween deathFadeTween = _effectsSystem?.PlayDeathFade(DEATH_FADE_DURATION);
+        if (deathFadeTween == null)
+        {
+            DestroyEnemy();
+            return;
+        }
+
+        deathFadeTween.OnComplete(DestroyEnemy);
+    }
+
+    private void PrepareForDeathAnimation()
+    {
+        _enemyFacade.SetStop(true);
+        _enemyFacade.AnimationSystem?.IdleAnimation();
+
+        if (_enemyFacade.EnemyCollisionDetector != null)
+            _enemyFacade.EnemyCollisionDetector.enabled = false;
+
+        Rigidbody rigidbody = _enemyFacade.Rigidbody;
+        if (rigidbody != null)
+        {
+            rigidbody.linearVelocity = Vector3.zero;
+            rigidbody.angularVelocity = Vector3.zero;
+        }
+
+        Collider[] colliders = _enemyFacade.GetComponentsInChildren<Collider>();
+        foreach (Collider enemyCollider in colliders)
+            enemyCollider.enabled = false;
+    }
+
+    private void DestroyEnemy()
+    {
+        if (_enemyFacade != null)
+            Object.Destroy(_enemyFacade.gameObject);
     }
 
     private int CalculateExpReward(int baseReward)
