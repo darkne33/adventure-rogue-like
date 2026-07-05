@@ -18,6 +18,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
     [SerializeField] private AllAbilitiesConfiguration _abilitiesConfiguration;
     [SerializeField] private RelicPoolConfiguration _relicPoolConfiguration;
     [SerializeField] private RelicChestConfiguration _relicChestConfiguration;
+    [SerializeField] private GoldDropperConfiguration _goldDropperConfiguration;
 
     [SerializeField] private SceneNames.SceneNameType _sceneNameType;
 
@@ -32,6 +33,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         BindCharacterWallet();
         BindCharacterStats();
         BindUpgradeOffer();
+        BindGoldDropper();
         BindRelics();
         BindDebugMode();
     }
@@ -97,6 +99,14 @@ public class RogueLikeMonoInstaller : MonoInstaller
     {
         Container.Bind<IUpgradeOfferGenerator>().To<UpgradeOfferGenerator>().AsSingle();
         Container.BindInterfacesAndSelfTo<UpgradeOfferHandler>().AsSingle();
+    }
+
+    private void BindGoldDropper()
+    {
+        _goldDropperConfiguration ??= ScriptableObject.CreateInstance<GoldDropperConfiguration>();
+
+        Container.Bind<GoldDropperConfiguration>().FromInstance(_goldDropperConfiguration).AsSingle();
+        Container.Bind<GoldDropper>().AsSingle();
     }
 
     private void BindRelics()

@@ -13,10 +13,12 @@ public class EnemyDeathSystem : IDeathSystem
     private readonly CharacterStats _characterStats;
     private readonly CharacterFacade _characterFacade;
     private readonly DealDamageEffectSystem _effectsSystem;
+    private readonly GoldDropper _goldDropper;
 
     public EnemyDeathSystem(IEnemiesProvider enemiesProvider, EnemyFacade enemyFacade,
         ICharacterLevelService characterLevelService, EnemyConfiguration enemyConfiguration,
-        CharacterStats characterStats, CharacterFacade characterFacade, DealDamageEffectSystem effectsSystem)
+        CharacterStats characterStats, CharacterFacade characterFacade, DealDamageEffectSystem effectsSystem,
+        GoldDropper goldDropper)
     {
         _enemyFacade = enemyFacade;
         _characterLevelService = characterLevelService;
@@ -25,6 +27,7 @@ public class EnemyDeathSystem : IDeathSystem
         _characterStats = characterStats;
         _characterFacade = characterFacade;
         _effectsSystem = effectsSystem;
+        _goldDropper = goldDropper;
     }
 
     public void HandleDeath()
@@ -32,6 +35,7 @@ public class EnemyDeathSystem : IDeathSystem
         _enemiesProvider.RemoveEnemy(_enemyFacade);
         _characterLevelService.AddExp(CalculateExpReward(_enemyConfiguration.Exp));
         _characterFacade.HealthSystem.IncreaseCurrentHealth(Mathf.Max(0f, _characterStats.GainHp));
+        _goldDropper.DropGold(_enemyFacade.transform.position);
 
         PrepareForDeathAnimation();
 

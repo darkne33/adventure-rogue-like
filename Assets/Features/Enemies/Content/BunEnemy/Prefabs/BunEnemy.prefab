@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2789017409583798328}
   - component: {fileID: 5242580760792504197}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RightHand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -128,7 +128,7 @@ GameObject:
   - component: {fileID: 6036621609958912665}
   - component: {fileID: 8889264642693056443}
   - component: {fileID: 2648576806044370628}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: BodyModel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -216,7 +216,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2616682782172582901}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.014
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -247,7 +247,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4847906636383084185}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.009
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -279,7 +279,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2846597140598301072}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.019
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -311,7 +311,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7889757375591154656}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.010
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -343,7 +343,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8973479922175471637}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.026
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -374,7 +374,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1778784669409920512}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: BunRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -412,7 +412,7 @@ GameObject:
   - component: {fileID: 6345428810085301797}
   - component: {fileID: 3152935701593428585}
   - component: {fileID: 7952237936481109373}
-  m_Layer: 5
+  m_Layer: 10
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -457,6 +457,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -511,7 +512,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4495407654992554780}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: LeftHandBone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -543,7 +544,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1886820736392346129}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.018
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -575,7 +576,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3362692581431098082}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.016
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -606,7 +607,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1686265402581911513}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.015
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -638,7 +639,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4430446212199673675}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: BunBones
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -670,7 +671,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 628848790400514942}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.011
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -711,7 +712,7 @@ GameObject:
   - component: {fileID: 7199049114847290061}
   - component: {fileID: 4228037969279559467}
   - component: {fileID: 6123456789012345678}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: BunEnemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -879,10 +880,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyDamageNumberView
   _worldCanvas: {fileID: 6345428810085301797}
   _fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  _lowDamageColor: {r: 1, g: 1, b: 1, a: 1}
-  _mediumDamageColor: {r: 1, g: 1, b: 1, a: 1}
-  _highDamageColor: {r: 1, g: 1, b: 1, a: 1}
-  _criticalDamageColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &4228037969279559467
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -919,7 +916,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1876528506007874993}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.004
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -951,7 +948,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2183330309079916347}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.017
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -985,7 +982,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 14924732210867675}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.013
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1017,7 +1014,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3455265798173914441}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.024
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1049,7 +1046,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1978818861363405765}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.007
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1083,7 +1080,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7008294239760027774}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.023
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1114,7 +1111,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8680136809057212643}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.021
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1146,7 +1143,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3494036349749498171}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bones
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1179,7 +1176,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7421794490685336864}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RightHandBone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1211,7 +1208,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7670735592827098629}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.003
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1243,7 +1240,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1952509589358638492}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.008
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1275,7 +1272,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5410500666221331116}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.012
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1306,7 +1303,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8022568123099210873}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: BunModel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1338,7 +1335,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3035429632397679461}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.022
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1370,7 +1367,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1736655320492919923}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: TargetToShoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1401,7 +1398,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6881082682651517775}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.020
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1432,7 +1429,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6338086461148349388}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bone.025
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1465,7 +1462,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7484031668609018243}
   - component: {fileID: 7699659707685108879}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: LeftHand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1624,6 +1621,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: DirectionIndicator
       objectReference: {fileID: 0}
+    - target: {fileID: 6769835410302440454, guid: 39aa9fa9354a9dd439fc009e4976082a, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1642,6 +1643,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7141188079042192644}
     m_Modifications:
+    - target: {fileID: 6167410864652892362, guid: 8e97d17e41f2805448c658e32de8ef88, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 6538866591495573540, guid: 8e97d17e41f2805448c658e32de8ef88, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1726,6 +1731,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: HpBar
       objectReference: {fileID: 0}
+    - target: {fileID: 7341896992053661827, guid: 8e97d17e41f2805448c658e32de8ef88, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 7602519587480111245, guid: 8e97d17e41f2805448c658e32de8ef88, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 8319305696091368879, guid: 8e97d17e41f2805448c658e32de8ef88, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -1733,6 +1746,10 @@ PrefabInstance:
     - target: {fileID: 8319305696091368879, guid: 8e97d17e41f2805448c658e32de8ef88, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8863220558853697953, guid: 8e97d17e41f2805448c658e32de8ef88, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -14,11 +14,12 @@ namespace Features.Enemies.Scripts
         private readonly IRogueLikeRuntimeDataService _runtimeDataService;
         private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
         private readonly LevelsConfiguration _levelsConfiguration;
+        private readonly GoldDropper _goldDropper;
 
         public EnemySystemsFactory(ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
             ICharacterLevelService characterLevelService, CharacterStats characterStats,
             IRogueLikeRuntimeDataService runtimeDataService, ISceneService<RogueLikeSceneProvider> sceneService,
-            LevelsConfiguration levelsConfiguration)
+            LevelsConfiguration levelsConfiguration, GoldDropper goldDropper)
         {
             _characterProvider = characterProvider;
             _enemiesProvider = enemiesProvider;
@@ -27,6 +28,7 @@ namespace Features.Enemies.Scripts
             _runtimeDataService = runtimeDataService;
             _sceneService = sceneService;
             _levelsConfiguration = levelsConfiguration;
+            _goldDropper = goldDropper;
         }
 
         public void Create(EnemyFacade facade)
@@ -45,7 +47,7 @@ namespace Features.Enemies.Scripts
                 facade.GetComponent<EnemyDashView>(), facade.GetComponent<EnemyRangedAttackView>());
             var effectsSystem = new DealDamageEffectSystem(facade.MeshRenderers);
             var deathSystem = new EnemyDeathSystem(_enemiesProvider, facade, _characterLevelService, configuration,
-                _characterStats, character, effectsSystem);
+                _characterStats, character, effectsSystem, _goldDropper);
             int maxHealth = GetScaledMaxHealth(configuration.MaxHealth);
             var healthSystem = new HealthSystem(maxHealth,
                 new IHealthView[] { facade.GetComponent<EnemyHealthView>() }, deathSystem,

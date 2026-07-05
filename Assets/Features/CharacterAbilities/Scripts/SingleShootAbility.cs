@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
-using UI;
 using UnityEngine;
 
 public class SingleShootAbility : CharacterActiveAbility
@@ -19,22 +18,15 @@ public class SingleShootAbility : CharacterActiveAbility
 
     private ShootableAbilityConfiguration _abilityConfig;
     private readonly IEnemiesProvider _enemiesProvider;
-    private readonly IPanelService _panelService;
-    private readonly CharacterWallet _characterWallet;
     private readonly CharacterDamageCalculator _damageCalculator;
     private readonly CharacterStats _characterStats;
     private readonly RelicEventBus _relicEventBus;
     private readonly RelicManager _relicManager;
 
-    private CharacterPanel _characterPanel;
-
-    public SingleShootAbility(IEnemiesProvider enemiesProvider, IPanelService panelService,
-        CharacterWallet characterWallet, CharacterDamageCalculator damageCalculator, CharacterStats characterStats,
-        RelicEventBus relicEventBus, RelicManager relicManager)
+    public SingleShootAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
+        CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager)
     {
         _enemiesProvider = enemiesProvider;
-        _panelService = panelService;
-        _characterWallet = characterWallet;
         _damageCalculator = damageCalculator;
         _characterStats = characterStats;
         _relicEventBus = relicEventBus;
@@ -80,8 +72,6 @@ public class SingleShootAbility : CharacterActiveAbility
         }
 
         Cooldown = _abilityConfig.Cooldown;
-
-        _characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
     }
 
     protected override void OnUse(CharacterFacade character)
@@ -205,10 +195,6 @@ public class SingleShootAbility : CharacterActiveAbility
         if (healed > 0f)
             _relicEventBus.PublishHeal(new RelicHealEvent(character, healed));
 
-        int goldReward = CalculateGoldReward(1);
-        _characterPanel.CharacterGoldView.ShowGold(goldReward);
-        _characterWallet.Gold.Add(goldReward);
-
         enemyFacade.EffectsSystem.DealDamage();
         _relicEventBus.PublishHit(new RelicHitEvent(character, enemyFacade, appliedDamage,
             damageResult.IsCritical, _abilityConfig.AbilityName.ToString(), enemyFacade.transform.position));
@@ -329,18 +315,4 @@ public class SingleShootAbility : CharacterActiveAbility
         }
     }
 
-    private int CalculateGoldReward(int baseReward)
-    {
-        float scaledReward = baseReward * (1f + Mathf.Max(0f, _characterStats.GainGold) * 0.01f);
-        int reward = Mathf.FloorToInt(scaledReward);
-
-        if (Random.value < scaledReward - reward)
-            reward++;
-
-        float luckChance = Mathf.Clamp(_characterStats.Luck, 0f, 100f) * 0.01f;
-        if (Random.value < luckChance)
-            reward += baseReward;
-
-        return Mathf.Max(1, reward);
-    }
 }
