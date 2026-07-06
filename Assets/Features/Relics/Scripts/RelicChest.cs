@@ -1,6 +1,4 @@
-using System;
 using UnityEngine;
-using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine.InputSystem;
 using Zenject;
@@ -20,9 +18,7 @@ namespace Features.Relics.Scripts
         [SerializeField] private Transform _interactionPromptTransform;
         [SerializeField, Min(0f)] private float _promptShowDuration = 0.14f;
         [SerializeField, Min(0f)] private float _promptHideDuration = 0.12f;
-        [SerializeField] private Animator _animator;
-        [SerializeField] private string _openAnimationTrigger = "Open";
-        [SerializeField, Min(0f)] private float _openPickupDelay = 0.36f;
+        [SerializeField] private ParticleSystem[] _treasureVerticalRaysParticles;
 
         private RelicDefinition _relic;
         private RelicChestConfiguration _configuration;
@@ -34,7 +30,6 @@ namespace Features.Relics.Scripts
         private Room _room;
         private bool _isOpened;
         private bool _isInteractionAvailable;
-        private int _openAnimationTriggerHash;
         private Vector3 _promptVisibleScale = Vector3.one;
         private Vector3 _promptHiddenScale = Vector3.one * 0.82f;
 
@@ -48,9 +43,6 @@ namespace Features.Relics.Scripts
                 _promptHiddenScale = _promptVisibleScale * 0.82f;
             }
 
-            _openAnimationTriggerHash = string.IsNullOrWhiteSpace(_openAnimationTrigger)
-                ? 0
-                : Animator.StringToHash(_openAnimationTrigger);
             SetInteractionVisuals(false, true);
         }
 
@@ -95,7 +87,7 @@ namespace Features.Relics.Scripts
                 return;
 
             if (_inputActions != null && _inputActions.Player.Interact.WasPressedThisFrame())
-                Open().Forget();
+                Open();
         }
 
         private bool CanInteract()
@@ -139,7 +131,7 @@ namespace Features.Relics.Scripts
                 .SetLink(gameObject);
         }
 
-        private async UniTaskVoid Open()
+        private void Open()
         {
             if (_isOpened)
                 return;
@@ -148,23 +140,7 @@ namespace Features.Relics.Scripts
             SetInteractionVisuals(false);
             _eventBus.PublishChestOpened(transform.position);
 
-            await PlayOpenAnimation();
             SpawnPickup();
-        }
-
-        private async UniTask PlayOpenAnimation()
-        {
-            if (_animator != null && !string.IsNullOrWhiteSpace(_openAnimationTrigger))
-            {
-                _animator.ResetTrigger(_openAnimationTriggerHash);
-                _animator.SetTrigger(_openAnimationTriggerHash);
-            }
-
-            if (_openPickupDelay <= 0f)
-                return;
-
-            await UniTask.Delay(TimeSpan.FromSeconds(_openPickupDelay),
-                cancellationToken: this.GetCancellationTokenOnDestroy());
         }
 
         private void SpawnPickup()
@@ -176,7 +152,27 @@ namespace Features.Relics.Scripts
                 transform.parent);
             pickup.name = $"RelicPickup_{_relic.Id}";
             pickup.Construct(_relic, _configuration, _relicManager, _eventBus, _characterProvider,
-                _roomData, _room, true);
+                _roomData, _room, true, HandlePickupCollected);
+        }
+
+        private void HandlePickupCollected()
+        {
+            if (this == null)
+                return;
+
+            StopTreasureVerticalRays();
+        }
+
+        private void StopTreasureVerticalRays()
+        {
+            if (_treasureVerticalRaysParticles == null)
+                return;
+
+            foreach (ParticleSystem particle in _treasureVerticalRaysParticles)
+            {
+                if (particle != null)
+                    particle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
         }
     }
 }

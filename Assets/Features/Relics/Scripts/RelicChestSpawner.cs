@@ -382,7 +382,9 @@ namespace Features.Relics.Scripts
 
         private static void AlignBottomToGround(GameObject chestObject, float groundY)
         {
-            Renderer[] renderers = chestObject.GetComponentsInChildren<Renderer>();
+            Renderer[] renderers = chestObject.GetComponentsInChildren<Renderer>()
+                .Where(renderer => renderer is not ParticleSystemRenderer)
+                .ToArray();
             if (renderers.Length == 0)
                 return;
 

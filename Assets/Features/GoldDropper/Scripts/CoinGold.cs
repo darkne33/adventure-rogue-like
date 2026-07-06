@@ -5,6 +5,7 @@ using UnityEngine;
 public sealed class CoinGold : MonoBehaviour
 {
     private const float RotationDuration = 0.8f;
+    private const float PickupEffectDestroyDelay = 1.5f;
 
     private GoldDropperConfiguration _configuration;
     private CharacterWallet _characterWallet;
@@ -97,9 +98,20 @@ public sealed class CoinGold : MonoBehaviour
             return;
 
         _isCollecting = true;
+        Vector3 collectPosition = transform.position;
         transform.DOKill();
         AddGold();
+        SpawnPickupEffect(collectPosition);
         Destroy(gameObject);
+    }
+
+    private void SpawnPickupEffect(Vector3 position)
+    {
+        if (_configuration.PickupYellowPrefab == null)
+            return;
+
+        GameObject effect = Instantiate(_configuration.PickupYellowPrefab, position, Quaternion.identity);
+        Destroy(effect, PickupEffectDestroyDelay);
     }
 
     private void AddGold()

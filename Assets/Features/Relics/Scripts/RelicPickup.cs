@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Core;
 using Cysharp.Threading.Tasks;
@@ -26,6 +27,7 @@ namespace Features.Relics.Scripts
         private RoomData _roomData;
         private Room _room;
         private SpriteRenderer _spriteRenderer;
+        private Action _collectedCallback;
         private bool _isPicked;
 
         private void Awake() =>
@@ -33,7 +35,7 @@ namespace Features.Relics.Scripts
 
         public void Construct(RelicDefinition relic, RelicChestConfiguration configuration,
             RelicManager relicManager, RelicEventBus eventBus, ICharacterProvider characterProvider,
-            RoomData roomData, Room room, bool collectImmediately = false)
+            RoomData roomData, Room room, bool collectImmediately = false, Action collectedCallback = null)
         {
             _relic = relic;
             _configuration = configuration;
@@ -42,6 +44,7 @@ namespace Features.Relics.Scripts
             _characterProvider = characterProvider;
             _roomData = roomData;
             _room = room;
+            _collectedCallback = collectedCallback;
 
             _spriteRenderer = GetComponent<SpriteRenderer>();
             if (_spriteRenderer != null)
@@ -184,6 +187,8 @@ namespace Features.Relics.Scripts
                 return;
             }
 
+            _collectedCallback?.Invoke();
+            _collectedCallback = null;
             _eventBus.PublishChestCollected(_roomData, _room);
             transform.DOKill();
 

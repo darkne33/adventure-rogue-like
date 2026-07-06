@@ -17,8 +17,7 @@ public class CharacterMoveSystem
 
     private Vector3 _direction;
     private Vector3 _currentVelocity;
-
-    private readonly InputAction _dashAction;
+    
     private float _dashCooldownTimer = 0f;
 
     private readonly float _dashForce = 25f;
@@ -59,9 +58,6 @@ public class CharacterMoveSystem
         _characterAnimationSystem = characterAnimationSystem;
         _cameraMoveSystem = cameraMoveSystem;
         _pauseEntity = pauseEntity;
-
-        _dashAction = _inputActions.Player.Dash;
-        _dashAction.started += OnDashStarted;
 
         _inputActions.Enable();
     }
@@ -584,9 +580,6 @@ public class CharacterMoveSystem
         _jumpInertiaTimer = 0f;
         _jumpInertiaVelocity = Vector3.zero;
     }
-
-    private void OnDashStarted(InputAction.CallbackContext context) =>
-        TryDash();
 
     private void TryDash()
     {
