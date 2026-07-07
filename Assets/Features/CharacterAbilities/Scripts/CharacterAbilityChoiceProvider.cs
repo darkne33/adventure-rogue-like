@@ -22,8 +22,10 @@ public class CharacterAbilityChoiceProvider : IAbilityChoiceProvider
             switch (abilityConfig.AbilityName)
             {
                 case AbilityName.FireBall:
+                    CreateAbility<FireballAbility>(abilityConfig, abilityConfig.AbilityName);
+                    break;
                 case AbilityName.RabbitBoomerang:
-                    CreateAbility<SingleShootAbility>(abilityConfig, abilityConfig.AbilityName);
+                    CreateAbility<RabbitBoomerangAbility>(abilityConfig, abilityConfig.AbilityName);
                     break;
                 case AbilityName.AbilityDurationScroll:
                     CreateAbility<CharacterScrollAbilityDurationAbility>(abilityConfig, abilityConfig.AbilityName);

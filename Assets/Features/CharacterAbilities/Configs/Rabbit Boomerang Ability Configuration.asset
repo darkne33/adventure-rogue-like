@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6ea4ed126124099bc5c7a355616ee15, type: 3}
+  m_Name: Rabbit Boomerang Ability Configuration
+  m_EditorClassIdentifier: Assembly-CSharp::RabbitBoomerangAbilityConfiguration
+  <AbilityName>k__BackingField: 1
+  DisplayName: Ability!
+  Description: Oops it's ABILITY?! :)
+  <Icon>k__BackingField: {fileID: 21300000, guid: e7fcfd33be0164a4bb780dbcca33e639, type: 3}
+  <Speed>k__BackingField: 20
+  StartDamage: 15
+  <DamageVariationPercent>k__BackingField: 20
+  Cooldown: 2
+  Prefab: {fileID: 6745468301251721559, guid: e5d7a9801def66b42af49a9d94a76c00, type: 3}
+  ExplosionPrefab: {fileID: 2773179911997602487, guid: 50b72613727dcb84d95bae0832a00a37, type: 3}
+  MuzzlePrefab: {fileID: 5609939908839008403, guid: 18176365400c7724e802286290302494, type: 3}
+  <StartTargets>k__BackingField: 2
+  <TargetsPerLevel>k__BackingField: 1
+  <BounceRadius>k__BackingField: 12
+  <OvertravelDistance>k__BackingField: 8
+  <RaycastSkin>k__BackingField: 0.05
