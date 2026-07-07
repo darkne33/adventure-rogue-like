@@ -9,6 +9,9 @@ namespace Features.Enemies.Scripts
     public class EnemyDamageNumberView : MonoBehaviour, IDamageView
     {
         private const int POOL_SIZE = 6;
+        private const float DAMAGE_NUMBER_FONT_SIZE = 1.05f;
+        private const float DAMAGE_NUMBER_TARGET_SCALE = 0.6f;
+        private const float DAMAGE_NUMBER_START_SCALE = DAMAGE_NUMBER_TARGET_SCALE * 0.45f;
         private static readonly Color32 TextOutlineColor = new(0, 0, 0, 255);
 
         [SerializeField] private Canvas _worldCanvas;
@@ -34,18 +37,13 @@ namespace Features.Enemies.Scripts
         {
             SyncRootTransform();
             DamageNumber number = GetNumber();
-            float damageRatio = maximumHealth > 0f ? damage / maximumHealth : 0f;
 
             number.Sequence?.Kill();
             number.Text.text = isCritical ? $"{damage}!" : damage.ToString();
-            number.Text.fontSize = isCritical ? 1.25f : 1.05f;
+            number.Text.fontSize = DAMAGE_NUMBER_FONT_SIZE;
             number.Text.color = Color.white;
             number.Text.outlineColor = TextOutlineColor;
             number.CanvasGroup.alpha = 1f;
-
-            float scale = Mathf.Lerp(0.85f, 1.35f, Mathf.InverseLerp(0.02f, 0.35f, damageRatio));
-            if (isCritical)
-                scale *= 1.4f;
 
             float horizontalOffset = Random.Range(-0.45f, 0.45f);
             Vector2 startPosition = new(horizontalOffset, 0.55f);
@@ -54,7 +52,7 @@ namespace Features.Enemies.Scripts
 
             number.RectTransform.anchoredPosition = startPosition;
             number.RectTransform.localRotation = Quaternion.identity;
-            number.RectTransform.localScale = Vector3.one * scale * (isCritical ? 0.22f : 0.45f);
+            number.RectTransform.localScale = Vector3.one * DAMAGE_NUMBER_START_SCALE;
             number.GameObject.SetActive(true);
 
             number.Sequence = DOTween.Sequence().SetLink(number.GameObject);
@@ -62,13 +60,15 @@ namespace Features.Enemies.Scripts
             if (isCritical)
             {
                 number.Sequence
-                    .Append(number.RectTransform.DOScale(scale, 0.24f).SetEase(Ease.OutElastic, 1.15f, 0.35f))
+                    .Append(number.RectTransform.DOScale(DAMAGE_NUMBER_TARGET_SCALE, 0.24f)
+                        .SetEase(Ease.OutElastic, 1.15f, 0.35f))
                     .Join(number.RectTransform.DOPunchRotation(
                         new Vector3(0f, 0f, Random.Range(-14f, 14f)), 0.28f, 7, 0.55f));
             }
             else
             {
-                number.Sequence.Append(number.RectTransform.DOScale(scale, 0.16f).SetEase(Ease.OutBack));
+                number.Sequence.Append(number.RectTransform.DOScale(DAMAGE_NUMBER_TARGET_SCALE, 0.16f)
+                    .SetEase(Ease.OutBack));
             }
 
             number.Sequence
@@ -107,7 +107,7 @@ namespace Features.Enemies.Scripts
 
                 TextMeshProUGUI text = numberObject.GetComponent<TextMeshProUGUI>();
                 text.font = _fontAsset;
-                text.fontSize = 1.05f;
+                text.fontSize = DAMAGE_NUMBER_FONT_SIZE;
                 text.fontStyle = FontStyles.Bold;
                 text.alignment = TextAlignmentOptions.Center;
                 text.raycastTarget = false;

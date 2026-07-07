@@ -27,8 +27,7 @@ public class CharacterCameraSettingsConfiguration : ScriptableObject
     [field: SerializeField] public float FollowVerticalArmLength { get; private set; } = 0f;
     [field: SerializeField] public float FollowCameraDistance { get; private set; } = 14f;
 
-    [Header("Camera Shake")]
+    [Header("Landing Pivot Movement")]
     [field: SerializeField] public float LandingShakeDuration { get; private set; } = 0.26f;
     [field: SerializeField] public float LandingShakeStrength { get; private set; } = 0.32f;
-    [field: SerializeField] public float LandingShakePitchStrength { get; private set; } = 1.45f;
 }

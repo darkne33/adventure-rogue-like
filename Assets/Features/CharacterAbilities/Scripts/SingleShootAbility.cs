@@ -11,6 +11,8 @@ public class SingleShootAbility : CharacterActiveAbility
     private const float ProjectileSpreadOffset = 0.35f;
     private const float ProjectileTravelDistance = 100f;
     private const float BoomerangBounceRadius = 12f;
+    private const float BoomerangOvertravelDistance = 8f;
+    private const float BoomerangRaycastSkin = 0.05f;
     private const string DamageStatName = "Damage";
     private const string BoomerangStatName = "Targets";
 
@@ -156,6 +158,12 @@ public class SingleShootAbility : CharacterActiveAbility
             return;
         }
 
+        if (hitEnemies.Count >= GetBoomerangMaxHitCount())
+        {
+            DestroyShoot(shootObj);
+            return;
+        }
+
         if (hitEnemies.Contains(enemyFacade))
         {
             collisionDetector.ResetHit();
@@ -256,12 +264,56 @@ public class SingleShootAbility : CharacterActiveAbility
         }
 
         direction.Normalize();
+        Vector3 endPosition = GetBoomerangEndPosition(shootObj.transform, startPosition, targetPosition, direction);
         shootObj.transform.rotation = Quaternion.LookRotation(direction);
         collisionDetector.ResetHit();
         shootObj.transform.DOKill();
-        shootObj.transform.DOMove(targetPosition, _abilityConfig.Speed).SetSpeedBased().SetLink(shootObj)
+        shootObj.transform.DOMove(endPosition, _abilityConfig.Speed).SetSpeedBased().SetLink(shootObj)
             .SetId($"Shoot Ability {shootObj.name}")
             .OnComplete(() => DestroyShoot(shootObj));
+    }
+
+    private static Vector3 GetBoomerangEndPosition(Transform projectile, Vector3 startPosition, Vector3 targetPosition,
+        Vector3 direction)
+    {
+        Vector3 desiredEndPosition = targetPosition + direction * BoomerangOvertravelDistance;
+        Vector3 rayOrigin = startPosition + direction * BoomerangRaycastSkin;
+        float rayDistance = Mathf.Max(0f, Vector3.Distance(startPosition, desiredEndPosition) - BoomerangRaycastSkin);
+        RaycastHit[] hits = Physics.RaycastAll(rayOrigin, direction, rayDistance, Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore);
+
+        bool foundBlockingHit = false;
+        float closestDistance = float.MaxValue;
+        Vector3 blockingPosition = desiredEndPosition;
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (hit.distance >= closestDistance || !IsBoomerangBlockingCollider(hit.collider, projectile))
+                continue;
+
+            foundBlockingHit = true;
+            closestDistance = hit.distance;
+            blockingPosition = hit.point;
+        }
+
+        return foundBlockingHit ? blockingPosition : desiredEndPosition;
+    }
+
+    private static bool IsBoomerangBlockingCollider(Collider collider, Transform projectile)
+    {
+        if (collider == null || collider.isTrigger)
+            return false;
+
+        Transform hitTransform = collider.transform;
+        if (projectile != null && (hitTransform == projectile || hitTransform.IsChildOf(projectile)))
+            return false;
+
+        if (collider.GetComponentInParent<EnemyFacade>() != null ||
+            collider.GetComponentInParent<CharacterFacade>() != null ||
+            collider.GetComponentInParent<PlayerCollisionDetector>() != null)
+            return false;
+
+        return true;
     }
 
     private static Vector3 GetEnemyTargetPosition(EnemyFacade enemy) =>
