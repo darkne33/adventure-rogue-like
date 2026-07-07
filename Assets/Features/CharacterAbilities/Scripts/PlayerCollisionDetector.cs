@@ -27,11 +27,17 @@ public class PlayerCollisionDetector : MonoBehaviour
 
     private void HandleHit(Collider other)
     {
-        if (_isHit || other == null || IsIgnored(other.transform))
+        if (_isHit || other == null || IsIgnored(other.transform) || IsOtherPlayerProjectile(other))
             return;
 
         _isHit = true;
         OnHit?.Invoke(other.GetComponentInParent<EnemyFacade>());
+    }
+
+    private bool IsOtherPlayerProjectile(Collider other)
+    {
+        PlayerCollisionDetector otherDetector = other.GetComponentInParent<PlayerCollisionDetector>();
+        return otherDetector != null && otherDetector != this;
     }
 
     private bool IsIgnored(Transform other)
