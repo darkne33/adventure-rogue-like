@@ -144,7 +144,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f98e8a3b3cf7c8645abafe43c7bff9bb, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 11a4ced5e6e2cd64d8104fc929d16119, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3418,6 +3418,10 @@ PrefabInstance:
     - target: {fileID: 8817300822754683091, guid: 4797b8bc4dbb9c54e9ce3f17f35dec31, type: 3}
       propertyPath: m_Name
       value: UpgradeOfferPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 8817300822754683091, guid: 4797b8bc4dbb9c54e9ce3f17f35dec31, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
