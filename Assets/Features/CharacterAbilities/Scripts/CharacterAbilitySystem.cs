@@ -8,12 +8,16 @@ public class CharacterAbilitySystem
     private readonly Dictionary<AbilityName, CharacterActiveAbility> _activeAbilities = new();
     private readonly Dictionary<AbilityName, CharacterPassiveAbility> _passiveAbilities = new();
 
-    public void AddAbility(CharacterAbility ability, CharacterStats characterStats)
+    public void AddAbility(CharacterAbility ability, CharacterStats characterStats) =>
+        AddAbility(ability, characterStats, 1f, AbilityUpgradeType.Default);
+
+    public void AddAbility(CharacterAbility ability, CharacterStats characterStats, float upgradeMultiplier,
+        AbilityUpgradeType upgradeType = AbilityUpgradeType.Default)
     {
         if (_abilities.Contains(ability) == false)
             _abilities.Add(ability);
         
-        ability.OnEquip(characterStats);
+        ability.ApplyUpgrade(characterStats, upgradeMultiplier, upgradeType);
 
         if (ability is CharacterActiveAbility active)
             _activeAbilities[active.Id] = active;

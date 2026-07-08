@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Rabbit Boomerang Ability Configuration
   m_EditorClassIdentifier: Assembly-CSharp::RabbitBoomerangAbilityConfiguration
   <AbilityName>k__BackingField: 1
-  DisplayName: Ability!
+  DisplayName: Rabbitarang
   Description: Oops it's ABILITY?! :)
   <Icon>k__BackingField: {fileID: 21300000, guid: 991842f7df854fdb9594bd8f8b40c6b0, type: 3}
   <Speed>k__BackingField: 25
@@ -24,7 +24,11 @@ MonoBehaviour:
   ExplosionPrefab: {fileID: 2773179911997602487, guid: 50b72613727dcb84d95bae0832a00a37, type: 3}
   MuzzlePrefab: {fileID: 5609939908839008403, guid: 18176365400c7724e802286290302494, type: 3}
   <StartTargets>k__BackingField: 2
-  <TargetsPerLevel>k__BackingField: 1
+  <DamageUpgradeIncrease>k__BackingField: 2
+  <SpeedUpgradeIncrease>k__BackingField: 2
+  <CooldownUpgradeReduction>k__BackingField: 0.05
+  <TargetUpgradeIncrease>k__BackingField: 1
+  <BounceRadiusUpgradeIncrease>k__BackingField: 1.8
   <BounceRadius>k__BackingField: 12
   <OvertravelDistance>k__BackingField: 8
   <RaycastSkin>k__BackingField: 0.05

@@ -5,7 +5,7 @@
     public override void OnUnequip(CharacterStats characterStats)
     {
         base.OnUnequip(characterStats);
-        characterStats.ThornsDamage -= _scrollAbilityConfiguration.DefaultIncreaseStat;
+        characterStats.ThornsDamage -= GetCurrentUpgradeValue(_scrollAbilityConfiguration.DefaultIncreaseStat);
     }
 
     public override void Initialize(AbilityConfiguration abilityConfig)
@@ -18,12 +18,13 @@
     public override void OnEquip(CharacterStats characterStats)
     {
         base.OnEquip(characterStats);
-        characterStats.ThornsDamage += _scrollAbilityConfiguration.DefaultIncreaseStat;
+        characterStats.ThornsDamage += GetCurrentUpgradeValue(_scrollAbilityConfiguration.DefaultIncreaseStat);
     }
 
     public override float GetStatFromIncrease(CharacterStats characterStats) => 
         characterStats.ThornsDamage;
 
-    public override float GetStatToIncrease(CharacterStats characterStats) => 
-        GetStatFromIncrease(characterStats) + _scrollAbilityConfiguration.DefaultIncreaseStat;
+    public override float GetStatToIncrease(CharacterStats characterStats, float upgradeMultiplier) => 
+        GetStatFromIncrease(characterStats) +
+        GetUpgradeValue(_scrollAbilityConfiguration.DefaultIncreaseStat, upgradeMultiplier);
 }

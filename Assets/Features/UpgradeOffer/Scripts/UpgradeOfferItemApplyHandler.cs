@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
 
@@ -6,13 +6,11 @@ public class UpgradeOfferItemApplyHandler : MonoBehaviour
 {
     [SerializeField] private Button _applyButton;
 
-    [Inject] private ICharacterProvider _characterProvider;
-    [Inject] private CharacterStats _characterStats;
     [Inject] private IUpgradeOfferHandler _upgradeOfferHandler;
 
-    public void Initialize(CharacterAbility characterAbility) =>
+    public void Initialize(UpgradeOffer upgradeOffer) =>
         _applyButton.onClick.AddListener(() =>
-            _upgradeOfferHandler.ApplyAbilityToCharacter(characterAbility));
+            _upgradeOfferHandler.ApplyUpgradeOffer(upgradeOffer));
 
     private void OnDisable() =>
         _applyButton.onClick.RemoveAllListeners();

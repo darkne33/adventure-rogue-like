@@ -18,6 +18,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     protected ShootableAbilityConfiguration AbilityConfig { get; private set; }
     protected IEnemiesProvider EnemiesProvider => _enemiesProvider;
     protected int Damage { get; set; }
+    protected float ProjectileSpeed { get; private set; }
 
     protected SingleShootAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
         CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager)
@@ -34,6 +35,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         base.Initialize(abilityConfig);
         AbilityConfig = (ShootableAbilityConfiguration)abilityConfig;
         Cooldown = AbilityConfig.Cooldown;
+        ProjectileSpeed = AbilityConfig.Speed;
         OnShootableInitialized();
     }
 
@@ -86,8 +88,23 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     }
 
     protected Tween MoveProjectile(GameObject shootObj, Vector3 endPosition) =>
-        shootObj.transform.DOMove(endPosition, AbilityConfig.Speed).SetSpeedBased().SetLink(shootObj)
+        shootObj.transform.DOMove(endPosition, ProjectileSpeed).SetSpeedBased().SetLink(shootObj)
             .SetId($"Shoot Ability {shootObj.name}");
+
+    protected void IncreaseDamage(float damageIncrease)
+    {
+        Damage += Mathf.Max(0, Mathf.RoundToInt(damageIncrease));
+    }
+
+    protected void IncreaseProjectileSpeed(float speedIncrease)
+    {
+        ProjectileSpeed += Mathf.Max(0f, speedIncrease);
+    }
+
+    protected void ReduceCooldown(float cooldownReduction)
+    {
+        Cooldown = Mathf.Max(0.05f, Cooldown - Mathf.Max(0f, cooldownReduction));
+    }
 
     protected void DestroyShoot(GameObject shootObj)
     {

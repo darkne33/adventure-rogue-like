@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public abstract class CharacterActiveAbility : CharacterAbility
@@ -47,5 +48,40 @@ public abstract class CharacterActiveAbility : CharacterAbility
     protected abstract void OnUse(CharacterFacade character);
 
     public abstract float GetStatFromIncrease();
-    public abstract float GetStatToIncrease();
+
+    public float GetStatToIncrease() =>
+        GetStatToIncrease(1f);
+
+    public abstract float GetStatToIncrease(float upgradeMultiplier);
+    public virtual AbilityUpgradePreview[] GetAcquirePreviews() =>
+        Array.Empty<AbilityUpgradePreview>();
+
+    public abstract AbilityUpgradePreview[] GetUpgradePreviews(AbilityUpgradeType upgradeType, float upgradeMultiplier);
+}
+
+public readonly struct AbilityUpgradePreview
+{
+    public AbilityUpgradePreview(string statName, float statFrom, float statTo, string suffix = "")
+    {
+        StatName = statName;
+        StatFrom = statFrom;
+        StatTo = statTo;
+        Suffix = suffix;
+        HasStatFrom = true;
+    }
+
+    public AbilityUpgradePreview(string statName, float statTo, string suffix = "")
+    {
+        StatName = statName;
+        StatFrom = 0f;
+        StatTo = statTo;
+        Suffix = suffix;
+        HasStatFrom = false;
+    }
+
+    public string StatName { get; }
+    public float StatFrom { get; }
+    public float StatTo { get; }
+    public string Suffix { get; }
+    public bool HasStatFrom { get; }
 }

@@ -7,9 +7,24 @@ using UnityEngine;
 public class RabbitBoomerangAbility : SingleShootAbility
 {
     private const string BoomerangStatName = "Targets";
+    private const string SpeedStatName = "Speed";
+    private const string CooldownStatName = "Cooldown";
+    private const string BounceRadiusStatName = "Bounce Radius";
+    private const string DamageStatName = "Damage";
+
+    private static readonly AbilityUpgradeType[] BoomerangUpgradeTypes =
+    {
+        AbilityUpgradeType.ProjectileSpeedCooldown,
+        AbilityUpgradeType.BounceRadiusDamage,
+        AbilityUpgradeType.TargetsDamage
+    };
+
+    private int _bonusTargets;
+    private float _bounceRadius;
 
     private RabbitBoomerangAbilityConfiguration BoomerangConfig =>
         (RabbitBoomerangAbilityConfiguration)AbilityConfig;
+    public override AbilityUpgradeType[] UpgradeTypes => BoomerangUpgradeTypes;
 
     public RabbitBoomerangAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
         CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager)
@@ -18,22 +33,75 @@ public class RabbitBoomerangAbility : SingleShootAbility
     }
 
     public override float GetStatFromIncrease() =>
-        GetBoomerangMaxHitCount();
+        Level <= 0 ? 0 : GetBoomerangMaxHitCount();
 
-    public override float GetStatToIncrease() =>
-        GetBoomerangHitCount(Level + 1);
+    public override float GetStatToIncrease(float upgradeMultiplier) =>
+        GetTargetsTo(upgradeMultiplier);
+
+    public override AbilityUpgradePreview[] GetAcquirePreviews() =>
+        new[]
+        {
+            new AbilityUpgradePreview(BoomerangStatName, BoomerangConfig.StartTargets),
+            new AbilityUpgradePreview(DamageStatName, AbilityConfig.StartDamage)
+        };
+
+    public override AbilityUpgradePreview[] GetUpgradePreviews(AbilityUpgradeType upgradeType, float upgradeMultiplier)
+    {
+        return GetBoomerangUpgradeType(upgradeType) switch
+        {
+            AbilityUpgradeType.BounceRadiusDamage => new[]
+            {
+                new AbilityUpgradePreview(BounceRadiusStatName, _bounceRadius,
+                    _bounceRadius + GetBounceRadiusIncrease(upgradeMultiplier), "m"),
+                new AbilityUpgradePreview(DamageStatName, Damage,
+                    GetDamageTo(upgradeMultiplier))
+            },
+            AbilityUpgradeType.TargetsDamage => new[]
+            {
+                new AbilityUpgradePreview(BoomerangStatName, GetTargetsFrom(),
+                    GetTargetsTo(upgradeMultiplier)),
+                new AbilityUpgradePreview(DamageStatName, Damage,
+                    GetDamageTo(upgradeMultiplier))
+            },
+            _ => new[]
+            {
+                new AbilityUpgradePreview(SpeedStatName, ProjectileSpeed,
+                    ProjectileSpeed + GetSpeedIncrease(upgradeMultiplier)),
+                new AbilityUpgradePreview(CooldownStatName, Cooldown,
+                    GetCooldownTo(upgradeMultiplier), "s")
+            }
+        };
+    }
 
     protected override void OnShootableInitialized()
     {
         Level = 0;
+        _bonusTargets = 0;
+        _bounceRadius = BoomerangConfig.BounceRadius;
         StatName_1 = BoomerangStatName;
-        Stat_1 = GetBoomerangHitCount(1);
+        Stat_1 = BoomerangConfig.StartTargets;
     }
 
     protected override void OnShootableEquipped(CharacterStats characterStats)
     {
         if (Damage <= 0)
             Damage = AbilityConfig.StartDamage;
+
+        switch (CurrentUpgradeType)
+        {
+            case AbilityUpgradeType.BounceRadiusDamage:
+                _bounceRadius += GetBounceRadiusIncrease(CurrentUpgradeMultiplier);
+                IncreaseDamage(GetDamageIncrease(CurrentUpgradeMultiplier));
+                break;
+            case AbilityUpgradeType.ProjectileSpeedCooldown:
+                IncreaseProjectileSpeed(GetSpeedIncrease(CurrentUpgradeMultiplier));
+                ReduceCooldown(GetCooldownReduction(CurrentUpgradeMultiplier));
+                break;
+            case AbilityUpgradeType.TargetsDamage:
+                _bonusTargets += GetTargetIncrease(CurrentUpgradeMultiplier);
+                IncreaseDamage(GetDamageIncrease(CurrentUpgradeMultiplier));
+                break;
+        }
 
         Stat_1 = GetBoomerangMaxHitCount();
     }
@@ -107,7 +175,7 @@ public class RabbitBoomerangAbility : SingleShootAbility
     {
         EnemyFacade closestEnemy = null;
         float closestSqrDistance = float.MaxValue;
-        float maxSqrDistance = BoomerangConfig.BounceRadius * BoomerangConfig.BounceRadius;
+        float maxSqrDistance = _bounceRadius * _bounceRadius;
 
         foreach (EnemyFacade enemy in EnemiesProvider.ActiveEnemies)
         {
@@ -195,12 +263,38 @@ public class RabbitBoomerangAbility : SingleShootAbility
     }
 
     private int GetBoomerangMaxHitCount() =>
-        GetBoomerangHitCount(Level);
+        Mathf.Max(1, BoomerangConfig.StartTargets + _bonusTargets);
 
-    private int GetBoomerangHitCount(int level)
+    private int GetTargetIncrease(float upgradeMultiplier) =>
+        Mathf.Max(0, Mathf.RoundToInt(GetUpgradeValue(BoomerangConfig.TargetUpgradeIncrease, upgradeMultiplier)));
+
+    private int GetTargetsFrom() =>
+        Level <= 0 ? 0 : GetBoomerangMaxHitCount();
+
+    private int GetTargetsTo(float upgradeMultiplier)
     {
-        int upgradeCount = Mathf.Max(0, level - 1);
-        int targetCount = BoomerangConfig.StartTargets + upgradeCount * BoomerangConfig.TargetsPerLevel;
-        return Mathf.Max(1, targetCount);
+        int baseTargets = Level <= 0 ? BoomerangConfig.StartTargets : GetBoomerangMaxHitCount();
+        return baseTargets + GetTargetIncrease(upgradeMultiplier);
     }
+
+    private float GetDamageIncrease(float upgradeMultiplier) =>
+        GetUpgradeValue(BoomerangConfig.DamageUpgradeIncrease, upgradeMultiplier);
+
+    private float GetDamageTo(float upgradeMultiplier) =>
+        (Damage <= 0 ? AbilityConfig.StartDamage : Damage) + GetDamageIncrease(upgradeMultiplier);
+
+    private float GetSpeedIncrease(float upgradeMultiplier) =>
+        GetUpgradeValue(BoomerangConfig.SpeedUpgradeIncrease, upgradeMultiplier);
+
+    private float GetCooldownReduction(float upgradeMultiplier) =>
+        GetUpgradeValue(BoomerangConfig.CooldownUpgradeReduction, upgradeMultiplier);
+
+    private float GetCooldownTo(float upgradeMultiplier) =>
+        Mathf.Max(0.05f, Cooldown - GetCooldownReduction(upgradeMultiplier));
+
+    private float GetBounceRadiusIncrease(float upgradeMultiplier) =>
+        GetUpgradeValue(BoomerangConfig.BounceRadiusUpgradeIncrease, upgradeMultiplier);
+
+    private static AbilityUpgradeType GetBoomerangUpgradeType(AbilityUpgradeType upgradeType) =>
+        upgradeType == AbilityUpgradeType.Default ? AbilityUpgradeType.ProjectileSpeedCooldown : upgradeType;
 }
