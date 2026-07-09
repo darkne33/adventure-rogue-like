@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using CustomPackages.Package.Extensions;
+using UnityEngine;
 
 public class UpgradeOfferGenerator : IUpgradeOfferGenerator
 {
+    private const int TotalOfferCount = 3;
+
     private readonly IAbilityChoiceProvider _abilityChoiceProvider;
     private readonly UpgradeOfferConfiguration _upgradeOfferConfiguration;
 
@@ -19,14 +22,17 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         List<UpgradeOffer> offers = new();
         List<CharacterAbility> offerAbilities = new();
 
-        int countScrolls = 2;
-        int countActiveAbilities = 1;
-
         List<CharacterPassiveAbility> passiveAbilities = _abilityChoiceProvider.GetCharacterAbilities().Values
             .OfType<CharacterPassiveAbility>().ToList();
 
         List<CharacterActiveAbility> activeAbilities = _abilityChoiceProvider.GetCharacterAbilities().Values
             .OfType<CharacterActiveAbility>().ToList();
+
+        bool includeActiveAbility = activeAbilities.Count > 0 &&
+                                    Random.Range(0f, 100f) <
+                                    _upgradeOfferConfiguration.ActiveAbilityOfferChance;
+        int countActiveAbilities = includeActiveAbility ? 1 : 0;
+        int countScrolls = TotalOfferCount - countActiveAbilities;
 
         for (int i = 0; i < countScrolls; i++)
         {

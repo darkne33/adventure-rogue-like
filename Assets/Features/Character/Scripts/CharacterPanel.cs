@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class CharacterPanel : PanelBase
 {
     [field: SerializeField] public CharacterHealthView CharacterHealthView { get; private set; }
+    [field: SerializeField] public CharacterShieldView CharacterShieldView { get; private set; }
     [field: SerializeField] public CharacterGoldView CharacterGoldView { get; private set; }
     [field: SerializeField] public CharacterExpView CharacterExpView { get; private set; }
     [field: SerializeField] public TMP_Text WaveAlertText { get; private set; }

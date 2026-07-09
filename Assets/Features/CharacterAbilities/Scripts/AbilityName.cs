@@ -15,5 +15,6 @@
     MaxHpScroll = 12,
     MovementSpeedScroll = 13,
     RegenHpScroll = 14,
-    ThornsDamageScroll = 15
+    ThornsDamageScroll = 15,
+    ShieldScroll = 16
 }

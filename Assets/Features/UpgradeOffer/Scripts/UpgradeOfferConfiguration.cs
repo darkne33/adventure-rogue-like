@@ -6,6 +6,7 @@ using UnityEngine;
 public class UpgradeOfferConfiguration : ScriptableObject
 {
     [field: SerializeField] public UpgradeOfferItemFacade UpgradeOfferItemFacade { get; private set; }
+    [field: SerializeField, Range(0f, 100f)] public float ActiveAbilityOfferChance { get; private set; } = 50f;
     [field: SerializeField] public UpgradeRarityData[] RarityData { get; private set; } =
     {
         new(UpgradeRarity.Common, 1f, 70f),

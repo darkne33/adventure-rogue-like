@@ -148,6 +148,7 @@ public sealed class CharacterStatModifierLayer
             StatType.ThornsDamage => _characterStats.ThornsDamage,
             StatType.MaxHp => _characterStats.MaxHp,
             StatType.RegenHp => _characterStats.RegenHp,
+            StatType.Shield => _characterStats.Shield,
             StatType.Armor => _characterStats.Armor,
             StatType.Evasion => _characterStats.Evasion,
             StatType.GainHp => _characterStats.GainHp,
@@ -195,6 +196,9 @@ public sealed class CharacterStatModifierLayer
                 break;
             case StatType.RegenHp:
                 _characterStats.RegenHp = value;
+                break;
+            case StatType.Shield:
+                _characterStats.Shield = value;
                 break;
             case StatType.Armor:
                 _characterStats.Armor = value;
@@ -249,7 +253,7 @@ public sealed class CharacterStatModifierLayer
             StatType.CritChance => Mathf.Clamp(value, 0f, CritChanceCap),
             StatType.Evasion => Mathf.Clamp(value, 0f, EvasionCap),
             StatType.CooldownReduction => Mathf.Clamp(value, 0f, CooldownReductionCap),
-            StatType.MaxHp or StatType.RegenHp or StatType.Armor or StatType.GainHp or
+            StatType.MaxHp or StatType.RegenHp or StatType.Shield or StatType.Armor or StatType.GainHp or
                 StatType.MovementSpeed or StatType.MovementAcceleration or StatType.JumpForce or
                 StatType.RotationSpeed or StatType.GravityMultiplier or StatType.ProjectileCount =>
                 Mathf.Max(0f, value),

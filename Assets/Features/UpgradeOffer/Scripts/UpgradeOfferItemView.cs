@@ -58,24 +58,10 @@ public class UpgradeOfferItemView : MonoBehaviour
     public void SetupLevel(int lvl, bool isAcquired) =>
         _newOrLvlAbilityText.text = isAcquired ? $"LVL {lvl}" : "NEW";
 
-    public void SetupSkillDescription_1(string statName, int statFrom, int statTo)
-    {
-        string skillDescription = $"{statName}: {statFrom}% > {ColorizeUpgradeToValue($"{statTo}%")}";
-        _skillDescription_1.gameObject.SetActive(true);
-        _skillDescription_1.text = skillDescription;
-    }
-
     public void SetupSkillDescription_1(AbilityUpgradePreview preview)
     {
         _skillDescription_1.gameObject.SetActive(true);
         _skillDescription_1.text = GetSkillDescription(preview);
-    }
-
-    public void SetupSkillDescription_2(string statName, int statFrom, int statTo)
-    {
-        string skillDescription = $"{statName}: {statFrom}% > {ColorizeUpgradeToValue($"{statTo}%")}";
-        _skillDescription_2.gameObject.SetActive(true);
-        _skillDescription_2.text = skillDescription;
     }
 
     public void SetupSkillDescription_2(AbilityUpgradePreview preview)

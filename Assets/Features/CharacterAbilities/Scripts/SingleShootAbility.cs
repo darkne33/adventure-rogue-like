@@ -135,10 +135,9 @@ public abstract class SingleShootAbility : CharacterActiveAbility
             return;
 
         Vector3 targetPosition = GetEnemyTargetPosition(randomEnemy);
-        Vector3 spawnPosition = character.transform.position +
+        Vector3 spawnPosition = character.ProjectileSpawnPosition +
                                 GetProjectileSpawnOffset(character.transform, projectileIndex, projectileCount);
         Vector3 shootDirection = targetPosition - spawnPosition;
-        shootDirection.y = 0f;
         if (shootDirection.sqrMagnitude <= 0.001f)
             shootDirection = character.transform.forward;
         shootDirection.Normalize();

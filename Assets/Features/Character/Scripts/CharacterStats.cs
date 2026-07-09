@@ -17,6 +17,7 @@ public class CharacterStats
     //Survival
     public float MaxHp;
     public float RegenHp;
+    public float Shield;
     public float Armor;
     public float Evasion;
     

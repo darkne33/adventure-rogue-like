@@ -38,6 +38,7 @@ public class RogueLikePrepareStatsState : State
         
         _characterStats.MaxHp = _characterSettingsConfiguration.MaxHp;
         _characterStats.RegenHp = _characterSettingsConfiguration.RegenHp;
+        _characterStats.Shield = _characterSettingsConfiguration.Shield;
         _characterStats.Armor = _characterSettingsConfiguration.Armor;
         _characterStats.Evasion = _characterSettingsConfiguration.Evasion;
         

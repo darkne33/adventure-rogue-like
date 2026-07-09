@@ -22,5 +22,6 @@
     MovementAcceleration = 20,
     JumpForce = 21,
     RotationSpeed = 22,
-    GravityMultiplier = 23
+    GravityMultiplier = 23,
+    Shield = 24
 }

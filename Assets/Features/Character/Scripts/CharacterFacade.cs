@@ -12,12 +12,15 @@ public class CharacterFacade : MonoBehaviour
     private const float ShadowHeightOffset = 0.02f;
 
     public HealthSystem HealthSystem => _healthSystem;
+    public ShieldSystem ShieldSystem => _shieldSystem;
     public Rigidbody Rigidbody => _rigidbody;
     public CharacterAbilitySystem CharacterAbilitySystem => _abilitySystem;
     public CharacterMoveSystem MoveSystem => _moveSystem;
     public DealDamageEffectSystem DamageEffectSystem => _damageEffectSystem;
     public CharacterCameraMoveSystem CameraSystem => _cameraSystem;
     public Transform CameraPivot => _cameraPivot.transform;
+    public Vector3 ProjectileSpawnPosition =>
+        _collider != null ? _collider.bounds.center : transform.position;
 
     internal GameObject CharacterModel => _characterModel;
     internal Renderer[] MeshRenderers => _meshRenderers;
@@ -37,6 +40,7 @@ public class CharacterFacade : MonoBehaviour
     private CharacterStats _characterStats;
     private PauseEntity _pauseEntity;
     private HealthSystem _healthSystem;
+    private ShieldSystem _shieldSystem;
     private CharacterAbilitySystem _abilitySystem;
     private CharacterMoveSystem _moveSystem;
     private CharacterCameraMoveSystem _cameraSystem;
@@ -46,6 +50,7 @@ public class CharacterFacade : MonoBehaviour
     private void Update()
     {
         UpdateHealth(Time.deltaTime);
+        UpdateShield(Time.deltaTime);
         _moveSystem.CaptureJumpInput(Time.deltaTime);
         _moveSystem.Rotate(Time.deltaTime);
 
@@ -84,10 +89,12 @@ public class CharacterFacade : MonoBehaviour
             _shadow.SetParent(null);
 
         _healthSystem.Initialize();
+        _shieldSystem.Initialize(_characterStats.Shield);
     }
 
     public void Construct(Rigidbody rigidbody, Collider collider, CharacterStats characterStats,
-        PauseEntity pauseEntity, HealthSystem healthSystem, CharacterAbilitySystem abilitySystem,
+        PauseEntity pauseEntity, HealthSystem healthSystem, ShieldSystem shieldSystem,
+        CharacterAbilitySystem abilitySystem,
         CharacterMoveSystem moveSystem, CharacterCameraMoveSystem cameraSystem,
         DealDamageEffectSystem damageEffectSystem)
     {
@@ -96,6 +103,7 @@ public class CharacterFacade : MonoBehaviour
         _characterStats = characterStats;
         _pauseEntity = pauseEntity;
         _healthSystem = healthSystem;
+        _shieldSystem = shieldSystem;
         _abilitySystem = abilitySystem;
         _moveSystem = moveSystem;
         _cameraSystem = cameraSystem;
@@ -116,16 +124,19 @@ public class CharacterFacade : MonoBehaviour
 
         float armorMultiplier = 100f / (100f + Mathf.Max(0f, _characterStats.Armor));
         int reducedDamage = Mathf.Max(1, Mathf.RoundToInt(rawDamage * armorMultiplier));
+        int absorbedDamage = _shieldSystem.AbsorbDamage(reducedDamage);
+        int healthDamage = reducedDamage - absorbedDamage;
 
-        if (_healthSystem.CurrentHealth - reducedDamage <= 0f &&
+        if (healthDamage > 0 && _healthSystem.CurrentHealth - healthDamage <= 0f &&
             _relicManager != null &&
-            _relicManager.TryCancelFatalDamage(this, reducedDamage))
+            _relicManager.TryCancelFatalDamage(this, healthDamage))
         {
             _damageEffectSystem.DealDamage();
             return true;
         }
 
-        int appliedDamage = _healthSystem.GetDamage(reducedDamage);
+        int appliedHealthDamage = healthDamage > 0 ? _healthSystem.GetDamage(healthDamage) : 0;
+        int appliedDamage = absorbedDamage + appliedHealthDamage;
 
         if (appliedDamage <= 0)
             return false;
@@ -168,6 +179,14 @@ public class CharacterFacade : MonoBehaviour
             if (healed > 0f)
                 _relicEventBus?.PublishHeal(new RelicHealEvent(this, healed));
         }
+    }
+
+    private void UpdateShield(float deltaTime)
+    {
+        _shieldSystem.SetMaxShield(_characterStats.Shield);
+
+        if (_pauseEntity.IsPauseEntity == false)
+            _shieldSystem.Tick(deltaTime);
     }
 
     private void UpdateShadow()

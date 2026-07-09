@@ -69,6 +69,9 @@ public class CharacterAbilityChoiceProvider : IAbilityChoiceProvider
                 case AbilityName.ThornsDamageScroll:
                     CreateAbility<CharacterScrollThornsDamageAbility>(abilityConfig, abilityConfig.AbilityName);
                     break;
+                case AbilityName.ShieldScroll:
+                    CreateAbility<CharacterScrollShieldAbility>(abilityConfig, abilityConfig.AbilityName);
+                    break;
                 default:
                     throw new Exception("Unknown ability name: " + abilityConfig.AbilityName);
             }

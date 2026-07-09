@@ -18,6 +18,9 @@ public class CharacterSettingsConfiguration : ScriptableObject
     [field: Header("Survival")]
     [field: SerializeField] public int MaxHp { get; private set; } = 54;
     [field: SerializeField] public float RegenHp { get; private set; }
+    [field: SerializeField, Min(0f)] public float Shield { get; private set; }
+    [field: SerializeField, Min(0f)] public float ShieldRegenerationDelay { get; private set; } = 4f;
+    [field: SerializeField, Min(0f)] public float ShieldRegenerationPerSecond { get; private set; } = 1f;
     [field: SerializeField] public float Armor { get; private set; }
     [field: SerializeField] public float Evasion { get; private set; }
 

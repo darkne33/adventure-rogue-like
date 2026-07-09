@@ -10,15 +10,18 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
     private readonly IPanelService _panelService;
     private readonly CharacterStats _characterStats;
     private readonly PauseEntityDistributor _pauseEntityDistributor;
+    private readonly CharacterSettingsConfiguration _characterSettingsConfiguration;
 
     public CharacterSystemsFactory(CharacterCameraSettingsConfiguration cameraSettings, ICameraService cameraService,
-        IPanelService panelService, CharacterStats characterStats, PauseEntityDistributor pauseEntityDistributor)
+        IPanelService panelService, CharacterStats characterStats, PauseEntityDistributor pauseEntityDistributor,
+        CharacterSettingsConfiguration characterSettingsConfiguration)
     {
         _cameraSettings = cameraSettings;
         _cameraService = cameraService;
         _panelService = panelService;
         _characterStats = characterStats;
         _pauseEntityDistributor = pauseEntityDistributor;
+        _characterSettingsConfiguration = characterSettingsConfiguration;
     }
 
     public void Create(CharacterFacade facade)
@@ -42,8 +45,10 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         var deathSystem = new CharacterDeathSystem(facade);
         var healthSystem = new HealthSystem(_characterStats.MaxHp,
             new IHealthView[] { characterPanel.CharacterHealthView, worldHealthView }, deathSystem);
+        var shieldSystem = new ShieldSystem(_characterSettingsConfiguration.ShieldRegenerationDelay,
+            _characterSettingsConfiguration.ShieldRegenerationPerSecond, characterPanel.CharacterShieldView);
 
-        facade.Construct(rigidbody, collider, _characterStats, pauseEntity, healthSystem, abilitySystem, moveSystem,
-            cameraSystem, damageEffectSystem);
+        facade.Construct(rigidbody, collider, _characterStats, pauseEntity, healthSystem, shieldSystem, abilitySystem,
+            moveSystem, cameraSystem, damageEffectSystem);
     }
 }

@@ -148,9 +148,11 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
             {
                 case CharacterPassiveAbility passiveAbility:
                     string statName = CleanCharacterStatName(passiveAbility.Id.ToString());
-                    offerItemView.SetupSkillDescription_1(statName,
-                        (int)passiveAbility.GetStatFromIncrease(_characterStats),
-                        (int)passiveAbility.GetStatToIncrease(_characterStats, upgradeOffer.UpgradeMultiplier));
+                    float statFrom = passiveAbility.GetStatFromIncrease(_characterStats);
+                    float statTo = passiveAbility.GetStatToIncrease(_characterStats,
+                        upgradeOffer.UpgradeMultiplier);
+                    offerItemView.SetupSkillDescription_1(
+                        new AbilityUpgradePreview(statName, statFrom, statTo, passiveAbility.StatSuffix));
                     break;
                 case CharacterActiveAbility activeAbility:
                     AbilityUpgradePreview[] previews = upgradeOffer.HasRarity
