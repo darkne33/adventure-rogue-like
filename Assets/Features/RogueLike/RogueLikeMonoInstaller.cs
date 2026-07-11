@@ -19,6 +19,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
     [SerializeField] private RelicPoolConfiguration _relicPoolConfiguration;
     [SerializeField] private RelicChestConfiguration _relicChestConfiguration;
     [SerializeField] private GoldDropperConfiguration _goldDropperConfiguration;
+    [SerializeField] private HeartDropperConfiguration _heartDropperConfiguration;
 
     [SerializeField] private SceneNames.SceneNameType _sceneNameType;
 
@@ -34,6 +35,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         BindCharacterStats();
         BindUpgradeOffer();
         BindGoldDropper();
+        BindHeartDropper();
         BindRelics();
         BindDebugMode();
     }
@@ -107,6 +109,14 @@ public class RogueLikeMonoInstaller : MonoInstaller
 
         Container.Bind<GoldDropperConfiguration>().FromInstance(_goldDropperConfiguration).AsSingle();
         Container.Bind<GoldDropper>().AsSingle();
+    }
+
+    private void BindHeartDropper()
+    {
+        _heartDropperConfiguration ??= ScriptableObject.CreateInstance<HeartDropperConfiguration>();
+
+        Container.Bind<HeartDropperConfiguration>().FromInstance(_heartDropperConfiguration).AsSingle();
+        Container.Bind<HeartDropper>().AsSingle();
     }
 
     private void BindRelics()

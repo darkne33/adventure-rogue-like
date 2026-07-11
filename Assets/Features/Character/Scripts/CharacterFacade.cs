@@ -46,6 +46,8 @@ public class CharacterFacade : MonoBehaviour
     private CharacterCameraMoveSystem _cameraSystem;
     private DealDamageEffectSystem _damageEffectSystem;
     private float _invulnerableUntilTime;
+    private bool _isTransitionPaused;
+    private bool _wasKinematicBeforeTransition;
 
     private void Update()
     {
@@ -154,6 +156,31 @@ public class CharacterFacade : MonoBehaviour
 
     public void SetTemporaryInvulnerability(float duration) =>
         _invulnerableUntilTime = Mathf.Max(_invulnerableUntilTime, Time.unscaledTime + duration);
+
+    public void SetTransitionPaused(bool state)
+    {
+        if (_isTransitionPaused == state || _rigidbody == null)
+            return;
+
+        _isTransitionPaused = state;
+        _pauseEntity.SetTransitionPaused(state);
+        _moveSystem.SetTransitionPaused(state);
+        _cameraSystem.SetInputEnabled(!state);
+
+        if (state)
+        {
+            _wasKinematicBeforeTransition = _rigidbody.isKinematic;
+            _rigidbody.linearVelocity = Vector3.zero;
+            _rigidbody.angularVelocity = Vector3.zero;
+            _rigidbody.isKinematic = true;
+            return;
+        }
+
+        _rigidbody.isKinematic = _wasKinematicBeforeTransition;
+        _rigidbody.linearVelocity = Vector3.zero;
+        _rigidbody.angularVelocity = Vector3.zero;
+        _moveSystem.CanMove(true);
+    }
 
     public void DisableAfterDeath()
     {

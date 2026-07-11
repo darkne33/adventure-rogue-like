@@ -69,6 +69,20 @@ public class CharacterCameraMoveSystem
             _cameraPivot.localPosition = _baseCameraPivotLocalPosition;
     }
 
+    public void SetInputEnabled(bool state)
+    {
+        if (state)
+        {
+            _inputActions.Enable();
+            return;
+        }
+
+        _inputActions.Disable();
+        _yawVelocity = 0f;
+        _pitchVelocity = 0f;
+        StopLandingShake();
+    }
+
     public void Move()
     {
         if (_cameraPivot == null || _pauseEntity.IsPauseEntity)

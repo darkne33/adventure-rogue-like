@@ -105,14 +105,26 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
     private async UniTask TransitToNextLevelAsync(int nextLevelIndex)
     {
         _isTransitioning = true;
+        CharacterFacade character = _characterProvider.CharacterFacade;
 
         try
         {
-            await _roomTransitionService.Play(() => ReplaceLevel(nextLevelIndex));
+            character?.SetTransitionPaused(true);
+            await _roomTransitionService.Play(
+                () => ReplaceLevel(nextLevelIndex),
+                () => character?.SetTransitionPaused(false));
         }
         finally
         {
-            _isTransitioning = false;
+            try
+            {
+                if (character != null)
+                    character.SetTransitionPaused(false);
+            }
+            finally
+            {
+                _isTransitioning = false;
+            }
         }
     }
 
@@ -152,8 +164,12 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         _runtimeDataService.CurrentIndexLevel = nextLevelIndex;
         sceneProvider.CurrentLevel = nextLevel;
 
-        character.Rigidbody.linearVelocity = Vector3.zero;
-        character.Rigidbody.angularVelocity = Vector3.zero;
+        if (!character.Rigidbody.isKinematic)
+        {
+            character.Rigidbody.linearVelocity = Vector3.zero;
+            character.Rigidbody.angularVelocity = Vector3.zero;
+        }
+
         character.transform.SetPositionAndRotation(startRoomData.StartPoint.position,
             startRoomData.StartPoint.rotation);
         Physics.SyncTransforms();

@@ -29,7 +29,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
             _panelService = panelService;
         }
 
-        public async UniTask Play(Func<UniTask> hiddenAction)
+        public async UniTask Play(Func<UniTask> hiddenAction, Action beforeReveal = null)
         {
             if (hiddenAction == null)
                 throw new ArgumentNullException(nameof(hiddenAction));
@@ -47,6 +47,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
                 await AnimateCover();
                 await hiddenAction();
                 await UniTask.Delay(80, ignoreTimeScale: true);
+                beforeReveal?.Invoke();
                 await AnimateReveal();
             }
             finally
@@ -116,6 +117,6 @@ namespace Features.Enemies.Scripts.Level.Scripts
     public interface IRoomTransitionService
     {
         bool IsPlaying { get; }
-        UniTask Play(Func<UniTask> hiddenAction);
+        UniTask Play(Func<UniTask> hiddenAction, Action beforeReveal = null);
     }
 }

@@ -50,72 +50,72 @@ namespace Features.Enemies.Scripts.Level.Scripts
                 throw new System.InvalidOperationException("Character is not available for room transition.");
 
             _isTransitioning = true;
-            CloseRoomDoors(_runtimeDataService.CurrentRoomData);
             TransitAsync(nextRoom, roomData, entryDoor).Forget();
         }
 
         private async UniTask TransitAsync(Room nextRoom, RoomData roomData, RoomDoor entryDoor)
         {
+            CharacterFacade character = _characterProvider.CharacterFacade;
+
             try
             {
-                await _roomTransitionService.Play(async () =>
-                {
-                    _runtimeDataService.SetCurrentRoomData(roomData);
-
-                    Transform teleportPlayerTarget = entryDoor.transform;
-                    const int offset = 10;
-                    Vector3 characterPosition = teleportPlayerTarget.position + teleportPlayerTarget.forward * offset;
-
-                    TeleportCharacter(characterPosition);
-                    entryDoor.Close();
-                    _relicEventBus.PublishRoomStarted(new RelicRoomEvent(roomData, nextRoom, characterPosition));
-
-                    if (roomData is DefaultEnemiesRoomData)
+                character.SetTransitionPaused(true);
+                await _roomTransitionService.Play(
+                    async () =>
                     {
-                        await _gameModeService.Get<RogueLikeStateMachine>()
-                            .EnterState<RogueLikeRoomPrepareState>();
-                    }
-                    else
-                    {
-                        if (roomData is RewardRoomData rewardRoomData)
-                            rewardRoomData.MarkCompleted();
+                        _runtimeDataService.SetCurrentRoomData(roomData);
 
-                        foreach (RoomDoor roomDoor in roomData.RoomDoors)
+                        Transform teleportPlayerTarget = entryDoor.transform;
+                        const int offset = 10;
+                        Vector3 characterPosition = teleportPlayerTarget.position +
+                                                    teleportPlayerTarget.forward * offset;
+
+                        TeleportCharacter(characterPosition);
+                        entryDoor.Open();
+                        _relicEventBus.PublishRoomStarted(
+                            new RelicRoomEvent(roomData, nextRoom, characterPosition));
+
+                        if (roomData is DefaultEnemiesRoomData)
                         {
-                            if (roomDoor != null)
-                                roomDoor.Open();
+                            await _gameModeService.Get<RogueLikeStateMachine>()
+                                .EnterState<RogueLikeRoomPrepareState>();
                         }
-                    }
+                        else if (roomData is RewardRoomData rewardRoomData)
+                        {
+                            rewardRoomData.MarkCompleted();
+                        }
 
-                });
+                    },
+                    () => character.SetTransitionPaused(false));
             }
             finally
             {
-                _isTransitioning = false;
+                try
+                {
+                    if (character != null)
+                        character.SetTransitionPaused(false);
+                }
+                finally
+                {
+                    _isTransitioning = false;
+                }
             }
         }
 
         private void TeleportCharacter(Vector3 position)
         {
             CharacterFacade character = _characterProvider.CharacterFacade;
-            character.Rigidbody.linearVelocity = Vector3.zero;
-            character.Rigidbody.angularVelocity = Vector3.zero;
+            if (!character.Rigidbody.isKinematic)
+            {
+                character.Rigidbody.linearVelocity = Vector3.zero;
+                character.Rigidbody.angularVelocity = Vector3.zero;
+            }
+
             character.Rigidbody.position = position;
             character.transform.position = position;
             Physics.SyncTransforms();
         }
 
-        private static void CloseRoomDoors(RoomData roomData)
-        {
-            if (roomData?.RoomDoors == null)
-                return;
-
-            foreach (RoomDoor roomDoor in roomData.RoomDoors)
-            {
-                if (roomDoor != null)
-                    roomDoor.Close();
-            }
-        }
     }
 
     public interface ITransitToRoomService

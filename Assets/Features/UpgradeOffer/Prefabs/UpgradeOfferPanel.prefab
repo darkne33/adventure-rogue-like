@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2600385510777881676}
   - component: {fileID: 2524637355091715797}
   - component: {fileID: 8516517535525462411}
+  - component: {fileID: 2184379234169218508}
   m_Layer: 5
   m_Name: RefreshUpgradesButton
   m_TagString: Untagged
@@ -135,6 +136,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeOfferItemsRefreshHandler
   _refreshButton: {fileID: 2524637355091715797}
+--- !u!114 &2184379234169218508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 91411168118571202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa745cae54a14f349a98ea4c746fcfea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.UIHoverScaler
+  _scaleTarget: {fileID: 3304329326732281143}
+  _hoverScale: 1.1
+  _scaleDuration: 0.1
+  _ease: 6
+  _useUnscaledTime: 1
 --- !u!1 &560147574109228190
 GameObject:
   m_ObjectHideFlags: 0
@@ -147,6 +165,7 @@ GameObject:
   - component: {fileID: 940963030570468091}
   - component: {fileID: 7294141460763075840}
   - component: {fileID: 5486690342798338805}
+  - component: {fileID: 3342321687047145446}
   m_Layer: 5
   m_Name: BanUpgradeButton
   m_TagString: Untagged
@@ -256,6 +275,23 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &3342321687047145446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 560147574109228190}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa745cae54a14f349a98ea4c746fcfea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.UIHoverScaler
+  _scaleTarget: {fileID: 4047142931613198809}
+  _hoverScale: 1.1
+  _scaleDuration: 0.1
+  _ease: 6
+  _useUnscaledTime: 1
 --- !u!1 &1399638806815403537
 GameObject:
   m_ObjectHideFlags: 0
@@ -903,6 +939,7 @@ GameObject:
   - component: {fileID: 9030870837624439015}
   - component: {fileID: 3170399555676462121}
   - component: {fileID: 2364346894488000679}
+  - component: {fileID: 5747347473831089763}
   m_Layer: 5
   m_Name: SkipUpgradeButton
   m_TagString: Untagged
@@ -1025,6 +1062,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeOfferItemsSkipHandler
   _skipButton: {fileID: 3170399555676462121}
+--- !u!114 &5747347473831089763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7641849869456045858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa745cae54a14f349a98ea4c746fcfea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.UIHoverScaler
+  _scaleTarget: {fileID: 7737842242106167966}
+  _hoverScale: 1.1
+  _scaleDuration: 0.1
+  _ease: 6
+  _useUnscaledTime: 1
 --- !u!1 &7875361190409699116
 GameObject:
   m_ObjectHideFlags: 0

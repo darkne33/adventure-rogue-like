@@ -47,12 +47,6 @@ namespace Core
             _enemiesWaveObserver.StartRoom(waitForEnemySpawning: true);
             await _enemySpawner.LoadEnemyPrefabs(cts);
 
-            foreach (var roomDoor in currentRoomData.RoomDoors)
-            {
-                if (roomDoor != null)
-                    roomDoor.Close();
-            }
-
             _enemySpawner.TrySpawnEnemies(_characterProvider.CharacterFacade,
                 _enemiesWaveObserver.CurrentWave);
 

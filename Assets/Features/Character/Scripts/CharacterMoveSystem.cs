@@ -156,6 +156,24 @@ public class CharacterMoveSystem
     public void CanMove(bool state) =>
         _canMove = state;
 
+    public void SetTransitionPaused(bool state)
+    {
+        if (state)
+        {
+            _inputActions.Disable();
+            _direction = Vector3.zero;
+            _jumpInputBufferTimer = 0f;
+            ResetBunnyHopBonus();
+            _characterAnimationSystem.MovementPlay(false);
+        }
+        else
+        {
+            _inputActions.Enable();
+        }
+
+        _characterAnimationSystem.SetPaused(state);
+    }
+
     public void SetGrounded(bool isGrounded)
     {
         if (isGrounded && !_isGrounded)
