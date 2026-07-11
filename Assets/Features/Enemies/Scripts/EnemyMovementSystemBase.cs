@@ -45,7 +45,12 @@ namespace Features.Enemies.Scripts
                     NavMesh.AllAreas) == false)
                 return;
 
-            NavMeshAgent.SetDestination(hit.position);
+            MoveDirectlyTo(hit.position);
+        }
+
+        protected void MoveDirectlyTo(Vector3 desiredPosition)
+        {
+            NavMeshAgent.SetDestination(desiredPosition);
             Enemy.transform.position = Vector3.Lerp(
                 Enemy.transform.position,
                 NavMeshAgent.nextPosition,

@@ -1,5 +1,7 @@
 public enum EnemyMovementType
 {
     Chase,
-    Skirmisher
+    Skirmisher,
+    AggressiveChase,
+    Aggressive
 }

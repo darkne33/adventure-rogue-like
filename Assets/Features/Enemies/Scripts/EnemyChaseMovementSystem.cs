@@ -5,6 +5,8 @@ namespace Features.Enemies.Scripts
 {
     public sealed class EnemyChaseMovementSystem : EnemyMovementSystemBase
     {
+        private bool _isFollowingDirectly;
+
         public EnemyChaseMovementSystem(EnemyFacade enemy, CharacterFacade character,
             EnemyConfiguration configuration, NavMeshAgent navMeshAgent,
             IEnemyAnimationSystem animationSystem)
@@ -20,10 +22,29 @@ namespace Features.Enemies.Scripts
             Vector3 direction = Character.transform.position - Enemy.transform.position;
             direction.y = 0f;
 
-            if (direction.magnitude <= Configuration.DistanceToStop)
+            float distance = direction.magnitude;
+
+            if (_isFollowingDirectly)
+            {
+                float resumeChaseDistance = Mathf.Max(
+                    Configuration.CloseFollowDistance,
+                    Configuration.ResumeChaseDistance);
+                if (distance >= resumeChaseDistance)
+                    _isFollowingDirectly = false;
+            }
+            else if (Configuration.CloseFollowDistance > 0f &&
+                     distance <= Configuration.CloseFollowDistance)
+            {
+                _isFollowingDirectly = true;
+            }
+
+            if (distance <= Configuration.DistanceToStop)
                 return;
 
-            MoveTo(Character.transform.position);
+            if (_isFollowingDirectly)
+                MoveDirectlyTo(Character.transform.position);
+            else
+                MoveTo(Character.transform.position);
         }
     }
 }

@@ -18,6 +18,7 @@ public class EnemySpawner
     private readonly IEffectsService _effectsService;
     private readonly RelicEventBus _relicEventBus;
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
+    private readonly EnemiesWaveObserver _enemiesWaveObserver;
 
     private readonly Vector2 _spawnRadius = new Vector2(0, 40f);
 
@@ -30,7 +31,8 @@ public class EnemySpawner
 
     public EnemySpawner(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IEnemyFactory enemyFactory,
         LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider, IEffectsService effectsService,
-        RelicEventBus relicEventBus, ISceneService<RogueLikeSceneProvider> sceneService)
+        RelicEventBus relicEventBus, ISceneService<RogueLikeSceneProvider> sceneService,
+        EnemiesWaveObserver enemiesWaveObserver)
     {
         _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
         _enemyFactory = enemyFactory;
@@ -39,6 +41,7 @@ public class EnemySpawner
         _effectsService = effectsService;
         _relicEventBus = relicEventBus;
         _sceneService = sceneService;
+        _enemiesWaveObserver = enemiesWaveObserver;
     }
 
     public async UniTask LoadEnemyPrefabs(CancellationToken cts)
@@ -50,7 +53,12 @@ public class EnemySpawner
                 "Enemy factory configuration is missing for the current level.");
 
         foreach (var enemyPrefabData in levelSettings.EnemyFactoryConfiguration.EnemyPrefabs)
-            await enemyPrefabData.WavesConfigurationContainer.Load(cts);
+        {
+            await enemyPrefabData.NormalPrefabContainer.Load(cts);
+
+            if (enemyPrefabData.HasElitePrefab)
+                await enemyPrefabData.ElitePrefabContainer.Load(cts);
+        }
     }
 
     public void TrySpawnEnemies(CharacterFacade characterFacade, int currentWave)
@@ -124,7 +132,8 @@ public class EnemySpawner
                 continue;
             }
 
-            var enemy = levelSettings.EnemyFactoryConfiguration.GetEnemyByType(enemyType);
+            var enemy = levelSettings.EnemyFactoryConfiguration.GetEnemyByType(
+                enemyType, _enemiesWaveObserver.CompletedRooms);
 
             SpawnEnemy(enemy, spawnPosition).Forget();
         }

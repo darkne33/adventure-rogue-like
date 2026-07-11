@@ -33,4 +33,10 @@ public class EnemyConfiguration : ScriptableObject
     [field: SerializeField] public float Speed { get; private set; }
     [field: SerializeField] public float RotationSpeed { get; private set; }
     [field: SerializeField] public float Acceleration { get; private set; }
+    [field: Min(0f)]
+    [field: SerializeField] public float CloseFollowDistance { get; private set; }
+    [field: Min(0f)]
+    [field: SerializeField] public float ResumeChaseDistance { get; private set; }
+    [field: Min(0f)]
+    [field: SerializeField] public float MovementPauseAfterAttack { get; private set; } = 1f;
 }

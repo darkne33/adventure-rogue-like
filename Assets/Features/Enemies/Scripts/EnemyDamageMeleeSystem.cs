@@ -29,7 +29,7 @@ namespace Features.Enemies.Scripts
             if (_enemyFacade.IsDead)
                 return;
 
-            _enemyFacade.StartDelayMovementTimer(1).Forget();
+            _enemyFacade.StartDelayMovementTimer(_enemyConfiguration.MovementPauseAfterAttack).Forget();
             _enemyFacade.AnimationSystem.AttackAnimation();
             
             await UniTask.Delay(TimeSpan.FromSeconds(0.5f), cancellationToken: cancellationToken);

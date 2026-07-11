@@ -216,7 +216,7 @@ GameObject:
   - component: {fileID: 4228037969279559467}
   - component: {fileID: 4784738034083141854}
   m_Layer: 10
-  m_Name: DummyEnemy
+  m_Name: DummyEnemy_Normal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -420,6 +420,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3474670309302645969}
   - component: {fileID: 4649343357702555601}
+  - component: {fileID: 5092420742056310194}
   m_Layer: 10
   m_Name: Boss_heand_1
   m_TagString: Untagged
@@ -507,6 +508,24 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.016428322, y: 0.050485462, z: 0.0008395338}
     m_Extent: {x: 0.023962256, y: 0.022432894, z: 0.0020273891}
   m_DirtyAABB: 0
+--- !u!114 &5092420742056310194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2952201823532377239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 0
+  outlineColor: {r: 0, g: 0, b: 0, a: 1}
+  outlineWidth: 1
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1 &3721492148928030382
 GameObject:
   m_ObjectHideFlags: 0
@@ -517,6 +536,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3667041065814551883}
   - component: {fileID: 9134880393014516908}
+  - component: {fileID: 3255359929011344809}
   m_Layer: 10
   m_Name: Boss_heand_2
   m_TagString: Untagged
@@ -604,6 +624,24 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.014204438, y: 0.054503843, z: 0.0006992268}
     m_Extent: {x: 0.023335356, y: 0.02121044, z: 0.0018870826}
   m_DirtyAABB: 0
+--- !u!114 &3255359929011344809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3721492148928030382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 0
+  outlineColor: {r: 0, g: 0, b: 0, a: 1}
+  outlineWidth: 1
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1 &3903405614083211642
 GameObject:
   m_ObjectHideFlags: 0
@@ -614,6 +652,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4405391433016104546}
   - component: {fileID: 2354078946213474228}
+  - component: {fileID: 4871175290247907088}
   m_Layer: 10
   m_Name: Boss_body
   m_TagString: Untagged
@@ -701,6 +740,24 @@ SkinnedMeshRenderer:
     m_Center: {x: 0, y: 0.03804112, z: -0.000026714988}
     m_Extent: {x: 0.0075364867, y: 0.038287763, z: 0.0075364853}
   m_DirtyAABB: 0
+--- !u!114 &4871175290247907088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3903405614083211642}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 0
+  outlineColor: {r: 0, g: 0, b: 0, a: 1}
+  outlineWidth: 1
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1 &4275681840095371081
 GameObject:
   m_ObjectHideFlags: 0

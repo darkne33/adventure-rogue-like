@@ -90,6 +90,10 @@ namespace Features.Enemies.Scripts
                     facade, character, configuration, navMeshAgent, animationSystem),
                 EnemyMovementType.Skirmisher => new EnemySkirmisherMovementSystem(
                     facade, character, configuration, navMeshAgent, animationSystem),
+                EnemyMovementType.AggressiveChase => new EnemyAggressiveChaseMovementSystem(
+                    facade, character, configuration, navMeshAgent, animationSystem),
+                EnemyMovementType.Aggressive => new EnemyAggressiveMovementSystem(
+                    facade, character, configuration, navMeshAgent, animationSystem),
                 _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyMovementType),
                     configuration.EnemyMovementType, "Enemy movement type is not supported.")
             };
