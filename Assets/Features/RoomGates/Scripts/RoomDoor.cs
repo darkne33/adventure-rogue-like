@@ -5,19 +5,30 @@ using Zenject;
 public class RoomDoor : MonoBehaviour
 {
     private bool _isOpen;
+    private bool _usesRewardDoor;
 
-    [SerializeField] private Transform _leftDoor;
-    [SerializeField] private Transform _rightDoor;
+    [SerializeField] private GameObject _enemyDoor;
+    [SerializeField] private GameObject _enemyLeftDoor;
+    [SerializeField] private GameObject _enemyRightDoor;
+    [SerializeField] private GameObject _rewardDoor;
+    [SerializeField] private GameObject _rewardLeftDoor;
+    [SerializeField] private GameObject _rewardRightDoor;
     [SerializeField] private RoomDirection _direction;
     [SerializeField] private Room _nextRoom;
-    [SerializeField] private bool _isRewardGate;
 
     [Inject] private ITransitToRoomService _transitToRoomService;
     [Inject] private ILevelProgressionService _levelProgressionService;
 
     public RoomDirection Direction => _direction;
     public Room NextRoom => _nextRoom;
-    public bool IsRewardGate => _isRewardGate;
+    public bool IsRewardGate => _usesRewardDoor;
+    public bool HasConfiguredVisuals =>
+        _enemyDoor != null &&
+        _enemyLeftDoor != null &&
+        _enemyRightDoor != null &&
+        _rewardDoor != null &&
+        _rewardLeftDoor != null &&
+        _rewardRightDoor != null;
 
     private RoomDoor _nextRoomEntryDoor;
     private bool _isLevelExit;
@@ -34,6 +45,7 @@ public class RoomDoor : MonoBehaviour
             ? nextRoomEntryDoor
             : throw new System.ArgumentNullException(nameof(nextRoomEntryDoor));
         _isLevelExit = false;
+        _usesRewardDoor = nextRoom.RoomData is RewardRoomData;
         gameObject.SetActive(true);
         Close();
     }
@@ -46,6 +58,7 @@ public class RoomDoor : MonoBehaviour
         _nextRoom = null;
         _nextRoomEntryDoor = null;
         _isLevelExit = true;
+        _usesRewardDoor = false;
         gameObject.SetActive(true);
         Close();
     }
@@ -56,6 +69,7 @@ public class RoomDoor : MonoBehaviour
         _nextRoomEntryDoor = null;
         _isLevelExit = false;
         _isOpen = false;
+        SetDoorVariant(enemyVisible: false, rewardVisible: false);
         gameObject.SetActive(false);
     }
 
@@ -70,8 +84,10 @@ public class RoomDoor : MonoBehaviour
         }
 
         gameObject.SetActive(true);
-        _leftDoor.gameObject.SetActive(true);
-        _rightDoor.gameObject.SetActive(true);
+        SetDoorVariant(
+            enemyVisible: !_usesRewardDoor,
+            rewardVisible: _usesRewardDoor);
+        SetSelectedDoorLeaves(active: true);
     }
 
     public void Open()
@@ -84,8 +100,33 @@ public class RoomDoor : MonoBehaviour
 
         gameObject.SetActive(true);
         _isOpen = true;
-        _leftDoor.gameObject.SetActive(false);
-        _rightDoor.gameObject.SetActive(false);
+        SetDoorVariant(
+            enemyVisible: !_usesRewardDoor,
+            rewardVisible: _usesRewardDoor);
+        SetSelectedDoorLeaves(active: false);
+    }
+
+    private void EnsureDoorVisualsConfigured()
+    {
+        if (!HasConfiguredVisuals)
+            throw new MissingReferenceException(
+                $"{name} must contain assigned EnemyDoor and RewardDoor roots and two door leaves for each variant.");
+    }
+
+    private void SetDoorVariant(bool enemyVisible, bool rewardVisible)
+    {
+        EnsureDoorVisualsConfigured();
+        _enemyDoor.SetActive(enemyVisible);
+        _rewardDoor.SetActive(rewardVisible);
+    }
+
+    private void SetSelectedDoorLeaves(bool active)
+    {
+        GameObject leftDoor = _usesRewardDoor ? _rewardLeftDoor : _enemyLeftDoor;
+        GameObject rightDoor = _usesRewardDoor ? _rewardRightDoor : _enemyRightDoor;
+
+        leftDoor.SetActive(active);
+        rightDoor.SetActive(active);
     }
 
     private void OnTriggerEnter(Collider other) =>

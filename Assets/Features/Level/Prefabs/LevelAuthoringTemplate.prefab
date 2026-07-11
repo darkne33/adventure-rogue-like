@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &6926511112365813280
+--- !u!1 &1000000000000000000
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,22 +8,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5351916288843041472}
-  - component: {fileID: 5716263380797961638}
+  - component: {fileID: 4000000000000000000}
+  - component: {fileID: 1140000000000000000}
   m_Layer: 0
-  m_Name: Level_1
+  m_Name: LevelAuthoringTemplate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5351916288843041472
+--- !u!4 &4000000000000000000
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6926511112365813280}
+  m_GameObject: {fileID: 1000000000000000000}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -32,13 +32,13 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5716263380797961638
+--- !u!114 &1140000000000000000
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6926511112365813280}
+  m_GameObject: {fileID: 1000000000000000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ba82bedc53a51f438552eb731cf734f, type: 3}
@@ -47,38 +47,23 @@ MonoBehaviour:
   _startRoomPrefab: {fileID: 5078363352170045939, guid: 336c05fa31210114497d0352144fba3e, type: 3}
   _startRoomGridPosition: {x: 0, y: -1}
   _rooms:
-  - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
+  - _roomPrefab: {fileID: 4465193699951163159, guid: 3f84bacec5d24de6be91e3a24a18fca2, type: 3}
     <GridPosition>k__BackingField: {x: 0, y: 0}
     <IsRewardRoom>k__BackingField: 0
     <IsLevelExit>k__BackingField: 0
     <LevelExitDirection>k__BackingField: 0
-  - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
+  - _roomPrefab: {fileID: 4465193699951163159, guid: 3f84bacec5d24de6be91e3a24a18fca2, type: 3}
     <GridPosition>k__BackingField: {x: 1, y: 0}
-    <IsRewardRoom>k__BackingField: 0
+    <IsRewardRoom>k__BackingField: 1
     <IsLevelExit>k__BackingField: 0
     <LevelExitDirection>k__BackingField: 0
-  - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
+  - _roomPrefab: {fileID: 4465193699951163159, guid: 3f84bacec5d24de6be91e3a24a18fca2, type: 3}
     <GridPosition>k__BackingField: {x: 0, y: 1}
     <IsRewardRoom>k__BackingField: 0
     <IsLevelExit>k__BackingField: 0
     <LevelExitDirection>k__BackingField: 0
-  - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
+  - _roomPrefab: {fileID: 4465193699951163159, guid: 3f84bacec5d24de6be91e3a24a18fca2, type: 3}
     <GridPosition>k__BackingField: {x: 1, y: 1}
-    <IsRewardRoom>k__BackingField: 0
-    <IsLevelExit>k__BackingField: 0
-    <LevelExitDirection>k__BackingField: 0
-  - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
-    <GridPosition>k__BackingField: {x: 1, y: 2}
-    <IsRewardRoom>k__BackingField: 0
-    <IsLevelExit>k__BackingField: 0
-    <LevelExitDirection>k__BackingField: 0
-  - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
-    <GridPosition>k__BackingField: {x: 2, y: 2}
-    <IsRewardRoom>k__BackingField: 0
-    <IsLevelExit>k__BackingField: 0
-    <LevelExitDirection>k__BackingField: 0
-  - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
-    <GridPosition>k__BackingField: {x: 2, y: 3}
     <IsRewardRoom>k__BackingField: 0
     <IsLevelExit>k__BackingField: 1
     <LevelExitDirection>k__BackingField: 0

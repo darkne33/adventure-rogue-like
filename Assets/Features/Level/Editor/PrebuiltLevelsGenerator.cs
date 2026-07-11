@@ -16,9 +16,9 @@ public static class PrebuiltLevelsGenerator
     private const string StartRoomPath =
         "Assets/Features/Level/Level_1/Rooms/RoomStart.prefab";
     private const string DoorPrefabPath =
-        "Assets/Features/RoomGates/Prefabs/DefaultRoom.prefab";
+        "Assets/Features/RoomGates/Prefabs/RoomDoor.prefab";
     private const string CoinDoorPrefabPath =
-        "Assets/Features/RoomGates/Prefabs/CoinRoomGate.prefab";
+        "Assets/Features/RoomGates/Prefabs/RoomDoor.prefab";
     private const string ConfigurationPath =
         "Assets/Features/Level/LevelsConfiguration.asset";
 
@@ -174,9 +174,9 @@ public static class PrebuiltLevelsGenerator
                 throw new InvalidOperationException("Start room must contain StartRoomData.");
 
             var doors = root.GetComponentsInChildren<RoomDoor>(true).ToList();
-            if (doors.Count != 3)
+            if (doors.Count == 0)
                 throw new InvalidOperationException(
-                    $"Start room must contain three doors, but contains {doors.Count}.");
+                    "Start room must contain at least one door.");
 
             AssignDoorDirections(doors);
             roomData.RoomDoors = OrderDoors(doors);
@@ -324,7 +324,8 @@ public static class PrebuiltLevelsGenerator
                     rooms[roomIndex],
                     layout[roomIndex],
                     isLevelExit,
-                    ExitDirections[levelNumber - 1]);
+                    ExitDirections[levelNumber - 1],
+                    isRewardRoom);
 
                 RemoveUnusedDoors(rooms[roomIndex], layout[roomIndex], roomPositions,
                     hasNextLevel && isLevelExit, ExitDirections[levelNumber - 1]);
@@ -557,7 +558,8 @@ public static class PrebuiltLevelsGenerator
             roomsByPosition.Add(node.GridPosition, node.Room);
             ValidateUniqueDirections(roomData.RoomDoors, node.Room.name);
 
-            if ((node.Room.transform.localPosition - ToWorldPosition(node.GridPosition)).sqrMagnitude >
+            if (node.Room.transform.IsChildOf(levelView.transform) &&
+                (node.Room.transform.localPosition - ToWorldPosition(node.GridPosition)).sqrMagnitude >
                 0.001f)
                 throw new InvalidOperationException(
                     $"{node.Room.name} transform does not match its grid position.");
@@ -579,7 +581,7 @@ public static class PrebuiltLevelsGenerator
             throw new InvalidOperationException(
                 $"Level {levelNumber} must contain exactly one exit room.");
 
-        ValidateDoorConnections(levelView, roomsByPosition, levelNumber);
+        ValidateDoorConnections(levelView, roomsByPosition, levelNumber, hasNextLevel);
         ValidateConnectivity(roomsByPosition, levelView.StartRoomGridPosition, levelNumber);
     }
 
@@ -591,7 +593,8 @@ public static class PrebuiltLevelsGenerator
     }
 
     private static void ValidateDoorConnections(LevelView levelView,
-        IReadOnlyDictionary<Vector2Int, Room> roomsByPosition, int levelNumber)
+        IReadOnlyDictionary<Vector2Int, Room> roomsByPosition, int levelNumber,
+        bool hasNextLevel)
     {
         var levelExits = levelView.Rooms
             .Where(node => node.IsLevelExit)
@@ -599,28 +602,37 @@ public static class PrebuiltLevelsGenerator
 
         foreach (KeyValuePair<Vector2Int, Room> roomEntry in roomsByPosition)
         {
-            foreach (RoomDoor roomDoor in roomEntry.Value.RoomData.RoomDoors)
+            foreach (RoomDirection direction in Enum.GetValues(typeof(RoomDirection)))
             {
                 Vector2Int neighbourPosition =
-                    roomEntry.Key + roomDoor.Direction.ToGridOffset();
+                    roomEntry.Key + direction.ToGridOffset();
+                bool hasDoor = roomEntry.Value.RoomData.RoomDoors.Any(
+                    door => door.Direction == direction);
+
                 if (!roomsByPosition.TryGetValue(neighbourPosition, out Room neighbourRoom))
                 {
-                    bool isLevelExit = levelExits.TryGetValue(roomEntry.Key,
+                    bool requiresLevelExitDoor = hasNextLevel &&
+                                               levelExits.TryGetValue(roomEntry.Key,
                         out RoomDirection exitDirection) &&
-                                       exitDirection == roomDoor.Direction;
-                    if (!isLevelExit)
+                                               exitDirection == direction;
+                    if (requiresLevelExitDoor && !hasDoor)
                         throw new InvalidOperationException(
-                            $"Level {levelNumber}: {roomEntry.Value.name} contains an unused " +
-                            $"{roomDoor.Direction} door.");
+                            $"Level {levelNumber}: {roomEntry.Value.name} does not contain " +
+                            $"the {direction} level-exit door.");
 
                     continue;
                 }
 
+                if (!hasDoor)
+                    throw new InvalidOperationException(
+                        $"Level {levelNumber}: {roomEntry.Value.name} does not contain " +
+                        $"a {direction} door for {neighbourRoom.name}.");
+
                 bool hasOppositeDoor = neighbourRoom.RoomData.RoomDoors.Any(
-                    door => door.Direction == roomDoor.Direction.Opposite());
+                    door => door.Direction == direction.Opposite());
                 if (!hasOppositeDoor)
                     throw new InvalidOperationException(
-                        $"Level {levelNumber}: {roomEntry.Value.name} {roomDoor.Direction} door " +
+                        $"Level {levelNumber}: {roomEntry.Value.name} {direction} door " +
                         $"does not have an opposite door in {neighbourRoom.name}.");
             }
         }

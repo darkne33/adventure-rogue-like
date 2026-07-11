@@ -7,9 +7,12 @@ public class Room : MonoBehaviour
     [field: SerializeReference]
     public RoomData RoomData { get; private set; }
 
+    internal void SetRoomData(RoomData roomData) =>
+        RoomData = roomData ?? throw new ArgumentNullException(nameof(roomData));
+
 #if UNITY_EDITOR
     public void SetEditorRoomData(RoomData roomData) =>
-        RoomData = roomData ?? throw new ArgumentNullException(nameof(roomData));
+        SetRoomData(roomData);
 #endif
 }
 
