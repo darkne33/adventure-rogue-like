@@ -60,6 +60,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
 
         DestroyViews();
         GenerateUpgrades(UpgradesRoot);
+        PlayItemsAppearance();
     }
 
     public void SkipUpgrades()
@@ -102,6 +103,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
 
         _pauseService.HandlePause();
         UpgradeOfferPanel.Show().Forget();
+        PlayItemsAppearance();
     }
 
     private async UniTask CloseCurrentOffer()
@@ -118,7 +120,10 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
     private void DestroyViews()
     {
         foreach (UpgradeOfferItemView upgradeItem in _upgradeItems)
+        {
+            upgradeItem.gameObject.SetActive(false);
             UnityEngine.Object.Destroy(upgradeItem.gameObject);
+        }
 
         _upgradeItems.Clear();
     }
@@ -169,6 +174,12 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
             _upgradeItems.Add(offerItemView);
             upgradeItemOfferFacade.UpgradeOfferItemApplyHandler.Initialize(upgradeOffer);
         }
+    }
+
+    private void PlayItemsAppearance()
+    {
+        for (int i = 0; i < _upgradeItems.Count; i++)
+            _upgradeItems[i].PlayAppearance();
     }
 
     private static string CleanCharacterStatName(string abilityName)

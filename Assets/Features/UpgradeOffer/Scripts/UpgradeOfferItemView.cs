@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -5,6 +6,8 @@ using UnityEngine.UI;
 public class UpgradeOfferItemView : MonoBehaviour
 {
     private const string UpgradeToValueColor = "#6CFF7A";
+    private const float AppearanceStartScale = 0.82f;
+    private const float AppearanceScaleDuration = 0.28f;
 
     [SerializeField] private TMP_Text _nameAbilityText;
     [SerializeField] private TMP_Text _rarityText;
@@ -17,6 +20,27 @@ public class UpgradeOfferItemView : MonoBehaviour
 
     [SerializeField] private TMP_Text _skillDescription_1;
     [SerializeField] private TMP_Text _skillDescription_2;
+
+    private CanvasGroup _canvasGroup;
+    private Vector3 _defaultScale;
+    private Sequence _appearanceSequence;
+    private bool _isAppearanceInitialized;
+
+    public void PlayAppearance()
+    {
+        InitializeAppearance();
+        _appearanceSequence?.Kill();
+
+        transform.localScale = _defaultScale * AppearanceStartScale;
+        _canvasGroup.blocksRaycasts = false;
+
+        _appearanceSequence = DOTween.Sequence()
+            .SetId($"{gameObject.name} Upgrade Item Appearance")
+            .SetLink(gameObject)
+            .SetUpdate(true)
+            .Append(transform.DOScale(_defaultScale, AppearanceScaleDuration).SetEase(Ease.OutBack))
+            .OnComplete(CompleteAppearance);
+    }
 
     public void DeactivateSkillsDescriptions()
     {
@@ -68,6 +92,34 @@ public class UpgradeOfferItemView : MonoBehaviour
     {
         _skillDescription_2.gameObject.SetActive(true);
         _skillDescription_2.text = GetSkillDescription(preview);
+    }
+
+    private void OnDisable()
+    {
+        if (!_isAppearanceInitialized)
+            return;
+
+        _appearanceSequence?.Kill();
+        CompleteAppearance();
+    }
+
+    private void InitializeAppearance()
+    {
+        if (_isAppearanceInitialized)
+            return;
+
+        _isAppearanceInitialized = true;
+        _defaultScale = transform.localScale;
+        _canvasGroup = GetComponent<CanvasGroup>();
+        if (_canvasGroup == null)
+            _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+    }
+
+    private void CompleteAppearance()
+    {
+        transform.localScale = _defaultScale;
+        _canvasGroup.blocksRaycasts = true;
+        _appearanceSequence = null;
     }
 
     private static string GetSkillDescription(AbilityUpgradePreview preview)

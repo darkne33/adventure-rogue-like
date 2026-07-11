@@ -16,13 +16,12 @@ public class UpgradeOfferPanel : MonoBehaviour
         _panelAnimationsMonoComponent = GetComponent<PanelAnimationsMonoComponent>();
     }
 
-    public async UniTask Show()
+    public UniTask Show()
     {
         gameObject.SetActive(true);
-        _panelAnimationsMonoComponent.ForceHide();
+        _panelAnimationsMonoComponent.ForceShow();
         _cursorService.ShowUiCursor();
-        await _panelAnimationsMonoComponent.Show();
-        _cursorService.ShowUiCursor();
+        return UniTask.CompletedTask;
     }
 
     public async UniTask Hide()

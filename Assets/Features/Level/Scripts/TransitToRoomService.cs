@@ -85,6 +85,9 @@ namespace Features.Enemies.Scripts.Level.Scripts
                             rewardRoomData.MarkCompleted();
                         }
 
+                        if (roomData is RewardRoomData or StartRoomData)
+                            OpenRoomDoors(roomData);
+
                     },
                     () => character.SetTransitionPaused(false));
             }
@@ -114,6 +117,18 @@ namespace Features.Enemies.Scripts.Level.Scripts
             character.Rigidbody.position = position;
             character.transform.position = position;
             Physics.SyncTransforms();
+        }
+
+        private static void OpenRoomDoors(RoomData roomData)
+        {
+            if (roomData?.RoomDoors == null)
+                return;
+
+            foreach (RoomDoor roomDoor in roomData.RoomDoors)
+            {
+                if (roomDoor != null)
+                    roomDoor.Open();
+            }
         }
 
     }
