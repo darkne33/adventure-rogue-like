@@ -44,41 +44,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ba82bedc53a51f438552eb731cf734f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelView
-  _startRoomPrefab: {fileID: 5078363352170045939, guid: 336c05fa31210114497d0352144fba3e, type: 3}
-  _startRoomGridPosition: {x: 0, y: -1}
   _rooms:
-  - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
+  - _roomPrefab: {fileID: 5078363352170045939, guid: 336c05fa31210114497d0352144fba3e, type: 3}
     <GridPosition>k__BackingField: {x: 0, y: 0}
-    <IsRewardRoom>k__BackingField: 0
-    <IsLevelExit>k__BackingField: 0
+    <Type>k__BackingField: 0
     <LevelExitDirection>k__BackingField: 0
   - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
     <GridPosition>k__BackingField: {x: 1, y: 0}
-    <IsRewardRoom>k__BackingField: 0
-    <IsLevelExit>k__BackingField: 0
+    <Type>k__BackingField: 2
     <LevelExitDirection>k__BackingField: 0
   - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
     <GridPosition>k__BackingField: {x: 0, y: 1}
-    <IsRewardRoom>k__BackingField: 0
-    <IsLevelExit>k__BackingField: 0
+    <Type>k__BackingField: 2
     <LevelExitDirection>k__BackingField: 0
   - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
     <GridPosition>k__BackingField: {x: 1, y: 1}
-    <IsRewardRoom>k__BackingField: 0
-    <IsLevelExit>k__BackingField: 0
+    <Type>k__BackingField: 3
     <LevelExitDirection>k__BackingField: 0
   - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
     <GridPosition>k__BackingField: {x: 1, y: 2}
-    <IsRewardRoom>k__BackingField: 0
-    <IsLevelExit>k__BackingField: 0
+    <Type>k__BackingField: 2
     <LevelExitDirection>k__BackingField: 0
   - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
     <GridPosition>k__BackingField: {x: 2, y: 2}
-    <IsRewardRoom>k__BackingField: 0
-    <IsLevelExit>k__BackingField: 0
+    <Type>k__BackingField: 2
     <LevelExitDirection>k__BackingField: 0
   - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
     <GridPosition>k__BackingField: {x: 2, y: 3}
-    <IsRewardRoom>k__BackingField: 0
-    <IsLevelExit>k__BackingField: 1
+    <Type>k__BackingField: 1
     <LevelExitDirection>k__BackingField: 0

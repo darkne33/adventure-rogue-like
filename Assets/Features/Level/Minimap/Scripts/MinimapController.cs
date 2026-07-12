@@ -106,16 +106,16 @@ public sealed class MinimapController : IDisposable, ITickable
     {
         ClearRuntimeView();
 
-        var rooms = new List<RoomEntry>
-        {
-            new(_level.StartRoom.RoomData, _level.StartRoom,
-                _level.StartRoomGridPosition,
-                MinimapRoomKind.Start, null)
-        };
-        rooms.AddRange(_level.Rooms.Select(node =>
+        List<RoomEntry> rooms = _level.Rooms.Select(node =>
             new RoomEntry(node.Room.RoomData, node.Room, node.GridPosition,
-                node.IsLevelExit ? MinimapRoomKind.Exit : MinimapRoomKind.Normal,
-                node.IsLevelExit ? node.LevelExitDirection : null)));
+                node.Type switch
+                {
+                    RoomType.Start => MinimapRoomKind.Start,
+                    RoomType.Exit => MinimapRoomKind.Exit,
+                    _ => MinimapRoomKind.Normal
+                },
+                node.Type == RoomType.Exit ? node.LevelExitDirection : null))
+            .ToList();
 
         Vector2 center = CalculateCenter(rooms);
         foreach (RoomEntry room in rooms)

@@ -9,25 +9,17 @@ public class LevelView : MonoBehaviour
 {
     public const float RoomWorldSize = 160f;
 
-    [FormerlySerializedAs("<StartRoom>k__BackingField")]
-    [SerializeField] private Room _startRoomPrefab;
-    [NonSerialized] private Room _startRoom;
-
-    [SerializeField] private Vector2Int _startRoomGridPosition;
     [SerializeField] private LevelRoomNode[] _rooms;
 
-    public Room StartRoomPrefab => _startRoomPrefab;
-    public Room StartRoom => _startRoom;
-    public Vector2Int StartRoomGridPosition => _startRoomGridPosition;
+    public Room StartRoomPrefab => GetRoomNode(RoomType.Start).RoomPrefab;
+    public Room StartRoom => GetRoomNode(RoomType.Start).Room;
+    public Vector2Int StartRoomGridPosition => GetRoomNode(RoomType.Start).GridPosition;
     public IReadOnlyList<LevelRoomNode> Rooms => _rooms;
 
     private bool _isInitialized;
 
-    public void Configure(Room startRoomPrefab, Vector2Int startRoomGridPosition,
-        LevelRoomNode[] rooms)
+    public void Configure(LevelRoomNode[] rooms)
     {
-        _startRoomPrefab = startRoomPrefab;
-        _startRoomGridPosition = startRoomGridPosition;
         _rooms = rooms;
         _isInitialized = false;
     }
@@ -56,13 +48,8 @@ public class LevelView : MonoBehaviour
 
     public void ResolveRoomReferences()
     {
-        if (StartRoomPrefab == null)
-            throw new InvalidOperationException($"{name} does not have a start room prefab.");
         if (_rooms == null || _rooms.Length == 0)
             throw new InvalidOperationException($"{name} does not contain room nodes.");
-
-        _startRoom = StartRoomPrefab;
-        PositionEmbeddedRoom(StartRoom, _startRoomGridPosition);
 
         foreach (LevelRoomNode roomNode in _rooms)
         {
@@ -79,21 +66,11 @@ public class LevelView : MonoBehaviour
     [ContextMenu("Validate Level Authoring")]
     public void ValidateAuthoring()
     {
-        if (StartRoomPrefab == null)
-            throw new InvalidOperationException($"{name} does not have a start room prefab.");
-        if (StartRoomPrefab.RoomData is not StartRoomData startRoomData)
-            throw new InvalidOperationException(
-                $"{StartRoomPrefab.name} must contain StartRoomData.");
-        if (startRoomData.StartPoint == null)
-            throw new InvalidOperationException(
-                $"{StartRoomPrefab.name} does not have a start point.");
         if (_rooms == null || _rooms.Length == 0)
             throw new InvalidOperationException($"{name} does not contain room nodes.");
 
-        var sourcesByPosition = new Dictionary<Vector2Int, Room>
-        {
-            { _startRoomGridPosition, StartRoomPrefab }
-        };
+        var sourcesByPosition = new Dictionary<Vector2Int, Room>();
+        int startCount = 0;
         int exitCount = 0;
 
         foreach (LevelRoomNode roomNode in _rooms)
@@ -107,15 +84,17 @@ public class LevelView : MonoBehaviour
                 throw new InvalidOperationException(
                     $"{name} contains more than one room at {roomNode.GridPosition}.");
 
-            if (roomNode.IsLevelExit)
+            if (roomNode.Type == RoomType.Start)
+                startCount++;
+            if (roomNode.Type == RoomType.Exit)
                 exitCount++;
         }
 
-        ValidateExitTopology(sourcesByPosition, exitCount);
+        ValidateTopology(sourcesByPosition, startCount, exitCount);
         ValidateConnectivity(sourcesByPosition.Keys);
         ValidateAuthoringDoors(sourcesByPosition);
 
-        LevelRoomNode exitNode = _rooms.Single(roomNode => roomNode.IsLevelExit);
+        LevelRoomNode exitNode = GetRoomNode(RoomType.Exit);
         if (!GetAvailableDirections(exitNode.RoomPrefab)
                 .Contains(exitNode.LevelExitDirection))
         {
@@ -127,13 +106,8 @@ public class LevelView : MonoBehaviour
 
     private void MaterializeRooms(DiContainer container)
     {
-        if (StartRoomPrefab == null)
-            throw new InvalidOperationException($"{name} does not have a start room prefab.");
         if (_rooms == null || _rooms.Length == 0)
             throw new InvalidOperationException($"{name} does not contain room nodes.");
-
-        _startRoom = MaterializeRoom(container, StartRoomPrefab, StartRoom,
-            _startRoomGridPosition, "start room");
 
         foreach (LevelRoomNode roomNode in _rooms)
         {
@@ -142,10 +116,10 @@ public class LevelView : MonoBehaviour
             if (roomNode.RoomPrefab == null)
                 throw new InvalidOperationException($"{name} contains a missing room prefab.");
 
-            DefaultRoom room = MaterializeRoom(container, roomNode.RoomPrefab,
+            Room room = MaterializeRoom(container, roomNode.RoomPrefab,
                 roomNode.Room, roomNode.GridPosition, "room");
 
-            if (roomNode.IsRewardRoom && room.RoomData is not RewardRoomData)
+            if (roomNode.Type == RoomType.Reward && room.RoomData is not RewardRoomData)
             {
                 RoomDoor[] authoredDoors = room.RoomData?.RoomDoors;
                 room.SetRoomData(new RewardRoomData
@@ -160,13 +134,7 @@ public class LevelView : MonoBehaviour
 
     private void ResolveAuthoredDoors()
     {
-        var rooms = new List<Room>(_rooms.Length + 1)
-        {
-            StartRoom
-        };
-        rooms.AddRange(_rooms.Select(roomNode => (Room)roomNode.Room));
-
-        foreach (Room room in rooms)
+        foreach (Room room in _rooms.Select(roomNode => roomNode.Room))
         {
             if (room?.RoomData == null)
                 throw new InvalidOperationException($"{room?.name ?? name} does not have room data.");
@@ -212,22 +180,10 @@ public class LevelView : MonoBehaviour
 
     private Dictionary<Vector2Int, Room> ValidateAndBuildRoomMap()
     {
-        if (StartRoom == null)
-            throw new InvalidOperationException($"{name} does not have a start room.");
-        if (StartRoom.RoomData is not StartRoomData startRoomData)
-            throw new InvalidOperationException($"{StartRoom.name} must contain StartRoomData.");
-        if (startRoomData.StartPoint == null)
-            throw new InvalidOperationException($"{StartRoom.name} does not have a start point.");
+        var roomsByPosition = new Dictionary<Vector2Int, Room>();
+        var roomInstances = new HashSet<Room>();
 
-        var roomsByPosition = new Dictionary<Vector2Int, Room>
-        {
-            { _startRoomGridPosition, StartRoom }
-        };
-        var roomInstances = new HashSet<Room>
-        {
-            StartRoom
-        };
-
+        int startCount = 0;
         int exitCount = 0;
         foreach (LevelRoomNode roomNode in _rooms)
         {
@@ -244,23 +200,28 @@ public class LevelView : MonoBehaviour
                 throw new InvalidOperationException(
                     $"{name} contains more than one room at {roomNode.GridPosition}.");
 
-            if (roomNode.IsLevelExit)
+            if (roomNode.Type == RoomType.Start)
+                startCount++;
+            if (roomNode.Type == RoomType.Exit)
                 exitCount++;
         }
 
-        ValidateExitTopology(roomsByPosition, exitCount);
+        ValidateTopology(roomsByPosition, startCount, exitCount);
         ValidateConnectivity(roomsByPosition.Keys);
         return roomsByPosition;
     }
 
-    private void ValidateExitTopology<T>(IReadOnlyDictionary<Vector2Int, T> roomsByPosition,
-        int exitCount)
+    private void ValidateTopology<T>(IReadOnlyDictionary<Vector2Int, T> roomsByPosition,
+        int startCount, int exitCount)
     {
+        if (startCount != 1)
+            throw new InvalidOperationException(
+                $"{name} must contain exactly one start room.");
         if (exitCount != 1)
             throw new InvalidOperationException(
                 $"{name} must contain exactly one exit room.");
 
-        LevelRoomNode exitNode = _rooms.Single(roomNode => roomNode.IsLevelExit);
+        LevelRoomNode exitNode = GetRoomNode(RoomType.Exit);
         Vector2Int destination =
             exitNode.GridPosition + exitNode.LevelExitDirection.ToGridOffset();
         if (roomsByPosition.ContainsKey(destination))
@@ -271,29 +232,47 @@ public class LevelView : MonoBehaviour
     private static void ValidateSourceRoomData(LevelRoomNode roomNode)
     {
         RoomData roomData = roomNode.RoomPrefab.RoomData;
-        if (roomNode.IsRewardRoom || roomData is RewardRoomData)
-            return;
-
-        if (roomData is not DefaultEnemiesRoomData enemiesRoomData)
-            throw new InvalidOperationException(
-                $"{roomNode.RoomPrefab.name} must contain DefaultEnemiesRoomData " +
-                "or be marked as a reward room.");
-
-        ValidateEnemyWaves(roomNode.RoomPrefab.name, enemiesRoomData);
+        switch (roomNode.Type)
+        {
+            case RoomType.Start when roomData is StartRoomData startRoomData:
+                if (startRoomData.StartPoint == null)
+                    throw new InvalidOperationException(
+                        $"{roomNode.RoomPrefab.name} does not have a start point.");
+                return;
+            case RoomType.Start:
+                throw new InvalidOperationException(
+                    $"{roomNode.RoomPrefab.name} must contain StartRoomData.");
+            case RoomType.Reward:
+                return;
+            case RoomType.Enemy:
+            case RoomType.Exit:
+                if (roomData is not DefaultEnemiesRoomData enemiesRoomData)
+                    throw new InvalidOperationException(
+                        $"{roomNode.RoomPrefab.name} must contain DefaultEnemiesRoomData.");
+                ValidateEnemyWaves(roomNode.RoomPrefab.name, enemiesRoomData);
+                return;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
     }
 
     private static void ValidateRuntimeRoomData(LevelRoomNode roomNode)
     {
-        switch (roomNode.Room.RoomData)
+        switch (roomNode.Type, roomNode.Room.RoomData)
         {
-            case DefaultEnemiesRoomData enemiesRoomData:
+            case (RoomType.Start, StartRoomData startRoomData):
+                if (startRoomData.StartPoint == null)
+                    throw new InvalidOperationException(
+                        $"{roomNode.Room.name} does not have a start point.");
+                return;
+            case (RoomType.Enemy or RoomType.Exit, DefaultEnemiesRoomData enemiesRoomData):
                 ValidateEnemyWaves(roomNode.Room.name, enemiesRoomData);
                 return;
-            case RewardRoomData:
+            case (RoomType.Reward, RewardRoomData):
                 return;
             default:
                 throw new InvalidOperationException(
-                    $"{roomNode.Room.name} must contain DefaultEnemiesRoomData or RewardRoomData.");
+                    $"{roomNode.Room.name} data does not match its {roomNode.Type} room type.");
         }
     }
 
@@ -334,7 +313,7 @@ public class LevelView : MonoBehaviour
         IReadOnlyDictionary<Vector2Int, Room> roomsByPosition, bool hasNextLevel)
     {
         var levelExits = _rooms
-            .Where(roomNode => roomNode.IsLevelExit)
+            .Where(roomNode => roomNode.Type == RoomType.Exit)
             .ToDictionary(roomNode => roomNode.GridPosition,
                 roomNode => roomNode.LevelExitDirection);
 
@@ -442,7 +421,7 @@ public class LevelView : MonoBehaviour
         if (!hasNextLevel)
             return;
 
-        LevelRoomNode roomNode = _rooms.Single(node => node.IsLevelExit);
+        LevelRoomNode roomNode = GetRoomNode(RoomType.Exit);
         RoomDoor exitDoor = GetRequiredDoor(roomNode.Room, roomNode.LevelExitDirection);
         if (exitDoor.HasRoomDestination)
             throw new InvalidOperationException(
@@ -453,7 +432,7 @@ public class LevelView : MonoBehaviour
 
     public bool IsExitRoom(RoomData roomData) =>
         roomData != null && _rooms.Any(roomNode =>
-            roomNode.IsLevelExit && roomNode.Room != null &&
+            roomNode.Type == RoomType.Exit && roomNode.Room != null &&
             ReferenceEquals(roomNode.Room.RoomData, roomData));
 
     public int GetEnemyRoomIndex(RoomData roomData)
@@ -461,10 +440,17 @@ public class LevelView : MonoBehaviour
         if (roomData == null)
             throw new ArgumentNullException(nameof(roomData));
 
+        int nonStartRoomIndex = 0;
         for (int i = 0; i < _rooms.Length; i++)
         {
-            if (ReferenceEquals(_rooms[i]?.Room?.RoomData, roomData))
-                return i;
+            LevelRoomNode roomNode = _rooms[i];
+            if (roomNode == null || roomNode.Type == RoomType.Start)
+                continue;
+
+            if (ReferenceEquals(roomNode.Room?.RoomData, roomData))
+                return nonStartRoomIndex;
+
+            nonStartRoomIndex++;
         }
 
         throw new InvalidOperationException($"{name} does not contain the provided enemy room data.");
@@ -500,7 +486,7 @@ public class LevelView : MonoBehaviour
         var positions = new HashSet<Vector2Int>(roomPositions);
         var visited = new HashSet<Vector2Int>();
         var pending = new Queue<Vector2Int>();
-        pending.Enqueue(_startRoomGridPosition);
+        pending.Enqueue(StartRoomGridPosition);
 
         while (pending.Count > 0)
         {
@@ -552,7 +538,6 @@ public class LevelView : MonoBehaviour
         Color previousColor = Gizmos.color;
         Gizmos.matrix = transform.localToWorldMatrix;
 
-        DrawRoomGizmo(_startRoomGridPosition, Color.cyan);
         if (_rooms != null)
         {
             foreach (LevelRoomNode roomNode in _rooms)
@@ -560,9 +545,13 @@ public class LevelView : MonoBehaviour
                 if (roomNode == null)
                     continue;
 
-                Color color = roomNode.IsLevelExit
-                    ? Color.green
-                    : IsRewardDefinition(roomNode) ? Color.yellow : Color.white;
+                Color color = roomNode.Type switch
+                {
+                    RoomType.Start => Color.cyan,
+                    RoomType.Exit => Color.green,
+                    RoomType.Reward => Color.yellow,
+                    _ => Color.white
+                };
                 DrawRoomGizmo(roomNode.GridPosition, color);
             }
         }
@@ -581,38 +570,56 @@ public class LevelView : MonoBehaviour
     private static Vector3 ToWorldPosition(Vector2Int gridPosition) =>
         new(gridPosition.x * RoomWorldSize, 0f, gridPosition.y * RoomWorldSize);
 
-    private static bool IsRewardDefinition(LevelRoomNode roomNode) =>
-        roomNode.IsRewardRoom || roomNode.RoomPrefab?.RoomData is RewardRoomData;
+    private LevelRoomNode GetRoomNode(RoomType roomType)
+    {
+        if (_rooms == null)
+            throw new InvalidOperationException($"{name} does not contain room nodes.");
 
+        LevelRoomNode[] matches = _rooms
+            .Where(roomNode => roomNode != null && roomNode.Type == roomType)
+            .ToArray();
+        if (matches.Length != 1)
+            throw new InvalidOperationException(
+                $"{name} must contain exactly one {roomType.ToString().ToLowerInvariant()} room.");
+
+        return matches[0];
+    }
+
+}
+
+public enum RoomType
+{
+    Start,
+    Exit,
+    Enemy,
+    Reward
 }
 
 [Serializable]
 public sealed class LevelRoomNode
 {
     [FormerlySerializedAs("<Room>k__BackingField")]
-    [SerializeField] private DefaultRoom _roomPrefab;
-    [NonSerialized] private DefaultRoom _room;
+    [SerializeField] private Room _roomPrefab;
+    [NonSerialized] private Room _room;
 
-    public DefaultRoom RoomPrefab => _roomPrefab;
-    public DefaultRoom Room => _room;
+    public Room RoomPrefab => _roomPrefab;
+    public Room Room => _room;
     [field: SerializeField] public Vector2Int GridPosition { get; private set; }
+    [field: SerializeField] public RoomType Type { get; private set; } = RoomType.Enemy;
     [field: SerializeField]
-    [field: Tooltip("Convert this room instance to RewardRoomData at runtime.")]
-    public bool IsRewardRoom { get; private set; }
-    [field: SerializeField] public bool IsLevelExit { get; private set; }
-    [field: SerializeField] public RoomDirection LevelExitDirection { get; private set; }
+    [field: Tooltip("Used only when Type is Exit.")]
+    public RoomDirection LevelExitDirection { get; private set; }
 
-    public LevelRoomNode(DefaultRoom roomPrefab, Vector2Int gridPosition, bool isLevelExit,
-        RoomDirection levelExitDirection, bool isRewardRoom = false)
+    public LevelRoomNode(Room roomPrefab, Vector2Int gridPosition, RoomType type,
+        RoomDirection levelExitDirection = default)
     {
         _roomPrefab = roomPrefab;
         GridPosition = gridPosition;
-        IsRewardRoom = isRewardRoom;
-        IsLevelExit = isLevelExit;
+        Type = type;
         LevelExitDirection = levelExitDirection;
     }
 
-    public void Bind(DefaultRoom room) =>
+    public void Bind(Room room) =>
         _room = room != null
             ? room
             : throw new ArgumentNullException(nameof(room));

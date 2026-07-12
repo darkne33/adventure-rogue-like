@@ -1,18 +1,17 @@
-﻿using Features.Enemies.Scripts.Level.Scripts;
+using System;
+using Features.Enemies.Scripts.Level.Scripts;
 using UnityEngine;
 using Zenject;
 
-public class RoomDoor : MonoBehaviour
+[DisallowMultipleComponent]
+public sealed class RoomDoor : MonoBehaviour
 {
     private bool _isOpen;
-    private bool _usesRewardDoor;
+    private DoorType _doorType;
+    private RoomDoor _nextRoomEntryDoor;
+    private bool _isLevelExit;
 
-    [SerializeField] private GameObject _enemyDoor;
-    [SerializeField] private GameObject _enemyLeftDoor;
-    [SerializeField] private GameObject _enemyRightDoor;
-    [SerializeField] private GameObject _rewardDoor;
-    [SerializeField] private GameObject _rewardLeftDoor;
-    [SerializeField] private GameObject _rewardRightDoor;
+    [SerializeField] private DoorAnimator _doorAnimator;
     [SerializeField] private RoomDirection _direction;
     [SerializeField] private Room _nextRoom;
 
@@ -21,32 +20,25 @@ public class RoomDoor : MonoBehaviour
 
     public RoomDirection Direction => _direction;
     public Room NextRoom => _nextRoom;
-    public bool IsRewardGate => _usesRewardDoor;
-    public bool HasConfiguredVisuals =>
-        _enemyDoor != null &&
-        _enemyLeftDoor != null &&
-        _enemyRightDoor != null &&
-        _rewardDoor != null &&
-        _rewardLeftDoor != null &&
-        _rewardRightDoor != null;
-
-    private RoomDoor _nextRoomEntryDoor;
-    private bool _isLevelExit;
-
-    private bool HasDestination => _nextRoom != null || _isLevelExit;
+    public bool IsRewardGate => _doorType == DoorType.Reward;
+    public bool HasConfiguredVisuals => _doorAnimator != null && _doorAnimator.IsConfigured;
     public bool HasRoomDestination => _nextRoom != null;
+
+    private bool HasDestination => HasRoomDestination || _isLevelExit;
 
     public void Configure(Room nextRoom, RoomDoor nextRoomEntryDoor)
     {
         _nextRoom = nextRoom != null
             ? nextRoom
-            : throw new System.ArgumentNullException(nameof(nextRoom));
+            : throw new ArgumentNullException(nameof(nextRoom));
         _nextRoomEntryDoor = nextRoomEntryDoor != null
             ? nextRoomEntryDoor
-            : throw new System.ArgumentNullException(nameof(nextRoomEntryDoor));
+            : throw new ArgumentNullException(nameof(nextRoomEntryDoor));
         _isLevelExit = false;
-        _usesRewardDoor = nextRoom.RoomData is RewardRoomData;
-        gameObject.SetActive(true);
+        _doorType = nextRoom.RoomData is RewardRoomData
+            ? DoorType.Reward
+            : DoorType.Enemy;
+
         Close();
     }
 
@@ -58,24 +50,35 @@ public class RoomDoor : MonoBehaviour
         _nextRoom = null;
         _nextRoomEntryDoor = null;
         _isLevelExit = true;
-        _usesRewardDoor = false;
-        gameObject.SetActive(true);
+        _doorType = DoorType.Enemy;
+
         Close();
     }
 
     public void ClearDestination()
     {
+        ResetDestination();
+        _doorAnimator.Hide();
+        gameObject.SetActive(false);
+    }
+
+    public void Close() =>
+        SetOpenState(isOpen: false);
+
+    public void Open() =>
+        SetOpenState(isOpen: true);
+
+    private void ResetDestination()
+    {
         _nextRoom = null;
         _nextRoomEntryDoor = null;
         _isLevelExit = false;
         _isOpen = false;
-        SetDoorVariant(enemyVisible: false, rewardVisible: false);
-        gameObject.SetActive(false);
     }
 
-    public void Close()
+    private void SetOpenState(bool isOpen)
     {
-        _isOpen = false;
+        _isOpen = isOpen && HasDestination;
 
         if (!HasDestination)
         {
@@ -84,49 +87,11 @@ public class RoomDoor : MonoBehaviour
         }
 
         gameObject.SetActive(true);
-        SetDoorVariant(
-            enemyVisible: !_usesRewardDoor,
-            rewardVisible: _usesRewardDoor);
-        SetSelectedDoorLeaves(active: true);
-    }
 
-    public void Open()
-    {
-        if (!HasDestination)
-        {
-            gameObject.SetActive(false);
-            return;
-        }
-
-        gameObject.SetActive(true);
-        _isOpen = true;
-        SetDoorVariant(
-            enemyVisible: !_usesRewardDoor,
-            rewardVisible: _usesRewardDoor);
-        SetSelectedDoorLeaves(active: false);
-    }
-
-    private void EnsureDoorVisualsConfigured()
-    {
-        if (!HasConfiguredVisuals)
-            throw new MissingReferenceException(
-                $"{name} must contain assigned EnemyDoor and RewardDoor roots and two door leaves for each variant.");
-    }
-
-    private void SetDoorVariant(bool enemyVisible, bool rewardVisible)
-    {
-        EnsureDoorVisualsConfigured();
-        _enemyDoor.SetActive(enemyVisible);
-        _rewardDoor.SetActive(rewardVisible);
-    }
-
-    private void SetSelectedDoorLeaves(bool active)
-    {
-        GameObject leftDoor = _usesRewardDoor ? _rewardLeftDoor : _enemyLeftDoor;
-        GameObject rightDoor = _usesRewardDoor ? _rewardRightDoor : _enemyRightDoor;
-
-        leftDoor.SetActive(active);
-        rightDoor.SetActive(active);
+        if (_isOpen)
+            _doorAnimator.Open(_doorType);
+        else
+            _doorAnimator.Close(_doorType);
     }
 
     private void OnTriggerEnter(Collider other) =>
@@ -144,9 +109,12 @@ public class RoomDoor : MonoBehaviour
         if (characterFacade == null)
             return;
 
+        _isOpen = false;
+
         if (_isLevelExit)
             _levelProgressionService.TransitToNextLevel();
         else
             _transitToRoomService.Transit(_nextRoom, _nextRoomEntryDoor);
     }
 }
+

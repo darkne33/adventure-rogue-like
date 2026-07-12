@@ -313,19 +313,23 @@ public static class PrebuiltLevelsGenerator
                 rooms[roomIndex].transform.localPosition = ToWorldPosition(layout[roomIndex]);
             }
 
-            var roomNodes = new LevelRoomNode[rooms.Length];
+            var roomNodes = new LevelRoomNode[rooms.Length + 1];
+            roomNodes[0] = new LevelRoomNode(startRoom, StartRoomGridPosition,
+                RoomType.Start);
             for (int roomIndex = 0; roomIndex < rooms.Length; roomIndex++)
             {
                 bool isLevelExit =
                     roomIndex == ExitRoomIndices[levelNumber - 1];
                 bool isRewardRoom =
                     roomIndex == RewardRoomIndices[levelNumber - 1];
-                roomNodes[roomIndex] = new LevelRoomNode(
+                RoomType roomType = isLevelExit
+                    ? RoomType.Exit
+                    : isRewardRoom ? RoomType.Reward : RoomType.Enemy;
+                roomNodes[roomIndex + 1] = new LevelRoomNode(
                     rooms[roomIndex],
                     layout[roomIndex],
-                    isLevelExit,
-                    ExitDirections[levelNumber - 1],
-                    isRewardRoom);
+                    roomType,
+                    ExitDirections[levelNumber - 1]);
 
                 RemoveUnusedDoors(rooms[roomIndex], layout[roomIndex], roomPositions,
                     hasNextLevel && isLevelExit, ExitDirections[levelNumber - 1]);
@@ -342,7 +346,7 @@ public static class PrebuiltLevelsGenerator
                     defaultDoorPrefab, coinDoorPrefab, levelNumber);
             }
 
-            levelView.Configure(startRoom, StartRoomGridPosition, roomNodes);
+            levelView.Configure(roomNodes);
 
             string levelPath = GetLevelPath(levelNumber);
             GameObject savedPrefab =
@@ -522,20 +526,25 @@ public static class PrebuiltLevelsGenerator
             throw new InvalidOperationException(
                 $"Level {levelNumber} must contain at least one enemy room.");
 
-        var positions = new HashSet<Vector2Int> { levelView.StartRoomGridPosition };
-        var roomsByPosition = new Dictionary<Vector2Int, Room>
-        {
-            { levelView.StartRoomGridPosition, levelView.StartRoom }
-        };
+        var positions = new HashSet<Vector2Int>();
+        var roomsByPosition = new Dictionary<Vector2Int, Room>();
+        int starts = 0;
         int exits = 0;
 
         foreach (LevelRoomNode node in levelView.Rooms)
         {
-            if (node?.Room?.RoomData is not DefaultEnemiesRoomData &&
-                node?.Room?.RoomData is not RewardRoomData)
+            bool hasMatchingData = node?.Type switch
+            {
+                RoomType.Start => node.Room?.RoomData is StartRoomData,
+                RoomType.Reward => node.Room?.RoomData is RewardRoomData,
+                RoomType.Enemy or RoomType.Exit =>
+                    node.Room?.RoomData is DefaultEnemiesRoomData,
+                _ => false
+            };
+            if (!hasMatchingData)
             {
                 throw new InvalidOperationException(
-                    $"Level {levelNumber} contains an invalid room.");
+                    $"Level {levelNumber} contains a room whose data does not match its type.");
             }
 
             RoomData roomData = node.Room.RoomData;
@@ -564,7 +573,10 @@ public static class PrebuiltLevelsGenerator
                 throw new InvalidOperationException(
                     $"{node.Room.name} transform does not match its grid position.");
 
-            if (node.IsLevelExit)
+            if (node.Type == RoomType.Start)
+                starts++;
+
+            if (node.Type == RoomType.Exit)
             {
                 exits++;
 
@@ -576,6 +588,10 @@ public static class PrebuiltLevelsGenerator
                         $"{node.Room.name} level exit points into another room.");
             }
         }
+
+        if (starts != 1)
+            throw new InvalidOperationException(
+                $"Level {levelNumber} must contain exactly one start room.");
 
         if (exits != 1)
             throw new InvalidOperationException(
@@ -597,7 +613,7 @@ public static class PrebuiltLevelsGenerator
         bool hasNextLevel)
     {
         var levelExits = levelView.Rooms
-            .Where(node => node.IsLevelExit)
+            .Where(node => node.Type == RoomType.Exit)
             .ToDictionary(node => node.GridPosition, node => node.LevelExitDirection);
 
         foreach (KeyValuePair<Vector2Int, Room> roomEntry in roomsByPosition)

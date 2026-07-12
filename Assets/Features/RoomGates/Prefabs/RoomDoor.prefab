@@ -99,6 +99,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1507200729593503931}
+  - component: {fileID: 6869393535510588152}
   m_Layer: 0
   m_Name: EnemyDoor
   m_TagString: Untagged
@@ -124,6 +125,21 @@ Transform:
   - {fileID: 2135571130056969463}
   m_Father: {fileID: 7385916335824375612}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6869393535510588152
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2279234550361045505}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 818f5230a92de604f91c4ae40b77e3ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorView
+  _type: 0
+  _leftLeaf: {fileID: 1102117780364710553}
+  _rightLeaf: {fileID: 5297861279875035451}
 --- !u!1 &5297861279875035451
 GameObject:
   m_ObjectHideFlags: 0
@@ -405,6 +421,7 @@ GameObject:
   - component: {fileID: 7385916335824375612}
   - component: {fileID: 4551908310260861939}
   - component: {fileID: 9176366286788703104}
+  - component: {fileID: 3516761520459087416}
   m_Layer: 0
   m_Name: RoomDoor
   m_TagString: Untagged
@@ -439,14 +456,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8e8f620244e34ef4ab532ae52bd9eb63, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelDoor
-  _enemyDoor: {fileID: 2279234550361045505}
-  _enemyLeftDoor: {fileID: 1102117780364710553}
-  _enemyRightDoor: {fileID: 5297861279875035451}
-  _rewardDoor: {fileID: 8316120539423478500}
-  _rewardLeftDoor: {fileID: 6814855193882911273}
-  _rewardRightDoor: {fileID: 8653602008452662758}
+  _doorAnimator: {fileID: 3516761520459087416}
   _direction: 0
   _nextRoom: {fileID: 0}
 --- !u!65 &9176366286788703104
@@ -470,6 +482,21 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 7, y: 7.1328487, z: 2}
   m_Center: {x: 0, y: 3.5998278, z: 2}
+--- !u!114 &3516761520459087416
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8087100465863157442}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d451cacdbaf19a3418fd0a66a0e35240, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorAnimator
+  _doors:
+  - {fileID: 6869393535510588152}
+  - {fileID: 4740413469230184476}
 --- !u!1 &8316120539423478500
 GameObject:
   m_ObjectHideFlags: 0
@@ -479,6 +506,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8656792859675641950}
+  - component: {fileID: 4740413469230184476}
   m_Layer: 0
   m_Name: RewardDoor
   m_TagString: Untagged
@@ -504,6 +532,21 @@ Transform:
   - {fileID: 8725049976751433281}
   m_Father: {fileID: 7385916335824375612}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4740413469230184476
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8316120539423478500}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 818f5230a92de604f91c4ae40b77e3ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorView
+  _type: 1
+  _leftLeaf: {fileID: 6814855193882911273}
+  _rightLeaf: {fileID: 8653602008452662758}
 --- !u!1 &8494291758453086526
 GameObject:
   m_ObjectHideFlags: 0
