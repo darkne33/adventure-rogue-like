@@ -16,7 +16,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 
     private Tween _expTween;
     private Tween _roomTween;
-    private EnemiesWaveObserver _enemiesWaveObserver;
+    private IRogueLikeRuntimeDataService _runtimeDataService;
     private MinimapController _minimapController;
     private RelicInventoryViewService _relicInventoryViewService;
     private CharacterWallet _characterWallet;
@@ -24,6 +24,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     private readonly HashSet<EnemyFacade> _countedKilledEnemies = new();
     private CancellationTokenSource _gameTimerCancellation;
     private int _killedEnemies;
+    private int _shownRoomCount = -1;
 
     public CharacterPanelPresenter(ICharacterLevelService characterLevelService,
         IGameModeService gameModeService)
@@ -39,13 +40,15 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         _characterLevelService.OnUpdateAddExpView += UpdateExpView;
         _characterLevelService.OnExpAdded += ShowExpRewardView;
         RogueLikeStateMachine stateMachine = _gameModeService.Get<RogueLikeStateMachine>();
-        _enemiesWaveObserver = stateMachine.Resolve<EnemiesWaveObserver>();
+        _runtimeDataService = stateMachine.Resolve<IRogueLikeRuntimeDataService>() ??
+                              throw new InvalidOperationException(
+                                  "Rogue-like runtime data service is not available.");
         _minimapController = stateMachine.Resolve<MinimapController>();
         _relicInventoryViewService = stateMachine.Resolve<RelicInventoryViewService>();
         _characterWallet = stateMachine.Resolve<CharacterWallet>();
         _relicEventBus = stateMachine.Resolve<RelicEventBus>();
 
-        _enemiesWaveObserver.RoomCompleted += UpdateRoomView;
+        _runtimeDataService.RoomChanged += HandleRoomChanged;
         _minimapController.Attach(Panel.MinimapView);
         _relicInventoryViewService.Attach(Panel);
         if (_characterWallet != null)
@@ -71,8 +74,8 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     {
         _characterLevelService.OnUpdateAddExpView -= UpdateExpView;
         _characterLevelService.OnExpAdded -= ShowExpRewardView;
-        if (_enemiesWaveObserver != null)
-            _enemiesWaveObserver.RoomCompleted -= UpdateRoomView;
+        if (_runtimeDataService != null)
+            _runtimeDataService.RoomChanged -= HandleRoomChanged;
 
         if (_characterWallet != null)
         {
@@ -104,11 +107,17 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     private void ShowExpRewardView(int amount) =>
         Panel.CharacterExpView.ShowExp(amount);
 
-    private void UpdateRoomView(DefaultEnemiesRoomData roomData = null)
-    {
-        Panel.RoomNumberText.text = $"ROOM {_enemiesWaveObserver.CompletedRooms}";
+    private void HandleRoomChanged(RoomData previousRoom, RoomData currentRoom) =>
+        UpdateRoomView(animate: true);
 
-        if (roomData == null)
+    private void UpdateRoomView(bool animate = false)
+    {
+        int roomCount = _runtimeDataService.VisitedRoomsCount;
+        bool hasChanged = roomCount != _shownRoomCount;
+        _shownRoomCount = roomCount;
+        Panel.RoomNumberText.text = $"ROOM {roomCount}";
+
+        if (!animate || !hasChanged)
             return;
 
         RectTransform roomTextTransform = Panel.RoomNumberText.rectTransform;
