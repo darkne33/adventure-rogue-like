@@ -13,6 +13,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
         private const string SoftnessProperty = "_Softness";
         private const float CoverDuration = 0.55f;
         private const float RevealDuration = 0.5f;
+        private const float MinimumLoadingDisplayDuration = 0.35f;
 
         private readonly IPanelService _panelService;
 
@@ -29,7 +30,13 @@ namespace Features.Enemies.Scripts.Level.Scripts
             _panelService = panelService;
         }
 
-        public async UniTask Play(Func<UniTask> hiddenAction, Action beforeReveal = null)
+        public UniTask Play(Func<UniTask> hiddenAction, Action beforeReveal = null) =>
+            PlayInternal(hiddenAction, beforeReveal, showLoading: false);
+
+        public UniTask PlayLoading(Func<UniTask> hiddenAction, Action beforeReveal = null) =>
+            PlayInternal(hiddenAction, beforeReveal, showLoading: true);
+
+        private async UniTask PlayInternal(Func<UniTask> hiddenAction, Action beforeReveal, bool showLoading)
         {
             if (hiddenAction == null)
                 throw new ArgumentNullException(nameof(hiddenAction));
@@ -40,21 +47,53 @@ namespace Features.Enemies.Scripts.Level.Scripts
             IsPlaying = true;
             await EnsurePanel();
             _panel.gameObject.SetActive(true);
+            _panel.transform.SetAsLastSibling();
             _panel.TransitionCanvasGroup.blocksRaycasts = true;
+            _panel.SetLoadingVisible(false);
 
             try
             {
                 await AnimateCover();
+
+                float loadingShownAt = 0f;
+                if (showLoading)
+                {
+                    _panel.SetLoadingVisible(true);
+                    loadingShownAt = Time.realtimeSinceStartup;
+                }
+
                 await hiddenAction();
+
+                // Panels created during the hidden action (for example the gameplay HUD)
+                // must stay below the transition overlay.
+                _panel.transform.SetAsLastSibling();
+
+                if (showLoading)
+                {
+                    float elapsed = Time.realtimeSinceStartup - loadingShownAt;
+                    int remainingMilliseconds = Mathf.CeilToInt(
+                        Mathf.Max(0f, MinimumLoadingDisplayDuration - elapsed) * 1000f);
+                    if (remainingMilliseconds > 0)
+                    {
+                        await UniTask.Delay(remainingMilliseconds, ignoreTimeScale: true);
+                    }
+                }
+
                 await UniTask.Delay(80, ignoreTimeScale: true);
                 beforeReveal?.Invoke();
+                _panel.SetLoadingVisible(false);
                 await AnimateReveal();
             }
             finally
             {
                 _sequence?.Kill();
-                _panel.TransitionCanvasGroup.blocksRaycasts = false;
-                _panel.gameObject.SetActive(false);
+                if (_panel != null)
+                {
+                    _panel.SetLoadingVisible(false);
+                    _panel.TransitionCanvasGroup.blocksRaycasts = false;
+                    _panel.gameObject.SetActive(false);
+                }
+
                 IsPlaying = false;
             }
         }
@@ -96,6 +135,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
             _panel = presenter.Panel;
             _panel.TransitionCanvasGroup.alpha = 1f;
             _panel.TransitionCanvasGroup.blocksRaycasts = false;
+            _panel.SetLoadingVisible(false);
 
             _irisMaterial = _panel.IrisImage.material;
             if (_irisMaterial == null)
@@ -118,5 +158,6 @@ namespace Features.Enemies.Scripts.Level.Scripts
     {
         bool IsPlaying { get; }
         UniTask Play(Func<UniTask> hiddenAction, Action beforeReveal = null);
+        UniTask PlayLoading(Func<UniTask> hiddenAction, Action beforeReveal = null);
     }
 }

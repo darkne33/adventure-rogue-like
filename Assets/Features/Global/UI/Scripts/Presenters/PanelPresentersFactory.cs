@@ -14,6 +14,7 @@ namespace UI
         {
             switch (panelName)
             {
+                case PanelName.MainMenuPanel: return typeof(MainMenuPanelPresenter);
                 case PanelName.CharacterPanel: return typeof(CharacterPanelPresenter);
                 case PanelName.RoomTransitionPanel: return typeof(RoomTransitionPanelPresenter);
                 default:
