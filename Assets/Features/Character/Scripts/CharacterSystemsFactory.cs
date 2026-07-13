@@ -28,9 +28,9 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
     {
         Rigidbody rigidbody = facade.GetComponent<Rigidbody>();
         Collider collider = facade.GetComponent<Collider>();
-        CharacterFxSystem fxSystem = facade.GetComponent<CharacterFxSystem>();
+        CharacterFxSystem fxSystem = facade.CharacterModel.GetComponent<CharacterFxSystem>();
         HealthView worldHealthView = facade.GetComponent<HealthView>();
-        Animator animator = facade.GetComponent<Animator>();
+        Animator animator = facade.CharacterModel.GetComponent<Animator>();
         PauseEntity pauseEntity = _pauseEntityDistributor.EntityDistribute();
 
         var animationSystem = new CharacterAnimationSystem(animator);
@@ -49,6 +49,6 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
             _characterSettingsConfiguration.ShieldRegenerationPerSecond, characterPanel.CharacterShieldView);
 
         facade.Construct(rigidbody, collider, _characterStats, pauseEntity, healthSystem, shieldSystem, abilitySystem,
-            moveSystem, cameraSystem, damageEffectSystem);
+            animationSystem, moveSystem, cameraSystem, damageEffectSystem);
     }
 }

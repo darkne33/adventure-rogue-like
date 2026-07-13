@@ -18,6 +18,7 @@ public class CharacterFacade : MonoBehaviour
     public CharacterMoveSystem MoveSystem => _moveSystem;
     public DealDamageEffectSystem DamageEffectSystem => _damageEffectSystem;
     public CharacterCameraMoveSystem CameraSystem => _cameraSystem;
+    public bool IsChestOpening => _isChestOpening;
     public Transform CameraPivot => _cameraPivot.transform;
     public Vector3 ProjectileSpawnPosition =>
         _collider != null ? _collider.bounds.center : transform.position;
@@ -42,12 +43,16 @@ public class CharacterFacade : MonoBehaviour
     private HealthSystem _healthSystem;
     private ShieldSystem _shieldSystem;
     private CharacterAbilitySystem _abilitySystem;
+    private CharacterAnimationSystem _animationSystem;
     private CharacterMoveSystem _moveSystem;
     private CharacterCameraMoveSystem _cameraSystem;
     private DealDamageEffectSystem _damageEffectSystem;
     private float _invulnerableUntilTime;
     private bool _isTransitionPaused;
-    private bool _wasKinematicBeforeTransition;
+    private bool _isChestOpening;
+    private bool _wasKinematicBeforeControlLock;
+
+    private bool IsControlLocked => _isTransitionPaused || _isChestOpening;
 
     private void Update()
     {
@@ -96,7 +101,7 @@ public class CharacterFacade : MonoBehaviour
 
     public void Construct(Rigidbody rigidbody, Collider collider, CharacterStats characterStats,
         PauseEntity pauseEntity, HealthSystem healthSystem, ShieldSystem shieldSystem,
-        CharacterAbilitySystem abilitySystem,
+        CharacterAbilitySystem abilitySystem, CharacterAnimationSystem animationSystem,
         CharacterMoveSystem moveSystem, CharacterCameraMoveSystem cameraSystem,
         DealDamageEffectSystem damageEffectSystem)
     {
@@ -107,6 +112,7 @@ public class CharacterFacade : MonoBehaviour
         _healthSystem = healthSystem;
         _shieldSystem = shieldSystem;
         _abilitySystem = abilitySystem;
+        _animationSystem = animationSystem;
         _moveSystem = moveSystem;
         _cameraSystem = cameraSystem;
         _damageEffectSystem = damageEffectSystem;
@@ -162,23 +168,79 @@ public class CharacterFacade : MonoBehaviour
         if (_isTransitionPaused == state || _rigidbody == null)
             return;
 
+        bool wasControlLocked = IsControlLocked;
         _isTransitionPaused = state;
         _pauseEntity.SetTransitionPaused(state);
         _moveSystem.SetTransitionPaused(state);
-        _cameraSystem.SetInputEnabled(!state);
+        RefreshControlLock(wasControlLocked);
+    }
 
-        if (state)
+    public bool TryEnterChestOpening(Transform characterPosition)
+    {
+        if (_isChestOpening || _isTransitionPaused || _rigidbody == null ||
+            characterPosition == null || _pauseEntity.IsPauseEntity)
+            return false;
+
+        bool wasControlLocked = IsControlLocked;
+        _isChestOpening = true;
+        _pauseEntity.SetCinematicPaused(true);
+        RefreshControlLock(wasControlLocked);
+
+        Vector3 targetPosition = characterPosition.position;
+        _rigidbody.position = targetPosition;
+        transform.position = targetPosition;
+
+        Physics.SyncTransforms();
+        return true;
+    }
+
+    public void StartChestOpeningAnimation() =>
+        _animationSystem.StartChestOpening();
+
+    public void EndChestOpeningAnimation() =>
+        _animationSystem.EndChestOpening();
+
+    public void FinishChestOpening()
+    {
+        if (_isChestOpening == false)
+            return;
+
+        _animationSystem.FinishChestOpening();
+
+        bool wasControlLocked = IsControlLocked;
+        _isChestOpening = false;
+        _pauseEntity.SetCinematicPaused(false);
+        RefreshControlLock(wasControlLocked);
+    }
+
+    private void RefreshControlLock(bool wasControlLocked)
+    {
+        bool isControlLocked = IsControlLocked;
+        _cameraSystem.SetInputEnabled(isControlLocked == false);
+
+        if (wasControlLocked == isControlLocked)
+            return;
+
+        if (isControlLocked)
         {
-            _wasKinematicBeforeTransition = _rigidbody.isKinematic;
-            _rigidbody.linearVelocity = Vector3.zero;
-            _rigidbody.angularVelocity = Vector3.zero;
+            _wasKinematicBeforeControlLock = _rigidbody.isKinematic;
+            if (_rigidbody.isKinematic == false)
+            {
+                _rigidbody.linearVelocity = Vector3.zero;
+                _rigidbody.angularVelocity = Vector3.zero;
+            }
+
             _rigidbody.isKinematic = true;
             return;
         }
 
-        _rigidbody.isKinematic = _wasKinematicBeforeTransition;
-        _rigidbody.linearVelocity = Vector3.zero;
-        _rigidbody.angularVelocity = Vector3.zero;
+        _rigidbody.isKinematic = _wasKinematicBeforeControlLock;
+        if (_rigidbody.isKinematic == false)
+        {
+            _rigidbody.linearVelocity = Vector3.zero;
+            _rigidbody.angularVelocity = Vector3.zero;
+        }
+
         _moveSystem.CanMove(true);
     }
 

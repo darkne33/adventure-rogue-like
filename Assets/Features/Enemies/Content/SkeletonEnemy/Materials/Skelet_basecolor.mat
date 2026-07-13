@@ -8,14 +8,16 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Skelet_basecolor
-  m_Shader: {fileID: 4800000, guid: 0dde7f0097aeb2541aea684ca0ad0e3c, type: 3}
+  m_Shader: {fileID: 4800000, guid: 66e2a6cb7def4a7c8c700b23317379b5, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
+  m_ValidKeywords: []
+  m_InvalidKeywords:
   - _ALBEDOVERTEXCOLORMODE_REPLACE
   - _ALPHA_CUTOFF_ON
   - _CAST_SHADOWS_ON
   - _COLORRAMPLIGHTINGSTAGE_BEFORELIGHTING
+  - _GLITCHWORLDSPACE_ON
   - _GREYSCALESTAGE_BEFORELIGHTING
   - _HEIGHTGRADIENTPOSITIONSPACE_LOCAL
   - _LIGHTMODEL_CLASSIC
@@ -31,12 +33,10 @@ Material:
   - _TEXTUREBLENDINGSOURCE_VERTEXCOLOR
   - _TRIPLANARNORMALSPACE_WORLD
   - _USE_WIND_VERTICAL_MASK
-  m_InvalidKeywords:
-  - _GLITCHWORLDSPACE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2000
+  m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
@@ -188,6 +188,7 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AdvancedConfigurationEnabled: 0
     - _AffectedByLightmaps: 0
+    - _AffineMapIntensity: 1
     - _AlbedoVertexColorMode: 1
     - _AlbedoVertexColorOn: 0
     - _AlphaClip: 0
@@ -195,6 +196,7 @@ Material:
     - _AlphaCutoffValue: 0.25
     - _AlphaRoundOn: 0
     - _AlphaToMask: 0
+    - _AmbientStrength: 1
     - _AnisoShininess: 0.85
     - _Anisotropy: 0.45
     - _Blend: 0
@@ -235,11 +237,13 @@ Material:
     - _DepthGlowPower: 25
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
+    - _DirectLightStrength: 1
     - _DistortAmount: 0.3
     - _DistortTexXSpeed: 2
     - _DistortTexYSpeed: 2
     - _DitherOn: 0
     - _DitherScale: 1
+    - _DrawDist: 0
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EmissionEnabled: 0
@@ -281,6 +285,7 @@ Material:
     - _Hit: 0
     - _HitBlend: 1
     - _HitGlow: 5
+    - _HitPower: 0
     - _Hologram: 0
     - _HologramAccentAlpha: 0.5
     - _HologramAccentFrequency: 2
@@ -320,6 +325,7 @@ Material:
     - _MinDistanceToFade: 0
     - _MinGradientHeight: 0
     - _MinInflate: 0
+    - _MinLight: 0.35
     - _MinRim: 0
     - _NearFade: 0
     - _NormalInfluence: 0.5
@@ -389,6 +395,7 @@ Material:
     - _UVDistortion: 0
     - _UseCustomTime: 0
     - _UseVerticalMask: 1
+    - _VertJitter: 0
     - _VertexColorBlending: 1
     - _VertexDistortionAmount: 0
     - _VertexDistortionOn: 0

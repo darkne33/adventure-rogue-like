@@ -5,6 +5,11 @@ public class CharacterAnimationSystem
     private static readonly int IsMove = Animator.StringToHash("IsMove");
     private static readonly int Jump = Animator.StringToHash("Jump");
     private static readonly int IsGround = Animator.StringToHash("IsGround");
+    private static readonly int StartChestOpeningTrigger = Animator.StringToHash("StartChestOpening");
+    private static readonly int EndChestOpeningTrigger = Animator.StringToHash("EndChestOpening");
+    private static readonly int IdleState = Animator.StringToHash("Base Layer.Idle");
+
+    private const float ChestOpeningExitTransitionDuration = 0.1f;
 
     private readonly Animator _animator;
     private float _speedBeforePause = 1f;
@@ -23,6 +28,26 @@ public class CharacterAnimationSystem
 
     public void GroundConditionState(bool state) => 
         _animator.SetBool(IsGround, state);
+
+    public void StartChestOpening()
+    {
+        _animator.ResetTrigger(EndChestOpeningTrigger);
+        _animator.SetBool(IsMove, false);
+        _animator.SetTrigger(StartChestOpeningTrigger);
+    }
+
+    public void EndChestOpening()
+    {
+        _animator.ResetTrigger(StartChestOpeningTrigger);
+        _animator.SetTrigger(EndChestOpeningTrigger);
+    }
+
+    public void FinishChestOpening()
+    {
+        _animator.ResetTrigger(StartChestOpeningTrigger);
+        _animator.ResetTrigger(EndChestOpeningTrigger);
+        _animator.CrossFade(IdleState, ChestOpeningExitTransitionDuration);
+    }
 
     public void SetPaused(bool state)
     {

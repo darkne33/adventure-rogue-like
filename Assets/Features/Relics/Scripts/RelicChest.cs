@@ -1,5 +1,9 @@
-using UnityEngine;
+using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using UI;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Zenject;
 
@@ -7,6 +11,16 @@ namespace Features.Relics.Scripts
 {
     public sealed class RelicChest : MonoBehaviour
     {
+        private static readonly int ChestCameraOpeningTrigger =
+            Animator.StringToHash("ChestCameraOpening");
+        private static readonly int ClaimTrigger = Animator.StringToHash("Claim");
+        private static readonly int OpenTrigger = Animator.StringToHash("Open");
+
+        private const float MinimumOpeningDuration = 1f;
+        private const float MinimumClaimHoldDuration = 0.3f;
+
+        [Inject] private IPanelService _panelService;
+
         private InputSystem_Actions _inputActions;
 
         public bool IsOpened => _isOpened;
@@ -19,6 +33,10 @@ namespace Features.Relics.Scripts
         [SerializeField, Min(0f)] private float _promptShowDuration = 0.14f;
         [SerializeField, Min(0f)] private float _promptHideDuration = 0.12f;
         [SerializeField] private ParticleSystem[] _treasureVerticalRaysParticles;
+        [SerializeField] private Transform _characterPosition;
+        [SerializeField] private GameObject _chestCamera;
+        [SerializeField] private Animator _chestCameraAnimator;
+        [SerializeField] private Animator _chestAnimator;
 
         private RelicDefinition _relic;
         private RelicChestConfiguration _configuration;
@@ -95,6 +113,9 @@ namespace Features.Relics.Scripts
             if (_isOpened || _configuration == null || _characterProvider?.CharacterFacade == null)
                 return false;
 
+            if (_characterProvider.CharacterFacade.IsChestOpening)
+                return false;
+
             return Vector3.Distance(transform.position,
                 _characterProvider.CharacterFacade.transform.position) <= _configuration.InteractDistance;
         }
@@ -136,11 +157,118 @@ namespace Features.Relics.Scripts
             if (_isOpened)
                 return;
 
-            _isOpened = true;
-            SetInteractionVisuals(false);
-            _eventBus.PublishChestOpened(transform.position);
+            if (_characterPosition == null || _chestCamera == null || _chestCameraAnimator == null ||
+                _chestAnimator == null)
+            {
+                Debug.LogError($"{name} is missing chest opening sequence references.", this);
+                return;
+            }
 
-            SpawnPickup();
+            OpenSequenceAsync().Forget();
+        }
+
+        private async UniTask OpenSequenceAsync()
+        {
+            CharacterFacade character = _characterProvider?.CharacterFacade;
+            if (character == null || character.IsChestOpening)
+                return;
+
+            bool characterLockAcquired = false;
+            CancellationToken cancellationToken = default;
+            CharacterPanelPresenter characterPanelPresenter = null;
+            CharacterPanel characterPanel = null;
+            CanvasGroup characterPanelCanvasGroup = null;
+            bool wasCharacterPanelStateCaptured = false;
+            float characterPanelAlpha = 0f;
+            bool wasCharacterPanelInteractable = false;
+            bool wasCharacterPanelBlockingRaycasts = false;
+
+            try
+            {
+                if (character.TryEnterChestOpening(_characterPosition) == false)
+                    return;
+
+                characterLockAcquired = true;
+                _isOpened = true;
+                SetInteractionVisuals(false);
+                cancellationToken = this.GetCancellationTokenOnDestroy();
+
+                characterPanelPresenter = _panelService?
+                    .GetPanelPresenter<CharacterPanelPresenter>(PanelName.CharacterPanel);
+                characterPanel = characterPanelPresenter?.Panel;
+                if (characterPanel != null)
+                {
+                    characterPanelCanvasGroup = characterPanel.GetComponent<CanvasGroup>();
+                    if (characterPanelCanvasGroup != null)
+                    {
+                        characterPanelAlpha = characterPanelCanvasGroup.alpha;
+                        wasCharacterPanelInteractable = characterPanelCanvasGroup.interactable;
+                        wasCharacterPanelBlockingRaycasts = characterPanelCanvasGroup.blocksRaycasts;
+                        wasCharacterPanelStateCaptured = true;
+                        characterPanelPresenter.ForceHide();
+                    }
+                }
+
+                _chestCamera.SetActive(true);
+                _chestCameraAnimator.SetTrigger(ChestCameraOpeningTrigger);
+                character.StartChestOpeningAnimation();
+                _eventBus.PublishChestOpened(transform.position);
+
+                float openingDuration = Mathf.Max(MinimumOpeningDuration, _configuration.OpeningDuration);
+                await UniTask.Delay(TimeSpan.FromSeconds(openingDuration),
+                    cancellationToken: cancellationToken);
+
+                character.EndChestOpeningAnimation();
+                _chestCameraAnimator.SetTrigger(ClaimTrigger);
+                _chestAnimator.enabled = true;
+                _chestAnimator.SetTrigger(OpenTrigger);
+                SpawnPickup();
+
+                float claimHoldDuration = Mathf.Max(MinimumClaimHoldDuration,
+                    _configuration.ClaimHoldDuration);
+                await UniTask.Delay(TimeSpan.FromSeconds(claimHoldDuration),
+                    cancellationToken: cancellationToken);
+
+                _chestCamera.SetActive(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+            }
+            finally
+            {
+                try
+                {
+                    try
+                    {
+                        if (_chestCamera != null)
+                            _chestCamera.SetActive(false);
+                    }
+                    finally
+                    {
+                        bool isSamePanel = characterPanelPresenter != null &&
+                                           ReferenceEquals(characterPanelPresenter.Panel, characterPanel);
+                        bool isStillHiddenBySequence = characterPanelCanvasGroup != null &&
+                                                       Mathf.Approximately(characterPanelCanvasGroup.alpha, 0f) &&
+                                                       characterPanelCanvasGroup.interactable == false &&
+                                                       characterPanelCanvasGroup.blocksRaycasts == false;
+
+                        if (wasCharacterPanelStateCaptured && characterPanel != null &&
+                            isSamePanel && isStillHiddenBySequence)
+                        {
+                            characterPanelCanvasGroup.alpha = characterPanelAlpha;
+                            characterPanelCanvasGroup.interactable = wasCharacterPanelInteractable;
+                            characterPanelCanvasGroup.blocksRaycasts = wasCharacterPanelBlockingRaycasts;
+                        }
+                    }
+                }
+                finally
+                {
+                    bool ownsCharacterLock = characterLockAcquired ||
+                                             (character != null && character.IsChestOpening);
+                    if (ownsCharacterLock && character != null)
+                        character.FinishChestOpening();
+                }
+            }
         }
 
         private void SpawnPickup()
