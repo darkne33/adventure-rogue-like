@@ -37,6 +37,19 @@ namespace Features.Relics.Scripts
             RelicManager relicManager, RelicEventBus eventBus, ICharacterProvider characterProvider,
             RoomData roomData, Room room, bool collectImmediately = false, Action collectedCallback = null)
         {
+            Initialize(relic, configuration, relicManager, eventBus, characterProvider, roomData, room,
+                collectedCallback);
+
+            if (collectImmediately)
+                AutoCollect().Forget();
+            else
+                AnimateDrop();
+        }
+
+        private void Initialize(RelicDefinition relic, RelicChestConfiguration configuration,
+            RelicManager relicManager, RelicEventBus eventBus, ICharacterProvider characterProvider,
+            RoomData roomData, Room room, Action collectedCallback)
+        {
             _relic = relic;
             _configuration = configuration;
             _relicManager = relicManager;
@@ -54,11 +67,6 @@ namespace Features.Relics.Scripts
             }
 
             transform.localScale = Vector3.one * 1.15f;
-
-            if (collectImmediately)
-                AutoCollect().Forget();
-            else
-                AnimateDrop();
         }
 
         private void OnEnable()
@@ -181,15 +189,12 @@ namespace Features.Relics.Scripts
 
         private async UniTask ActivateAndDestroy()
         {
-            if (_relicManager.AddRelic(_relic) == false)
+            if (TryActivate() == false)
             {
                 _isPicked = false;
                 return;
             }
 
-            _collectedCallback?.Invoke();
-            _collectedCallback = null;
-            _eventBus.PublishChestCollected(_roomData, _room);
             transform.DOKill();
 
             await transform.DOScale(Vector3.one * 1.7f, 0.12f)
@@ -199,6 +204,17 @@ namespace Features.Relics.Scripts
                 .SetEase(Ease.InBack)
                 .ToUniTask(cancellationToken: this.GetCancellationTokenOnDestroy());
             Destroy(gameObject);
+        }
+
+        private bool TryActivate()
+        {
+            if (_relicManager.AddRelic(_relic) == false)
+                return false;
+
+            _collectedCallback?.Invoke();
+            _collectedCallback = null;
+            _eventBus.PublishChestCollected(_roomData, _room);
+            return true;
         }
 
         private float GetPickupDistance()

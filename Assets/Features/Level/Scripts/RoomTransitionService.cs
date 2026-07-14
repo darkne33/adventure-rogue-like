@@ -14,6 +14,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
         private const float CoverDuration = 0.55f;
         private const float RevealDuration = 0.5f;
         private const float MinimumLoadingDisplayDuration = 0.35f;
+        private const float DefaultBeforeRevealDelay = 0.08f;
 
         private readonly IPanelService _panelService;
 
@@ -31,12 +32,17 @@ namespace Features.Enemies.Scripts.Level.Scripts
         }
 
         public UniTask Play(Func<UniTask> hiddenAction, Action beforeReveal = null) =>
-            PlayInternal(hiddenAction, beforeReveal, showLoading: false);
+            PlayInternal(hiddenAction, beforeReveal, showLoading: false, DefaultBeforeRevealDelay);
+
+        public UniTask Play(Func<UniTask> hiddenAction, float beforeRevealDelay,
+            Action beforeReveal = null) =>
+            PlayInternal(hiddenAction, beforeReveal, showLoading: false, beforeRevealDelay);
 
         public UniTask PlayLoading(Func<UniTask> hiddenAction, Action beforeReveal = null) =>
-            PlayInternal(hiddenAction, beforeReveal, showLoading: true);
+            PlayInternal(hiddenAction, beforeReveal, showLoading: true, DefaultBeforeRevealDelay);
 
-        private async UniTask PlayInternal(Func<UniTask> hiddenAction, Action beforeReveal, bool showLoading)
+        private async UniTask PlayInternal(Func<UniTask> hiddenAction, Action beforeReveal,
+            bool showLoading, float beforeRevealDelay)
         {
             if (hiddenAction == null)
                 throw new ArgumentNullException(nameof(hiddenAction));
@@ -79,7 +85,11 @@ namespace Features.Enemies.Scripts.Level.Scripts
                     }
                 }
 
-                await UniTask.Delay(80, ignoreTimeScale: true);
+                int beforeRevealDelayMilliseconds = Mathf.CeilToInt(
+                    Mathf.Max(0f, beforeRevealDelay) * 1000f);
+                if (beforeRevealDelayMilliseconds > 0)
+                    await UniTask.Delay(beforeRevealDelayMilliseconds, ignoreTimeScale: true);
+
                 beforeReveal?.Invoke();
                 _panel.SetLoadingVisible(false);
                 await AnimateReveal();
@@ -158,6 +168,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
     {
         bool IsPlaying { get; }
         UniTask Play(Func<UniTask> hiddenAction, Action beforeReveal = null);
+        UniTask Play(Func<UniTask> hiddenAction, float beforeRevealDelay, Action beforeReveal = null);
         UniTask PlayLoading(Func<UniTask> hiddenAction, Action beforeReveal = null);
     }
 }

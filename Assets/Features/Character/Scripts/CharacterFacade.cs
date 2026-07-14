@@ -18,8 +18,9 @@ public class CharacterFacade : MonoBehaviour
     public CharacterMoveSystem MoveSystem => _moveSystem;
     public DealDamageEffectSystem DamageEffectSystem => _damageEffectSystem;
     public CharacterCameraMoveSystem CameraSystem => _cameraSystem;
-    public bool IsChestOpening => _isChestOpening;
+    public bool IsChestOpening => _chestOpeningController?.IsOpening ?? false;
     public Transform CameraPivot => _cameraPivot.transform;
+    public Transform RelicRootTarget => _relicRootTarget;
     public Vector3 ProjectileSpawnPosition =>
         _collider != null ? _collider.bounds.center : transform.position;
 
@@ -28,6 +29,7 @@ public class CharacterFacade : MonoBehaviour
 
     [SerializeField] private GameObject _characterModel;
     [SerializeField] private GameObject _cameraPivot;
+    [SerializeField] private Transform _relicRootTarget;
     [SerializeField] private Renderer[] _meshRenderers;
     [SerializeField] private Transform _shadow;
     [SerializeField] private LayerMask _shadowLayer;
@@ -49,10 +51,10 @@ public class CharacterFacade : MonoBehaviour
     private DealDamageEffectSystem _damageEffectSystem;
     private float _invulnerableUntilTime;
     private bool _isTransitionPaused;
-    private bool _isChestOpening;
     private bool _wasKinematicBeforeControlLock;
+    private CharacterChestOpeningController _chestOpeningController;
 
-    private bool IsControlLocked => _isTransitionPaused || _isChestOpening;
+    private bool IsControlLocked => _isTransitionPaused || IsChestOpening;
 
     private void Update()
     {
@@ -116,6 +118,8 @@ public class CharacterFacade : MonoBehaviour
         _moveSystem = moveSystem;
         _cameraSystem = cameraSystem;
         _damageEffectSystem = damageEffectSystem;
+        _chestOpeningController = new CharacterChestOpeningController(transform, _characterModel.transform,
+            _meshRenderers, rigidbody, pauseEntity, animationSystem);
     }
 
     public bool ReceiveDamage(int rawDamage, EnemyFacade source)
@@ -175,44 +179,21 @@ public class CharacterFacade : MonoBehaviour
         RefreshControlLock(wasControlLocked);
     }
 
-    public bool TryEnterChestOpening(Transform characterPosition)
-    {
-        if (_isChestOpening || _isTransitionPaused || _rigidbody == null ||
-            characterPosition == null || _pauseEntity.IsPauseEntity)
-            return false;
+    public bool TryBeginChestOpening() =>
+        _chestOpeningController != null &&
+        _chestOpeningController.TryBegin(_isTransitionPaused, RefreshControlLock);
 
-        bool wasControlLocked = IsControlLocked;
-        _isChestOpening = true;
-        _pauseEntity.SetCinematicPaused(true);
-        RefreshControlLock(wasControlLocked);
-
-        Vector3 targetPosition = characterPosition.position;
-        _rigidbody.position = targetPosition;
-        transform.position = targetPosition;
-        _characterModel.transform.localRotation = Quaternion.identity;
-
-        Physics.SyncTransforms();
-        return true;
-    }
+    public void PrepareChestOpening(Transform characterPosition) =>
+        _chestOpeningController.Prepare(characterPosition);
 
     public void StartChestOpeningAnimation() =>
-        _animationSystem.StartChestOpening();
+        _chestOpeningController.StartAnimation();
 
     public void EndChestOpeningAnimation() =>
-        _animationSystem.EndChestOpening();
+        _chestOpeningController.EndAnimation();
 
-    public void FinishChestOpening()
-    {
-        if (_isChestOpening == false)
-            return;
-
-        _animationSystem.FinishChestOpening();
-
-        bool wasControlLocked = IsControlLocked;
-        _isChestOpening = false;
-        _pauseEntity.SetCinematicPaused(false);
-        RefreshControlLock(wasControlLocked);
-    }
+    public void FinishChestOpening() =>
+        _chestOpeningController?.Finish(_isTransitionPaused, RefreshControlLock);
 
     private void RefreshControlLock(bool wasControlLocked)
     {
