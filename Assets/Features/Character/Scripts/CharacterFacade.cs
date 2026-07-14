@@ -189,6 +189,7 @@ public class CharacterFacade : MonoBehaviour
         Vector3 targetPosition = characterPosition.position;
         _rigidbody.position = targetPosition;
         transform.position = targetPosition;
+        _characterModel.transform.localRotation = Quaternion.identity;
 
         Physics.SyncTransforms();
         return true;
