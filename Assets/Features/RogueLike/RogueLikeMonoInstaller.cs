@@ -77,6 +77,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<IRogueLikeRuntimeDataService>().To<RogueLikeRuntimeDataService>().AsSingle();
         Container.Bind<IRoomTransitionService>().To<RoomTransitionService>().AsSingle();
         Container.Bind<ITransitToRoomService>().To<TransitToRoomService>().AsSingle();
+        Container.Bind<CharacterChestOpeningService>().AsSingle();
         Container.BindInterfacesAndSelfTo<LevelProgressionService>().AsSingle();
         Container.BindInterfacesAndSelfTo<MinimapController>().AsSingle();
     }

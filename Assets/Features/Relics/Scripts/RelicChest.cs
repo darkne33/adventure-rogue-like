@@ -11,6 +11,7 @@ namespace Features.Relics.Scripts
     {
         [Inject] private IPanelService _panelService;
         [Inject] private IRoomTransitionService _roomTransitionService;
+        [Inject] private CharacterChestOpeningService _chestOpeningService;
 
         [SerializeField] private RelicChestInteractionView _interactionView = new();
         [SerializeField] private RelicChestOpeningView _openingView = new();
@@ -47,7 +48,7 @@ namespace Features.Relics.Scripts
             RelicChestRewardPresenter rewardPresenter = new(configuration, relicManager, eventBus,
                 container, roomData, room);
             _openingSequence = new RelicChestOpeningSequence(_openingView, configuration, eventBus,
-                _panelService, _roomTransitionService, rewardPresenter);
+                _panelService, _roomTransitionService, _chestOpeningService, rewardPresenter);
         }
 
         private void OnEnable()
@@ -84,7 +85,7 @@ namespace Features.Relics.Scripts
                 return false;
 
             CharacterFacade character = _characterProvider.CharacterFacade;
-            return character.IsChestOpening == false &&
+            return _chestOpeningService.IsOpening == false &&
                    Vector3.Distance(transform.position, character.transform.position) <=
                    _configuration.InteractDistance;
         }
@@ -101,7 +102,7 @@ namespace Features.Relics.Scripts
             }
 
             CharacterFacade character = _characterProvider?.CharacterFacade;
-            if (character == null || character.IsChestOpening)
+            if (character == null || _chestOpeningService.IsOpening)
                 return;
 
             _openingSequence.PlayAsync(character, _relic, transform.position, HandleOpeningStarted,

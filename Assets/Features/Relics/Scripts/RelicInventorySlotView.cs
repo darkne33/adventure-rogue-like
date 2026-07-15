@@ -30,7 +30,7 @@ namespace Features.Relics.Scripts
 
             if (_iconOutline != null)
             {
-                _iconOutline.effectColor = GetRarityColor(state.Definition.Rarity);
+                _iconOutline.effectColor = RelicRarityPalette.GetColor(state.Definition.Rarity);
                 _iconOutline.effectDistance = GetOutlineDistance(state.Definition.Rarity);
             }
 
@@ -62,16 +62,6 @@ namespace Features.Relics.Scripts
             _stackText = stackText;
         }
 #endif
-
-        private static Color GetRarityColor(RelicRarity rarity) =>
-            rarity switch
-            {
-                RelicRarity.Common => new Color(0.28f, 0.85f, 0.28f),
-                RelicRarity.Uncommon => new Color(0.2f, 0.55f, 1f),
-                RelicRarity.Rare => new Color(0.85f, 0.25f, 1f),
-                RelicRarity.Legendary => new Color(1f, 0.75f, 0.12f),
-                _ => Color.white
-            };
 
         private static Vector2 GetOutlineDistance(RelicRarity rarity) =>
             rarity switch

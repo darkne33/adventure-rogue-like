@@ -21,6 +21,9 @@ namespace Features.Relics.Scripts
         [field: SerializeField] public float InteractDistance { get; private set; } = 4f;
         [field: SerializeField, Min(0f)] public float ScreenFadePreparationDuration { get; private set; } = 0.1f;
         [field: SerializeField, Min(1f)] public float OpeningDuration { get; private set; } = 5f;
+        [field: SerializeField, Min(0f)] public float FinishAnimationDuration { get; private set; } = 0.6333333f;
+        [field: SerializeField, Min(0f)] public float CameraClaimDuration { get; private set; } = 1.0833334f;
+        [field: SerializeField, Min(0f)] public float EndAnimationDuration { get; private set; } = 0.75f;
         [field: SerializeField, Min(0.3f)] public float ClaimHoldDuration { get; private set; } = 2f;
         [field: SerializeField] public float RelicDropHeight { get; private set; } = 2.2f;
         [field: SerializeField] public float RelicPickupDistance { get; private set; } = 3f;

@@ -10,6 +10,8 @@
         set => _isPausedByPauseService = value;
     }
 
+    public bool IsCinematicPaused => _isPausedByCinematic;
+
     public PauseEntity(IPauseService pauseService) =>
         pauseService.Register(this);
 

@@ -17,11 +17,13 @@ namespace Features.Relics.Scripts
         private readonly RelicEventBus _eventBus;
         private readonly IPanelService _panelService;
         private readonly IRoomTransitionService _roomTransitionService;
+        private readonly CharacterChestOpeningService _chestOpeningService;
         private readonly RelicChestRewardPresenter _rewardPresenter;
 
         public RelicChestOpeningSequence(RelicChestOpeningView view,
             RelicChestConfiguration configuration, RelicEventBus eventBus,
             IPanelService panelService, IRoomTransitionService roomTransitionService,
+            CharacterChestOpeningService chestOpeningService,
             RelicChestRewardPresenter rewardPresenter)
         {
             _view = view;
@@ -29,6 +31,7 @@ namespace Features.Relics.Scripts
             _eventBus = eventBus;
             _panelService = panelService;
             _roomTransitionService = roomTransitionService;
+            _chestOpeningService = chestOpeningService;
             _rewardPresenter = rewardPresenter;
         }
 
@@ -55,7 +58,7 @@ namespace Features.Relics.Scripts
 
             try
             {
-                if (character.TryBeginChestOpening() == false)
+                if (_chestOpeningService.TryBegin() == false)
                     return;
 
                 characterLockAcquired = true;
@@ -70,12 +73,12 @@ namespace Features.Relics.Scripts
                 float preparationDuration = Mathf.Max(0f,
                     _configuration.ScreenFadePreparationDuration);
 
-                await _roomTransitionService.Play(() =>
+                await _roomTransitionService.PlaySolidFade(() =>
                 {
                     sequenceToken.ThrowIfCancellationRequested();
-                    character.PrepareChestOpening(_view.CharacterPosition);
+                    _chestOpeningService.Prepare(_view.CharacterPosition);
                     _view.Begin();
-                    character.StartChestOpeningAnimation();
+                    _chestOpeningService.StartAnimation();
                     _eventBus.PublishChestOpened(chestPosition);
 
                     openingDelay = UniTask.Delay(TimeSpan.FromSeconds(openingDuration),
@@ -90,8 +93,24 @@ namespace Features.Relics.Scripts
 
                 await openingDelay;
 
-                character.EndChestOpeningAnimation();
-                _view.ShowClaim();
+                _chestOpeningService.FinishAnimation();
+                float finishAnimationDuration = Mathf.Max(0f,
+                    _configuration.FinishAnimationDuration);
+                await UniTask.Delay(TimeSpan.FromSeconds(finishAnimationDuration),
+                    cancellationToken: sequenceToken);
+
+                _view.BeginClaimCamera();
+                float cameraClaimDuration = Mathf.Max(0f, _configuration.CameraClaimDuration);
+                await UniTask.Delay(TimeSpan.FromSeconds(cameraClaimDuration),
+                    cancellationToken: sequenceToken);
+
+                _chestOpeningService.EndAnimation();
+                float endAnimationDuration = Mathf.Max(0f,
+                    _configuration.EndAnimationDuration);
+                await UniTask.Delay(TimeSpan.FromSeconds(endAnimationDuration),
+                    cancellationToken: sequenceToken);
+
+                _view.PlayTreasureOpen();
                 if (_rewardPresenter.TryPresent(relic, relicRootTarget, out rewardObject))
                     _view.StopTreasureRays();
 
@@ -123,10 +142,8 @@ namespace Features.Relics.Scripts
                     if (rewardObject != null)
                         UnityEngine.Object.Destroy(rewardObject);
 
-                    bool ownsCharacterLock = characterLockAcquired ||
-                                             (character != null && character.IsChestOpening);
-                    if (ownsCharacterLock && character != null)
-                        character.FinishChestOpening();
+                    if (characterLockAcquired)
+                        _chestOpeningService.Finish();
                 }
             }
         }
