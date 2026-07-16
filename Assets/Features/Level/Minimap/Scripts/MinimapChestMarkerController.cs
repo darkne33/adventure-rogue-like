@@ -107,7 +107,6 @@ public sealed class MinimapChestMarkerController : IDisposable
     private void HandleChestsCleared()
     {
         _visitedRooms.Clear();
-        _visibleRooms.Clear();
         ClearMarkers();
     }
 

@@ -25,11 +25,11 @@ namespace Features.Relics.Scripts
             _cameraAnimator.SetTrigger(OpeningTrigger);
         }
 
-        public void ShowClaim()
-        {
+        public void BeginClaimCamera() =>
             _cameraAnimator.SetTrigger(ClaimTrigger);
+
+        public void PlayTreasureOpen() =>
             _treasureOpenParticle.Play(true);
-        }
 
         public void End()
         {

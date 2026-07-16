@@ -17,6 +17,8 @@ namespace Features.Relics.Scripts
         [Inject] private ICameraService _cameraService;
         [Inject] private CharacterStats _characterStats;
 
+        [SerializeField] private ParticleSystem[] _treasureCircleRaysParticles;
+
         private InputSystem_Actions _inputActions;
 
         private RelicDefinition _relic;
@@ -66,7 +68,26 @@ namespace Features.Relics.Scripts
                 _spriteRenderer.sortingOrder = 10;
             }
 
+            ApplyRarityColor(relic.Rarity);
+
             transform.localScale = Vector3.one * 1.15f;
+        }
+
+        private void ApplyRarityColor(RelicRarity rarity)
+        {
+            if (_treasureCircleRaysParticles == null)
+                return;
+
+            Color color = RelicRarityPalette.GetColor(rarity);
+
+            foreach (ParticleSystem particleSystem in _treasureCircleRaysParticles)
+            {
+                if (particleSystem == null)
+                    continue;
+
+                ParticleSystem.MainModule main = particleSystem.main;
+                main.startColor = color;
+            }
         }
 
         private void OnEnable()

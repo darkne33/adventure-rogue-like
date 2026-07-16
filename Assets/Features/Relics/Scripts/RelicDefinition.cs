@@ -11,6 +11,19 @@ namespace Features.Relics.Scripts
         Legendary = 3
     }
 
+    internal static class RelicRarityPalette
+    {
+        public static Color GetColor(RelicRarity rarity) =>
+            rarity switch
+            {
+                RelicRarity.Common => new Color(0.28f, 0.85f, 0.28f),
+                RelicRarity.Uncommon => new Color(0.2f, 0.55f, 1f),
+                RelicRarity.Rare => new Color(0.85f, 0.25f, 1f),
+                RelicRarity.Legendary => new Color(1f, 0.75f, 0.12f),
+                _ => Color.white
+            };
+    }
+
     public enum RelicTag
     {
         Offense,

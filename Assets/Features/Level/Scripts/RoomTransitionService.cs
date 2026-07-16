@@ -13,6 +13,8 @@ namespace Features.Enemies.Scripts.Level.Scripts
         private const string SoftnessProperty = "_Softness";
         private const float CoverDuration = 0.55f;
         private const float RevealDuration = 0.5f;
+        private const float SolidFadeInDuration = 0.2f;
+        private const float SolidFadeOutDuration = 0.2f;
         private const float MinimumLoadingDisplayDuration = 0.35f;
         private const float DefaultBeforeRevealDelay = 0.08f;
 
@@ -40,6 +42,10 @@ namespace Features.Enemies.Scripts.Level.Scripts
 
         public UniTask PlayLoading(Func<UniTask> hiddenAction, Action beforeReveal = null) =>
             PlayInternal(hiddenAction, beforeReveal, showLoading: true, DefaultBeforeRevealDelay);
+
+        public UniTask PlaySolidFade(Func<UniTask> hiddenAction, float hiddenActionPadding,
+            Action beforeReveal = null) =>
+            PlaySolidFadeInternal(hiddenAction, hiddenActionPadding, beforeReveal);
 
         private async UniTask PlayInternal(Func<UniTask> hiddenAction, Action beforeReveal,
             bool showLoading, float beforeRevealDelay)
@@ -127,6 +133,69 @@ namespace Features.Enemies.Scripts.Level.Scripts
             await _sequence.ToUniTask();
         }
 
+        private async UniTask PlaySolidFadeInternal(Func<UniTask> hiddenAction,
+            float hiddenActionPadding, Action beforeReveal)
+        {
+            if (hiddenAction == null)
+                throw new ArgumentNullException(nameof(hiddenAction));
+
+            if (IsPlaying)
+                return;
+
+            IsPlaying = true;
+            await EnsurePanel();
+            _panel.gameObject.SetActive(true);
+            _panel.transform.SetAsLastSibling();
+            _panel.TransitionCanvasGroup.blocksRaycasts = true;
+            _panel.TransitionCanvasGroup.alpha = 0f;
+            _panel.SetLoadingVisible(false);
+            SetRadius(_closedRadius);
+
+            try
+            {
+                await AnimateSolidFade(1f, SolidFadeInDuration, Ease.InOutCubic);
+                await UniTask.NextFrame();
+                await DelayIgnoringTimeScale(hiddenActionPadding);
+                await hiddenAction();
+
+                _panel.transform.SetAsLastSibling();
+                await UniTask.NextFrame();
+                await DelayIgnoringTimeScale(hiddenActionPadding);
+
+                beforeReveal?.Invoke();
+                await AnimateSolidFade(0f, SolidFadeOutDuration, Ease.OutCubic);
+            }
+            finally
+            {
+                _sequence?.Kill();
+                if (_panel != null)
+                {
+                    _panel.TransitionCanvasGroup.alpha = 1f;
+                    _panel.TransitionCanvasGroup.blocksRaycasts = false;
+                    SetRadius(_openRadius);
+                    _panel.gameObject.SetActive(false);
+                }
+
+                IsPlaying = false;
+            }
+        }
+
+        private async UniTask AnimateSolidFade(float targetAlpha, float duration, Ease ease)
+        {
+            _sequence = DOTween.Sequence().SetUpdate(true);
+            _ = _sequence.Append(_panel.TransitionCanvasGroup.DOFade(targetAlpha, duration)
+                .SetEase(ease));
+
+            await _sequence.ToUniTask();
+        }
+
+        private static async UniTask DelayIgnoringTimeScale(float duration)
+        {
+            int durationMilliseconds = Mathf.CeilToInt(Mathf.Max(0f, duration) * 1000f);
+            if (durationMilliseconds > 0)
+                await UniTask.Delay(durationMilliseconds, ignoreTimeScale: true);
+        }
+
         private float GetRadius() =>
             _irisMaterial.GetFloat(RadiusProperty);
 
@@ -170,5 +239,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
         UniTask Play(Func<UniTask> hiddenAction, Action beforeReveal = null);
         UniTask Play(Func<UniTask> hiddenAction, float beforeRevealDelay, Action beforeReveal = null);
         UniTask PlayLoading(Func<UniTask> hiddenAction, Action beforeReveal = null);
+        UniTask PlaySolidFade(Func<UniTask> hiddenAction, float hiddenActionPadding,
+            Action beforeReveal = null);
     }
 }
