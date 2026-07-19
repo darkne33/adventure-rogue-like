@@ -4,6 +4,8 @@
     {
         _MainTex("Albedo Texture", 2D) = "white" {}
         _Color("Color Tint", Color) = (1,1,1,1)
+        [Toggle(_EMISSION_ON)]_EmissionEnabled("Emission", Float) = 0
+        [NoScaleOffset]_EmissionMap("Emission Map", 2D) = "black" {}
 
         [Enum(UnityEngine.Rendering.BlendMode)]_BlendSrc("Blend mode Source", Float) = 1
         [Enum(UnityEngine.Rendering.BlendMode)]_BlendDst("Blend mode Destination", Float) = 0
@@ -59,6 +61,7 @@
             #pragma multi_compile_fog
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma shader_feature_local_fragment _EMISSION_ON
             #pragma shader_feature_local _FADE_ON
             #pragma shader_feature_local _FADE_BURN_ON
 
@@ -67,6 +70,8 @@
 
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
+            TEXTURE2D(_EmissionMap);
+            SAMPLER(sampler_EmissionMap);
             TEXTURE2D(_FadeTex);
             SAMPLER(sampler_FadeTex);
 
@@ -279,6 +284,17 @@
                     lerp(tex.rgb,
                          _HitColor.rgb,
                          _HitPower);
+
+                #if defined(_EMISSION_ON)
+                    half3 emission =
+                        SAMPLE_TEXTURE2D(
+                            _EmissionMap,
+                            sampler_EmissionMap,
+                            finalUV
+                        ).rgb;
+
+                    tex.rgb += emission;
+                #endif
 
                 #if defined(_FADE_ON)
                     tex = ApplyFade(tex, finalUV);
