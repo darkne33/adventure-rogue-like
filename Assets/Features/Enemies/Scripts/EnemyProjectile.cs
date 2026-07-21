@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -6,75 +5,56 @@ using UnityEngine;
 namespace Features.Enemies.Scripts
 {
     [RequireComponent(typeof(Collider))]
-    public sealed class EnemyProjectile : MonoBehaviour
+    public abstract class EnemyProjectile : MonoBehaviour
     {
         private CharacterFacade _target;
         private EnemyFacade _source;
         private CancellationTokenSource _linkedCancellationTokenSource;
         private int _damage;
-        private float _impactRadius;
         private bool _isLaunched;
         private bool _isResolved;
 
-        public void Launch(Vector3 startPosition, Vector3 targetPosition, float flightDuration, float arcHeight,
-            float impactRadius, int damage, EnemyFacade source, CharacterFacade target,
-            CancellationToken cancellationToken)
+        protected bool IsResolved => _isResolved;
+
+        protected CancellationToken InitializeProjectile(Vector3 startPosition, int damage,
+            EnemyFacade source, CharacterFacade target, CancellationToken cancellationToken)
         {
             CancelCurrentFlight();
 
             _target = target;
             _source = source;
             _damage = damage;
-            _impactRadius = impactRadius;
             _isLaunched = true;
             _isResolved = false;
             transform.position = startPosition;
 
             _linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
                 cancellationToken, gameObject.GetCancellationTokenOnDestroy());
-            Fly(startPosition, targetPosition, Mathf.Max(0.05f, flightDuration), arcHeight,
-                _linkedCancellationTokenSource.Token).Forget();
+            return _linkedCancellationTokenSource.Token;
         }
 
-        private async UniTaskVoid Fly(Vector3 startPosition, Vector3 targetPosition, float flightDuration,
-            float arcHeight, CancellationToken cancellationToken)
+        protected void ResolveHit() =>
+            ResolveHitAtRadius(null);
+
+        protected void ResolveHitAtRadius(float impactRadius) =>
+            ResolveHitAtRadius((float?)Mathf.Max(0f, impactRadius));
+
+        private void ResolveHitAtRadius(float? impactRadius)
         {
-            try
-            {
-                float elapsed = 0f;
+            if (_isResolved)
+                return;
 
-                while (elapsed < flightDuration)
-                {
-                    float progress = Mathf.Clamp01(elapsed / flightDuration);
-                    UpdatePosition(startPosition, targetPosition, arcHeight, progress);
+            _isResolved = true;
+            _isLaunched = false;
 
-                    elapsed += Time.deltaTime;
-                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
-                }
+            if (_target == null)
+                return;
 
-                UpdatePosition(startPosition, targetPosition, arcHeight, 1f);
-                ResolveHit(true);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            finally
-            {
-                if (this != null)
-                    Destroy(gameObject);
-            }
-        }
+            if (impactRadius.HasValue &&
+                Vector3.Distance(transform.position, _target.transform.position) > impactRadius.Value)
+                return;
 
-        private void UpdatePosition(Vector3 startPosition, Vector3 targetPosition, float arcHeight, float progress)
-        {
-            Vector3 nextPosition = Vector3.Lerp(startPosition, targetPosition, progress);
-            nextPosition.y += Mathf.Sin(progress * Mathf.PI) * arcHeight;
-
-            Vector3 direction = nextPosition - transform.position;
-            if (direction.sqrMagnitude > 0.0001f)
-                transform.rotation = Quaternion.LookRotation(direction.normalized);
-
-            transform.position = nextPosition;
+            _target.ReceiveDamage(_damage, _source);
         }
 
         private void OnTriggerEnter(Collider other)
@@ -85,7 +65,7 @@ namespace Features.Enemies.Scripts
             CharacterFacade character = other.GetComponentInParent<CharacterFacade>();
             if (character != null && character == _target)
             {
-                ResolveHit(false);
+                ResolveHit();
                 Destroy(gameObject);
                 return;
             }
@@ -97,24 +77,6 @@ namespace Features.Enemies.Scripts
                 _isLaunched = false;
                 Destroy(gameObject);
             }
-        }
-
-        private void ResolveHit(bool requireRadiusCheck)
-        {
-            if (_isResolved)
-                return;
-
-            _isResolved = true;
-            _isLaunched = false;
-
-            if (_target == null)
-                return;
-
-            if (requireRadiusCheck &&
-                Vector3.Distance(transform.position, _target.transform.position) > _impactRadius)
-                return;
-
-            _target.ReceiveDamage(_damage, _source);
         }
 
         private void CancelCurrentFlight()

@@ -5,7 +5,7 @@ namespace Features.Enemies.Scripts
     public sealed class EnemyRangedAttackView : MonoBehaviour
     {
         [SerializeField] private Transform _projectileSpawnPoint;
-        [SerializeField] private EnemyProjectile _projectilePrefab;
+        [SerializeField] private EnemyCannonball _projectilePrefab;
         [SerializeField, Min(0f)] private float _minimumAttackDistance = 6.5f;
         [SerializeField, Min(0f)] private float _windupDuration = 0.55f;
         [SerializeField, Min(0.05f)] private float _projectileFlightDuration = 1.1f;
@@ -15,7 +15,7 @@ namespace Features.Enemies.Scripts
         [SerializeField] private Vector3 _targetOffset = new(0f, 0.55f, 0f);
 
         public Transform ProjectileSpawnPoint => _projectileSpawnPoint != null ? _projectileSpawnPoint : transform;
-        public EnemyProjectile ProjectilePrefab => _projectilePrefab;
+        public EnemyCannonball ProjectilePrefab => _projectilePrefab;
         public float MinimumAttackDistance => _minimumAttackDistance;
         public float WindupDuration => _windupDuration;
         public float ProjectileFlightDuration => _projectileFlightDuration;
@@ -25,7 +25,7 @@ namespace Features.Enemies.Scripts
         public Vector3 TargetOffset => _targetOffset;
 
 #if UNITY_EDITOR
-        public void SetEditorReferences(Transform projectileSpawnPoint, EnemyProjectile projectilePrefab)
+        public void SetEditorReferences(Transform projectileSpawnPoint, EnemyCannonball projectilePrefab)
         {
             _projectileSpawnPoint = projectileSpawnPoint;
             _projectilePrefab = projectilePrefab;

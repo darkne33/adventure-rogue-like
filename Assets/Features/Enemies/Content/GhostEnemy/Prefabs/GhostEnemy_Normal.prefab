@@ -195,7 +195,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: -0.088, y: 1.989}
+  m_AnchoredPosition: {x: -0.088, y: 2.53}
   m_SizeDelta: {x: 9.4479, y: 1.3079}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &6345428810085301797
@@ -304,6 +304,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5139106712844819519}
   - component: {fileID: 351255443941349851}
+  - component: {fileID: 2745519078499732207}
   m_Layer: 0
   m_Name: Ghost
   m_TagString: Untagged
@@ -405,6 +406,24 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.00014076754, y: -0.00027066492, z: 0.0011297427}
     m_Extent: {x: 0.0075103594, y: 0.0076948646, z: 0.009489828}
   m_DirtyAABB: 0
+--- !u!114 &2745519078499732207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1530535884116121166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 0
+  outlineColor: {r: 0, g: 0, b: 0, a: 1}
+  outlineWidth: 1
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1 &2706834636654241046
 GameObject:
   m_ObjectHideFlags: 0
@@ -517,10 +536,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.53387386
-  m_Height: 1.3455389
+  m_Radius: 0.7787005
+  m_Height: 2.2484431
   m_Direction: 1
-  m_Center: {x: 0, y: 1.0095509, z: 0.038649023}
+  m_Center: {x: -0.009065032, y: 0.9438286, z: 0.038649023}
 --- !u!195 &2841528611562344274
 NavMeshAgent:
   m_ObjectHideFlags: 0

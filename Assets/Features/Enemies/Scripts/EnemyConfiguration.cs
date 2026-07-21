@@ -23,6 +23,8 @@ public class EnemyConfiguration : ScriptableObject
     [field: SerializeField] public float DamageRange { get; private set; }
     [field: SerializeField] public float DamageCooldown { get; private set; }
     [field: SerializeField] public EnemyDamageType EnemyDamageType { get; private set; }
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeBullet)]
+    [field: SerializeField] public Features.Enemies.Scripts.EnemyBulletConfiguration BulletConfiguration { get; private set; }
     [field: SerializeField] public EnemyAnimationType EnemyAnimationType { get; private set; }
     [field: SerializeField] public EnemyMovementType EnemyMovementType { get; private set; }
     [field: SerializeField] public int Exp { get; private set; }

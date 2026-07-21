@@ -66,6 +66,7 @@ namespace Features.Enemies.Scripts
                 EnemyAnimationType.Bun => new BunEnemyAnimation(animator),
                 EnemyAnimationType.Dummy => new DummyEnemyAnimation(animator),
                 EnemyAnimationType.Skeleton => new SkeletonEnemyAnimation(animator),
+                EnemyAnimationType.Ghost => new GhostEnemyAnimation(animator),
                 _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyAnimationType),
                     configuration.EnemyAnimationType, "Enemy animation type is not supported.")
             };
@@ -78,6 +79,7 @@ namespace Features.Enemies.Scripts
                 EnemyDamageType.Dash => new EnemyDashAttackSystem(character, configuration, facade, dashView),
                 EnemyDamageType.RangeArea => new EnemyRangedAttackSystem(character, configuration, facade, rangedAttackView),
                 EnemyDamageType.RangeDirection => new EnemyRangedAttackSystem(character, configuration, facade, rangedAttackView),
+                EnemyDamageType.RangeBullet => new EnemyBulletAttackSystem(character, configuration, facade),
                 _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyDamageType),
                     configuration.EnemyDamageType, "Enemy damage type is not supported.")
             };

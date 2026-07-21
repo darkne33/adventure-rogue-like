@@ -5,38 +5,39 @@ using UnityEngine;
 
 namespace Features.Enemies.Scripts
 {
-    public sealed class EnemyRangedAttackSystem : IEnemyDamageSystem
+    public sealed class EnemyBulletAttackSystem : IEnemyDamageSystem
     {
         private const float RotationSpeed = 720f;
 
         private readonly CharacterFacade _characterFacade;
         private readonly EnemyConfiguration _enemyConfiguration;
         private readonly EnemyFacade _enemyFacade;
-        private readonly EnemyRangedAttackView _attackView;
 
+        private EnemyBulletConfiguration _bulletConfiguration;
         private float _cooldown;
-        private float _minimumDistanceExecuteDamage;
-        private float _distanceExecuteDamage;
+        private float _attackDistance;
 
-        public EnemyRangedAttackSystem(CharacterFacade characterFacade, EnemyConfiguration enemyConfiguration,
-            EnemyFacade enemyFacade, EnemyRangedAttackView attackView)
+        public EnemyBulletAttackSystem(CharacterFacade characterFacade,
+            EnemyConfiguration enemyConfiguration, EnemyFacade enemyFacade)
         {
             _characterFacade = characterFacade;
             _enemyConfiguration = enemyConfiguration;
             _enemyFacade = enemyFacade;
-            _attackView = attackView;
         }
 
         public void Initialize()
         {
-            if (_attackView == null)
-                throw new InvalidOperationException($"{_enemyFacade.name} requires EnemyRangedAttackView.");
+            _bulletConfiguration = _enemyConfiguration.BulletConfiguration;
 
-            if (_attackView.ProjectilePrefab == null)
-                throw new InvalidOperationException($"{_enemyFacade.name} requires a projectile prefab.");
+            if (_bulletConfiguration == null)
+                throw new InvalidOperationException(
+                    $"{_enemyFacade.name} requires an EnemyBulletConfiguration for RangeBullet attacks.");
 
-            _minimumDistanceExecuteDamage = _attackView.MinimumAttackDistance;
-            _distanceExecuteDamage = _enemyConfiguration.DamageRange;
+            if (_bulletConfiguration.ProjectilePrefab == null)
+                throw new InvalidOperationException(
+                    $"{_bulletConfiguration.name} requires a projectile prefab.");
+
+            _attackDistance = _enemyConfiguration.DamageRange;
             _cooldown = _enemyConfiguration.DamageCooldown;
         }
 
@@ -56,7 +57,7 @@ namespace Features.Enemies.Scripts
                 _enemyFacade.AnimationSystem.AttackAnimation();
 
                 float elapsed = 0f;
-                while (elapsed < _attackView.WindupDuration)
+                while (elapsed < _bulletConfiguration.WindupDuration)
                 {
                     if (_enemyFacade.IsDead)
                         return;
@@ -72,7 +73,7 @@ namespace Features.Enemies.Scripts
                 RotateTowardsCharacter(enemyTransform, true);
                 SpawnProjectile(cancellationToken);
 
-                await UniTask.Delay(TimeSpan.FromSeconds(_attackView.RecoveryDuration),
+                await UniTask.Delay(TimeSpan.FromSeconds(_bulletConfiguration.RecoveryDuration),
                     cancellationToken: cancellationToken);
             }
             finally
@@ -96,8 +97,7 @@ namespace Features.Enemies.Scripts
                 if (_enemyFacade.IsDead == false &&
                     _enemyFacade.IsStopped == false &&
                     _cooldown <= 0f &&
-                    distanceToCharacter >= _minimumDistanceExecuteDamage &&
-                    distanceToCharacter <= _distanceExecuteDamage)
+                    distanceToCharacter <= _attackDistance)
                 {
                     await Execute(cancellationToken);
                     _cooldown = _enemyConfiguration.DamageCooldown;
@@ -116,19 +116,23 @@ namespace Features.Enemies.Scripts
 
         private void SpawnProjectile(CancellationToken cancellationToken)
         {
-            Transform spawnPoint = _attackView.ProjectileSpawnPoint;
-            Vector3 startPosition = spawnPoint.position;
-            Vector3 targetPosition = _characterFacade.transform.position + _attackView.TargetOffset;
+            Vector3 startPosition = _enemyFacade.TargetToShootDamage != null
+                ? _enemyFacade.TargetToShootDamage.position
+                : _enemyFacade.transform.position + Vector3.up;
+            Vector3 targetPosition = _characterFacade.ProjectileSpawnPosition +
+                                     _bulletConfiguration.TargetOffset;
             Vector3 direction = targetPosition - startPosition;
-            Quaternion rotation = direction.sqrMagnitude > 0.0001f
-                ? Quaternion.LookRotation(direction.normalized)
-                : Quaternion.identity;
 
-            EnemyCannonball projectile = UnityEngine.Object.Instantiate(
-                _attackView.ProjectilePrefab, startPosition, rotation);
-            projectile.Launch(startPosition, targetPosition, _attackView.ProjectileFlightDuration,
-                _attackView.ProjectileArcHeight, _attackView.ImpactRadius, _enemyConfiguration.Damage,
-                _enemyFacade, _characterFacade, cancellationToken);
+            if (direction.sqrMagnitude <= 0.0001f)
+                direction = _enemyFacade.transform.forward;
+
+            direction.Normalize();
+            Quaternion rotation = Quaternion.LookRotation(direction);
+            EnemyBullet projectile = UnityEngine.Object.Instantiate(
+                _bulletConfiguration.ProjectilePrefab, startPosition, rotation);
+            projectile.Launch(startPosition, direction, _bulletConfiguration.Speed,
+                _bulletConfiguration.Lifetime, _enemyConfiguration.Damage, _enemyFacade,
+                _characterFacade, cancellationToken);
         }
 
         private void RotateTowardsCharacter(Transform enemyTransform, bool immediately = false)
@@ -142,7 +146,8 @@ namespace Features.Enemies.Scripts
             Quaternion targetRotation = Quaternion.LookRotation(direction.normalized);
             enemyTransform.rotation = immediately
                 ? targetRotation
-                : Quaternion.RotateTowards(enemyTransform.rotation, targetRotation, RotationSpeed * Time.deltaTime);
+                : Quaternion.RotateTowards(enemyTransform.rotation, targetRotation,
+                    RotationSpeed * Time.deltaTime);
         }
 
         private static void StopHorizontalMovement(Rigidbody rigidbody)
