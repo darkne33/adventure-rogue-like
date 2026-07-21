@@ -6,11 +6,6 @@ using Zenject;
 [RequireComponent(typeof(Rigidbody))]
 public class CharacterFacade : MonoBehaviour
 {
-    private const float MinGroundNormalY = 0.5f;
-    private const float MaxGroundedVerticalSpeed = 0.1f;
-    private const float GroundCheckDistance = 0.15f;
-    private const float ShadowHeightOffset = 0.02f;
-
     public HealthSystem HealthSystem => _healthSystem;
     public ShieldSystem ShieldSystem => _shieldSystem;
     public Rigidbody Rigidbody => _rigidbody;
@@ -23,10 +18,10 @@ public class CharacterFacade : MonoBehaviour
     public Vector3 ProjectileSpawnPosition =>
         _collider != null ? _collider.bounds.center : transform.position;
 
-    internal GameObject CharacterModel => _characterModel;
-    internal Renderer[] MeshRenderers => _meshRenderers;
-    internal Outline Outline => _outline;
-    internal bool IsTransitionPaused => _isTransitionPaused;
+    public GameObject CharacterModel => _characterModel;
+    public  Renderer[] MeshRenderers => _meshRenderers;
+    public  Outline Outline => _outline;
+    public  bool IsTransitionPaused => _isTransitionPaused;
 
     [SerializeField] private GameObject _characterModel;
     [SerializeField] private GameObject _cameraPivot;
@@ -35,10 +30,15 @@ public class CharacterFacade : MonoBehaviour
     [SerializeField] private Outline _outline;
     [SerializeField] private Transform _shadow;
     [SerializeField] private LayerMask _shadowLayer;
+    [SerializeField] private Transform _pivotGroundChecker;
 
     [Inject] private ICharacterSystemsFactory _systemsFactory;
     [InjectOptional] private RelicManager _relicManager;
     [InjectOptional] private RelicEventBus _relicEventBus;
+
+    private const float MinGroundNormalY = 0.5f;
+    private const float MaxGroundedVerticalSpeed = 0.1f;
+    private const float GroundCheckDistance = 0.3f;
 
     private Rigidbody _rigidbody;
     private Collider _collider;
@@ -78,9 +78,6 @@ public class CharacterFacade : MonoBehaviour
         _moveSystem.Jump();
     }
 
-    private void LateUpdate() =>
-        UpdateShadow();
-
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.GetComponent<Wall>() != null ||
@@ -95,9 +92,6 @@ public class CharacterFacade : MonoBehaviour
     {
         _systemsFactory.Create(this);
         _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-
-        if (_shadow != null)
-            _shadow.SetParent(null);
 
         _healthSystem.Initialize();
         _shieldSystem.Initialize(_characterStats.Shield);
@@ -254,38 +248,41 @@ public class CharacterFacade : MonoBehaviour
             _shieldSystem.Tick(deltaTime);
     }
 
-    private void UpdateShadow()
-    {
-        if (_shadow == null)
-            return;
-
-        if (!Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, Mathf.Infinity,
-                _shadowLayer, QueryTriggerInteraction.Ignore))
-            return;
-
-        Vector3 position = transform.position;
-        _shadow.position = new Vector3(position.x, hit.point.y + ShadowHeightOffset, position.z);
-    }
-
     private void UpdateGroundedState()
     {
-        if (_rigidbody.linearVelocity.y > MaxGroundedVerticalSpeed)
-        {
-            _moveSystem.SetGrounded(false);
-            return;
-        }
+        bool hasGroundSurface = TryGetGroundSurface(out Vector3 groundNormal);
 
-        Bounds bounds = _collider.bounds;
-        float radius = Mathf.Min(bounds.extents.x, bounds.extents.z) * 0.9f;
-        float castDistance = bounds.extents.y - radius + GroundCheckDistance;
+        float surfaceSeparationSpeed = hasGroundSurface
+            ? Vector3.Dot(_rigidbody.linearVelocity, groundNormal)
+            : float.PositiveInfinity;
+        bool isGrounded = hasGroundSurface &&
+                          surfaceSeparationSpeed <= MaxGroundedVerticalSpeed;
 
-        bool isGrounded = Physics.SphereCast(bounds.center, radius, Vector3.down, out RaycastHit hit,
-                              castDistance, _shadowLayer, QueryTriggerInteraction.Ignore)
-                          && hit.normal.y >= MinGroundNormalY;
-
-        _moveSystem.SetGrounded(isGrounded);
+        _moveSystem.SetGrounded(isGrounded, hasGroundSurface ? groundNormal : Vector3.up);
 
         if (isGrounded)
             _moveSystem.CanMove(true);
+    }
+
+    private bool TryGetGroundSurface(out Vector3 groundNormal)
+    {
+        Bounds bounds = _collider.bounds;
+        Vector3 footPosition = _pivotGroundChecker != null
+            ? _pivotGroundChecker.position
+            : new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+        Vector3 rayOrigin = footPosition + Vector3.up * GroundCheckDistance;
+        float rayDistance = GroundCheckDistance * 2f;
+
+        bool hasGround = Physics.Raycast(
+            rayOrigin,
+            Vector3.down,
+            out RaycastHit hit,
+            rayDistance,
+            _shadowLayer,
+            QueryTriggerInteraction.Ignore)
+            && hit.normal.y >= MinGroundNormalY;
+
+        groundNormal = hasGround ? hit.normal.normalized : Vector3.up;
+        return hasGround;
     }
 }

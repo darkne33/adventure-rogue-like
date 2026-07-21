@@ -17,6 +17,7 @@ public class CharacterMoveSystem
 
     private Vector3 _direction;
     private Vector3 _currentVelocity;
+    private Vector3 _groundNormal = Vector3.up;
     
     private float _dashCooldownTimer = 0f;
 
@@ -126,6 +127,7 @@ public class CharacterMoveSystem
         }
 
         _direction = moveDirection;
+        CancelGravityAlongGround();
 
         bool blocked = false;
         if (input.magnitude > 0.1f && Physics.Raycast(_rigidbody.transform.position, _direction, out var hit, 1f))
@@ -153,6 +155,12 @@ public class CharacterMoveSystem
         }
     }
 
+    private void CancelGravityAlongGround()
+    {
+        Vector3 gravityAlongGround = Vector3.ProjectOnPlane(Physics.gravity, _groundNormal);
+        _rigidbody.AddForce(-gravityAlongGround, ForceMode.Acceleration);
+    }
+
     public void CanMove(bool state) =>
         _canMove = state;
 
@@ -174,8 +182,12 @@ public class CharacterMoveSystem
         _characterAnimationSystem.SetPaused(state);
     }
 
-    public void SetGrounded(bool isGrounded)
+    public void SetGrounded(bool isGrounded, Vector3 groundNormal)
     {
+        _groundNormal = groundNormal.sqrMagnitude > Mathf.Epsilon
+            ? groundNormal.normalized
+            : Vector3.up;
+
         if (isGrounded && !_isGrounded)
         {
             _canJump = true;
@@ -245,17 +257,25 @@ public class CharacterMoveSystem
         if (_pauseEntity.IsPauseEntity)
             return;
 
-        if (_direction.magnitude > 0.1f)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(_direction);
+        Vector3 modelUp = _groundNormal;
+        Vector3 modelForward = _direction.sqrMagnitude > 0.01f
+            ? _direction
+            : _characterModel.transform.forward;
 
-            float rotationSpeed = _characterStats.RotationSpeed;
-            _characterModel.transform.rotation = Quaternion.Slerp(
-                _characterModel.transform.rotation,
-                targetRotation,
-                rotationSpeed * deltaTime
-            );
-        }
+        modelForward = Vector3.ProjectOnPlane(modelForward, modelUp);
+        if (modelForward.sqrMagnitude <= 0.01f)
+            modelForward = Vector3.ProjectOnPlane(_characterModel.transform.right, modelUp);
+
+        if (modelForward.sqrMagnitude <= 0.01f)
+            return;
+
+        Quaternion targetRotation = Quaternion.LookRotation(modelForward.normalized, modelUp);
+        float rotationSpeed = _characterStats.RotationSpeed;
+        _characterModel.transform.rotation = Quaternion.Slerp(
+            _characterModel.transform.rotation,
+            targetRotation,
+            rotationSpeed * deltaTime
+        );
     }
 
     private void ApplyEnhancedGravity()
