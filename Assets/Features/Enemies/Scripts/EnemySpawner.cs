@@ -20,8 +20,6 @@ public class EnemySpawner
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
     private readonly EnemiesWaveObserver _enemiesWaveObserver;
 
-    private readonly Vector2 _spawnRadius = new Vector2(0, 40f);
-
     private const float RayStartHeight = 50f;
     private const float RayDistance = 100f;
     private const float NavMeshSampleDistance = 1.5f;
@@ -75,7 +73,8 @@ public class EnemySpawner
             _levelsConfiguration.GetEnemyWaveScalingConfiguration();
         List<EnemyType> enemyTypes = BuildSpawnQueue(scalingConfiguration, wave,
             _rogueLikeRuntimeDataService.CurrentIndexLevel, roomIndex, currentWave);
-        SpawnEnemyTypes(characterFacade, levelSettings, enemyTypes);
+        Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
+        SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes);
     }
 
     public void TrySpawnAdditionalEnemies(CharacterFacade characterFacade, int currentWave, int enemyCount)
@@ -84,9 +83,15 @@ public class EnemySpawner
             return;
 
         EnemyWavesConfiguration wave = GetCurrentWave(characterFacade, currentWave,
-            out _, out LevelSettings levelSettings);
+            out DefaultEnemiesRoomData currentRoomData, out LevelSettings levelSettings);
         List<EnemyType> enemyTypes = BuildAdditionalSpawnQueue(wave, enemyCount, currentWave);
-        SpawnEnemyTypes(characterFacade, levelSettings, enemyTypes);
+
+        LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
+        if (currentLevel == null)
+            throw new System.InvalidOperationException("Current level view is not available.");
+
+        Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
+        SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes);
     }
 
     private EnemyWavesConfiguration GetCurrentWave(CharacterFacade characterFacade, int currentWave,
@@ -119,16 +124,25 @@ public class EnemySpawner
         return wave;
     }
 
-    private void SpawnEnemyTypes(CharacterFacade characterFacade, LevelSettings levelSettings,
+    private void SpawnEnemyTypes(Room currentRoom, LevelSettings levelSettings,
         IReadOnlyList<EnemyType> enemyTypes)
     {
+        List<Collider> groundColliders = GetGroundColliders(currentRoom);
+        if (groundColliders.Count == 0)
+        {
+            Debug.LogWarning($"Could not find ground colliders in room {currentRoom.name}.");
+            return;
+        }
+
         for (int i = 0; i < enemyTypes.Count; i++)
         {
             var enemyType = enemyTypes[i];
 
-            if (!TryFindValidSpawnPosition(characterFacade.transform.position, out var spawnPosition))
+            if (!TryFindValidSpawnPosition(currentRoom, groundColliders, out var spawnPosition))
             {
-                Debug.LogWarning($"Could not find valid spawn position for enemy {enemyType} after max attempts.");
+                Debug.LogWarning(
+                    $"Could not find valid spawn position for enemy {enemyType} in room {currentRoom.name} " +
+                    "after max attempts.");
                 continue;
             }
 
@@ -219,22 +233,46 @@ public class EnemySpawner
         }
     }
 
-    private Vector3 GetRandomPointInAnnulus(Vector3 center, float minRadius, float maxRadius)
+    private static Room GetCurrentRoom(LevelView currentLevel, RoomData currentRoomData)
     {
-        float angle = Random.Range(0f, 360f);
-        float distance = Random.Range(minRadius, maxRadius);
-        Vector3 direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
-        return center + direction * distance;
+        for (int i = 0; i < currentLevel.Rooms.Count; i++)
+        {
+            Room room = currentLevel.Rooms[i]?.Room;
+            if (room != null && ReferenceEquals(room.RoomData, currentRoomData))
+                return room;
+        }
+
+        throw new System.InvalidOperationException(
+            $"{currentLevel.name} does not contain the current room data.");
     }
 
-    private bool TryFindValidSpawnPosition(Vector3 center, out Vector3 validPosition)
+    private List<Collider> GetGroundColliders(Room room)
+    {
+        var groundColliders = new List<Collider>();
+        Collider[] colliders = room.GetComponentsInChildren<Collider>(false);
+
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider collider = colliders[i];
+            if (collider == null || collider.enabled == false || collider.isTrigger ||
+                ContainsLayer(_levelsConfiguration.GroundLayer, collider.gameObject.layer) == false)
+                continue;
+
+            groundColliders.Add(collider);
+        }
+
+        return groundColliders;
+    }
+
+    private bool TryFindValidSpawnPosition(Room room, IReadOnlyList<Collider> groundColliders,
+        out Vector3 validPosition)
     {
         const int maxAttempts = 50;
 
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
-            Vector3 candidate = GetRandomPointInAnnulus(center, _spawnRadius.x, _spawnRadius.y);
-            if (IsPositionValid(candidate, out validPosition))
+            Vector3 candidate = GetRandomSpawnCandidate(groundColliders);
+            if (IsPositionValid(room, candidate, out validPosition))
             {
                 return true;
             }
@@ -244,13 +282,60 @@ public class EnemySpawner
         return false;
     }
 
-    private bool IsPositionValid(Vector3 position, out Vector3 finalPosition)
+    private static Vector3 GetRandomSpawnCandidate(IReadOnlyList<Collider> groundColliders)
+    {
+        float totalArea = 0f;
+        for (int i = 0; i < groundColliders.Count; i++)
+            totalArea += GetHorizontalArea(groundColliders[i]);
+
+        float areaRoll = Random.Range(0f, totalArea);
+        Collider selectedCollider = groundColliders[groundColliders.Count - 1];
+        for (int i = 0; i < groundColliders.Count; i++)
+        {
+            Collider groundCollider = groundColliders[i];
+            areaRoll -= GetHorizontalArea(groundCollider);
+            if (areaRoll > 0f)
+                continue;
+
+            selectedCollider = groundCollider;
+            break;
+        }
+
+        Bounds bounds = selectedCollider.bounds;
+        float margin = ObstacleCheckRadius;
+        float minX = bounds.min.x + margin;
+        float maxX = bounds.max.x - margin;
+        float minZ = bounds.min.z + margin;
+        float maxZ = bounds.max.z - margin;
+
+        if (minX > maxX)
+        {
+            minX = bounds.min.x;
+            maxX = bounds.max.x;
+        }
+
+        if (minZ > maxZ)
+        {
+            minZ = bounds.min.z;
+            maxZ = bounds.max.z;
+        }
+
+        return new Vector3(Random.Range(minX, maxX), bounds.max.y, Random.Range(minZ, maxZ));
+    }
+
+    private bool IsPositionValid(Room room, Vector3 position, out Vector3 finalPosition)
     {
         finalPosition = Vector3.zero;
 
         Vector3 rayOrigin = position + Vector3.up * RayStartHeight;
         if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, RayDistance,
                 _levelsConfiguration.GroundLayer, QueryTriggerInteraction.Ignore) == false)
+        {
+            return false;
+        }
+
+        if (hit.collider == null ||
+            hit.collider.transform != room.transform && hit.collider.transform.IsChildOf(room.transform) == false)
         {
             return false;
         }
@@ -273,4 +358,10 @@ public class EnemySpawner
 
         return colliders.Length == 0;
     }
+
+    private static bool ContainsLayer(LayerMask layerMask, int layer) =>
+        (layerMask.value & (1 << layer)) != 0;
+
+    private static float GetHorizontalArea(Collider collider) =>
+        collider.bounds.size.x * collider.bounds.size.z;
 }
