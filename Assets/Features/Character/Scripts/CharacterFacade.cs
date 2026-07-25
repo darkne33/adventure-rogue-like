@@ -51,6 +51,7 @@ public class CharacterFacade : MonoBehaviour
     private CharacterMoveSystem _moveSystem;
     private CharacterCameraMoveSystem _cameraSystem;
     private DealDamageEffectSystem _damageEffectSystem;
+    private IDamageView _damageView;
     private float _invulnerableUntilTime;
     private bool _isTransitionPaused;
     private bool _wasKinematicBeforeControlLock;
@@ -101,7 +102,7 @@ public class CharacterFacade : MonoBehaviour
         PauseEntity pauseEntity, HealthSystem healthSystem, ShieldSystem shieldSystem,
         CharacterAbilitySystem abilitySystem, CharacterAnimationSystem animationSystem,
         CharacterMoveSystem moveSystem, CharacterCameraMoveSystem cameraSystem,
-        DealDamageEffectSystem damageEffectSystem)
+        DealDamageEffectSystem damageEffectSystem, IDamageView damageView)
     {
         _rigidbody = rigidbody;
         _collider = collider;
@@ -114,6 +115,7 @@ public class CharacterFacade : MonoBehaviour
         _moveSystem = moveSystem;
         _cameraSystem = cameraSystem;
         _damageEffectSystem = damageEffectSystem;
+        _damageView = damageView;
     }
 
     public bool ReceiveDamage(int rawDamage, EnemyFacade source)
@@ -133,10 +135,14 @@ public class CharacterFacade : MonoBehaviour
         int absorbedDamage = _shieldSystem.AbsorbDamage(reducedDamage);
         int healthDamage = reducedDamage - absorbedDamage;
 
-        if (healthDamage > 0 && _healthSystem.CurrentHealth - healthDamage <= 0f &&
+        float healthBeforeDamage = _healthSystem.CurrentHealth;
+        if (healthDamage > 0 && healthBeforeDamage - healthDamage <= 0f &&
             _relicManager != null &&
             _relicManager.TryCancelFatalDamage(this, healthDamage))
         {
+            int rescuedHealthDamage =
+                Mathf.CeilToInt(Mathf.Max(0f, healthBeforeDamage - _healthSystem.CurrentHealth));
+            PlayDamageFeedback(absorbedDamage + rescuedHealthDamage);
             _damageEffectSystem.DealDamage();
             return true;
         }
@@ -148,6 +154,7 @@ public class CharacterFacade : MonoBehaviour
             return false;
 
         _moveSystem.ResetBunnyHopBonus();
+        PlayDamageFeedback(appliedDamage);
         _damageEffectSystem.DealDamage();
         _relicEventBus?.PublishDamageTaken(new RelicDamageTakenEvent(this, source, appliedDamage, "Enemy"));
 
@@ -156,6 +163,15 @@ public class CharacterFacade : MonoBehaviour
             source.HealthSystem.GetDamage(thornsDamage);
 
         return true;
+    }
+
+    private void PlayDamageFeedback(int damage)
+    {
+        if (damage <= 0)
+            return;
+
+        _damageView?.ShowDamage(damage, _healthSystem.MaxHealth, false);
+        _cameraSystem.PlayDamageShake();
     }
 
     public void SetTemporaryInvulnerability(float duration) =>

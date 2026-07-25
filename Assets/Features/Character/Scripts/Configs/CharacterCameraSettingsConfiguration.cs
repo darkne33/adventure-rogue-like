@@ -30,4 +30,10 @@ public class CharacterCameraSettingsConfiguration : ScriptableObject
     [Header("Landing Pivot Movement")]
     [field: SerializeField] public float LandingShakeDuration { get; private set; } = 0.26f;
     [field: SerializeField] public float LandingShakeStrength { get; private set; } = 0.32f;
+
+    [Header("Damage Shake")]
+    [field: SerializeField] public float DamageShakeDuration { get; private set; } = 0.2f;
+    [field: SerializeField] public float DamageShakeStrength { get; private set; } = 0.12f;
+    [field: SerializeField] public float DamageShakeRotationStrength { get; private set; } = 1.4f;
+    [field: SerializeField] public float DamageShakeFrequency { get; private set; } = 30f;
 }

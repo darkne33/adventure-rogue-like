@@ -43,6 +43,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
             facade.CharacterModel, animationSystem, cameraSystem, pauseEntity);
         var abilitySystem = new CharacterAbilitySystem();
         var damageEffectSystem = new DealDamageEffectSystem(facade.MeshRenderers);
+        IDamageView damageView = facade.GetComponent<CharacterDamageNumberView>();
 
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         var deathSystem = new CharacterDeathSystem(facade);
@@ -52,7 +53,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
             _characterSettingsConfiguration.ShieldRegenerationPerSecond, characterPanel.CharacterShieldView);
 
         facade.Construct(rigidbody, collider, _characterStats, pauseEntity, healthSystem, shieldSystem, abilitySystem,
-            animationSystem, moveSystem, cameraSystem, damageEffectSystem);
+            animationSystem, moveSystem, cameraSystem, damageEffectSystem, damageView);
         _chestOpeningService.Initialize(facade, rigidbody, pauseEntity, animationSystem);
     }
 }
