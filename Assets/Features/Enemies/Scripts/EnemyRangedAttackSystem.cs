@@ -72,7 +72,10 @@ namespace Features.Enemies.Scripts
                 RotateTowardsCharacter(enemyTransform, true);
                 SpawnProjectile(cancellationToken);
 
-                await UniTask.Delay(TimeSpan.FromSeconds(_attackView.RecoveryDuration),
+                float movementPause = Mathf.Max(
+                    _attackView.RecoveryDuration,
+                    _enemyConfiguration.MovementPauseAfterAttack);
+                await UniTask.Delay(TimeSpan.FromSeconds(movementPause),
                     cancellationToken: cancellationToken);
             }
             finally

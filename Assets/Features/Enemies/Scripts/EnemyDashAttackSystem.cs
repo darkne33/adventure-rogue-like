@@ -86,7 +86,11 @@ namespace Features.Enemies.Scripts
                 StopHorizontalMovement(rigidbody);
                 _dashView?.StopDash();
 
-                await UniTask.Delay(TimeSpan.FromSeconds(RecoveryDuration), cancellationToken: cancellationToken);
+                float movementPause = Mathf.Max(
+                    RecoveryDuration,
+                    _enemyConfiguration.MovementPauseAfterAttack);
+                await UniTask.Delay(TimeSpan.FromSeconds(movementPause),
+                    cancellationToken: cancellationToken);
             }
             finally
             {

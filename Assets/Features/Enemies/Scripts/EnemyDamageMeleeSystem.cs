@@ -29,23 +29,35 @@ namespace Features.Enemies.Scripts
             if (_enemyFacade.IsDead)
                 return;
 
-            _enemyFacade.StartDelayMovementTimer(_enemyConfiguration.MovementPauseAfterAttack).Forget();
-            _enemyFacade.AnimationSystem.AttackAnimation();
-            
-            await UniTask.Delay(TimeSpan.FromSeconds(0.5f), cancellationToken: cancellationToken);
+            _enemyFacade.SetStop(true);
 
-            if (_enemyFacade.IsDead)
-                return;
+            try
+            {
+                _enemyFacade.AnimationSystem.AttackAnimation();
 
-            var enemyTransform = _enemyFacade.transform;
-            if (_characterFacade.ReceiveDamage(_enemyConfiguration.Damage, _enemyFacade) == false)
-                return;
+                await UniTask.Delay(TimeSpan.FromSeconds(0.5f), cancellationToken: cancellationToken);
 
-            Vector3 pushDirection = _characterFacade.transform.position - enemyTransform.position;
-            pushDirection.y = 0f;
-            pushDirection.Normalize();
-            Vector3 force = pushDirection;
-            _characterFacade.Rigidbody.AddForce(force * 10f, ForceMode.Impulse);
+                if (_enemyFacade.IsDead)
+                    return;
+
+                Transform enemyTransform = _enemyFacade.transform;
+                if (_characterFacade.ReceiveDamage(_enemyConfiguration.Damage, _enemyFacade))
+                {
+                    Vector3 pushDirection = _characterFacade.transform.position - enemyTransform.position;
+                    pushDirection.y = 0f;
+                    pushDirection.Normalize();
+                    _characterFacade.Rigidbody.AddForce(pushDirection * 10f, ForceMode.Impulse);
+                }
+
+                await UniTask.Delay(
+                    TimeSpan.FromSeconds(_enemyConfiguration.MovementPauseAfterAttack),
+                    cancellationToken: cancellationToken);
+            }
+            finally
+            {
+                if (_enemyFacade != null)
+                    _enemyFacade.SetStop(false);
+            }
         }
 
         public async UniTask Tick(CancellationToken cancellationToken)
