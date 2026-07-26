@@ -15,7 +15,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
     private readonly ICharacterProvider _characterProvider;
     private readonly IEnemiesProvider _enemiesProvider;
     private readonly IRoomTransitionService _roomTransitionService;
-    private readonly EnemiesWaveObserver _enemiesWaveObserver;
+    private readonly EnemyRoomObserver _enemyRoomObserver;
     private readonly IGameModeService _gameModeService;
     private readonly MinimapController _minimapController;
     private readonly RelicChestSpawner _relicChestSpawner;
@@ -27,7 +27,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
     public LevelProgressionService(LevelsConfiguration levelsConfiguration, ILevelFactory levelFactory,
         IRogueLikeRuntimeDataService runtimeDataService, ISceneService<RogueLikeSceneProvider> sceneService,
         ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
-        IRoomTransitionService roomTransitionService, EnemiesWaveObserver enemiesWaveObserver,
+        IRoomTransitionService roomTransitionService, EnemyRoomObserver enemyRoomObserver,
         IGameModeService gameModeService, MinimapController minimapController,
         RelicChestSpawner relicChestSpawner, RelicEventBus relicEventBus)
     {
@@ -38,13 +38,13 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         _characterProvider = characterProvider;
         _enemiesProvider = enemiesProvider;
         _roomTransitionService = roomTransitionService;
-        _enemiesWaveObserver = enemiesWaveObserver;
+        _enemyRoomObserver = enemyRoomObserver;
         _gameModeService = gameModeService;
         _minimapController = minimapController;
         _relicChestSpawner = relicChestSpawner;
         _relicEventBus = relicEventBus;
 
-        _enemiesWaveObserver.RoomCompleted += HandleRoomCompleted;
+        _enemyRoomObserver.RoomCompleted += HandleRoomCompleted;
     }
 
     public void TransitToNextLevel()
@@ -63,7 +63,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
     }
 
     public void Dispose() =>
-        _enemiesWaveObserver.RoomCompleted -= HandleRoomCompleted;
+        _enemyRoomObserver.RoomCompleted -= HandleRoomCompleted;
 
     private void HandleRoomCompleted(DefaultEnemiesRoomData roomData)
     {

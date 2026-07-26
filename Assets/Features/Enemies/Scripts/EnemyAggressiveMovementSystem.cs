@@ -21,23 +21,13 @@ namespace Features.Enemies.Scripts
 
         public override void Tick()
         {
-            if (Character == null)
+            if (CanMove() == false)
                 return;
 
             if (_automaticNavigationEnabled == false)
-            {
-                if (NavMeshAgent.isStopped)
-                    return;
-
                 EnableAutomaticNavigation();
-            }
 
             RotateTowardsCharacter();
-
-            if (NavMeshAgent.isStopped)
-                return;
-
-            AnimationSystem.RunAnimation();
             NavMeshAgent.SetDestination(Character.transform.position);
         }
 

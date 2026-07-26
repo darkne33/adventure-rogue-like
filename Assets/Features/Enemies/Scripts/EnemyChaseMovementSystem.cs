@@ -5,6 +5,9 @@ namespace Features.Enemies.Scripts
 {
     public sealed class EnemyChaseMovementSystem : EnemyMovementSystemBase
     {
+        private const float MeleeStopRangeMultiplier = 0.8f;
+
+        private readonly float _stopDistance;
         private bool _isFollowingDirectly;
 
         public EnemyChaseMovementSystem(EnemyFacade enemy, CharacterFacade character,
@@ -12,6 +15,12 @@ namespace Features.Enemies.Scripts
             IEnemyAnimationSystem animationSystem)
             : base(enemy, character, configuration, navMeshAgent, animationSystem)
         {
+            _stopDistance = Mathf.Max(
+                configuration.DistanceToStop,
+                configuration.DamageRange * MeleeStopRangeMultiplier);
+
+            navMeshAgent.autoBraking = true;
+            navMeshAgent.stoppingDistance = _stopDistance;
         }
 
         public override void Tick()
@@ -38,13 +47,32 @@ namespace Features.Enemies.Scripts
                 _isFollowingDirectly = true;
             }
 
-            if (distance <= Configuration.DistanceToStop)
+            if (distance <= _stopDistance)
+            {
+                if (NavMeshAgent.hasPath)
+                    NavMeshAgent.ResetPath();
+
+                RotateTowardsCharacter(direction);
+                AnimationSystem.IdleAnimation();
                 return;
+            }
 
             if (_isFollowingDirectly)
                 MoveDirectlyTo(Character.transform.position);
             else
                 MoveTo(Character.transform.position);
+        }
+
+        private void RotateTowardsCharacter(Vector3 direction)
+        {
+            if (direction.sqrMagnitude <= 0.001f)
+                return;
+
+            Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+            Enemy.transform.rotation = Quaternion.RotateTowards(
+                Enemy.transform.rotation,
+                targetRotation,
+                Configuration.RotationSpeed * Time.fixedDeltaTime);
         }
     }
 }

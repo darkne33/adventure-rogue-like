@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(menuName = "Create LevelsConfiguration", fileName = "LevelsConfiguration", order = 0)]
 public class LevelsConfiguration : ScriptableObject
 {
     [field: SerializeField] public LayerMask GroundLayer { get; private set; }
     [field: SerializeField] public LayerMask ObstacleLayer { get; private set; }
-    [field: SerializeField] public EnemyWaveScalingConfiguration EnemyWaveScalingConfiguration { get; private set; }
+    [field: FormerlySerializedAs("<EnemyWaveScalingConfiguration>k__BackingField")]
+    [field: SerializeField] public EnemyRoomScalingConfiguration EnemyRoomScalingConfiguration { get; private set; }
     [field: SerializeField] public EnemyHealthScalingConfiguration EnemyHealthScalingConfiguration { get; private set; }
     [field: SerializeField] public EnemyTimedSpawnScalingConfiguration EnemyTimedSpawnScalingConfiguration { get; private set; }
     [field: SerializeField] public List<LevelSettings> Levels { get; private set; }
@@ -28,12 +30,12 @@ public class LevelsConfiguration : ScriptableObject
         return level;
     }
 
-    public EnemyWaveScalingConfiguration GetEnemyWaveScalingConfiguration()
+    public EnemyRoomScalingConfiguration GetEnemyRoomScalingConfiguration()
     {
-        if (EnemyWaveScalingConfiguration == null)
-            throw new InvalidOperationException("Enemy wave scaling configuration is missing.");
+        if (EnemyRoomScalingConfiguration == null)
+            throw new InvalidOperationException("Enemy room scaling configuration is missing.");
 
-        return EnemyWaveScalingConfiguration;
+        return EnemyRoomScalingConfiguration;
     }
 
     public EnemyHealthScalingConfiguration GetEnemyHealthScalingConfiguration()

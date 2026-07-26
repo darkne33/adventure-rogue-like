@@ -2,6 +2,7 @@ using TMPro;
 using Features.Relics.Scripts;
 using UI;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class CharacterPanel : PanelBase
@@ -10,7 +11,8 @@ public class CharacterPanel : PanelBase
     [field: SerializeField] public CharacterShieldView CharacterShieldView { get; private set; }
     [field: SerializeField] public CharacterGoldView CharacterGoldView { get; private set; }
     [field: SerializeField] public CharacterExpView CharacterExpView { get; private set; }
-    [field: SerializeField] public TMP_Text WaveAlertText { get; private set; }
+    [field: FormerlySerializedAs("<WaveAlertText>k__BackingField")]
+    [field: SerializeField] public TMP_Text AnnouncementText { get; private set; }
     [field: SerializeField] public RoomTimerView RoomTimerView { get; private set; }
     [field: SerializeField] public TMP_Text RoomNumberText { get; private set; }
     [field: SerializeField] public TMP_Text PlayerGoldCurrencyText { get; private set; }

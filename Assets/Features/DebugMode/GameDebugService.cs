@@ -13,7 +13,6 @@ public sealed class GameDebugService : IInitializable, IDisposable
 {
     private const string AddExpCommand = "debug.exp";
     private const string AddLevelCommand = "debug.level";
-    private const string CompleteWaveCommand = "debug.wave.complete";
     private const string CompleteRoomCommand = "debug.room.complete";
     private const string RestartRoomCommand = "debug.room.restart";
     private const string RestartGameCommand = "debug.game.restart";
@@ -26,7 +25,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
     private readonly ICharacterLevelService _characterLevelService;
     private readonly CharacterExpConfig _characterExpConfig;
     private readonly IEnemiesProvider _enemiesProvider;
-    private readonly EnemiesWaveObserver _enemiesWaveObserver;
+    private readonly EnemyRoomObserver _enemyRoomObserver;
     private readonly IRogueLikeRuntimeDataService _runtimeDataService;
     private readonly IGameModeService _gameModeService;
     private readonly ISceneLoader _sceneLoader;
@@ -41,7 +40,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
 
     public GameDebugService(ICharacterLevelService characterLevelService,
         CharacterExpConfig characterExpConfig, IEnemiesProvider enemiesProvider,
-        EnemiesWaveObserver enemiesWaveObserver, IRogueLikeRuntimeDataService runtimeDataService,
+        EnemyRoomObserver enemyRoomObserver, IRogueLikeRuntimeDataService runtimeDataService,
         IGameModeService gameModeService, ISceneLoader sceneLoader,
         ISceneService<RogueLikeSceneProvider> sceneService,
         IRoomTransitionService roomTransitionService, IPauseService pauseService,
@@ -50,7 +49,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
         _characterLevelService = characterLevelService;
         _characterExpConfig = characterExpConfig;
         _enemiesProvider = enemiesProvider;
-        _enemiesWaveObserver = enemiesWaveObserver;
+        _enemyRoomObserver = enemyRoomObserver;
         _runtimeDataService = runtimeDataService;
         _gameModeService = gameModeService;
         _sceneLoader = sceneLoader;
@@ -70,12 +69,10 @@ public sealed class GameDebugService : IInitializable, IDisposable
             "Adds experience to the character", AddExperience, "amount");
         DebugLogConsole.AddCommand(AddLevelCommand,
             "Adds enough experience to gain one level", AddLevel);
-        DebugLogConsole.AddCommand(CompleteWaveCommand,
-            "Defeats all enemies and completes the current wave", CompleteWave);
         DebugLogConsole.AddCommand(CompleteRoomCommand,
             "Defeats all enemies and opens the current room", CompleteRoom);
         DebugLogConsole.AddCommand(RestartRoomCommand,
-            "Restarts the current room from wave one", RestartRoom);
+            "Restarts the current enemy room", RestartRoom);
         DebugLogConsole.AddCommand(RestartGameCommand,
             "Restarts the current run", RestartGame);
         DebugLogConsole.AddCommand(StatusCommand,
@@ -99,7 +96,6 @@ public sealed class GameDebugService : IInitializable, IDisposable
 
         DebugLogConsole.RemoveCommand(AddExpCommand);
         DebugLogConsole.RemoveCommand(AddLevelCommand);
-        DebugLogConsole.RemoveCommand(CompleteWaveCommand);
         DebugLogConsole.RemoveCommand(CompleteRoomCommand);
         DebugLogConsole.RemoveCommand(RestartRoomCommand);
         DebugLogConsole.RemoveCommand(RestartGameCommand);
@@ -137,19 +133,6 @@ public sealed class GameDebugService : IInitializable, IDisposable
         return $"Level: {previousLevel} -> {_characterLevelService.GetLevel}.";
     }
 
-    private string CompleteWave()
-    {
-        string validationError = ValidateRoomCommand(requireEnemies: true);
-        if (validationError != null)
-            return validationError;
-
-        int completedWave = _enemiesWaveObserver.CurrentWave + 1;
-        int defeatedEnemies = _enemiesProvider.DefeatAllEnemies();
-        _enemiesWaveObserver.CompleteCurrentWave();
-
-        return $"Wave {completedWave} completed. Defeated enemies: {defeatedEnemies}.";
-    }
-
     private string CompleteRoom()
     {
         string validationError = ValidateRoomCommand(requireEnemies: true);
@@ -157,7 +140,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
             return validationError;
 
         int defeatedEnemies = _enemiesProvider.DefeatAllEnemies();
-        _enemiesWaveObserver.CompleteCurrentRoom();
+        _enemyRoomObserver.CompleteCurrentRoom();
 
         return $"Room completed. Defeated enemies: {defeatedEnemies}.";
     }
@@ -170,7 +153,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
 
         int removedEnemies = _enemiesProvider.ClearEnemies();
         _pauseService.CancelPause();
-        _enemiesWaveObserver.ResetCurrentRoom();
+        _enemyRoomObserver.ResetCurrentRoom();
 
         RogueLikeStateMachine stateMachine = _gameModeService.Get<RogueLikeStateMachine>();
         stateMachine.EnterState<RogueLikeRoomPrepareState>().Forget();
@@ -198,8 +181,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
 
         return $"Level {_characterLevelService.GetLevel}, " +
                $"EXP {_characterLevelService.GetCurrentExp}/{_characterLevelService.GetMaxExp}, " +
-               $"room {room}, wave {_enemiesWaveObserver.CurrentWave + 1}, " +
-               $"enemies {_enemiesProvider.Count}, state {state}.";
+               $"room {room}, enemies {_enemiesProvider.Count}, state {state}.";
     }
 
     private string GiveRelic(string id) =>
@@ -241,7 +223,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
             return "RogueLike state machine is not available.";
 
         if (requireEnemies && _enemiesProvider.Count == 0)
-            return "The current wave has no active enemies yet.";
+            return "The current room has no active enemies yet.";
 
         return null;
     }

@@ -57,6 +57,17 @@ public class EnemyConfiguration : ScriptableObject
     [field: Min(0f)]
     [field: SerializeField] public float RangeChaseMaximumDistance { get; private set; } = 9f;
 
+    [field: Header("AI Settings")]
+    [field: Tooltip("The enemy starts moving and attacking when the character enters this radius.")]
+    [field: Min(0.1f)]
+    [field: SerializeField] public float AggroRange { get; private set; } = 15f;
+    [field: Tooltip("How long the enemy shows its alert before it can move or attack.")]
+    [field: Min(0f)]
+    [field: SerializeField] public float AggroReactionDuration { get; private set; } = 0.65f;
+    [field: Tooltip("Maximum distance to a random NavMesh point selected before aggro.")]
+    [field: Min(0f)]
+    [field: SerializeField] public float WanderRadius { get; private set; } = 8f;
+
     private bool UsesDistanceToStop =>
         EnemyMovementType == EnemyMovementType.Chase ||
         EnemyMovementType == EnemyMovementType.AggressiveChase;

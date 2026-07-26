@@ -41,6 +41,9 @@ namespace Features.Enemies.Scripts
             NavMeshAgent navMeshAgent = facade.GetComponent<NavMeshAgent>();
             Animator animator = facade.GetComponent<Animator>();
             EnemyCollisionDetector collisionDetector = facade.GetComponent<EnemyCollisionDetector>();
+            EnemyAggroIndicatorView aggroIndicatorView =
+                facade.GetComponent<EnemyAggroIndicatorView>() ??
+                facade.gameObject.AddComponent<EnemyAggroIndicatorView>();
 
             IEnemyAnimationSystem animationSystem = CreateAnimationSystem(configuration, animator);
             IEnemyMovementSystem movementSystem = CreateMovementSystem(configuration, facade, character,
@@ -56,7 +59,7 @@ namespace Features.Enemies.Scripts
                 new IDamageView[] { facade.GetComponent<EnemyDamageNumberView>() });
 
             facade.Construct(rigidbody, navMeshAgent, collisionDetector, animationSystem, movementSystem,
-                damageSystem, healthSystem, effectsSystem);
+                damageSystem, healthSystem, effectsSystem, aggroIndicatorView);
         }
 
         private IEnemyAnimationSystem CreateAnimationSystem(EnemyConfiguration configuration,

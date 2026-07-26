@@ -16,6 +16,7 @@ namespace Features.Enemies.Scripts
         private EnemyBulletConfiguration _bulletConfiguration;
         private float _cooldown;
         private float _attackDistance;
+        private float _minimumAttackDistance;
 
         public EnemyBulletAttackSystem(CharacterFacade characterFacade,
             EnemyConfiguration enemyConfiguration, EnemyFacade enemyFacade)
@@ -38,12 +39,17 @@ namespace Features.Enemies.Scripts
                     $"{_bulletConfiguration.name} requires a projectile prefab.");
 
             _attackDistance = _enemyConfiguration.DamageRange;
+            _minimumAttackDistance =
+                _enemyConfiguration.EnemyMovementType == EnemyMovementType.RangeChase
+                    ? Mathf.Max(0f, _enemyConfiguration.RangeChaseMinimumDistance)
+                    : 0f;
+            _minimumAttackDistance = Mathf.Min(_minimumAttackDistance, _attackDistance);
             _cooldown = _enemyConfiguration.DamageCooldown;
         }
 
         public async UniTask Execute(CancellationToken cancellationToken)
         {
-            if (_enemyFacade.IsDead)
+            if (_enemyFacade.IsDead || _enemyFacade.IsAggro == false)
                 return;
 
             Transform enemyTransform = _enemyFacade.transform;
@@ -67,7 +73,7 @@ namespace Features.Enemies.Scripts
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
 
-                if (_enemyFacade.IsDead)
+                if (_enemyFacade.IsDead || IsCharacterInsideAttackRange() == false)
                     return;
 
                 RotateTowardsCharacter(enemyTransform, true);
@@ -94,13 +100,13 @@ namespace Features.Enemies.Scripts
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                float distanceToCharacter = GetFlatDistanceToCharacter();
                 _cooldown -= Time.deltaTime;
 
                 if (_enemyFacade.IsDead == false &&
+                    _enemyFacade.IsAggro &&
                     _enemyFacade.IsStopped == false &&
                     _cooldown <= 0f &&
-                    distanceToCharacter <= _attackDistance)
+                    IsCharacterInsideAttackRange())
                 {
                     await Execute(cancellationToken);
                     _cooldown = _enemyConfiguration.DamageCooldown;
@@ -108,6 +114,13 @@ namespace Features.Enemies.Scripts
 
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
             }
+        }
+
+        private bool IsCharacterInsideAttackRange()
+        {
+            float distanceToCharacter = GetFlatDistanceToCharacter();
+            return distanceToCharacter >= _minimumAttackDistance &&
+                   distanceToCharacter <= _attackDistance;
         }
 
         private float GetFlatDistanceToCharacter()

@@ -37,7 +37,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 
     public override UniTask Initialize()
     {
-        Panel.WaveAlertText.DOFade(0, 0);
+        Panel.AnnouncementText.DOFade(0, 0);
         Panel.RoomTimerView?.HideImmediate();
         _characterLevelService.OnUpdateAddExpView += UpdateExpView;
         _characterLevelService.OnExpAdded += ShowExpRewardView;

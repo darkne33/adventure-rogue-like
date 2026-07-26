@@ -12,9 +12,8 @@ public class DummyEnemyAnimation : IEnemyAnimationSystem
         _animator = animator;
     }
 
-    public void IdleAnimation()
-    {
-    }
+    public void IdleAnimation() =>
+        _animator.SetBool(IsRunning, false);
 
     public void RunAnimation() =>
         _animator.SetBool(IsRunning, true);
@@ -22,6 +21,7 @@ public class DummyEnemyAnimation : IEnemyAnimationSystem
     public void AttackAnimation()
     {
         _animator.SetBool(IsRunning, false);
+        _animator.ResetTrigger(Attack);
         _animator.SetTrigger(Attack);
     }
 }

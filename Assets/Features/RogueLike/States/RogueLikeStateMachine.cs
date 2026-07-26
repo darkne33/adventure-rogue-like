@@ -10,7 +10,6 @@ namespace Core
             Add<RogueLikePrepareState>();
             Add<RogueLikePrepareStatsState>();
             Add<RogueLikeRoomPrepareState>();
-            Add<RogueLikeSpawnEnemyWaveState>();
             Add<RogueLikeCleanUpState>();
         }
     }

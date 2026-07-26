@@ -12,10 +12,8 @@ public class BunEnemyAnimation : IEnemyAnimationSystem
         _animator = animator;
     }
     
-    public void IdleAnimation()
-    {
-        
-    }
+    public void IdleAnimation() =>
+        _animator.SetBool(IsRunning, false);
 
     public void RunAnimation()
     {

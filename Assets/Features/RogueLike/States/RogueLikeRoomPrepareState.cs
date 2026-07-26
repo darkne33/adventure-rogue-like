@@ -11,7 +11,7 @@ namespace Core
     public class RogueLikeRoomPrepareState : State
     {
         private readonly IRogueLikeRuntimeDataService _rogueLikeRuntimeDataService;
-        private readonly EnemiesWaveObserver _enemiesWaveObserver;
+        private readonly EnemyRoomObserver _enemyRoomObserver;
         private readonly EnemySpawner _enemySpawner;
         private readonly ICharacterProvider _characterProvider;
         private readonly IEnemiesProvider _enemiesProvider;
@@ -19,12 +19,12 @@ namespace Core
         private readonly LevelsConfiguration _levelsConfiguration;
 
         public RogueLikeRoomPrepareState(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService,
-            EnemiesWaveObserver enemiesWaveObserver, EnemySpawner enemySpawner,
+            EnemyRoomObserver enemyRoomObserver, EnemySpawner enemySpawner,
             ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
             IPanelService panelService, LevelsConfiguration levelsConfiguration)
         {
             _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
-            _enemiesWaveObserver = enemiesWaveObserver;
+            _enemyRoomObserver = enemyRoomObserver;
             _enemySpawner = enemySpawner;
             _characterProvider = characterProvider;
             _enemiesProvider = enemiesProvider;
@@ -41,10 +41,10 @@ namespace Core
             if (currentRoomData.RoomDoors == null)
                 throw new InvalidOperationException("Room doors are not configured.");
 
-            if (_enemiesWaveObserver.RestoreCompletedRoom())
+            if (_enemyRoomObserver.RestoreCompletedRoom())
                 return;
 
-            _enemiesWaveObserver.StartRoom(waitForEnemySpawning: true);
+            _enemyRoomObserver.StartRoom(waitForEnemySpawning: true);
             await _enemySpawner.LoadEnemyPrefabs(cts);
 
             foreach (RoomDoor roomDoor in currentRoomData.RoomDoors)
@@ -53,26 +53,25 @@ namespace Core
                     roomDoor.Close();
             }
 
-            _enemySpawner.TrySpawnEnemies(_characterProvider.CharacterFacade,
-                _enemiesWaveObserver.CurrentWave);
+            _enemySpawner.TrySpawnEnemies(_characterProvider.CharacterFacade);
 
-            RunTimedAdditionalSpawning(currentRoomData, cts).Forget();
+            RunTimedAdditionalSpawning(currentRoomData.Configuration, cts).Forget();
         }
 
-        private async UniTask RunTimedAdditionalSpawning(DefaultEnemiesRoomData roomData,
+        private async UniTask RunTimedAdditionalSpawning(EnemyRoomConfiguration configuration,
             CancellationToken cancellationToken)
         {
             EnemyTimedSpawnScalingConfiguration scalingConfiguration =
                 _levelsConfiguration.GetEnemyTimedSpawnScalingConfiguration();
-            float duration = scalingConfiguration.GetDuration(roomData.TimedSpawnDuration,
-                _enemiesWaveObserver.CompletedRooms);
+            float duration = scalingConfiguration.GetDuration(configuration.TimedSpawnDuration,
+                _enemyRoomObserver.CompletedRooms);
             if (duration <= 0f)
             {
-                _enemiesWaveObserver.FinishEnemySpawning(_enemiesProvider.Count);
+                _enemyRoomObserver.FinishEnemySpawning(_enemiesProvider.Count);
                 return;
             }
 
-            float spawnInterval = Mathf.Max(0.1f, roomData.AdditionalSpawnInterval);
+            float spawnInterval = Mathf.Max(0.1f, configuration.AdditionalSpawnInterval);
             float spawnTimer = spawnInterval;
             float remainingTime = duration;
             int shownSeconds = Mathf.CeilToInt(remainingTime);
@@ -98,7 +97,7 @@ namespace Core
                     if (spawnTimer <= 0f && remainingTime > 0f)
                     {
                         _enemySpawner.TrySpawnAdditionalEnemies(_characterProvider.CharacterFacade,
-                            _enemiesWaveObserver.CurrentWave, roomData.AdditionalEnemiesPerSpawn);
+                            configuration.AdditionalEnemiesPerSpawn);
                         spawnTimer += spawnInterval;
                     }
 
@@ -125,7 +124,7 @@ namespace Core
                 timerView?.Hide();
 
                 if (timerCompleted)
-                    _enemiesWaveObserver.FinishEnemySpawning(_enemiesProvider.Count);
+                    _enemyRoomObserver.FinishEnemySpawning(_enemiesProvider.Count);
             }
         }
     }

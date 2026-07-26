@@ -58,6 +58,8 @@ MonoBehaviour:
   m_Active: 1
   downsampleDepthShader: {fileID: 4800000, guid: cffeaeec0396a2c4dad475266cc8dfeb, type: 3}
   volumetricFogShader: {fileID: 4800000, guid: 08f816187f9af0244a95556ee0cab83f, type: 3}
+  downsampleDepthMaterial: {fileID: 0}
+  volumetricFogMaterial: {fileID: 0}
 --- !u!114 &-1878332245247344467
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -112,8 +114,7 @@ MonoBehaviour:
   - {fileID: -1878332245247344467}
   - {fileID: -3931143420159258984}
   - {fileID: 5761865970047159037}
-  - {fileID: -3681641304301552997}
-  m_RendererFeatureMap: adc0de57c6d2eee5980e4b30e3c571c9fd8a12749242f64f9b3ab36abd2ee8cc
+  m_RendererFeatureMap: adc0de57c6d2eee5980e4b30e3c571c9fd8a12749242f64f
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   m_AssetVersion: 3

@@ -19,6 +19,7 @@ namespace Features.Enemies.Scripts
         public IEnemyAnimationSystem AnimationSystem => _animationSystem;
         public bool IsStopped => _navMeshAgent.isStopped;
         public bool IsDead => _healthSystem?.IsDead == true;
+        public bool IsAggro { get; private set; }
 
         public EnemyConfiguration Configuration => _enemyConfiguration;
         public Renderer[] MeshRenderers => _meshRenderers;
@@ -34,6 +35,7 @@ namespace Features.Enemies.Scripts
         private IEnemyDamageSystem _damageSystem;
         private HealthSystem _healthSystem;
         private DealDamageEffectSystem _effectsSystem;
+        private EnemyAggroIndicatorView _aggroIndicatorView;
 
         [Inject]
         private void CreateSystems(IEnemySystemsFactory systemsFactory)
@@ -54,7 +56,8 @@ namespace Features.Enemies.Scripts
         public void Construct(Rigidbody rigidbody, NavMeshAgent navMeshAgent,
             EnemyCollisionDetector collisionDetector, IEnemyAnimationSystem animationSystem,
             IEnemyMovementSystem movementSystem, IEnemyDamageSystem damageSystem,
-            HealthSystem healthSystem, DealDamageEffectSystem effectsSystem)
+            HealthSystem healthSystem, DealDamageEffectSystem effectsSystem,
+            EnemyAggroIndicatorView aggroIndicatorView)
         {
             _rigidbody = rigidbody;
             _navMeshAgent = navMeshAgent;
@@ -64,6 +67,7 @@ namespace Features.Enemies.Scripts
             _damageSystem = damageSystem;
             _healthSystem = healthSystem;
             _effectsSystem = effectsSystem;
+            _aggroIndicatorView = aggroIndicatorView;
         }
 
         public async UniTask StartDelayMovementTimer(float delay)
@@ -93,6 +97,32 @@ namespace Features.Enemies.Scripts
             if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, NavMeshSampleDistance,
                     NavMesh.AllAreas))
                 _navMeshAgent.Warp(hit.position);
+        }
+
+        internal void ActivateAggro()
+        {
+            if (IsAggro)
+                return;
+
+            IsAggro = true;
+            PlayAggroReaction().Forget();
+        }
+
+        private async UniTask PlayAggroReaction()
+        {
+            float reactionDuration = Mathf.Max(0f, _enemyConfiguration.AggroReactionDuration);
+
+            SetStop(true);
+            _animationSystem.IdleAnimation();
+            _aggroIndicatorView?.Play(reactionDuration);
+
+            bool wasCancelled = await UniTask.Delay(
+                    TimeSpan.FromSeconds(reactionDuration),
+                    cancellationToken: gameObject.GetCancellationTokenOnDestroy())
+                .SuppressCancellationThrow();
+
+            if (wasCancelled == false && this != null)
+                SetStop(false);
         }
 
         internal void InitializeNavigation(Vector3 navMeshPosition)

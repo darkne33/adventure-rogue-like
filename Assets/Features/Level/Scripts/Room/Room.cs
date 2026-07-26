@@ -25,12 +25,13 @@ public class RoomData
 [Serializable]
 public class DefaultEnemiesRoomData : RoomData
 {
-    [field: SerializeField] public EnemyWavesConfiguration[] EnemyWavesConfiguration { get; private set; }
-    [field: SerializeField, Min(0f)] public float TimedSpawnDuration { get; private set; } = 10f;
-    [field: SerializeField, Min(0.1f)] public float AdditionalSpawnInterval { get; private set; } = 2f;
-    [field: SerializeField, Min(0)] public int AdditionalEnemiesPerSpawn { get; private set; } = 1;
-
+    public EnemyRoomConfiguration Configuration { get; private set; }
     public bool IsCompleted { get; private set; }
+
+    internal void Configure(EnemyRoomConfiguration configuration) =>
+        Configuration = configuration != null
+            ? configuration
+            : throw new ArgumentNullException(nameof(configuration));
 
     public void MarkCompleted() =>
         IsCompleted = true;

@@ -7,16 +7,18 @@ namespace Features.Enemies.Scripts
 {
     public class EnemiesProvider : IEnemiesProvider
     {
+        private const int ClosestEnemiesPoolSize = 3;
+
         public int Count => _enemies.Count;
         public IReadOnlyList<EnemyFacade> ActiveEnemies => _enemies;
 
-        private readonly EnemiesWaveObserver _enemiesWaveObserver;
+        private readonly EnemyRoomObserver _enemyRoomObserver;
         private readonly List<EnemyFacade> _enemies = new();
         private bool _isBatchChange;
 
-        public EnemiesProvider(EnemiesWaveObserver enemiesWaveObserver)
+        public EnemiesProvider(EnemyRoomObserver enemyRoomObserver)
         {
-            _enemiesWaveObserver = enemiesWaveObserver;
+            _enemyRoomObserver = enemyRoomObserver;
         }
 
         public void AddEnemy(EnemyFacade enemyFacade) =>
@@ -27,7 +29,7 @@ namespace Features.Enemies.Scripts
             _enemies.Remove(enemyFacade);
 
             if (_isBatchChange == false)
-                _enemiesWaveObserver.Observe(_enemies);
+                _enemyRoomObserver.Observe(_enemies);
         }
 
         public int DefeatAllEnemies()
@@ -61,10 +63,21 @@ namespace Features.Enemies.Scripts
 
         public EnemyFacade GetRandomClosestEnemyByCharacter(Transform character, float distance)
         {
-            var closestEnemies = _enemies
-                .Where(x => (x.transform.position - character.transform.position).magnitude < distance).ToList();
-            var randomEnemy = closestEnemies.GetRandom();
-            return randomEnemy;
+            if (character == null || distance <= 0f)
+                return null;
+
+            Vector3 characterPosition = character.position;
+            float maxSqrDistance = distance * distance;
+            List<EnemyFacade> closestEnemies = _enemies
+                .Where(enemy => enemy != null &&
+                                enemy.gameObject.activeInHierarchy &&
+                                enemy.IsDead == false &&
+                                (enemy.transform.position - characterPosition).sqrMagnitude < maxSqrDistance)
+                .OrderBy(enemy => (enemy.transform.position - characterPosition).sqrMagnitude)
+                .Take(ClosestEnemiesPoolSize)
+                .ToList();
+
+            return closestEnemies.GetRandom();
         }
     }
 }

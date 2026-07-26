@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Zenject;
@@ -119,7 +120,18 @@ public class LevelView : MonoBehaviour
             Room room = MaterializeRoom(container, roomNode.RoomPrefab,
                 roomNode.Room, roomNode.GridPosition, "room");
 
-            if (roomNode.Type == RoomType.Reward && room.RoomData is not RewardRoomData)
+            if (roomNode.Type is RoomType.Enemy or RoomType.Exit)
+            {
+                RoomDoor[] authoredDoors = room.RoomData?.RoomDoors;
+                var enemiesRoomData = room.RoomData as DefaultEnemiesRoomData ??
+                                      new DefaultEnemiesRoomData
+                                      {
+                                          RoomDoors = authoredDoors
+                                      };
+                enemiesRoomData.Configure(roomNode.EnemyConfiguration);
+                room.SetRoomData(enemiesRoomData);
+            }
+            else if (roomNode.Type == RoomType.Reward && room.RoomData is not RewardRoomData)
             {
                 RoomDoor[] authoredDoors = room.RoomData?.RoomDoors;
                 room.SetRoomData(new RewardRoomData
@@ -246,10 +258,11 @@ public class LevelView : MonoBehaviour
                 return;
             case RoomType.Enemy:
             case RoomType.Exit:
-                if (roomData is not DefaultEnemiesRoomData enemiesRoomData)
+                if (roomData == null)
                     throw new InvalidOperationException(
-                        $"{roomNode.RoomPrefab.name} must contain DefaultEnemiesRoomData.");
-                ValidateEnemyWaves(roomNode.RoomPrefab.name, enemiesRoomData);
+                        $"{roomNode.RoomPrefab.name} does not contain room data.");
+                ValidateEnemyConfiguration(roomNode.RoomPrefab.name,
+                    roomNode.EnemyConfiguration);
                 return;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -266,7 +279,8 @@ public class LevelView : MonoBehaviour
                         $"{roomNode.Room.name} does not have a start point.");
                 return;
             case (RoomType.Enemy or RoomType.Exit, DefaultEnemiesRoomData enemiesRoomData):
-                ValidateEnemyWaves(roomNode.Room.name, enemiesRoomData);
+                ValidateEnemyConfiguration(roomNode.Room.name,
+                    enemiesRoomData.Configuration);
                 return;
             case (RoomType.Reward, RewardRoomData):
                 return;
@@ -276,15 +290,16 @@ public class LevelView : MonoBehaviour
         }
     }
 
-    private static void ValidateEnemyWaves(string roomName,
-        DefaultEnemiesRoomData enemiesRoomData)
+    private static void ValidateEnemyConfiguration(string roomName,
+        EnemyRoomConfiguration configuration)
     {
-        if (enemiesRoomData.EnemyWavesConfiguration == null ||
-            enemiesRoomData.EnemyWavesConfiguration.Length == 0)
-        {
+        if (configuration == null)
             throw new InvalidOperationException(
-                $"{roomName} does not contain enemy wave configurations.");
-        }
+                $"{roomName} does not contain an enemy room configuration.");
+
+        if (!configuration.HasSpawnableEnemies)
+            throw new InvalidOperationException(
+                $"{roomName} enemy room configuration does not contain spawnable enemies.");
     }
 
     private static void ValidateRoomDoors(IEnumerable<Room> rooms)
@@ -607,16 +622,22 @@ public sealed class LevelRoomNode
     [field: SerializeField] public Vector2Int GridPosition { get; private set; }
     [field: SerializeField] public RoomType Type { get; private set; } = RoomType.Enemy;
     [field: SerializeField]
+    [field: Expandable]
+    [field: Tooltip("Used by combat rooms (Enemy and Exit).")]
+    public EnemyRoomConfiguration EnemyConfiguration { get; private set; }
+    [field: SerializeField]
     [field: Tooltip("Used only when Type is Exit.")]
     public RoomDirection LevelExitDirection { get; private set; }
 
     public LevelRoomNode(Room roomPrefab, Vector2Int gridPosition, RoomType type,
-        RoomDirection levelExitDirection = default)
+        RoomDirection levelExitDirection = default,
+        EnemyRoomConfiguration enemyConfiguration = null)
     {
         _roomPrefab = roomPrefab;
         GridPosition = gridPosition;
         Type = type;
         LevelExitDirection = levelExitDirection;
+        EnemyConfiguration = enemyConfiguration;
     }
 
     public void Bind(Room room) =>

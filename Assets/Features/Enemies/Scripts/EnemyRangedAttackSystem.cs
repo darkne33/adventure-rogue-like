@@ -42,7 +42,7 @@ namespace Features.Enemies.Scripts
 
         public async UniTask Execute(CancellationToken cancellationToken)
         {
-            if (_enemyFacade.IsDead)
+            if (_enemyFacade.IsDead || _enemyFacade.IsAggro == false)
                 return;
 
             Transform enemyTransform = _enemyFacade.transform;
@@ -97,6 +97,7 @@ namespace Features.Enemies.Scripts
                 _cooldown -= Time.deltaTime;
 
                 if (_enemyFacade.IsDead == false &&
+                    _enemyFacade.IsAggro &&
                     _enemyFacade.IsStopped == false &&
                     _cooldown <= 0f &&
                     distanceToCharacter >= _minimumDistanceExecuteDamage &&

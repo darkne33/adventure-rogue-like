@@ -25,9 +25,9 @@ namespace Core
                 .GetPanelPresenter<CharacterPanelPresenter>(PanelName.CharacterPanel)
                 .Panel;
 
-            panel.WaveAlertText.DOKill();
-            panel.WaveAlertText.text = "RUN COMPLETE";
-            panel.WaveAlertText.alpha = 1f;
+            panel.AnnouncementText.DOKill();
+            panel.AnnouncementText.text = "RUN COMPLETE";
+            panel.AnnouncementText.alpha = 1f;
 
             return UniTask.CompletedTask;
         }

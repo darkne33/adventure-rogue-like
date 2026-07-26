@@ -9,13 +9,17 @@ namespace Features.Enemies.Scripts
     public sealed class EnemyRangeChaseMovementSystem : EnemyMovementSystemBase
     {
         private const float MinimumDirectionSqrMagnitude = 0.001f;
-        private const float SideStepWeight = 2f;
+        private const float DistanceHysteresis = 1f;
+        private const float NavMeshSampleDistance = 4f;
 
         private readonly float _minimumDistance;
         private readonly float _maximumDistance;
+        private readonly float _retreatStopDistance;
+        private readonly float _approachStopDistance;
 
-        private bool _isEvading;
-        private float _sideStepDirection;
+        private bool _isRetreating;
+        private bool _isApproaching;
+        private bool _automaticNavigationEnabled;
 
         public EnemyRangeChaseMovementSystem(EnemyFacade enemy, CharacterFacade character,
             EnemyConfiguration configuration, NavMeshAgent navMeshAgent,
@@ -34,6 +38,12 @@ namespace Features.Enemies.Scripts
                 ? Mathf.Min(configuredMaximumDistance, attackDistance)
                 : configuredMaximumDistance;
             _minimumDistance = Mathf.Min(configuredMinimumDistance, _maximumDistance);
+            _retreatStopDistance = Mathf.Min(
+                _minimumDistance + DistanceHysteresis,
+                _maximumDistance);
+            _approachStopDistance = Mathf.Max(
+                _maximumDistance - DistanceHysteresis,
+                _minimumDistance);
 
             navMeshAgent.autoBraking = true;
             navMeshAgent.stoppingDistance = 0f;
@@ -44,31 +54,60 @@ namespace Features.Enemies.Scripts
             if (CanMove() == false)
                 return;
 
+            EnableAutomaticNavigation();
+
             Vector3 awayFromCharacter = Enemy.transform.position - Character.transform.position;
             awayFromCharacter.y = 0f;
             float distance = awayFromCharacter.magnitude;
 
-            if (distance > _maximumDistance)
+            if (_isRetreating)
             {
-                _isEvading = false;
-                MoveTo(Character.transform.position);
-                return;
+                if (distance < _retreatStopDistance)
+                {
+                    MoveAwayFromCharacter(awayFromCharacter);
+                    return;
+                }
+
+                _isRetreating = false;
+            }
+
+            if (_isApproaching)
+            {
+                if (distance > _approachStopDistance)
+                {
+                    SetNavigationDestination(Character.transform.position);
+                    return;
+                }
+
+                _isApproaching = false;
             }
 
             if (distance < _minimumDistance)
             {
-                EvadeCharacter(awayFromCharacter);
+                _isRetreating = true;
+                MoveAwayFromCharacter(awayFromCharacter);
                 return;
             }
 
-            _isEvading = false;
+            if (distance > _maximumDistance)
+            {
+                _isApproaching = true;
+                SetNavigationDestination(Character.transform.position);
+                return;
+            }
+
             HoldPosition();
         }
 
         public override void Reset()
         {
+            base.Reset();
+
             if (NavMeshAgent.isOnNavMesh && NavMeshAgent.hasPath)
                 NavMeshAgent.ResetPath();
+
+            _isRetreating = false;
+            _isApproaching = false;
         }
 
         private void HoldPosition()
@@ -79,7 +118,7 @@ namespace Features.Enemies.Scripts
             AnimationSystem.IdleAnimation();
         }
 
-        private void EvadeCharacter(Vector3 awayFromCharacter)
+        private void MoveAwayFromCharacter(Vector3 awayFromCharacter)
         {
             if (awayFromCharacter.sqrMagnitude < MinimumDirectionSqrMagnitude)
             {
@@ -90,19 +129,27 @@ namespace Features.Enemies.Scripts
                     awayFromCharacter = Vector3.forward;
             }
 
-            if (_isEvading == false)
-            {
-                _isEvading = true;
-                _sideStepDirection = Random.value < 0.5f ? -1f : 1f;
-            }
-
             Vector3 awayDirection = awayFromCharacter.normalized;
-            Vector3 sideDirection = Vector3.Cross(Vector3.up, awayDirection) * _sideStepDirection;
-            Vector3 evadeDirection = (awayDirection + sideDirection * SideStepWeight).normalized;
-            Vector3 evadePosition = Character.transform.position +
-                                    evadeDirection * _maximumDistance;
+            Vector3 retreatPosition = Character.transform.position +
+                                      awayDirection * _retreatStopDistance;
+            SetNavigationDestination(retreatPosition);
+        }
 
-            MoveTo(evadePosition);
+        private void EnableAutomaticNavigation()
+        {
+            if (_automaticNavigationEnabled)
+                return;
+
+            NavMeshAgent.nextPosition = Enemy.transform.position;
+            NavMeshAgent.updatePosition = true;
+            _automaticNavigationEnabled = true;
+        }
+
+        private void SetNavigationDestination(Vector3 desiredPosition)
+        {
+            if (NavMesh.SamplePosition(desiredPosition, out NavMeshHit hit,
+                    NavMeshSampleDistance, NavMesh.AllAreas))
+                NavMeshAgent.SetDestination(hit.position);
         }
     }
 }

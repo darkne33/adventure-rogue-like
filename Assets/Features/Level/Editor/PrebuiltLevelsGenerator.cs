@@ -21,6 +21,8 @@ public static class PrebuiltLevelsGenerator
         "Assets/Features/RoomGates/Prefabs/RoomDoor.prefab";
     private const string ConfigurationPath =
         "Assets/Features/Level/LevelsConfiguration.asset";
+    private const string EnemyRoomConfigurationPath =
+        "Assets/Features/Level/Configs_Enemies_EnemyRoomConfiguration.asset";
 
     private static readonly Vector2Int StartRoomGridPosition = new(0, -1);
 
@@ -66,6 +68,13 @@ public static class PrebuiltLevelsGenerator
         if (configuration == null)
             throw new InvalidOperationException("Levels configuration asset is missing.");
 
+        EnemyRoomConfiguration enemyRoomConfiguration =
+            AssetDatabase.LoadAssetAtPath<EnemyRoomConfiguration>(
+                EnemyRoomConfigurationPath);
+        if (enemyRoomConfiguration == null)
+            throw new InvalidOperationException(
+                "Default enemy room configuration asset is missing.");
+
         ConfigureRoomPrefabs();
 
         GameObject baseRoom = AssetDatabase.LoadAssetAtPath<GameObject>(BaseRoomPath);
@@ -81,7 +90,8 @@ public static class PrebuiltLevelsGenerator
             {
                 EnsureLevelFolders(levelNumber);
                 GameObject[] roomPrefabs = CreateRoomPrefabs(baseRoom, levelNumber);
-                levelViews.Add(CreateLevelPrefab(startRoom, roomPrefabs, levelNumber));
+                levelViews.Add(CreateLevelPrefab(startRoom, roomPrefabs, levelNumber,
+                    enemyRoomConfiguration));
             }
 
             UpdateConfiguration(configuration, levelViews);
@@ -283,7 +293,8 @@ public static class PrebuiltLevelsGenerator
     }
 
     private static LevelView CreateLevelPrefab(GameObject startRoomPrefab,
-        IReadOnlyList<GameObject> roomPrefabs, int levelNumber)
+        IReadOnlyList<GameObject> roomPrefabs, int levelNumber,
+        EnemyRoomConfiguration enemyRoomConfiguration)
     {
         var levelRoot = new GameObject($"Level_{levelNumber}");
         GameObject defaultDoorPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(DoorPrefabPath);
@@ -329,7 +340,10 @@ public static class PrebuiltLevelsGenerator
                     rooms[roomIndex],
                     layout[roomIndex],
                     roomType,
-                    ExitDirections[levelNumber - 1]);
+                    ExitDirections[levelNumber - 1],
+                    roomType is RoomType.Enemy or RoomType.Exit
+                        ? enemyRoomConfiguration
+                        : null);
 
                 RemoveUnusedDoors(rooms[roomIndex], layout[roomIndex], roomPositions,
                     hasNextLevel && isLevelExit, ExitDirections[levelNumber - 1]);
@@ -536,9 +550,8 @@ public static class PrebuiltLevelsGenerator
             bool hasMatchingData = node?.Type switch
             {
                 RoomType.Start => node.Room?.RoomData is StartRoomData,
-                RoomType.Reward => node.Room?.RoomData is RewardRoomData,
-                RoomType.Enemy or RoomType.Exit =>
-                    node.Room?.RoomData is DefaultEnemiesRoomData,
+                RoomType.Reward or RoomType.Enemy or RoomType.Exit =>
+                    node.Room?.RoomData != null,
                 _ => false
             };
             if (!hasMatchingData)
@@ -552,9 +565,9 @@ public static class PrebuiltLevelsGenerator
                 throw new InvalidOperationException(
                     $"Level {levelNumber} contains a room without doors.");
 
-            if (roomData is DefaultEnemiesRoomData enemiesRoomData &&
-                (enemiesRoomData.EnemyWavesConfiguration == null ||
-                 enemiesRoomData.EnemyWavesConfiguration.Length == 0))
+            if (node.Type is RoomType.Enemy or RoomType.Exit &&
+                (node.EnemyConfiguration == null ||
+                 !node.EnemyConfiguration.HasSpawnableEnemies))
             {
                 throw new InvalidOperationException(
                     $"Level {levelNumber} contains an invalid enemy room.");

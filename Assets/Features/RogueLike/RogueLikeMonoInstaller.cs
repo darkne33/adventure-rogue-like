@@ -87,7 +87,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<EnemySpawner>().AsSingle();
 
     private void BindObservers() => 
-        Container.Bind<EnemiesWaveObserver>().AsSingle();
+        Container.Bind<EnemyRoomObserver>().AsSingle();
 
     private void BindCharacterWallet() =>
         Container.Bind<CharacterWallet>().AsSingle();

@@ -10,10 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 18664ffeca154f939751be1b50d9820f, type: 3}
-  m_Name: Configs_Enemies_EnemyWaveScalingConfiguration
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyWaveScalingConfiguration
+  m_Name: Configs_Enemies_EnemyRoomScalingConfiguration
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyRoomScalingConfiguration
   _enemyCountMultiplier: 1
   _additionalEnemiesPerLevel: 1
   _additionalEnemiesPerRoom: 1
-  _additionalEnemiesPerWave: 2
-  _maxEnemiesPerWave: 24
+  _maxEnemiesPerRoom: 24

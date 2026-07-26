@@ -67,8 +67,11 @@ namespace Features.Enemies.Scripts
             MoveTo(targetPosition);
         }
 
-        public override void Reset() =>
+        public override void Reset()
+        {
+            base.Reset();
             _decisionTimer = 0f;
+        }
 
         private void SelectState(float distance)
         {

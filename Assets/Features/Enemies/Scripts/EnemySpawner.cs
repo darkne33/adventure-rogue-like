@@ -18,7 +18,7 @@ public class EnemySpawner
     private readonly IEffectsService _effectsService;
     private readonly RelicEventBus _relicEventBus;
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
-    private readonly EnemiesWaveObserver _enemiesWaveObserver;
+    private readonly EnemyRoomObserver _enemyRoomObserver;
 
     private const float RayStartHeight = 50f;
     private const float RayDistance = 100f;
@@ -30,7 +30,7 @@ public class EnemySpawner
     public EnemySpawner(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IEnemyFactory enemyFactory,
         LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider, IEffectsService effectsService,
         RelicEventBus relicEventBus, ISceneService<RogueLikeSceneProvider> sceneService,
-        EnemiesWaveObserver enemiesWaveObserver)
+        EnemyRoomObserver enemyRoomObserver)
     {
         _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
         _enemyFactory = enemyFactory;
@@ -39,7 +39,7 @@ public class EnemySpawner
         _effectsService = effectsService;
         _relicEventBus = relicEventBus;
         _sceneService = sceneService;
-        _enemiesWaveObserver = enemiesWaveObserver;
+        _enemyRoomObserver = enemyRoomObserver;
     }
 
     public async UniTask LoadEnemyPrefabs(CancellationToken cts)
@@ -59,9 +59,9 @@ public class EnemySpawner
         }
     }
 
-    public void TrySpawnEnemies(CharacterFacade characterFacade, int currentWave)
+    public void TrySpawnEnemies(CharacterFacade characterFacade)
     {
-        EnemyWavesConfiguration wave = GetCurrentWave(characterFacade, currentWave,
+        EnemyRoomConfiguration configuration = GetCurrentConfiguration(characterFacade,
             out DefaultEnemiesRoomData currentRoomData, out LevelSettings levelSettings);
 
         LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
@@ -69,22 +69,22 @@ public class EnemySpawner
             throw new System.InvalidOperationException("Current level view is not available.");
 
         int roomIndex = currentLevel.GetEnemyRoomIndex(currentRoomData);
-        EnemyWaveScalingConfiguration scalingConfiguration =
-            _levelsConfiguration.GetEnemyWaveScalingConfiguration();
-        List<EnemyType> enemyTypes = BuildSpawnQueue(scalingConfiguration, wave,
-            _rogueLikeRuntimeDataService.CurrentIndexLevel, roomIndex, currentWave);
+        EnemyRoomScalingConfiguration scalingConfiguration =
+            _levelsConfiguration.GetEnemyRoomScalingConfiguration();
+        List<EnemyType> enemyTypes = BuildSpawnQueue(scalingConfiguration, configuration,
+            _rogueLikeRuntimeDataService.CurrentIndexLevel, roomIndex);
         Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
         SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes);
     }
 
-    public void TrySpawnAdditionalEnemies(CharacterFacade characterFacade, int currentWave, int enemyCount)
+    public void TrySpawnAdditionalEnemies(CharacterFacade characterFacade, int enemyCount)
     {
         if (enemyCount <= 0)
             return;
 
-        EnemyWavesConfiguration wave = GetCurrentWave(characterFacade, currentWave,
+        EnemyRoomConfiguration configuration = GetCurrentConfiguration(characterFacade,
             out DefaultEnemiesRoomData currentRoomData, out LevelSettings levelSettings);
-        List<EnemyType> enemyTypes = BuildAdditionalSpawnQueue(wave, enemyCount, currentWave);
+        List<EnemyType> enemyTypes = BuildAdditionalSpawnQueue(configuration, enemyCount);
 
         LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
         if (currentLevel == null)
@@ -94,7 +94,7 @@ public class EnemySpawner
         SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes);
     }
 
-    private EnemyWavesConfiguration GetCurrentWave(CharacterFacade characterFacade, int currentWave,
+    private EnemyRoomConfiguration GetCurrentConfiguration(CharacterFacade characterFacade,
         out DefaultEnemiesRoomData currentRoomData, out LevelSettings levelSettings)
     {
         if (characterFacade == null)
@@ -103,15 +103,10 @@ public class EnemySpawner
         if (_rogueLikeRuntimeDataService.CurrentRoomData is not DefaultEnemiesRoomData roomData)
             throw new System.InvalidOperationException("Enemies can only be spawned in a default enemies room.");
 
-        if (roomData.EnemyWavesConfiguration == null ||
-            currentWave < 0 ||
-            currentWave >= roomData.EnemyWavesConfiguration.Length)
-            throw new System.ArgumentOutOfRangeException(nameof(currentWave), currentWave,
-                "Wave index is outside the current room wave configuration.");
-
-        EnemyWavesConfiguration wave = roomData.EnemyWavesConfiguration[currentWave];
-        if (wave == null || wave.EnemyTypes == null)
-            throw new System.InvalidOperationException($"Wave {currentWave} is not configured correctly.");
+        EnemyRoomConfiguration configuration = roomData.Configuration;
+        if (configuration == null || !configuration.HasSpawnableEnemies)
+            throw new System.InvalidOperationException(
+                "The current enemy room configuration does not contain spawnable enemies.");
 
         levelSettings =
             _levelsConfiguration.GetLevel(_rogueLikeRuntimeDataService.CurrentIndexLevel);
@@ -121,7 +116,7 @@ public class EnemySpawner
                 "Enemy factory configuration is missing for the current level.");
 
         currentRoomData = roomData;
-        return wave;
+        return configuration;
     }
 
     private void SpawnEnemyTypes(Room currentRoom, LevelSettings levelSettings,
@@ -147,27 +142,28 @@ public class EnemySpawner
             }
 
             var enemy = levelSettings.EnemyFactoryConfiguration.GetEnemyByType(
-                enemyType, _enemiesWaveObserver.CompletedRooms);
+                enemyType, _enemyRoomObserver.CompletedRooms);
 
             SpawnEnemy(enemy, spawnPosition).Forget();
         }
     }
 
-    private static List<EnemyType> BuildSpawnQueue(EnemyWaveScalingConfiguration scalingConfiguration,
-        EnemyWavesConfiguration wave, int levelIndex, int roomIndex, int currentWave)
+    private static List<EnemyType> BuildSpawnQueue(EnemyRoomScalingConfiguration scalingConfiguration,
+        EnemyRoomConfiguration configuration, int levelIndex, int roomIndex)
     {
-        var baseEnemyTypes = new List<EnemyType>(wave.EnemyTypes.Length);
-        for (int i = 0; i < wave.EnemyTypes.Length; i++)
+        var baseEnemyTypes = new List<EnemyType>(configuration.EnemyTypes.Length);
+        for (int i = 0; i < configuration.EnemyTypes.Length; i++)
         {
-            if (wave.EnemyTypes[i] != EnemyType.None)
-                baseEnemyTypes.Add(wave.EnemyTypes[i]);
+            if (configuration.EnemyTypes[i] != EnemyType.None)
+                baseEnemyTypes.Add(configuration.EnemyTypes[i]);
         }
 
         if (baseEnemyTypes.Count == 0)
-            throw new System.InvalidOperationException($"Wave {currentWave} does not contain spawnable enemy types.");
+            throw new System.InvalidOperationException(
+                "The enemy room configuration does not contain spawnable enemy types.");
 
         int enemyCount = scalingConfiguration.GetEnemyCount(baseEnemyTypes.Count,
-            levelIndex, roomIndex, currentWave);
+            levelIndex, roomIndex);
         var spawnQueue = new List<EnemyType>(enemyCount);
         for (int i = 0; i < enemyCount; i++)
             spawnQueue.Add(baseEnemyTypes[i % baseEnemyTypes.Count]);
@@ -175,18 +171,19 @@ public class EnemySpawner
         return spawnQueue;
     }
 
-    private static List<EnemyType> BuildAdditionalSpawnQueue(EnemyWavesConfiguration wave,
-        int enemyCount, int currentWave)
+    private static List<EnemyType> BuildAdditionalSpawnQueue(
+        EnemyRoomConfiguration configuration, int enemyCount)
     {
-        var baseEnemyTypes = new List<EnemyType>(wave.EnemyTypes.Length);
-        for (int i = 0; i < wave.EnemyTypes.Length; i++)
+        var baseEnemyTypes = new List<EnemyType>(configuration.EnemyTypes.Length);
+        for (int i = 0; i < configuration.EnemyTypes.Length; i++)
         {
-            if (wave.EnemyTypes[i] != EnemyType.None)
-                baseEnemyTypes.Add(wave.EnemyTypes[i]);
+            if (configuration.EnemyTypes[i] != EnemyType.None)
+                baseEnemyTypes.Add(configuration.EnemyTypes[i]);
         }
 
         if (baseEnemyTypes.Count == 0)
-            throw new System.InvalidOperationException($"Wave {currentWave} does not contain spawnable enemy types.");
+            throw new System.InvalidOperationException(
+                "The enemy room configuration does not contain spawnable enemy types.");
 
         var spawnQueue = new List<EnemyType>(enemyCount);
         for (int i = 0; i < enemyCount; i++)
