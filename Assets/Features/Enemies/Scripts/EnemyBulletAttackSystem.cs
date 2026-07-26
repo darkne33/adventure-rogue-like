@@ -73,7 +73,9 @@ namespace Features.Enemies.Scripts
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
 
-                if (_enemyFacade.IsDead || IsCharacterInsideAttackRange() == false)
+                if (_enemyFacade.IsDead ||
+                    _enemyFacade.CanAttack == false ||
+                    IsCharacterInsideAttackRange() == false)
                     return;
 
                 RotateTowardsCharacter(enemyTransform, true);
@@ -104,6 +106,7 @@ namespace Features.Enemies.Scripts
 
                 if (_enemyFacade.IsDead == false &&
                     _enemyFacade.IsAggro &&
+                    _enemyFacade.CanAttack &&
                     _enemyFacade.IsStopped == false &&
                     _cooldown <= 0f &&
                     IsCharacterInsideAttackRange())
