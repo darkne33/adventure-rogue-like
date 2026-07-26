@@ -11,6 +11,7 @@ namespace Features.Enemies.Scripts
         private const float MinimumDirectionSqrMagnitude = 0.001f;
         private const float DistanceHysteresis = 1f;
         private const float NavMeshSampleDistance = 4f;
+        private const float ImmediateSpeedAcceleration = 1000f;
 
         private readonly float _minimumDistance;
         private readonly float _maximumDistance;
@@ -20,6 +21,8 @@ namespace Features.Enemies.Scripts
         private bool _isRetreating;
         private bool _isApproaching;
         private bool _automaticNavigationEnabled;
+
+        public override bool CanAttack => _isRetreating == false;
 
         public EnemyRangeChaseMovementSystem(EnemyFacade enemy, CharacterFacade character,
             EnemyConfiguration configuration, NavMeshAgent navMeshAgent,
@@ -38,9 +41,7 @@ namespace Features.Enemies.Scripts
                 ? Mathf.Min(configuredMaximumDistance, attackDistance)
                 : configuredMaximumDistance;
             _minimumDistance = Mathf.Min(configuredMinimumDistance, _maximumDistance);
-            _retreatStopDistance = Mathf.Min(
-                _minimumDistance + DistanceHysteresis,
-                _maximumDistance);
+            _retreatStopDistance = _maximumDistance;
             _approachStopDistance = Mathf.Max(
                 _maximumDistance - DistanceHysteresis,
                 _minimumDistance);
@@ -142,6 +143,8 @@ namespace Features.Enemies.Scripts
 
             NavMeshAgent.nextPosition = Enemy.transform.position;
             NavMeshAgent.updatePosition = true;
+            NavMeshAgent.updateRotation = true;
+            NavMeshAgent.acceleration = ImmediateSpeedAcceleration;
             _automaticNavigationEnabled = true;
         }
 

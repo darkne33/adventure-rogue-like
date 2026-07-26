@@ -20,6 +20,7 @@ namespace Features.Enemies.Scripts
         public bool IsStopped => _navMeshAgent.isStopped;
         public bool IsDead => _healthSystem?.IsDead == true;
         public bool IsAggro { get; private set; }
+        public bool CanAttack => _movementSystem?.CanAttack != false;
 
         public EnemyConfiguration Configuration => _enemyConfiguration;
         public Renderer[] MeshRenderers => _meshRenderers;

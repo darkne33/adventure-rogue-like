@@ -17,6 +17,8 @@ namespace Features.Enemies.Scripts
         protected readonly NavMeshAgent NavMeshAgent;
         protected readonly IEnemyAnimationSystem AnimationSystem;
 
+        public virtual bool CanAttack => true;
+
         private readonly NavMeshPath _wanderPath = new();
         private bool _hasWanderDestination;
         private float _nextWanderAttemptTime;
