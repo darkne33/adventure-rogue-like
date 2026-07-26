@@ -21,8 +21,10 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     private RelicInventoryViewService _relicInventoryViewService;
     private CharacterWallet _characterWallet;
     private RelicEventBus _relicEventBus;
+    private ICharacterAimTargetProvider _aimTargetProvider;
     private readonly HashSet<EnemyFacade> _countedKilledEnemies = new();
     private CancellationTokenSource _gameTimerCancellation;
+    private CancellationTokenSource _crosshairCancellation;
     private int _killedEnemies;
     private int _shownRoomCount = -1;
 
@@ -47,6 +49,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         _relicInventoryViewService = stateMachine.Resolve<RelicInventoryViewService>();
         _characterWallet = stateMachine.Resolve<CharacterWallet>();
         _relicEventBus = stateMachine.Resolve<RelicEventBus>();
+        _aimTargetProvider = stateMachine.Resolve<ICharacterAimTargetProvider>();
 
         _runtimeDataService.RoomChanged += HandleRoomChanged;
         _minimapController.Attach(Panel.MinimapView);
@@ -66,6 +69,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         UpdateSilverCurrencyView(_characterWallet?.Silver.Count ?? 0);
         ResetKilledEnemiesView();
         StartGameTimer();
+        StartCrosshairTracking();
 
         return UniTask.CompletedTask;
     }
@@ -87,6 +91,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
             _relicEventBus.Kill -= UpdateKilledEnemiesView;
 
         StopGameTimer();
+        StopCrosshairTracking();
         _minimapController?.Detach(Panel.MinimapView);
         _relicInventoryViewService?.Detach();
         Panel.RoomTimerView?.HideImmediate();
@@ -168,6 +173,25 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         _gameTimerCancellation = null;
     }
 
+    private void StartCrosshairTracking()
+    {
+        StopCrosshairTracking();
+        Panel.CrosshairView?.SetTargeted(false);
+        _crosshairCancellation = new CancellationTokenSource();
+        RunCrosshairTracking(_crosshairCancellation.Token).Forget();
+    }
+
+    private void StopCrosshairTracking()
+    {
+        if (_crosshairCancellation == null)
+            return;
+
+        _crosshairCancellation.Cancel();
+        _crosshairCancellation.Dispose();
+        _crosshairCancellation = null;
+        Panel.CrosshairView?.SetTargeted(false);
+    }
+
     private async UniTask RunGameTimer(CancellationToken cancellationToken)
     {
         float elapsedTime = 0f;
@@ -186,6 +210,21 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 
                 lastShownSeconds = seconds;
                 UpdateGameTimerView(seconds);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+    }
+
+    private async UniTask RunCrosshairTracking(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (cancellationToken.IsCancellationRequested == false)
+            {
+                await UniTask.Yield(PlayerLoopTiming.PostLateUpdate, cancellationToken);
+                Panel.CrosshairView?.SetTargeted(_aimTargetProvider?.GetAimedEnemy() != null);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

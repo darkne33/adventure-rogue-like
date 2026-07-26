@@ -10,6 +10,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     private const float ProjectileSpreadOffset = 0.35f;
 
     private readonly IEnemiesProvider _enemiesProvider;
+    private readonly ICharacterAimTargetProvider _aimTargetProvider;
     private readonly CharacterDamageCalculator _damageCalculator;
     private readonly CharacterStats _characterStats;
     private readonly RelicEventBus _relicEventBus;
@@ -20,10 +21,12 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     protected int Damage { get; set; }
     protected float ProjectileSpeed { get; private set; }
 
-    protected SingleShootAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
-        CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager)
+    protected SingleShootAbility(IEnemiesProvider enemiesProvider, ICharacterAimTargetProvider aimTargetProvider,
+        CharacterDamageCalculator damageCalculator, CharacterStats characterStats, RelicEventBus relicEventBus,
+        RelicManager relicManager)
     {
         _enemiesProvider = enemiesProvider;
+        _aimTargetProvider = aimTargetProvider;
         _damageCalculator = damageCalculator;
         _characterStats = characterStats;
         _relicEventBus = relicEventBus;
@@ -47,9 +50,10 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     protected override void OnUse(CharacterFacade character)
     {
+        EnemyFacade aimedEnemy = _aimTargetProvider.GetAimedEnemy();
         int projectileCount = CalculateProjectileCount();
         for (int index = 0; index < projectileCount; index++)
-            ShootProjectile(character, index, projectileCount);
+            ShootProjectile(character, aimedEnemy, index, projectileCount);
     }
 
     protected virtual void OnShootableInitialized()
@@ -127,14 +131,18 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         return Mathf.Max(1, Mathf.RoundToInt(Damage * multiplier));
     }
 
-    private void ShootProjectile(CharacterFacade character, int projectileIndex, int projectileCount)
+    private void ShootProjectile(CharacterFacade character, EnemyFacade aimedEnemy, int projectileIndex,
+        int projectileCount)
     {
-        EnemyFacade randomEnemy = _enemiesProvider.GetRandomClosestEnemyByCharacter(character.transform, 100);
+        EnemyFacade targetEnemy = IsValidAimedEnemy(aimedEnemy, character)
+            ? aimedEnemy
+            : _enemiesProvider.GetRandomClosestEnemyByCharacter(character.transform,
+                _aimTargetProvider.TargetingDistance);
 
-        if (randomEnemy == null)
+        if (targetEnemy == null)
             return;
 
-        Vector3 targetPosition = GetEnemyTargetPosition(randomEnemy);
+        Vector3 targetPosition = GetEnemyTargetPosition(targetEnemy);
         Vector3 spawnPosition = character.ProjectileSpawnPosition +
                                 GetProjectileSpawnOffset(character.transform, projectileIndex, projectileCount);
         Vector3 shootDirection = targetPosition - spawnPosition;
@@ -153,7 +161,16 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         }
 
         playerCollisionDetector.Initialize(character.transform);
-        OnProjectileCreated(character, shootObj, playerCollisionDetector, randomEnemy, spawnPosition, shootDirection);
+        OnProjectileCreated(character, shootObj, playerCollisionDetector, targetEnemy, spawnPosition, shootDirection);
+    }
+
+    private bool IsValidAimedEnemy(EnemyFacade aimedEnemy, CharacterFacade character)
+    {
+        if (aimedEnemy == null || aimedEnemy.gameObject.activeInHierarchy == false || aimedEnemy.IsDead)
+            return false;
+
+        float maxSqrDistance = _aimTargetProvider.TargetingDistance * _aimTargetProvider.TargetingDistance;
+        return (aimedEnemy.transform.position - character.transform.position).sqrMagnitude < maxSqrDistance;
     }
 
     private int CalculateProjectileCount()

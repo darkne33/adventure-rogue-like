@@ -20,9 +20,10 @@ public class FireballAbility : SingleShootAbility
     private FireballAbilityConfiguration FireballConfig => (FireballAbilityConfiguration)AbilityConfig;
     public override AbilityUpgradeType[] UpgradeTypes => FireballUpgradeTypes;
 
-    public FireballAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
-        CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager)
-        : base(enemiesProvider, damageCalculator, characterStats, relicEventBus, relicManager)
+    public FireballAbility(IEnemiesProvider enemiesProvider, ICharacterAimTargetProvider aimTargetProvider,
+        CharacterDamageCalculator damageCalculator, CharacterStats characterStats, RelicEventBus relicEventBus,
+        RelicManager relicManager)
+        : base(enemiesProvider, aimTargetProvider, damageCalculator, characterStats, relicEventBus, relicManager)
     {
     }
 

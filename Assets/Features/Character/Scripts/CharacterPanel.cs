@@ -21,4 +21,5 @@ public class CharacterPanel : PanelBase
     [field: SerializeField] public Slider ExpProgressBar { get; private set; }
     [field: SerializeField] public UpgradeOfferPanel UpgradeOfferPanel { get; private set; }
     [field: SerializeField] public RelicInventoryView RelicInventoryView { get; private set; }
+    [field: SerializeField] public CharacterCrosshairView CrosshairView { get; private set; }
 }
