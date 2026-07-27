@@ -7,7 +7,6 @@ namespace Features.Enemies.Scripts
 {
     public class EnemyDamageMeleeSystem : IEnemyDamageSystem
     {
-        private const float WindupDuration = 0.5f;
         private const float TrackingDuration = 0.35f;
         private const float AttackHalfAngle = 65f;
         private const float KnockbackForce = 10f;
@@ -15,16 +14,18 @@ namespace Features.Enemies.Scripts
         private readonly CharacterFacade _characterFacade;
         private readonly EnemyConfiguration _enemyConfiguration;
         private readonly EnemyFacade _enemyFacade;
+        private readonly float _attackPreparationDuration;
 
         private float _cooldown;
         private readonly float _distanceExecuteDamage;
 
         public EnemyDamageMeleeSystem(EnemyFacade enemyFacade, CharacterFacade characterFacade,
-            EnemyConfiguration enemyConfiguration)
+            EnemyConfiguration enemyConfiguration, float attackPreparationDuration)
         {
             _enemyFacade = enemyFacade;
             _characterFacade = characterFacade;
             _enemyConfiguration = enemyConfiguration;
+            _attackPreparationDuration = Mathf.Max(0f, attackPreparationDuration);
 
             _distanceExecuteDamage = _enemyConfiguration.DamageRange;
         }
@@ -34,19 +35,29 @@ namespace Features.Enemies.Scripts
             if (_enemyFacade.IsDead || _enemyFacade.IsAggro == false)
                 return;
 
+            Rigidbody rigidbody = _enemyFacade.Rigidbody;
             _enemyFacade.SetStop(true);
+            StopHorizontalMovement(rigidbody);
+            _enemyFacade.EffectsSystem.BeginAttackTelegraph(_attackPreparationDuration);
 
             try
             {
+                _enemyFacade.AnimationSystem.IdleAnimation();
                 _enemyFacade.AnimationSystem.AttackAnimation();
 
                 Transform enemyTransform = _enemyFacade.transform;
-                await TrackCharacter(enemyTransform, TrackingDuration, cancellationToken);
+                float trackingDuration = Mathf.Min(
+                    TrackingDuration, _attackPreparationDuration);
+                await TrackCharacter(enemyTransform, trackingDuration, cancellationToken);
 
                 Vector3 attackDirection = GetFlatDirection(enemyTransform.forward);
-                float lockedWindupDuration = Mathf.Max(0f, WindupDuration - TrackingDuration);
-                await UniTask.Delay(TimeSpan.FromSeconds(lockedWindupDuration),
-                    cancellationToken: cancellationToken);
+                await WaitForLockedWindup(
+                    trackingDuration, _attackPreparationDuration, cancellationToken);
+
+                if (_enemyFacade.IsDead)
+                    return;
+
+                await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
 
                 if (_enemyFacade.IsDead)
                     return;
@@ -62,14 +73,22 @@ namespace Features.Enemies.Scripts
                         ForceMode.Impulse);
                 }
 
+                _enemyFacade.AnimationSystem.IdleAnimation();
                 await UniTask.Delay(
-                    TimeSpan.FromSeconds(_enemyConfiguration.MovementPauseAfterAttack),
+                    TimeSpan.FromSeconds(Mathf.Max(
+                        0f, _enemyConfiguration.MovementPauseAfterAttack)),
                     cancellationToken: cancellationToken);
             }
             finally
             {
+                _enemyFacade?.EffectsSystem.ClearAttackTelegraph();
+
                 if (_enemyFacade != null)
+                {
+                    StopHorizontalMovement(rigidbody);
+                    _enemyFacade.SyncNavigationPosition();
                     _enemyFacade.SetStop(false);
+                }
             }
         }
 
@@ -120,6 +139,19 @@ namespace Features.Enemies.Scripts
             }
         }
 
+        private async UniTask WaitForLockedWindup(float elapsed, float duration,
+            CancellationToken cancellationToken)
+        {
+            while (elapsed < duration)
+            {
+                if (_enemyFacade.IsDead)
+                    return;
+
+                elapsed += Time.deltaTime;
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+        }
+
         private bool CanHitCharacter(Transform enemyTransform, Vector3 attackDirection)
         {
             Vector3 toCharacter = _characterFacade.transform.position - enemyTransform.position;
@@ -156,6 +188,14 @@ namespace Features.Enemies.Scripts
             return fallback.sqrMagnitude > 0.001f
                 ? fallback.normalized
                 : Vector3.forward;
+        }
+
+        private static void StopHorizontalMovement(Rigidbody rigidbody)
+        {
+            Vector3 velocity = rigidbody.linearVelocity;
+            velocity.x = 0f;
+            velocity.z = 0f;
+            rigidbody.linearVelocity = velocity;
         }
     }
 }

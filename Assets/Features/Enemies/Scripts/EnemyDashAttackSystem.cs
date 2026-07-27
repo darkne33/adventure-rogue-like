@@ -7,7 +7,6 @@ namespace Features.Enemies.Scripts
 {
     public class EnemyDashAttackSystem : IEnemyDamageSystem
     {
-        private const float WindupDuration = 0.65f;
         private const float DashDuration = 0.42f;
         private const float RecoveryDuration = 0.3f;
         private const float DashSpeed = 28f;
@@ -17,18 +16,20 @@ namespace Features.Enemies.Scripts
         private readonly EnemyConfiguration _enemyConfiguration;
         private readonly EnemyFacade _enemyFacade;
         private readonly EnemyDashView _dashView;
+        private readonly float _attackPreparationDuration;
 
         private float _cooldown;
         private float _distanceExecuteDamage;
         private bool _canDamage;
 
         public EnemyDashAttackSystem(CharacterFacade characterFacade, EnemyConfiguration enemyConfiguration,
-            EnemyFacade enemyFacade, EnemyDashView dashView)
+            EnemyFacade enemyFacade, EnemyDashView dashView, float attackPreparationDuration)
         {
             _characterFacade = characterFacade;
             _enemyConfiguration = enemyConfiguration;
             _enemyFacade = enemyFacade;
             _dashView = dashView;
+            _attackPreparationDuration = Mathf.Max(0f, attackPreparationDuration);
         }
 
         public void Initialize()
@@ -50,11 +51,15 @@ namespace Features.Enemies.Scripts
 
             _enemyFacade.SetStop(true);
             StopHorizontalMovement(rigidbody);
+            _enemyFacade.EffectsSystem.BeginAttackTelegraph(_attackPreparationDuration);
 
             try
             {
+                _enemyFacade.AnimationSystem.IdleAnimation();
+                _enemyFacade.AnimationSystem.AttackAnimation();
+
                 float elapsed = 0f;
-                while (elapsed < WindupDuration)
+                while (elapsed < _attackPreparationDuration)
                 {
                     if (_enemyFacade.IsDead)
                         return;
@@ -62,7 +67,8 @@ namespace Features.Enemies.Scripts
                     dashDirection = GetDirectionToCharacter(enemyTransform);
                     RotateTowards(enemyTransform, dashDirection);
 
-                    float progress = Mathf.Clamp01(elapsed / WindupDuration);
+                    float progress = Mathf.Clamp01(
+                        elapsed / _attackPreparationDuration);
                     float distance = Vector3.Distance(enemyTransform.position, _characterFacade.transform.position);
                     float telegraphLength = Mathf.Max(_distanceExecuteDamage + 3f, distance + 2f);
                     _dashView?.ShowTelegraph(dashDirection, telegraphLength, progress);
@@ -70,6 +76,11 @@ namespace Features.Enemies.Scripts
                     elapsed += Time.deltaTime;
                     await UniTask.Yield(cancellationToken);
                 }
+
+                await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
+
+                if (_enemyFacade.IsDead)
+                    return;
 
                 RotateTowards(enemyTransform, dashDirection, true);
                 _dashView?.StartDash();
@@ -85,6 +96,7 @@ namespace Features.Enemies.Scripts
                 _canDamage = false;
                 StopHorizontalMovement(rigidbody);
                 _dashView?.StopDash();
+                _enemyFacade.AnimationSystem.IdleAnimation();
 
                 float movementPause = Mathf.Max(
                     RecoveryDuration,
@@ -96,6 +108,7 @@ namespace Features.Enemies.Scripts
             {
                 _canDamage = false;
                 _dashView?.StopDash();
+                _enemyFacade?.EffectsSystem.ClearAttackTelegraph();
 
                 if (_enemyFacade != null)
                 {

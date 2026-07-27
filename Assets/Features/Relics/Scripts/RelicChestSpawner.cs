@@ -63,7 +63,9 @@ namespace Features.Relics.Scripts
 
             Shuffle(rooms);
 
-            var excludedRelicIds = new HashSet<string>();
+            int remainingChestRewards = _relicPool
+                .GetAvailable(_relicManager.ActiveRelics)
+                .Count();
             for (int index = 0; index < rooms.Count; index++)
             {
                 Room room = rooms[index];
@@ -73,12 +75,11 @@ namespace Features.Relics.Scripts
                 int chestCount = GetChestCount(roomData);
                 for (int chestIndex = 0; chestIndex < chestCount; chestIndex++)
                 {
-                    RelicDefinition relic = _relicPool.Roll(_relicManager.ActiveRelics, excludedRelicIds);
-                    if (relic == null)
+                    if (remainingChestRewards <= 0)
                         return;
 
-                    excludedRelicIds.Add(relic.Id);
-                    SpawnChest(room, roomData, relic);
+                    if (SpawnChest(room, roomData))
+                        remainingChestRewards--;
                 }
             }
         }
@@ -94,7 +95,7 @@ namespace Features.Relics.Scripts
                 .ToList();
         }
 
-        private bool SpawnChest(Room room, RoomData roomData, RelicDefinition relic)
+        private bool SpawnChest(Room room, RoomData roomData)
         {
             if (TryGetGroundPoint(room, out Vector3 groundPoint) == false)
             {
@@ -112,8 +113,8 @@ namespace Features.Relics.Scripts
 
             AlignBottomToGround(chestObject, groundPoint.y);
             _activeChests.Add(chest);
-            chest.Construct(relic, _configuration, _relicManager, _eventBus, _characterProvider,
-                _container, roomData, room);
+            chest.Construct(_configuration, _relicPool, _relicManager, _eventBus,
+                _characterProvider, _container, roomData, room);
             _eventBus.PublishChestSpawned(roomData, room, chestObject.transform.position);
             return true;
         }

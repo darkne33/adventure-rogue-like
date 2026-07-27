@@ -22,6 +22,8 @@
 
         _HitColor("Hit Color", Color) = (1,0,0,1)
         _HitPower("Hit Power", Range(0,1)) = 0
+        [HDR]_AttackTelegraphColor("Attack Telegraph Color", Color) = (2,2,2,1)
+        _AttackTelegraphPower("Attack Telegraph Power", Range(0,1)) = 0
 
         // Fade
         [Toggle(_FADE_ON)]_FadeOn("Fade", Float) = 0
@@ -93,6 +95,8 @@
 
             float4 _HitColor;
             float _HitPower;
+            float4 _AttackTelegraphColor;
+            float _AttackTelegraphPower;
 
             float4 _FadeTex_ST;
             float _FadeAmount;
@@ -295,6 +299,11 @@
 
                     tex.rgb += emission;
                 #endif
+
+                tex.rgb =
+                    lerp(tex.rgb,
+                         _AttackTelegraphColor.rgb,
+                         saturate(_AttackTelegraphPower));
 
                 #if defined(_FADE_ON)
                     tex = ApplyFade(tex, finalUV);

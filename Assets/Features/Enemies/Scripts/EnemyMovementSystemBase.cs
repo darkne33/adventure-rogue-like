@@ -5,11 +5,7 @@ namespace Features.Enemies.Scripts
 {
     public abstract class EnemyMovementSystemBase : IEnemyMovementSystem
     {
-        private const int WanderDestinationSearchAttempts = 8;
         private const float NavMeshSampleDistance = 4f;
-        private const float WanderDestinationReachedDistance = 0.4f;
-        private const float WanderDestinationRetryDelay = 0.5f;
-        private const float MinimumWanderDirectionSqrMagnitude = 0.01f;
 
         protected readonly EnemyFacade Enemy;
         protected readonly CharacterFacade Character;
@@ -18,10 +14,6 @@ namespace Features.Enemies.Scripts
         protected readonly IEnemyAnimationSystem AnimationSystem;
 
         public virtual bool CanAttack => true;
-
-        private readonly NavMeshPath _wanderPath = new();
-        private bool _hasWanderDestination;
-        private float _nextWanderAttemptTime;
 
         protected EnemyMovementSystemBase(EnemyFacade enemy, CharacterFacade character,
             EnemyConfiguration configuration, NavMeshAgent navMeshAgent,
@@ -36,13 +28,12 @@ namespace Features.Enemies.Scripts
 
         public abstract void Tick();
 
+        public virtual void OnAttackFinished()
+        {
+        }
+
         public virtual void Reset()
         {
-            if (Enemy.IsAggro)
-                return;
-
-            _hasWanderDestination = false;
-            _nextWanderAttemptTime = Time.time;
         }
 
         protected bool CanMove()
@@ -55,7 +46,7 @@ namespace Features.Enemies.Scripts
             {
                 if (IsCharacterInsideAggroRange() == false)
                 {
-                    Wander();
+                    ApproachCharacter();
                     return false;
                 }
 
@@ -82,95 +73,43 @@ namespace Features.Enemies.Scripts
         private void ActivateAggro()
         {
             Enemy.ActivateAggro();
-            _hasWanderDestination = false;
 
             if (NavMeshAgent.hasPath)
                 NavMeshAgent.ResetPath();
         }
 
-        private void Wander()
+        private void ApproachCharacter()
         {
-            if (ShouldSelectWanderDestination())
-                SelectWanderDestination();
-
-            if (_hasWanderDestination == false)
-            {
-                AnimationSystem.IdleAnimation();
-                return;
-            }
-
             AnimationSystem.RunAnimation();
-            Enemy.transform.position = Vector3.Lerp(
-                Enemy.transform.position,
-                NavMeshAgent.nextPosition,
-                Time.deltaTime * NavMeshAgent.speed);
-        }
-
-        private bool ShouldSelectWanderDestination()
-        {
-            if (_hasWanderDestination == false)
-                return Time.time >= _nextWanderAttemptTime;
-
-            if (NavMeshAgent.pathPending)
-                return false;
-
-            if (NavMeshAgent.pathStatus != NavMeshPathStatus.PathComplete)
-                return true;
-
-            float reachedDistance = Mathf.Max(
-                WanderDestinationReachedDistance,
-                NavMeshAgent.stoppingDistance);
-            return NavMeshAgent.remainingDistance <= reachedDistance;
-        }
-
-        private void SelectWanderDestination()
-        {
-            float wanderRadius = Mathf.Max(0f, Configuration.WanderRadius);
-            if (wanderRadius <= 0f)
-            {
-                _hasWanderDestination = false;
-                _nextWanderAttemptTime = float.PositiveInfinity;
-                return;
-            }
-
-            for (int attempt = 0; attempt < WanderDestinationSearchAttempts; attempt++)
-            {
-                Vector2 randomOffset = Random.insideUnitCircle;
-                if (randomOffset.sqrMagnitude < MinimumWanderDirectionSqrMagnitude)
-                    continue;
-
-                Vector3 desiredPosition = Enemy.transform.position +
-                                          new Vector3(randomOffset.x, 0f, randomOffset.y) * wanderRadius;
-
-                if (NavMesh.SamplePosition(desiredPosition, out NavMeshHit hit, NavMeshSampleDistance,
-                        NavMesh.AllAreas) == false ||
-                    NavMeshAgent.CalculatePath(hit.position, _wanderPath) == false ||
-                    _wanderPath.status != NavMeshPathStatus.PathComplete ||
-                    NavMeshAgent.SetDestination(hit.position) == false)
-                {
-                    continue;
-                }
-
-                _hasWanderDestination = true;
-                return;
-            }
-
-            _hasWanderDestination = false;
-            _nextWanderAttemptTime = Time.time + WanderDestinationRetryDelay;
+            MoveTo(Character.transform.position);
         }
 
         protected void MoveTo(Vector3 desiredPosition)
         {
-            if (NavMesh.SamplePosition(desiredPosition, out NavMeshHit hit, NavMeshSampleDistance,
-                    NavMesh.AllAreas) == false)
+            if (SetNavigationDestination(desiredPosition) == false)
                 return;
 
-            MoveDirectlyTo(hit.position);
+            UpdateManualNavigationPosition();
         }
 
         protected void MoveDirectlyTo(Vector3 desiredPosition)
         {
             NavMeshAgent.SetDestination(desiredPosition);
+            UpdateManualNavigationPosition();
+        }
+
+        protected bool SetNavigationDestination(Vector3 desiredPosition)
+        {
+            return NavMesh.SamplePosition(desiredPosition, out NavMeshHit hit,
+                       NavMeshSampleDistance, NavMesh.AllAreas) &&
+                   NavMeshAgent.SetDestination(hit.position);
+        }
+
+        private void UpdateManualNavigationPosition()
+        {
+            if (NavMeshAgent.updatePosition)
+                return;
+
             Enemy.transform.position = Vector3.Lerp(
                 Enemy.transform.position,
                 NavMeshAgent.nextPosition,

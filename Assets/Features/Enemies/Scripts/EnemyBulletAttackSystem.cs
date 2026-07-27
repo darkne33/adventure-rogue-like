@@ -12,18 +12,20 @@ namespace Features.Enemies.Scripts
         private readonly CharacterFacade _characterFacade;
         private readonly EnemyConfiguration _enemyConfiguration;
         private readonly EnemyFacade _enemyFacade;
+        private readonly float _attackPreparationDuration;
 
         private EnemyBulletConfiguration _bulletConfiguration;
         private float _cooldown;
         private float _attackDistance;
-        private float _minimumAttackDistance;
 
         public EnemyBulletAttackSystem(CharacterFacade characterFacade,
-            EnemyConfiguration enemyConfiguration, EnemyFacade enemyFacade)
+            EnemyConfiguration enemyConfiguration, EnemyFacade enemyFacade,
+            float attackPreparationDuration)
         {
             _characterFacade = characterFacade;
             _enemyConfiguration = enemyConfiguration;
             _enemyFacade = enemyFacade;
+            _attackPreparationDuration = Mathf.Max(0f, attackPreparationDuration);
         }
 
         public void Initialize()
@@ -39,12 +41,7 @@ namespace Features.Enemies.Scripts
                     $"{_bulletConfiguration.name} requires a projectile prefab.");
 
             _attackDistance = _enemyConfiguration.DamageRange;
-            _minimumAttackDistance =
-                _enemyConfiguration.EnemyMovementType == EnemyMovementType.RangeChase
-                    ? Mathf.Max(0f, _enemyConfiguration.RangeChaseMinimumDistance)
-                    : 0f;
-            _minimumAttackDistance = Mathf.Min(_minimumAttackDistance, _attackDistance);
-            _cooldown = _enemyConfiguration.DamageCooldown;
+            _cooldown = Mathf.Max(0f, _enemyConfiguration.InitialAttackCooldown);
         }
 
         public async UniTask Execute(CancellationToken cancellationToken)
@@ -54,16 +51,19 @@ namespace Features.Enemies.Scripts
 
             Transform enemyTransform = _enemyFacade.transform;
             Rigidbody rigidbody = _enemyFacade.Rigidbody;
+            bool projectileReleased = false;
 
             _enemyFacade.SetStop(true);
             StopHorizontalMovement(rigidbody);
+            _enemyFacade.EffectsSystem.BeginAttackTelegraph(_attackPreparationDuration);
 
             try
             {
+                _enemyFacade.AnimationSystem.IdleAnimation();
                 _enemyFacade.AnimationSystem.AttackAnimation();
 
                 float elapsed = 0f;
-                while (elapsed < _bulletConfiguration.WindupDuration)
+                while (elapsed < _attackPreparationDuration)
                 {
                     if (_enemyFacade.IsDead)
                         return;
@@ -73,14 +73,19 @@ namespace Features.Enemies.Scripts
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
 
-                if (_enemyFacade.IsDead ||
-                    _enemyFacade.CanAttack == false ||
-                    IsCharacterInsideAttackRange() == false)
+                if (_enemyFacade.IsDead)
+                    return;
+
+                await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
+
+                if (_enemyFacade.IsDead)
                     return;
 
                 RotateTowardsCharacter(enemyTransform, true);
                 SpawnProjectile(cancellationToken);
+                projectileReleased = true;
 
+                _enemyFacade.AnimationSystem.IdleAnimation();
                 float movementPause = Mathf.Max(
                     _bulletConfiguration.RecoveryDuration,
                     _enemyConfiguration.MovementPauseAfterAttack);
@@ -89,11 +94,16 @@ namespace Features.Enemies.Scripts
             }
             finally
             {
+                _enemyFacade?.EffectsSystem.ClearAttackTelegraph();
+
                 if (_enemyFacade != null)
                 {
                     StopHorizontalMovement(rigidbody);
                     _enemyFacade.SyncNavigationPosition();
                     _enemyFacade.SetStop(false);
+
+                    if (projectileReleased && _enemyFacade.IsDead == false)
+                        _enemyFacade.NotifyAttackFinished();
                 }
             }
         }
@@ -122,8 +132,7 @@ namespace Features.Enemies.Scripts
         private bool IsCharacterInsideAttackRange()
         {
             float distanceToCharacter = GetFlatDistanceToCharacter();
-            return distanceToCharacter >= _minimumAttackDistance &&
-                   distanceToCharacter <= _attackDistance;
+            return distanceToCharacter <= _attackDistance;
         }
 
         private float GetFlatDistanceToCharacter()

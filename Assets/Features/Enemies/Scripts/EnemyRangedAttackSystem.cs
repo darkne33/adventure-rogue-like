@@ -13,18 +13,21 @@ namespace Features.Enemies.Scripts
         private readonly EnemyConfiguration _enemyConfiguration;
         private readonly EnemyFacade _enemyFacade;
         private readonly EnemyRangedAttackView _attackView;
+        private readonly float _attackPreparationDuration;
 
         private float _cooldown;
         private float _minimumDistanceExecuteDamage;
         private float _distanceExecuteDamage;
 
         public EnemyRangedAttackSystem(CharacterFacade characterFacade, EnemyConfiguration enemyConfiguration,
-            EnemyFacade enemyFacade, EnemyRangedAttackView attackView)
+            EnemyFacade enemyFacade, EnemyRangedAttackView attackView,
+            float attackPreparationDuration)
         {
             _characterFacade = characterFacade;
             _enemyConfiguration = enemyConfiguration;
             _enemyFacade = enemyFacade;
             _attackView = attackView;
+            _attackPreparationDuration = Mathf.Max(0f, attackPreparationDuration);
         }
 
         public void Initialize()
@@ -50,13 +53,15 @@ namespace Features.Enemies.Scripts
 
             _enemyFacade.SetStop(true);
             StopHorizontalMovement(rigidbody);
+            _enemyFacade.EffectsSystem.BeginAttackTelegraph(_attackPreparationDuration);
 
             try
             {
+                _enemyFacade.AnimationSystem.IdleAnimation();
                 _enemyFacade.AnimationSystem.AttackAnimation();
 
                 float elapsed = 0f;
-                while (elapsed < _attackView.WindupDuration)
+                while (elapsed < _attackPreparationDuration)
                 {
                     if (_enemyFacade.IsDead)
                         return;
@@ -66,12 +71,15 @@ namespace Features.Enemies.Scripts
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
 
+                await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
+
                 if (_enemyFacade.IsDead)
                     return;
 
                 RotateTowardsCharacter(enemyTransform, true);
                 SpawnProjectile(cancellationToken);
 
+                _enemyFacade.AnimationSystem.IdleAnimation();
                 float movementPause = Mathf.Max(
                     _attackView.RecoveryDuration,
                     _enemyConfiguration.MovementPauseAfterAttack);
@@ -80,6 +88,8 @@ namespace Features.Enemies.Scripts
             }
             finally
             {
+                _enemyFacade?.EffectsSystem.ClearAttackTelegraph();
+
                 if (_enemyFacade != null)
                 {
                     StopHorizontalMovement(rigidbody);

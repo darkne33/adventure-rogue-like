@@ -12,7 +12,6 @@ namespace Features.Enemies.Scripts
         [field: SerializeField, Min(0.1f)] public float Lifetime { get; private set; } = 4f;
 
         [field: Header("Attack Timing")]
-        [field: SerializeField, Min(0f)] public float WindupDuration { get; private set; } = 0.45f;
         [field: SerializeField, Min(0f)] public float RecoveryDuration { get; private set; } = 0.25f;
 
         [field: Header("Aiming")]

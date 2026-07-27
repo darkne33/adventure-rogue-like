@@ -1,6 +1,7 @@
+using System.Collections.Generic;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using Features.Enemies.Scripts.Level.Scripts;
-using UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Zenject;
@@ -9,20 +10,19 @@ namespace Features.Relics.Scripts
 {
     public sealed class RelicChest : MonoBehaviour
     {
-        [Inject] private IPanelService _panelService;
-        [Inject] private IRoomTransitionService _roomTransitionService;
-        [Inject] private CharacterChestOpeningService _chestOpeningService;
+        [Inject] private RelicChestRollService _rollService;
 
         [SerializeField] private RelicChestInteractionView _interactionView = new();
-        [SerializeField] private RelicChestOpeningView _openingView = new();
+        [SerializeField] private RelicChestRollView _rollView = new();
 
         private InputSystem_Actions _inputActions;
-        private RelicDefinition _relic;
         private RelicChestConfiguration _configuration;
+        private RelicPool _relicPool;
+        private RelicManager _relicManager;
         private ICharacterProvider _characterProvider;
         private RoomData _roomData;
         private Room _room;
-        private RelicChestOpeningSequence _openingSequence;
+        private RelicChestRollSequence _rollSequence;
         private bool _isOpened;
 
         public bool IsOpened => _isOpened;
@@ -33,22 +33,25 @@ namespace Features.Relics.Scripts
         {
             _inputActions = new InputSystem_Actions();
             _interactionView.Initialize(gameObject);
+            _rollView.Initialize(gameObject);
         }
 
-        public void Construct(RelicDefinition relic, RelicChestConfiguration configuration,
-            RelicManager relicManager, RelicEventBus eventBus, ICharacterProvider characterProvider,
-            DiContainer container, RoomData roomData, Room room)
+        public void Construct(RelicChestConfiguration configuration, RelicPool relicPool,
+            RelicManager relicManager, RelicEventBus eventBus,
+            ICharacterProvider characterProvider, DiContainer container, RoomData roomData,
+            Room room)
         {
-            _relic = relic;
             _configuration = configuration;
+            _relicPool = relicPool;
+            _relicManager = relicManager;
             _characterProvider = characterProvider;
             _roomData = roomData;
             _room = room;
 
             RelicChestRewardPresenter rewardPresenter = new(configuration, relicManager, eventBus,
-                container, roomData, room);
-            _openingSequence = new RelicChestOpeningSequence(_openingView, configuration, eventBus,
-                _panelService, _roomTransitionService, _chestOpeningService, rewardPresenter);
+                characterProvider, container, roomData, room);
+            _rollSequence = new RelicChestRollSequence(_rollView, configuration, eventBus,
+                rewardPresenter);
         }
 
         private void OnEnable()
@@ -85,7 +88,7 @@ namespace Features.Relics.Scripts
                 return false;
 
             CharacterFacade character = _characterProvider.CharacterFacade;
-            return _chestOpeningService.IsOpening == false &&
+            return _rollService.IsRolling == false &&
                    Vector3.Distance(transform.position, character.transform.position) <=
                    _configuration.InteractDistance;
         }
@@ -95,24 +98,33 @@ namespace Features.Relics.Scripts
             if (_isOpened)
                 return;
 
-            if (_openingSequence == null || _openingView.IsConfigured == false)
+            if (_rollSequence == null || _rollView.IsConfigured == false)
             {
-                Debug.LogError($"{name} is missing chest opening sequence references.", this);
+                Debug.LogError($"{name} is missing relic roll references.", this);
                 return;
             }
 
-            CharacterFacade character = _characterProvider?.CharacterFacade;
-            if (character == null || _chestOpeningService.IsOpening)
+            if (_characterProvider?.CharacterFacade == null || _relicPool == null ||
+                _relicManager == null)
                 return;
 
-            _openingSequence.PlayAsync(character, _relic, transform.position, HandleOpeningStarted,
-                this.GetCancellationTokenOnDestroy()).Forget();
-        }
+            List<RelicDefinition> availableRelics = _relicPool
+                .GetAvailable(_relicManager.ActiveRelics)
+                .ToList();
+            if (availableRelics.Count == 0)
+            {
+                Debug.LogWarning($"{name} has no available relic rewards.", this);
+                return;
+            }
 
-        private void HandleOpeningStarted()
-        {
+            if (_rollService.TryBegin() == false)
+                return;
+
+            _rollView.PlayOpenAnimation();
             _isOpened = true;
             _interactionView.SetAvailable(false);
+            _rollSequence.PlayAsync(availableRelics, transform.position,
+                _rollService.Finish, this.GetCancellationTokenOnDestroy()).Forget();
         }
     }
 }

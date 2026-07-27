@@ -24,6 +24,7 @@ namespace Features.Enemies.Scripts
 
         public EnemyConfiguration Configuration => _enemyConfiguration;
         public Renderer[] MeshRenderers => _meshRenderers;
+        public Transform AttackTelegraphTransform => GetAttackTelegraphTransform();
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
         [SerializeField] private Renderer[] _meshRenderers;
@@ -89,6 +90,14 @@ namespace Features.Enemies.Scripts
 
             _navMeshAgent.isStopped = state;
 
+            if (state && _navMeshAgent.isOnNavMesh)
+            {
+                if (_navMeshAgent.hasPath)
+                    _navMeshAgent.ResetPath();
+
+                _navMeshAgent.velocity = Vector3.zero;
+            }
+
             if (state == false)
                 _movementSystem.Reset();
         }
@@ -98,6 +107,33 @@ namespace Features.Enemies.Scripts
             if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, NavMeshSampleDistance,
                     NavMesh.AllAreas))
                 _navMeshAgent.Warp(hit.position);
+        }
+
+        public void NotifyAttackFinished() =>
+            _movementSystem.OnAttackFinished();
+
+        private Transform GetAttackTelegraphTransform()
+        {
+            if (_meshRenderers == null)
+                return transform;
+
+            for (int i = 0; i < _meshRenderers.Length; i++)
+            {
+                Renderer meshRenderer = _meshRenderers[i];
+                if (meshRenderer == null)
+                    continue;
+
+                Transform visualRoot = meshRenderer.transform;
+                if (visualRoot != transform && visualRoot.IsChildOf(transform) == false)
+                    return transform;
+
+                while (visualRoot != transform && visualRoot.parent != transform)
+                    visualRoot = visualRoot.parent;
+
+                return visualRoot;
+            }
+
+            return transform;
         }
 
         internal void ActivateAggro()

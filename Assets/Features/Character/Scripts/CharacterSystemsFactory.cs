@@ -11,12 +11,10 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
     private readonly CharacterStats _characterStats;
     private readonly PauseEntityDistributor _pauseEntityDistributor;
     private readonly CharacterSettingsConfiguration _characterSettingsConfiguration;
-    private readonly CharacterChestOpeningService _chestOpeningService;
 
     public CharacterSystemsFactory(CharacterCameraSettingsConfiguration cameraSettings, ICameraService cameraService,
         IPanelService panelService, CharacterStats characterStats, PauseEntityDistributor pauseEntityDistributor,
-        CharacterSettingsConfiguration characterSettingsConfiguration,
-        CharacterChestOpeningService chestOpeningService)
+        CharacterSettingsConfiguration characterSettingsConfiguration)
     {
         _cameraSettings = cameraSettings;
         _cameraService = cameraService;
@@ -24,7 +22,6 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         _characterStats = characterStats;
         _pauseEntityDistributor = pauseEntityDistributor;
         _characterSettingsConfiguration = characterSettingsConfiguration;
-        _chestOpeningService = chestOpeningService;
     }
 
     public void Create(CharacterFacade facade)
@@ -54,6 +51,5 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
 
         facade.Construct(rigidbody, collider, _characterStats, pauseEntity, healthSystem, shieldSystem, abilitySystem,
             animationSystem, moveSystem, cameraSystem, damageEffectSystem, damageView);
-        _chestOpeningService.Initialize(facade, rigidbody, pauseEntity, animationSystem);
     }
 }

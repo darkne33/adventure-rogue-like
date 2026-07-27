@@ -19,13 +19,30 @@ namespace Features.Relics.Scripts
         [field: SerializeField, Min(0f)] public float ObstacleCheckRadius { get; private set; } = 1f;
         [field: SerializeField, Min(0f)] public float ObstacleCheckHeight { get; private set; } = 0.6f;
         [field: SerializeField] public float InteractDistance { get; private set; } = 4f;
-        [field: SerializeField, Min(0f)] public float ScreenFadePreparationDuration { get; private set; } = 0.1f;
-        [field: SerializeField, Min(1f)] public float OpeningDuration { get; private set; } = 5f;
-        [field: SerializeField, Min(0f)] public float FinishAnimationDuration { get; private set; } = 0.6333333f;
-        [field: SerializeField, Min(0f)] public float CameraClaimDuration { get; private set; } = 1.0833334f;
-        [field: SerializeField, Min(0f)] public float EndAnimationDuration { get; private set; } = 0.75f;
-        [field: SerializeField, Min(0.3f)] public float ClaimHoldDuration { get; private set; } = 2f;
-        [field: SerializeField] public float RelicDropHeight { get; private set; } = 2.2f;
+        [field: FormerlySerializedAs("<RollDuration>k__BackingField")]
+        [field: SerializeField, Min(0.1f)] public float RarityStageDuration { get; private set; } = 0.85f;
+        [field: SerializeField, Min(0.02f)] public float PreviewStartInterval { get; private set; } = 0.07f;
+        [field: SerializeField, Min(0.02f)] public float PreviewEndInterval { get; private set; } = 0.17f;
+        [field: SerializeField, Min(0f)] public float RarityUpgradeTransitionDuration { get; private set; } = 0.3f;
+        [field: SerializeField, Range(0f, 1f)] public float CommonToUncommonChance { get; private set; } = 0.35f;
+        [field: SerializeField, Range(0f, 1f)] public float UncommonToRareChance { get; private set; } = 0.3f;
+        [field: SerializeField, Range(0f, 1f)] public float RareToLegendaryChance { get; private set; } = 0.1f;
+        [field: SerializeField, Min(0.01f)] public float RarityUpgradePumpDuration { get; private set; } = 0.32f;
+        [field: SerializeField, Min(0f)] public float RarityUpgradePumpStrength { get; private set; } = 0.18f;
+        [field: SerializeField, Min(0f)] public float FinalRevealDuration { get; private set; } = 0.65f;
+        [field: SerializeField, Min(0f)] public float ChestShakePositionStrength { get; private set; } = 0.12f;
+        [field: SerializeField, Min(0f)] public float ChestShakeRotationStrength { get; private set; } = 4f;
+        [field: SerializeField, Min(1)] public int ChestShakeVibrato { get; private set; } = 28;
+        [field: SerializeField, Min(0.01f)] public float RelicPreviewScale { get; private set; } = 0.9f;
         [field: SerializeField] public float RelicPickupDistance { get; private set; } = 3f;
+
+        public float GetRarityUpgradeChance(RelicRarity rarity) =>
+            rarity switch
+            {
+                RelicRarity.Common => CommonToUncommonChance,
+                RelicRarity.Uncommon => UncommonToRareChance,
+                RelicRarity.Rare => RareToLegendaryChance,
+                _ => 0f
+            };
     }
 }

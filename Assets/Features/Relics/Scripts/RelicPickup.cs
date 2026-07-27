@@ -61,6 +61,15 @@ namespace Features.Relics.Scripts
             _room = room;
             _collectedCallback = collectedCallback;
 
+            SetVisual(relic);
+            transform.localScale = Vector3.one * 1.15f;
+        }
+
+        public void SetVisual(RelicDefinition relic)
+        {
+            if (relic == null)
+                return;
+
             _spriteRenderer = GetComponent<SpriteRenderer>();
             if (_spriteRenderer != null)
             {
@@ -69,8 +78,6 @@ namespace Features.Relics.Scripts
             }
 
             ApplyRarityColor(relic.Rarity);
-
-            transform.localScale = Vector3.one * 1.15f;
         }
 
         private void ApplyRarityColor(RelicRarity rarity)
@@ -164,6 +171,22 @@ namespace Features.Relics.Scripts
             await ActivateAndDestroy();
         }
 
+        public async UniTask<bool> CollectImmediatelyAsync(RelicDefinition relic,
+            RelicChestConfiguration configuration, RelicManager relicManager,
+            RelicEventBus eventBus, ICharacterProvider characterProvider, RoomData roomData,
+            Room room, Action collectedCallback = null)
+        {
+            if (_isPicked)
+                return false;
+
+            Initialize(relic, configuration, relicManager, eventBus, characterProvider, roomData,
+                room, collectedCallback);
+            _isPicked = true;
+
+            await FlyToCharacter();
+            return await ActivateAndDestroy();
+        }
+
         private async UniTask FlyToCharacter()
         {
             Transform character = _characterProvider?.CharacterFacade != null
@@ -208,12 +231,12 @@ namespace Features.Relics.Scripts
             }
         }
 
-        private async UniTask ActivateAndDestroy()
+        private async UniTask<bool> ActivateAndDestroy()
         {
             if (TryActivate() == false)
             {
                 _isPicked = false;
-                return;
+                return false;
             }
 
             transform.DOKill();
@@ -225,6 +248,7 @@ namespace Features.Relics.Scripts
                 .SetEase(Ease.InBack)
                 .ToUniTask(cancellationToken: this.GetCancellationTokenOnDestroy());
             Destroy(gameObject);
+            return true;
         }
 
         private bool TryActivate()

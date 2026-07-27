@@ -6,5 +6,6 @@ namespace Features.Enemies.Scripts
 
         void Tick();
         void Reset();
+        void OnAttackFinished();
     }
 }

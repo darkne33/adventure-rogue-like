@@ -4,6 +4,8 @@ public class DummyEnemyAnimation : IEnemyAnimationSystem
 {
     private static readonly int IsRunning = Animator.StringToHash("IsRunning");
     private static readonly int Attack = Animator.StringToHash("Attack");
+    private static readonly int AttackState =
+        Animator.StringToHash("Base Layer.Attack");
 
     private readonly Animator _animator;
 
@@ -22,6 +24,6 @@ public class DummyEnemyAnimation : IEnemyAnimationSystem
     {
         _animator.SetBool(IsRunning, false);
         _animator.ResetTrigger(Attack);
-        _animator.SetTrigger(Attack);
+        _animator.Play(AttackState, 0, 0f);
     }
 }

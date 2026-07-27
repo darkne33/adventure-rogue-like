@@ -13,6 +13,7 @@ namespace Features.Enemies.Scripts
         private const int AggressiveAvoidancePriority = 20;
 
         private readonly float _stopDistance;
+        private bool _automaticNavigationEnabled;
 
         public EnemyAggressiveChaseMovementSystem(EnemyFacade enemy, CharacterFacade character,
             EnemyConfiguration configuration, NavMeshAgent navMeshAgent,
@@ -33,18 +34,30 @@ namespace Features.Enemies.Scripts
             if (CanMove() == false)
                 return;
 
+            EnableAutomaticNavigation();
+
             Vector3 toCharacter = Character.transform.position - Enemy.transform.position;
             toCharacter.y = 0f;
 
             if (toCharacter.sqrMagnitude <= _stopDistance * _stopDistance)
             {
-                if (NavMeshAgent.hasPath)
-                    NavMeshAgent.ResetPath();
-
+                NavMeshAgent.SetDestination(Character.transform.position);
+                AnimationSystem.IdleAnimation();
                 return;
             }
 
             MoveTo(Character.transform.position);
+        }
+
+        private void EnableAutomaticNavigation()
+        {
+            if (_automaticNavigationEnabled)
+                return;
+
+            NavMeshAgent.nextPosition = Enemy.transform.position;
+            NavMeshAgent.updatePosition = true;
+            NavMeshAgent.updateRotation = true;
+            _automaticNavigationEnabled = true;
         }
     }
 }
