@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
 
@@ -7,11 +9,13 @@ namespace Features.Relics.Scripts
     [Serializable]
     public sealed class RelicChestRollView
     {
+        private const float PreviewRiseLoopDistance = 1f;
         private static readonly int OpenTrigger = Animator.StringToHash("Open");
 
         [SerializeField] private Animator _animator;
         [SerializeField] private Transform _shakeTarget;
         [SerializeField] private Transform _rewardRoot;
+        [SerializeField] private Transform _coinSilverFountain;
         [SerializeField] private ParticleSystem[] _treasureRaysParticles;
         [SerializeField] private ParticleSystem[] _treasureOpenParticles;
 
@@ -19,25 +23,44 @@ namespace Features.Relics.Scripts
         private Vector3 _initialLocalPosition;
         private Quaternion _initialLocalRotation;
         private Vector3 _initialLocalScale;
+        private Vector3 _initialRewardRootLocalPosition;
+        private Tween _previewRiseTween;
 
         public Transform RewardRoot => _rewardRoot;
         public bool IsConfigured => _animator != null && _shakeTarget != null &&
-                                    _rewardRoot != null;
+                                    _rewardRoot != null && _coinSilverFountain != null;
 
         public void Initialize(GameObject owner)
         {
             _owner = owner;
 
-            if (_shakeTarget == null)
-                return;
+            if (_shakeTarget != null)
+            {
+                _initialLocalPosition = _shakeTarget.localPosition;
+                _initialLocalRotation = _shakeTarget.localRotation;
+                _initialLocalScale = _shakeTarget.localScale;
+            }
 
-            _initialLocalPosition = _shakeTarget.localPosition;
-            _initialLocalRotation = _shakeTarget.localRotation;
-            _initialLocalScale = _shakeTarget.localScale;
+            if (_rewardRoot != null)
+                _initialRewardRootLocalPosition = _rewardRoot.localPosition;
         }
 
-        public void PlayOpenAnimation() =>
+        public async UniTask PlayOpenAnimationAsync(CancellationToken cancellationToken)
+        {
+            int initialStateHash = _animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
+
+            _animator.ResetTrigger(OpenTrigger);
             _animator.SetTrigger(OpenTrigger);
+
+            await UniTask.WaitUntil(() =>
+            {
+                if (_animator.IsInTransition(0))
+                    return false;
+
+                AnimatorStateInfo state = _animator.GetCurrentAnimatorStateInfo(0);
+                return state.fullPathHash != initialStateHash && state.normalizedTime >= 1f;
+            }, cancellationToken: cancellationToken);
+        }
 
         public void SetRarity(RelicRarity rarity)
         {
@@ -46,20 +69,10 @@ namespace Features.Relics.Scripts
             SetParticleColor(_treasureOpenParticles, color);
         }
 
-        public void Begin(float duration, float positionStrength, float rotationStrength, int vibrato)
+        public void Begin(float previewRiseSpeed)
         {
             ResetShakeTarget();
-
-            if (_shakeTarget == null || duration <= 0f)
-                return;
-
-            _ = _shakeTarget.DOShakePosition(duration, positionStrength, vibrato)
-                .SetEase(Ease.Linear)
-                .SetLink(_owner);
-            _ = _shakeTarget.DOShakeRotation(duration, rotationStrength, vibrato)
-                .SetEase(Ease.Linear)
-                .SetLink(_owner);
-
+            StartPreviewRise(previewRiseSpeed);
             PlayParticles(_treasureRaysParticles, true);
         }
 
@@ -90,6 +103,7 @@ namespace Features.Relics.Scripts
 
         public void Reveal(Transform preview)
         {
+            StopPreviewRise(false);
             ResetShakeTarget();
             PlayParticles(_treasureOpenParticles, true);
 
@@ -100,11 +114,42 @@ namespace Features.Relics.Scripts
             }
         }
 
+        public void CompleteReward()
+        {
+            _animator.enabled = false;
+            _coinSilverFountain.gameObject.SetActive(false);
+        }
+
         public void End()
         {
+            StopPreviewRise(true);
             ResetShakeTarget();
             StopParticles(_treasureRaysParticles);
             StopParticles(_treasureOpenParticles);
+        }
+
+        private void StartPreviewRise(float speed)
+        {
+            StopPreviewRise(true);
+
+            if (_rewardRoot == null || speed <= 0f)
+                return;
+
+            float duration = PreviewRiseLoopDistance / speed;
+            _previewRiseTween = _rewardRoot
+                .DOLocalMoveY(_initialRewardRootLocalPosition.y + PreviewRiseLoopDistance, duration)
+                .SetEase(Ease.Linear)
+                .SetLoops(-1, LoopType.Incremental)
+                .SetLink(_owner);
+        }
+
+        private void StopPreviewRise(bool resetPosition)
+        {
+            _previewRiseTween?.Kill();
+            _previewRiseTween = null;
+
+            if (resetPosition && _rewardRoot != null)
+                _rewardRoot.localPosition = _initialRewardRootLocalPosition;
         }
 
         private void ResetShakeTarget()

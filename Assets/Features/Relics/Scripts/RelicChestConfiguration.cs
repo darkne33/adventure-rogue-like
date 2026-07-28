@@ -30,10 +30,8 @@ namespace Features.Relics.Scripts
         [field: SerializeField, Min(0.01f)] public float RarityUpgradePumpDuration { get; private set; } = 0.32f;
         [field: SerializeField, Min(0f)] public float RarityUpgradePumpStrength { get; private set; } = 0.18f;
         [field: SerializeField, Min(0f)] public float FinalRevealDuration { get; private set; } = 0.65f;
-        [field: SerializeField, Min(0f)] public float ChestShakePositionStrength { get; private set; } = 0.12f;
-        [field: SerializeField, Min(0f)] public float ChestShakeRotationStrength { get; private set; } = 4f;
-        [field: SerializeField, Min(1)] public int ChestShakeVibrato { get; private set; } = 28;
         [field: SerializeField, Min(0.01f)] public float RelicPreviewScale { get; private set; } = 0.9f;
+        [field: SerializeField, Min(0f)] public float RelicPreviewRiseSpeed { get; private set; } = 0.05f;
         [field: SerializeField] public float RelicPickupDistance { get; private set; } = 3f;
 
         public float GetRarityUpgradeChance(RelicRarity rarity) =>

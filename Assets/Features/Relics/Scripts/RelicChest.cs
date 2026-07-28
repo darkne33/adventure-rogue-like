@@ -120,7 +120,6 @@ namespace Features.Relics.Scripts
             if (_rollService.TryBegin() == false)
                 return;
 
-            _rollView.PlayOpenAnimation();
             _isOpened = true;
             _interactionView.SetAvailable(false);
             _rollSequence.PlayAsync(availableRelics, transform.position,

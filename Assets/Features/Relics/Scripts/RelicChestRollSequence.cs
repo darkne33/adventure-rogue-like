@@ -8,7 +8,6 @@ namespace Features.Relics.Scripts
 {
     internal sealed class RelicChestRollSequence
     {
-        private const int RarityStageCount = 4;
         private const float MinimumStageDuration = 0.1f;
         private const float MinimumPreviewInterval = 0.02f;
 
@@ -35,6 +34,8 @@ namespace Features.Relics.Scripts
 
             try
             {
+                await _view.PlayOpenAnimationAsync(cancellationToken);
+
                 if (TryGetInitialStage(availableRelics, out RelicRarity rarity,
                         out List<RelicDefinition> stageCandidates) == false)
                 {
@@ -52,14 +53,9 @@ namespace Features.Relics.Scripts
 
                 float stageDuration = Mathf.Max(MinimumStageDuration,
                     _configuration.RarityStageDuration);
-                float maximumRollDuration = stageDuration * RarityStageCount +
-                                            Mathf.Max(0f,
-                                                _configuration.RarityUpgradeTransitionDuration) *
-                                            (RarityStageCount - 1);
 
                 _view.SetRarity(rarity);
-                _view.Begin(maximumRollDuration, _configuration.ChestShakePositionStrength,
-                    _configuration.ChestShakeRotationStrength, _configuration.ChestShakeVibrato);
+                _view.Begin(_configuration.RelicPreviewRiseSpeed);
 
                 while (true)
                 {
@@ -97,7 +93,10 @@ namespace Features.Relics.Scripts
 
                 bool granted = await _rewardPresenter.GrantAndDismissAsync(preview, reward);
                 if (granted)
+                {
                     preview = null;
+                    _view.CompleteReward();
+                }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
