@@ -17,15 +17,21 @@ MonoBehaviour:
   <Damage>k__BackingField: 4
   <DamageRange>k__BackingField: 2
   <DamageCooldown>k__BackingField: 1
+  <InitialAttackCooldown>k__BackingField: 0
   <EnemyDamageType>k__BackingField: 1
+  <MovementPauseAfterAttack>k__BackingField: 1.25
+  <BulletConfiguration>k__BackingField: {fileID: 0}
   <EnemyAnimationType>k__BackingField: 2
   <EnemyMovementType>k__BackingField: 0
   <Exp>k__BackingField: 1
-  <DistanceToStop>k__BackingField: 0
-  <Speed>k__BackingField: 5
+  <Speed>k__BackingField: 8
   <RotationSpeed>k__BackingField: 360
-  <Acceleration>k__BackingField: 2
-  <AggroRange>k__BackingField: 15
+  <Acceleration>k__BackingField: 10
+  <DistanceToStop>k__BackingField: 0
   <CloseFollowDistance>k__BackingField: 6
   <ResumeChaseDistance>k__BackingField: 9
-  <MovementPauseAfterAttack>k__BackingField: 1.25
+  <RangeChaseMinimumDistance>k__BackingField: 6
+  <RangeChaseMaximumDistance>k__BackingField: 9
+  <RangeChaseRepositionAngle>k__BackingField: 60
+  <AggroRange>k__BackingField: 15
+  <AggroReactionDuration>k__BackingField: 0.65
