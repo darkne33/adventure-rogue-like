@@ -18,6 +18,8 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     private readonly RelicManager _relicManager;
 
     private float _additionalProjectileCount;
+    private bool _isLaunchingProjectiles;
+    private int _projectileLaunchSequence;
 
     protected ShootableAbilityConfiguration AbilityConfig { get; private set; }
     protected IEnemiesProvider EnemiesProvider => _enemiesProvider;
@@ -38,6 +40,8 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     public override void Initialize(AbilityConfiguration abilityConfig)
     {
+        _projectileLaunchSequence++;
+        _isLaunchingProjectiles = false;
         base.Initialize(abilityConfig);
         AbilityConfig = (ShootableAbilityConfiguration)abilityConfig;
         Cooldown = AbilityConfig.Cooldown;
@@ -58,16 +62,23 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     public override void OnUnequip(CharacterStats characterStats)
     {
+        _projectileLaunchSequence++;
+        _isLaunchingProjectiles = false;
         base.OnUnequip(characterStats);
         _additionalProjectileCount = 0f;
     }
+
+    protected override bool IsReady(CharacterFacade character) =>
+        _isLaunchingProjectiles == false &&
+        base.IsReady(character);
 
     protected override void OnUse(CharacterFacade character)
     {
         EnemyFacade aimedEnemy = _aimTargetProvider.GetAimedEnemy();
         int projectileCount = CalculateProjectileCount();
-        for (int index = 0; index < projectileCount; index++)
-            ShootProjectile(character, aimedEnemy, index, projectileCount);
+        int launchSequence = ++_projectileLaunchSequence;
+        _isLaunchingProjectiles = true;
+        LaunchProjectiles(character, aimedEnemy, projectileCount, launchSequence).Forget();
     }
 
     protected virtual void OnShootableInitialized()
@@ -153,6 +164,33 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         float variation = Mathf.Max(0f, AbilityConfig.DamageVariationPercent) * 0.01f;
         float multiplier = Random.Range(1f - variation, 1f + variation);
         return Mathf.Max(1, Mathf.RoundToInt(Damage * multiplier));
+    }
+
+    private async UniTask LaunchProjectiles(CharacterFacade character, EnemyFacade aimedEnemy,
+        int projectileCount, int launchSequence)
+    {
+        try
+        {
+            float launchDelay = Mathf.Max(0f, AbilityConfig.AdditionalProjectileLaunchDelay);
+            for (int index = 0; index < projectileCount; index++)
+            {
+                if (index > 0 && launchDelay > 0f)
+                {
+                    await UniTask.Delay(System.TimeSpan.FromSeconds(launchDelay),
+                        cancellationToken: character.GetCancellationTokenOnDestroy());
+                }
+
+                if (launchSequence != _projectileLaunchSequence)
+                    return;
+
+                ShootProjectile(character, aimedEnemy, index, projectileCount);
+            }
+        }
+        finally
+        {
+            if (launchSequence == _projectileLaunchSequence)
+                _isLaunchingProjectiles = false;
+        }
     }
 
     private void ShootProjectile(CharacterFacade character, EnemyFacade aimedEnemy, int projectileIndex,

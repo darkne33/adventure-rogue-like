@@ -6,6 +6,7 @@ public abstract class ShootableAbilityConfiguration : AbilityConfiguration
     [field: SerializeField] public int StartDamage = 2;
     [field: SerializeField, Min(0f)] public float DamageVariationPercent { get; private set; } = 20f;
     [field: SerializeField] public float Cooldown = 2f;
+    [field: SerializeField, Min(0f)] public float AdditionalProjectileLaunchDelay { get; private set; } = 0.5f;
     [field: SerializeField] public GameObject Prefab;
     [field: SerializeField] public GameObject ExplosionPrefab;
     [field: SerializeField] public GameObject MuzzlePrefab;

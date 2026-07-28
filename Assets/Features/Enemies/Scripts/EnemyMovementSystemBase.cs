@@ -110,10 +110,14 @@ namespace Features.Enemies.Scripts
             if (NavMeshAgent.updatePosition)
                 return;
 
-            Enemy.transform.position = Vector3.Lerp(
-                Enemy.transform.position,
-                NavMeshAgent.nextPosition,
-                Time.deltaTime * NavMeshAgent.speed);
+            Vector3 currentPosition = Enemy.transform.position;
+            Vector3 navigationPosition = NavMeshAgent.nextPosition;
+
+            // Keep the visible enemy on the agent's path instead of lerping
+            // across NavMesh corners. Vertical movement remains physics-driven.
+            currentPosition.x = navigationPosition.x;
+            currentPosition.z = navigationPosition.z;
+            Enemy.transform.position = currentPosition;
         }
     }
 }
