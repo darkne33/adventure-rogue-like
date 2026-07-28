@@ -19,6 +19,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     private IRogueLikeRuntimeDataService _runtimeDataService;
     private MinimapController _minimapController;
     private RelicInventoryViewService _relicInventoryViewService;
+    private UpgradeBuildViewService _upgradeBuildViewService;
     private CharacterWallet _characterWallet;
     private RelicEventBus _relicEventBus;
     private ICharacterAimTargetProvider _aimTargetProvider;
@@ -47,6 +48,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
                                   "Rogue-like runtime data service is not available.");
         _minimapController = stateMachine.Resolve<MinimapController>();
         _relicInventoryViewService = stateMachine.Resolve<RelicInventoryViewService>();
+        _upgradeBuildViewService = stateMachine.Resolve<UpgradeBuildViewService>();
         _characterWallet = stateMachine.Resolve<CharacterWallet>();
         _relicEventBus = stateMachine.Resolve<RelicEventBus>();
         _aimTargetProvider = stateMachine.Resolve<ICharacterAimTargetProvider>();
@@ -54,6 +56,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         _runtimeDataService.RoomChanged += HandleRoomChanged;
         _minimapController.Attach(Panel.MinimapView);
         _relicInventoryViewService.Attach(Panel);
+        _upgradeBuildViewService?.Attach(Panel);
         if (_characterWallet != null)
         {
             _characterWallet.Gold.CountChanged += UpdateGoldCurrencyView;
@@ -94,6 +97,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         StopCrosshairTracking();
         _minimapController?.Detach(Panel.MinimapView);
         _relicInventoryViewService?.Detach();
+        _upgradeBuildViewService?.Detach();
         Panel.RoomTimerView?.HideImmediate();
         _expTween?.Kill();
         _roomTween?.Kill();

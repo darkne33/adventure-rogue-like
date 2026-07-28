@@ -16,7 +16,8 @@ public class RabbitBoomerangAbility : SingleShootAbility
     {
         AbilityUpgradeType.ProjectileSpeedCooldown,
         AbilityUpgradeType.BounceRadiusDamage,
-        AbilityUpgradeType.TargetsDamage
+        AbilityUpgradeType.TargetsDamage,
+        AbilityUpgradeType.AdditionalProjectiles
     };
 
     private int _bonusTargets;
@@ -50,6 +51,8 @@ public class RabbitBoomerangAbility : SingleShootAbility
     {
         return GetBoomerangUpgradeType(upgradeType) switch
         {
+            AbilityUpgradeType.AdditionalProjectiles =>
+                GetAdditionalProjectileUpgradePreviews(upgradeMultiplier),
             AbilityUpgradeType.BounceRadiusDamage => new[]
             {
                 new AbilityUpgradePreview(BounceRadiusStatName, _bounceRadius,

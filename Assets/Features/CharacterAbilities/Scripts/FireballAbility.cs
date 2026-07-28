@@ -12,7 +12,8 @@ public class FireballAbility : SingleShootAbility
     private static readonly AbilityUpgradeType[] FireballUpgradeTypes =
     {
         AbilityUpgradeType.Damage,
-        AbilityUpgradeType.ProjectileSpeedCooldown
+        AbilityUpgradeType.ProjectileSpeedCooldown,
+        AbilityUpgradeType.AdditionalProjectiles
     };
 
     private float _travelDistance;
@@ -44,6 +45,8 @@ public class FireballAbility : SingleShootAbility
     {
         return GetFireballUpgradeType(upgradeType) switch
         {
+            AbilityUpgradeType.AdditionalProjectiles =>
+                GetAdditionalProjectileUpgradePreviews(upgradeMultiplier),
             AbilityUpgradeType.ProjectileSpeedCooldown => new[]
             {
                 new AbilityUpgradePreview(SpeedStatName, ProjectileSpeed,

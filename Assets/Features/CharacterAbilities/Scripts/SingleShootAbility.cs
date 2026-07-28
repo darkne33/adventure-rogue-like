@@ -8,6 +8,7 @@ using UnityEngine;
 public abstract class SingleShootAbility : CharacterActiveAbility
 {
     private const float ProjectileSpreadOffset = 0.35f;
+    private const string ProjectileCountStatName = "Projectiles";
 
     private readonly IEnemiesProvider _enemiesProvider;
     private readonly ICharacterAimTargetProvider _aimTargetProvider;
@@ -15,6 +16,8 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     private readonly CharacterStats _characterStats;
     private readonly RelicEventBus _relicEventBus;
     private readonly RelicManager _relicManager;
+
+    private float _additionalProjectileCount;
 
     protected ShootableAbilityConfiguration AbilityConfig { get; private set; }
     protected IEnemiesProvider EnemiesProvider => _enemiesProvider;
@@ -39,13 +42,24 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         AbilityConfig = (ShootableAbilityConfiguration)abilityConfig;
         Cooldown = AbilityConfig.Cooldown;
         ProjectileSpeed = AbilityConfig.Speed;
+        _additionalProjectileCount = 0f;
         OnShootableInitialized();
     }
 
     public override void OnEquip(CharacterStats characterStats)
     {
         base.OnEquip(characterStats);
+
+        if (CurrentUpgradeType == AbilityUpgradeType.AdditionalProjectiles)
+            _additionalProjectileCount += GetAdditionalProjectileIncrease(CurrentUpgradeMultiplier);
+
         OnShootableEquipped(characterStats);
+    }
+
+    public override void OnUnequip(CharacterStats characterStats)
+    {
+        base.OnUnequip(characterStats);
+        _additionalProjectileCount = 0f;
     }
 
     protected override void OnUse(CharacterFacade character)
@@ -62,6 +76,16 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     protected virtual void OnShootableEquipped(CharacterStats characterStats)
     {
+    }
+
+    protected AbilityUpgradePreview[] GetAdditionalProjectileUpgradePreviews(float upgradeValue)
+    {
+        float projectileCount = GetCurrentProjectileCount();
+        return new[]
+        {
+            new AbilityUpgradePreview(ProjectileCountStatName, projectileCount,
+                projectileCount + GetAdditionalProjectileIncrease(upgradeValue))
+        };
     }
 
     protected abstract void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
@@ -175,7 +199,8 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     private int CalculateProjectileCount()
     {
-        float projectileBonus = Mathf.Max(0f, _characterStats.ProjectileCount);
+        float projectileBonus = Mathf.Max(0f, _characterStats.ProjectileCount) +
+                                Mathf.Max(0f, _additionalProjectileCount);
         int projectileCount = 1 + Mathf.FloorToInt(projectileBonus);
         float fractionalProjectile = projectileBonus - Mathf.Floor(projectileBonus);
 
@@ -184,6 +209,12 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
         return Mathf.Max(1, projectileCount);
     }
+
+    private float GetCurrentProjectileCount() =>
+        1f + _additionalProjectileCount + Mathf.Max(0f, _characterStats.ProjectileCount);
+
+    private static float GetAdditionalProjectileIncrease(float upgradeValue) =>
+        Mathf.Max(0f, upgradeValue);
 
     private static Vector3 GetProjectileSpawnOffset(Transform characterTransform, int projectileIndex,
         int projectileCount)
