@@ -6,16 +6,31 @@ using UnityEngine;
 public class UpgradeOfferConfiguration : ScriptableObject
 {
     [field: SerializeField] public UpgradeOfferItemFacade UpgradeOfferItemFacade { get; private set; }
+    [field: SerializeField, Min(1)] public int MaxBuildSlots { get; private set; } = 5;
+    [field: SerializeField, Min(1)] public int MaxActiveAbilities { get; private set; } = 3;
+    [field: SerializeField, Range(0f, 100f)] public float SecondActiveAbilityOfferChance { get; private set; } = 100f;
+    [field: SerializeField, Range(0f, 100f)] public float ThirdActiveAbilityOfferChance { get; private set; } = 10f;
     [field: SerializeField, Range(0f, 100f)] public float ActiveAbilityOfferChance { get; private set; } = 50f;
+    [field: SerializeField, Min(0.01f)] public float ProjectileCountIncreaseStep { get; private set; } = 0.25f;
     [field: SerializeField] public UpgradeRarityData[] RarityData { get; private set; } =
     {
-        new(UpgradeRarity.Common, 1f, 70f),
-        new(UpgradeRarity.Rare, 1.5f, 22f),
-        new(UpgradeRarity.Epic, 2f, 7f),
-        new(UpgradeRarity.Legendary, 3f, 1f)
+        new(UpgradeRarity.Common, 1f, 70f, 0.25f, 0.75f),
+        new(UpgradeRarity.Rare, 1.5f, 22f, 0.5f, 1.25f),
+        new(UpgradeRarity.Epic, 2f, 7f, 1f, 2f),
+        new(UpgradeRarity.Legendary, 3f, 1f, 1.5f, 3f)
     };
     [field: SerializeField] public UpgradeItemSpriteSet[] ItemSpriteSets { get; private set; } =
         Array.Empty<UpgradeItemSpriteSet>();
+
+    public float GetNewActiveAbilityOfferChance(int activeAbilityCount)
+    {
+        if (activeAbilityCount >= Mathf.Max(1, MaxActiveAbilities))
+            return 0f;
+
+        return activeAbilityCount <= 1
+            ? SecondActiveAbilityOfferChance
+            : ThirdActiveAbilityOfferChance;
+    }
 
     public UpgradeRarityData GetRarityData(UpgradeRarity rarity)
     {
@@ -44,6 +59,19 @@ public class UpgradeOfferConfiguration : ScriptableObject
         return rarityData[^1];
     }
 
+    public float GetRandomProjectileCountIncrease(UpgradeRarityData rarityData)
+    {
+        float step = Mathf.Max(0.01f, ProjectileCountIncreaseStep);
+        if (rarityData == null)
+            return step;
+
+        float minIncrease = Mathf.Max(step, rarityData.MinProjectileCountIncrease);
+        float maxIncrease = Mathf.Max(minIncrease, rarityData.MaxProjectileCountIncrease);
+        int stepCount = Mathf.FloorToInt((maxIncrease - minIncrease) / step + 0.0001f);
+        float increase = minIncrease + UnityEngine.Random.Range(0, stepCount + 1) * step;
+        return Mathf.Min(maxIncrease, increase);
+    }
+
     public UpgradeItemSpriteSet GetItemSpriteSet(UpgradeItemType itemType)
     {
         UpgradeItemSpriteSet[] itemSpriteSets = GetItemSpriteSetsOrEmpty();
@@ -63,26 +91,31 @@ public class UpgradeOfferConfiguration : ScriptableObject
     private static UpgradeRarityData[] GetDefaultRarityData() =>
         new[]
         {
-            new UpgradeRarityData(UpgradeRarity.Common, 1f, 70f),
-            new UpgradeRarityData(UpgradeRarity.Rare, 1.5f, 22f),
-            new UpgradeRarityData(UpgradeRarity.Epic, 2f, 7f),
-            new UpgradeRarityData(UpgradeRarity.Legendary, 3f, 1f)
+            new UpgradeRarityData(UpgradeRarity.Common, 1f, 70f, 0.25f, 0.75f),
+            new UpgradeRarityData(UpgradeRarity.Rare, 1.5f, 22f, 0.5f, 1.25f),
+            new UpgradeRarityData(UpgradeRarity.Epic, 2f, 7f, 1f, 2f),
+            new UpgradeRarityData(UpgradeRarity.Legendary, 3f, 1f, 1.5f, 3f)
         };
 }
 
 [Serializable]
 public class UpgradeRarityData
 {
-    public UpgradeRarityData(UpgradeRarity rarity, float upgradeMultiplier, float weight)
+    public UpgradeRarityData(UpgradeRarity rarity, float upgradeMultiplier, float weight,
+        float minProjectileCountIncrease, float maxProjectileCountIncrease)
     {
         Rarity = rarity;
         UpgradeMultiplier = upgradeMultiplier;
         Weight = weight;
+        MinProjectileCountIncrease = minProjectileCountIncrease;
+        MaxProjectileCountIncrease = maxProjectileCountIncrease;
     }
 
     [field: SerializeField] public UpgradeRarity Rarity { get; private set; } = UpgradeRarity.Common;
     [field: SerializeField, Min(0f)] public float UpgradeMultiplier { get; private set; } = 1f;
     [field: SerializeField, Min(0f)] public float Weight { get; private set; } = 1f;
+    [field: SerializeField, Min(0.01f)] public float MinProjectileCountIncrease { get; private set; } = 0.25f;
+    [field: SerializeField, Min(0.01f)] public float MaxProjectileCountIncrease { get; private set; } = 0.75f;
 }
 
 [Serializable]
@@ -116,7 +149,8 @@ public enum AbilityUpgradeType
     ProjectileSpeedCooldown = 1,
     BounceRadiusDamage = 2,
     Damage = 3,
-    TargetsDamage = 4
+    TargetsDamage = 4,
+    AdditionalProjectiles = 5
 }
 
 public readonly struct UpgradeOffer

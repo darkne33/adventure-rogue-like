@@ -21,13 +21,15 @@ namespace Core
         private readonly MinimapController _minimapController;
         private readonly RelicChestSpawner _relicChestSpawner;
         private readonly RelicEventBus _relicEventBus;
+        private readonly UpgradeBuildService _upgradeBuildService;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
             ISceneService<RogueLikeSceneProvider> sceneService, ICharacterProvider characterProvider,
             ILevelFactory levelFactory, IPanelService panelService,
             IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IAbilityChoiceProvider abilityChoiceProvider,
             ICameraService cameraService, IUpgradeOfferHandler upgradeOfferHandler, CharacterStats characterStats,
-            MinimapController minimapController, RelicChestSpawner relicChestSpawner, RelicEventBus relicEventBus)
+            MinimapController minimapController, RelicChestSpawner relicChestSpawner, RelicEventBus relicEventBus,
+            UpgradeBuildService upgradeBuildService)
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
@@ -41,10 +43,13 @@ namespace Core
             _minimapController = minimapController;
             _relicChestSpawner = relicChestSpawner;
             _relicEventBus = relicEventBus;
+            _upgradeBuildService = upgradeBuildService;
         }
 
         public override async UniTask Enter(CancellationToken cts)
         {
+            _upgradeBuildService.Reset();
+
             var panel =
                 await _panelService.OpenPanelWithPresenter<CharacterPanel, CharacterPanelPresenter>(PanelName
                     .CharacterPanel);
@@ -84,8 +89,9 @@ namespace Core
             _relicEventBus.PublishRoomStarted(new RelicRoomEvent(startRoomData, currentLevel.StartRoom,
                 _characterProvider.CharacterFacade.transform.position));
 
-            _characterProvider.CharacterFacade.CharacterAbilitySystem.AddAbility(
-                _abilityChoiceProvider.GetAbility(AbilityName.RabbitBoomerang), _characterStats);
+            CharacterAbility startingAbility = _abilityChoiceProvider.GetAbility(AbilityName.RabbitBoomerang);
+            _characterProvider.CharacterFacade.CharacterAbilitySystem.AddAbility(startingAbility, _characterStats);
+            _upgradeBuildService.RecordAppliedSelection(startingAbility);
 
             _cameraService.MainCamera.Follow = _characterProvider.CharacterFacade.CameraPivot;
 

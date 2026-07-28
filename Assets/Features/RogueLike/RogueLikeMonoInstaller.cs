@@ -101,6 +101,8 @@ public class RogueLikeMonoInstaller : MonoInstaller
 
     private void BindUpgradeOffer()
     {
+        Container.Bind<UpgradeBuildService>().AsSingle();
+        Container.BindInterfacesAndSelfTo<UpgradeBuildViewService>().AsSingle();
         Container.Bind<IUpgradeOfferGenerator>().To<UpgradeOfferGenerator>().AsSingle();
         Container.BindInterfacesAndSelfTo<UpgradeOfferHandler>().AsSingle();
     }

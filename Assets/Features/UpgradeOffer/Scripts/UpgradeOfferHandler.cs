@@ -16,6 +16,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
     private readonly ICharacterProvider _characterProvider;
     private readonly IPauseService _pauseService;
     private readonly ICharacterLevelService _characterLevelService;
+    private readonly UpgradeBuildService _upgradeBuildService;
 
     private readonly List<UpgradeOfferItemView> _upgradeItems = new();
 
@@ -33,7 +34,8 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
     public UpgradeOfferHandler(IUpgradeOfferGenerator upgradeOfferGenerator,
         IUpgradeOfferItemFactory upgradeOfferItemFactory, UpgradeOfferConfiguration upgradeOfferConfiguration,
         IPanelService panelService, CharacterStats characterStats, ICharacterProvider characterProvider,
-        IPauseService pauseService, ICharacterLevelService characterLevelService)
+        IPauseService pauseService, ICharacterLevelService characterLevelService,
+        UpgradeBuildService upgradeBuildService)
     {
         _upgradeOfferGenerator = upgradeOfferGenerator;
         _upgradeOfferItemFactory = upgradeOfferItemFactory;
@@ -43,6 +45,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         _characterProvider = characterProvider;
         _pauseService = pauseService;
         _characterLevelService = characterLevelService;
+        _upgradeBuildService = upgradeBuildService;
 
         _characterLevelService.OnLevelUp += OnLevelUp;
     }
@@ -74,8 +77,15 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
 
     public void ApplyUpgradeOffer(UpgradeOffer upgradeOffer)
     {
+        if (_upgradeBuildService.CanSelect(upgradeOffer.Ability) == false)
+        {
+            RefreshItems();
+            return;
+        }
+
         _characterProvider.CharacterFacade.CharacterAbilitySystem.AddAbility(upgradeOffer.Ability, _characterStats,
             upgradeOffer.UpgradeMultiplier, upgradeOffer.UpgradeType);
+        _upgradeBuildService.RecordAppliedSelection(upgradeOffer.Ability);
         SkipUpgrades();
     }
 
