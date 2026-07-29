@@ -105,7 +105,7 @@ namespace Features.Enemies.Scripts
                    NavMeshAgent.SetDestination(hit.position);
         }
 
-        private void UpdateManualNavigationPosition()
+        protected void UpdateManualNavigationPosition()
         {
             if (NavMeshAgent.updatePosition)
                 return;

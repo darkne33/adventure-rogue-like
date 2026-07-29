@@ -46,7 +46,6 @@ namespace Features.Enemies.Scripts
         private bool _isApproaching;
         private bool _isRepositioning;
         private bool _isHoldingPosition;
-        private bool _automaticNavigationEnabled;
         private bool _hasRetreatPosition;
         private bool _isRetreatBlocked;
         private float _nextRetreatSelectionTime;
@@ -111,8 +110,6 @@ namespace Features.Enemies.Scripts
         {
             if (CanMove() == false)
                 return;
-
-            EnableAutomaticNavigation();
 
             Vector3 awayFromCharacter = Enemy.transform.position - Character.transform.position;
             awayFromCharacter.y = 0f;
@@ -430,17 +427,6 @@ namespace Features.Enemies.Scripts
             return false;
         }
 
-        private void EnableAutomaticNavigation()
-        {
-            if (_automaticNavigationEnabled)
-                return;
-
-            NavMeshAgent.nextPosition = Enemy.transform.position;
-            NavMeshAgent.updatePosition = true;
-            NavMeshAgent.updateRotation = true;
-            _automaticNavigationEnabled = true;
-        }
-
         private bool MoveUsingNavigation(Vector3 desiredPosition)
         {
             _isHoldingPosition = false;
@@ -454,6 +440,7 @@ namespace Features.Enemies.Scripts
                 return false;
             }
 
+            UpdateManualNavigationPosition();
             return true;
         }
 

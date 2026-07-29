@@ -11,6 +11,8 @@ using UnityEngine;
 
 public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 {
+    private const float CrosshairTargetLostGraceDuration = 0.08f;
+
     private readonly ICharacterLevelService _characterLevelService;
     private readonly IGameModeService _gameModeService;
 
@@ -223,12 +225,22 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 
     private async UniTask RunCrosshairTracking(CancellationToken cancellationToken)
     {
+        float lastTargetSeenTime = float.NegativeInfinity;
+
         try
         {
             while (cancellationToken.IsCancellationRequested == false)
             {
                 await UniTask.Yield(PlayerLoopTiming.PostLateUpdate, cancellationToken);
-                Panel.CrosshairView?.SetTargeted(_aimTargetProvider?.GetAimedEnemy() != null);
+
+                bool hasTarget = _aimTargetProvider?.GetAimedEnemy() != null;
+                if (hasTarget)
+                    lastTargetSeenTime = Time.unscaledTime;
+
+                bool showTargeted = hasTarget ||
+                                    Time.unscaledTime - lastTargetSeenTime <=
+                                    CrosshairTargetLostGraceDuration;
+                Panel.CrosshairView?.SetTargeted(showTargeted);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
