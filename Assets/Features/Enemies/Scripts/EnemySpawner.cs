@@ -19,6 +19,7 @@ public class EnemySpawner
     private readonly RelicEventBus _relicEventBus;
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
     private readonly EnemyRoomObserver _enemyRoomObserver;
+    private int _spawnedEnemiesInCurrentRoom;
 
     private const float RayStartHeight = 50f;
     private const float RayDistance = 100f;
@@ -68,13 +69,12 @@ public class EnemySpawner
         if (currentLevel == null)
             throw new System.InvalidOperationException("Current level view is not available.");
 
-        int roomIndex = currentLevel.GetEnemyRoomIndex(currentRoomData);
         EnemyRoomScalingConfiguration scalingConfiguration =
             _levelsConfiguration.GetEnemyRoomScalingConfiguration();
         List<EnemyType> enemyTypes = BuildSpawnQueue(scalingConfiguration, configuration,
-            _rogueLikeRuntimeDataService.CurrentIndexLevel, roomIndex);
+            _rogueLikeRuntimeDataService.CurrentIndexLevel, _enemyRoomObserver.CompletedRooms);
         Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
-        SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes);
+        _spawnedEnemiesInCurrentRoom = SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes);
     }
 
     public void TrySpawnAdditionalEnemies(CharacterFacade characterFacade, int enemyCount)
@@ -84,14 +84,24 @@ public class EnemySpawner
 
         EnemyRoomConfiguration configuration = GetCurrentConfiguration(characterFacade,
             out DefaultEnemiesRoomData currentRoomData, out LevelSettings levelSettings);
-        List<EnemyType> enemyTypes = BuildAdditionalSpawnQueue(configuration, enemyCount);
+        EnemyRoomScalingConfiguration scalingConfiguration =
+            _levelsConfiguration.GetEnemyRoomScalingConfiguration();
+        int remainingCapacity =
+            scalingConfiguration.MaxEnemiesPerRoom - _spawnedEnemiesInCurrentRoom;
+        int clampedEnemyCount = Mathf.Min(enemyCount, Mathf.Max(0, remainingCapacity));
+        if (clampedEnemyCount <= 0)
+            return;
+
+        List<EnemyType> enemyTypes =
+            BuildAdditionalSpawnQueue(configuration, clampedEnemyCount);
 
         LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
         if (currentLevel == null)
             throw new System.InvalidOperationException("Current level view is not available.");
 
         Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
-        SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes);
+        _spawnedEnemiesInCurrentRoom +=
+            SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes);
     }
 
     private EnemyRoomConfiguration GetCurrentConfiguration(CharacterFacade characterFacade,
@@ -119,16 +129,17 @@ public class EnemySpawner
         return configuration;
     }
 
-    private void SpawnEnemyTypes(Room currentRoom, LevelSettings levelSettings,
+    private int SpawnEnemyTypes(Room currentRoom, LevelSettings levelSettings,
         IReadOnlyList<EnemyType> enemyTypes)
     {
         List<Collider> groundColliders = GetGroundColliders(currentRoom);
         if (groundColliders.Count == 0)
         {
             Debug.LogWarning($"Could not find ground colliders in room {currentRoom.name}.");
-            return;
+            return 0;
         }
 
+        int spawnedEnemyCount = 0;
         for (int i = 0; i < enemyTypes.Count; i++)
         {
             var enemyType = enemyTypes[i];
@@ -145,11 +156,14 @@ public class EnemySpawner
                 enemyType, _enemyRoomObserver.CompletedRooms);
 
             SpawnEnemy(enemy, spawnPosition).Forget();
+            spawnedEnemyCount++;
         }
+
+        return spawnedEnemyCount;
     }
 
     private static List<EnemyType> BuildSpawnQueue(EnemyRoomScalingConfiguration scalingConfiguration,
-        EnemyRoomConfiguration configuration, int levelIndex, int roomIndex)
+        EnemyRoomConfiguration configuration, int levelIndex, int completedCombatRooms)
     {
         var baseEnemyTypes = new List<EnemyType>(configuration.EnemyTypes.Length);
         for (int i = 0; i < configuration.EnemyTypes.Length; i++)
@@ -163,7 +177,7 @@ public class EnemySpawner
                 "The enemy room configuration does not contain spawnable enemy types.");
 
         int enemyCount = scalingConfiguration.GetEnemyCount(baseEnemyTypes.Count,
-            levelIndex, roomIndex);
+            levelIndex, completedCombatRooms);
         var spawnQueue = new List<EnemyType>(enemyCount);
         for (int i = 0; i < enemyCount; i++)
             spawnQueue.Add(baseEnemyTypes[i % baseEnemyTypes.Count]);
