@@ -1,5 +1,58 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &156582163495383516
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7948264168056733966}
+  - component: {fileID: 5577109412727755799}
+  m_Layer: 11
+  m_Name: BoxCollider_2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7948264168056733966
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 156582163495383516}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.049459875, w: 0.99877614}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7385916335824375612}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 5.67}
+--- !u!65 &5577109412727755799
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 156582163495383516}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.3769198, y: 6.588153, z: 3.05372}
+  m_Center: {x: -2.4843087, y: 3.8722985, z: 1.3224673}
 --- !u!1 &1102117780364710553
 GameObject:
   m_ObjectHideFlags: 0
@@ -11,7 +64,7 @@ GameObject:
   - component: {fileID: 4739101954903003179}
   - component: {fileID: 2992361852445736189}
   - component: {fileID: 7438872604653977931}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Door_3_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -102,7 +155,7 @@ GameObject:
   - component: {fileID: 8202027006664007921}
   - component: {fileID: 4078141521229462612}
   - component: {fileID: 2755897820693024681}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Shadow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -118,8 +171,8 @@ Transform:
   m_GameObject: {fileID: 1927066851903716364}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 0.0494, y: 3, z: 2.4}
-  m_LocalScale: {x: 4.1635566, y: 4.5097284, z: 1}
+  m_LocalPosition: {x: 0.0106, y: 3.0056, z: 2.4}
+  m_LocalScale: {x: 4.42451, y: 4.761625, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7385916335824375612}
@@ -213,7 +266,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1507200729593503931}
   - component: {fileID: 6869393535510588152}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: EnemyDoor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -264,7 +317,7 @@ GameObject:
   - component: {fileID: 619849969958908448}
   - component: {fileID: 2737053695007214171}
   - component: {fileID: 7072192653110442678}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Door_3_1.001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -343,6 +396,112 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &5318720687301960157
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5090082257860184477}
+  - component: {fileID: 8042588153170849335}
+  m_Layer: 11
+  m_Name: BoxCollider_1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5090082257860184477
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5318720687301960157}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7385916335824375612}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &8042588153170849335
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5318720687301960157}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 7.882529, y: 1.6022186, z: 3.669953}
+  m_Center: {x: 0.11625457, y: 6.365143, z: 1.6306001}
+--- !u!1 &5345149942351693175
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7092998216410743994}
+  - component: {fileID: 1000223125453767764}
+  m_Layer: 11
+  m_Name: BoxCollider_3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7092998216410743994
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5345149942351693175}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: -0.061048605, w: 0.99813485}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7385916335824375612}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -7}
+--- !u!65 &1000223125453767764
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5345149942351693175}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.41445446, y: 6.5880976, z: 3.0939865}
+  m_Center: {x: 2.240903, y: 3.872316, z: 1.3426561}
 --- !u!1 &5700273095480113777
 GameObject:
   m_ObjectHideFlags: 0
@@ -354,7 +513,7 @@ GameObject:
   - component: {fileID: 2135571130056969463}
   - component: {fileID: 5219414617584266325}
   - component: {fileID: 1386099471629446263}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Door_gate_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -444,7 +603,7 @@ GameObject:
   - component: {fileID: 7972468672690591676}
   - component: {fileID: 6214655976653435575}
   - component: {fileID: 3563083861928464648}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Door_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -535,7 +694,7 @@ GameObject:
   - component: {fileID: 4551908310260861939}
   - component: {fileID: 9176366286788703104}
   - component: {fileID: 3516761520459087416}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: RoomDoor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -558,6 +717,9 @@ Transform:
   - {fileID: 1507200729593503931}
   - {fileID: 8656792859675641950}
   - {fileID: 6781167572362311876}
+  - {fileID: 5090082257860184477}
+  - {fileID: 7948264168056733966}
+  - {fileID: 7092998216410743994}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4551908310260861939
@@ -590,7 +752,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -621,7 +783,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8656792859675641950}
   - component: {fileID: 4740413469230184476}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: RewardDoor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -672,7 +834,7 @@ GameObject:
   - component: {fileID: 8725049976751433281}
   - component: {fileID: 288943030114175577}
   - component: {fileID: 9222107558144605825}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Door_gate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -762,7 +924,7 @@ GameObject:
   - component: {fileID: 3248337520830379449}
   - component: {fileID: 2558710464649301095}
   - component: {fileID: 2324323354375591441}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Door_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
