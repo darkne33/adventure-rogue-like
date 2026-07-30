@@ -16,5 +16,6 @@
     MovementSpeedScroll = 13,
     RegenHpScroll = 14,
     ThornsDamageScroll = 15,
-    ShieldScroll = 16
+    ShieldScroll = 16,
+    FireField = 17
 }

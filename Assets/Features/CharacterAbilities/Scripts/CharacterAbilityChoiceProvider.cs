@@ -27,6 +27,9 @@ public class CharacterAbilityChoiceProvider : IAbilityChoiceProvider
                 case AbilityName.RabbitBoomerang:
                     CreateAbility<RabbitBoomerangAbility>(abilityConfig, abilityConfig.AbilityName);
                     break;
+                case AbilityName.FireField:
+                    CreateAbility<FireFieldAbility>(abilityConfig, abilityConfig.AbilityName);
+                    break;
                 case AbilityName.AbilityDurationScroll:
                     CreateAbility<CharacterScrollAbilityDurationAbility>(abilityConfig, abilityConfig.AbilityName);
                     break;

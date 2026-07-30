@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e745055fcdf47eaa06352634ac7b200, type: 3}
+  m_Name: Fire Field Ability Configuration
+  m_EditorClassIdentifier: Assembly-CSharp::FireFieldAbilityConfiguration
+  <AbilityName>k__BackingField: 17
+  DisplayName: Fire Trail
+  Description: Creates a damaging fire field after every 3 meters traveled.
+  <Icon>k__BackingField: {fileID: 21300000, guid: eae0c1bce5f94311a9f24577c6437c5e, type: 3}
+  <Prefab>k__BackingField: {fileID: 1117364925471799688, guid: 69a077a0517314447a956fce91d28aa2, type: 3}
+  <DistancePerField>k__BackingField: 15
+  <MinimumDistancePerField>k__BackingField: 1.5
+  <FieldDuration>k__BackingField: 3
+  <DamageTickInterval>k__BackingField: 0.5
+  <DamageRadius>k__BackingField: 3.5
+  <DamageHeight>k__BackingField: 2.5
+  <StartDamage>k__BackingField: 4
+  <DamageVariationPercent>k__BackingField: 20
+  <DamageUpgradeIncrease>k__BackingField: 2
+  <DistanceUpgradeReduction>k__BackingField: 0.25
+  <RadiusUpgradeIncrease>k__BackingField: 0.35
+  <GroundRayStartHeight>k__BackingField: 4
+  <GroundRayDistance>k__BackingField: 12
+  <GroundOffset>k__BackingField: 0.05

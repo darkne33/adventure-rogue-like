@@ -7,7 +7,7 @@ public class UpgradeOfferConfiguration : ScriptableObject
 {
     [field: SerializeField] public UpgradeOfferItemFacade UpgradeOfferItemFacade { get; private set; }
     [field: SerializeField, Min(1)] public int MaxBuildSlots { get; private set; } = 5;
-    [field: SerializeField, Min(1)] public int MaxActiveAbilities { get; private set; } = 3;
+    [field: SerializeField, Min(1)] public int MaxActiveAbilities { get; private set; } = 2;
     [field: SerializeField, Range(0f, 100f)] public float ActiveAbilityOfferChance { get; private set; } = 50f;
     [field: SerializeField, Min(0.01f)] public float ProjectileCountIncreaseStep { get; private set; } = 0.25f;
     [field: SerializeField] public UpgradeRarityData[] RarityData { get; private set; } =
@@ -138,7 +138,9 @@ public enum AbilityUpgradeType
     BounceRadiusDamage = 2,
     Damage = 3,
     TargetsDamage = 4,
-    AdditionalProjectiles = 5
+    AdditionalProjectiles = 5,
+    FireFieldDistance = 6,
+    FireFieldRadius = 7
 }
 
 public readonly struct UpgradeOffer

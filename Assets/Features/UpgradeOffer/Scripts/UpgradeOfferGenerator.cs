@@ -40,10 +40,10 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
             .Where(ability => _upgradeBuildService.Contains(ability) == false)
             .ToList();
 
-        bool canOfferActiveAbilities = _upgradeBuildService.IsFull == false &&
-                                       _upgradeBuildService.ActiveAbilityCount <
-                                       _upgradeBuildService.MaxActiveAbilities;
-        int requestedNewActiveAbilityCount = canOfferActiveAbilities
+        bool canOfferNewActiveAbilities = _upgradeBuildService.IsFull == false &&
+                                          _upgradeBuildService.ActiveAbilityCount <
+                                          _upgradeBuildService.MaxActiveAbilities;
+        int requestedNewActiveAbilityCount = canOfferNewActiveAbilities
             ? Mathf.Clamp(
                 _upgradeBuildService.MaxActiveAbilities -
                 _upgradeBuildService.ActiveAbilityCount,
@@ -53,7 +53,6 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         int newActiveAbilityCount =
             Mathf.Min(requestedNewActiveAbilityCount, newActiveAbilities.Count);
         int selectedActiveAbilityCount =
-            canOfferActiveAbilities &&
             newActiveAbilityCount < TotalOfferCount &&
             selectedActiveAbilities.Count > 0 &&
             RollChance(_upgradeOfferConfiguration.ActiveAbilityOfferChance)
