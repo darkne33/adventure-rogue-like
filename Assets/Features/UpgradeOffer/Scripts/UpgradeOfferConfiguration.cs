@@ -8,8 +8,6 @@ public class UpgradeOfferConfiguration : ScriptableObject
     [field: SerializeField] public UpgradeOfferItemFacade UpgradeOfferItemFacade { get; private set; }
     [field: SerializeField, Min(1)] public int MaxBuildSlots { get; private set; } = 5;
     [field: SerializeField, Min(1)] public int MaxActiveAbilities { get; private set; } = 3;
-    [field: SerializeField, Range(0f, 100f)] public float SecondActiveAbilityOfferChance { get; private set; } = 100f;
-    [field: SerializeField, Range(0f, 100f)] public float ThirdActiveAbilityOfferChance { get; private set; } = 10f;
     [field: SerializeField, Range(0f, 100f)] public float ActiveAbilityOfferChance { get; private set; } = 50f;
     [field: SerializeField, Min(0.01f)] public float ProjectileCountIncreaseStep { get; private set; } = 0.25f;
     [field: SerializeField] public UpgradeRarityData[] RarityData { get; private set; } =
@@ -21,16 +19,6 @@ public class UpgradeOfferConfiguration : ScriptableObject
     };
     [field: SerializeField] public UpgradeItemSpriteSet[] ItemSpriteSets { get; private set; } =
         Array.Empty<UpgradeItemSpriteSet>();
-
-    public float GetNewActiveAbilityOfferChance(int activeAbilityCount)
-    {
-        if (activeAbilityCount >= Mathf.Max(1, MaxActiveAbilities))
-            return 0f;
-
-        return activeAbilityCount <= 1
-            ? SecondActiveAbilityOfferChance
-            : ThirdActiveAbilityOfferChance;
-    }
 
     public UpgradeRarityData GetRarityData(UpgradeRarity rarity)
     {

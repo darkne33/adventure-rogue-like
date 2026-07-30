@@ -40,23 +40,34 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
             .Where(ability => _upgradeBuildService.Contains(ability) == false)
             .ToList();
 
-        bool includeNewActiveAbility = ShouldIncludeNewActiveAbility(newActiveAbilities.Count > 0);
-        bool includeSelectedActiveAbility = includeNewActiveAbility == false &&
-                                            selectedActiveAbilities.Count > 0 &&
-                                            RollChance(_upgradeOfferConfiguration.ActiveAbilityOfferChance);
-        IEnumerable<CharacterActiveAbility> activeOfferAbilities = includeNewActiveAbility
-            ? newActiveAbilities
-            : selectedActiveAbilities;
+        bool canOfferActiveAbilities = _upgradeBuildService.IsFull == false &&
+                                       _upgradeBuildService.ActiveAbilityCount <
+                                       _upgradeBuildService.MaxActiveAbilities;
+        int requestedNewActiveAbilityCount = canOfferActiveAbilities
+            ? Mathf.Clamp(
+                _upgradeBuildService.MaxActiveAbilities -
+                _upgradeBuildService.ActiveAbilityCount,
+                0,
+                TotalOfferCount)
+            : 0;
+        int newActiveAbilityCount =
+            Mathf.Min(requestedNewActiveAbilityCount, newActiveAbilities.Count);
+        int selectedActiveAbilityCount =
+            canOfferActiveAbilities &&
+            newActiveAbilityCount < TotalOfferCount &&
+            selectedActiveAbilities.Count > 0 &&
+            RollChance(_upgradeOfferConfiguration.ActiveAbilityOfferChance)
+                ? 1
+                : 0;
+        int passiveAbilityCount =
+            TotalOfferCount - newActiveAbilityCount - selectedActiveAbilityCount;
 
-        int countActiveAbilities = includeNewActiveAbility || includeSelectedActiveAbility ? 1 : 0;
-        int countScrolls = TotalOfferCount - countActiveAbilities;
-
-        AddRandomOffers(passiveAbilities, countScrolls, offerAbilities, offers);
-        AddRandomOffers(activeOfferAbilities, countActiveAbilities, offerAbilities, offers);
+        AddRandomOffers(passiveAbilities, passiveAbilityCount, offerAbilities, offers);
+        AddRandomOffers(newActiveAbilities, newActiveAbilityCount, offerAbilities, offers);
+        AddRandomOffers(selectedActiveAbilities, selectedActiveAbilityCount, offerAbilities, offers);
 
         List<CharacterAbility> fallbackAbilities = availableAbilities
-            .Where(ability => ability is not CharacterActiveAbility ||
-                              _upgradeBuildService.Contains(ability))
+            .Where(ability => ability is not CharacterActiveAbility)
             .ToList();
         AddRandomOffers(fallbackAbilities, TotalOfferCount - offers.Count, offerAbilities, offers);
 
@@ -65,16 +76,6 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
 
     private bool IsAvailableForCurrentBuild(CharacterAbility ability) =>
         _upgradeBuildService.CanSelect(ability);
-
-    private bool ShouldIncludeNewActiveAbility(bool hasAvailableAbility)
-    {
-        if (hasAvailableAbility == false || _upgradeBuildService.IsFull)
-            return false;
-
-        float chance = _upgradeOfferConfiguration.GetNewActiveAbilityOfferChance(
-            _upgradeBuildService.ActiveAbilityCount);
-        return RollChance(chance);
-    }
 
     private static bool RollChance(float chance)
     {
