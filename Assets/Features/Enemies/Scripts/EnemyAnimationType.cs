@@ -4,5 +4,6 @@
     Bun = 1,
     Dummy = 2,
     Skeleton = 3,
-    Ghost = 4
+    Ghost = 4,
+    Bomb = 5,
 }
