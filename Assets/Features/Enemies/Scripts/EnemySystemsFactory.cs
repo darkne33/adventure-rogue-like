@@ -48,7 +48,7 @@ namespace Features.Enemies.Scripts
             IEnemyAnimationSystem animationSystem = CreateAnimationSystem(configuration, animator);
             IEnemyMovementSystem movementSystem = CreateMovementSystem(configuration, facade, character,
                 navMeshAgent, animationSystem);
-            float attackPreparationDuration = GetAttackPreparationDuration();
+            float attackPreparationDuration = configuration.AttackPreparationDuration;
             IEnemyDamageSystem damageSystem = CreateDamageSystem(configuration, facade, character,
                 facade.GetComponent<EnemyDashView>(), facade.GetComponent<EnemyRangedAttackView>(),
                 attackPreparationDuration);
@@ -113,18 +113,6 @@ namespace Features.Enemies.Scripts
                 _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyMovementType),
                     configuration.EnemyMovementType, "Enemy movement type is not supported.")
             };
-
-        private float GetAttackPreparationDuration()
-        {
-            LevelSettings levelSettings =
-                _levelsConfiguration.GetLevel(_runtimeDataService.CurrentIndexLevel);
-            if (levelSettings.EnemyFactoryConfiguration == null)
-                throw new InvalidOperationException(
-                    "Enemy factory configuration is missing for the current level.");
-
-            return Mathf.Max(
-                0f, levelSettings.EnemyFactoryConfiguration.AttackPreparationDuration);
-        }
 
         private int GetScaledMaxHealth(int baseHealth)
         {

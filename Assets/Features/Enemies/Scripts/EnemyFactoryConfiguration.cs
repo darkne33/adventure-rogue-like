@@ -7,10 +7,6 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Configs/Enemies/EnemyFactoryConfiguration", fileName = "EnemyFactoryConfiguration", order = 0)]
 public class EnemyFactoryConfiguration : ScriptableObject
 {
-    [field: Header("Combat Settings")]
-    [field: Min(0f)]
-    [field: SerializeField] public float AttackPreparationDuration { get; private set; } = 0.55f;
-
     [field: Header("Prefab Settings")]
     [field: SerializeField] public List<EnemyPrefabData> EnemyPrefabs { get; set; }
 

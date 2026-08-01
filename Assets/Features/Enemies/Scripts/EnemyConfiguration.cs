@@ -17,13 +17,15 @@ public class EnemyConfiguration : ScriptableObject
     [field: Min(1)]
     [field: SerializeField] public int MaxHealth { get; private set; } = 100;
 
-    [field: Header("Damage Settings")]
+    [field: Header("Combat Settings")]
     
     [field: SerializeField] public int Damage { get; private set; }
     [field: SerializeField] public float DamageRange { get; private set; }
     [field: SerializeField] public float DamageCooldown { get; private set; }
     [field: Min(0f)]
     [field: SerializeField] public float InitialAttackCooldown { get; private set; }
+    [field: Min(0f)]
+    [field: SerializeField] public float AttackPreparationDuration { get; private set; } = 0.55f;
     [field: SerializeField] public EnemyDamageType EnemyDamageType { get; private set; }
     [field: Tooltip("Minimum time the enemy remains stationary after releasing an attack. " +
                     "Attack-specific recovery can make the pause longer. " +
