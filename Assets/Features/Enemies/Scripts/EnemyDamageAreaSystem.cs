@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -10,7 +10,10 @@ namespace Features.Enemies.Scripts
         private readonly CharacterFacade _characterFacade;
         private readonly EnemyConfiguration _enemyConfiguration;
         private readonly EnemyFacade _enemyFacade;
+        private readonly IEnemiesProvider _enemiesProvider;
+        private readonly EnemyAreaDamageIndicatorView _indicatorView;
         private readonly float _attackPreparationDuration;
+        private readonly List<EnemyFacade> _enemiesInDamageRadius = new();
 
         private float _cooldown;
         private bool _attackStarted;
@@ -18,17 +21,21 @@ namespace Features.Enemies.Scripts
 
         public EnemyDamageAreaSystem(CharacterFacade characterFacade,
             EnemyConfiguration enemyConfiguration, EnemyFacade enemyFacade,
+            IEnemiesProvider enemiesProvider, EnemyAreaDamageIndicatorView indicatorView,
             float attackPreparationDuration)
         {
             _characterFacade = characterFacade;
             _enemyConfiguration = enemyConfiguration;
             _enemyFacade = enemyFacade;
+            _enemiesProvider = enemiesProvider;
+            _indicatorView = indicatorView;
             _attackPreparationDuration = Mathf.Max(0f, attackPreparationDuration);
         }
 
         public void Initialize()
         {
             _cooldown = Mathf.Max(0f, _enemyConfiguration.InitialAttackCooldown);
+            _indicatorView?.Initialize();
 
             if (_enemyConfiguration.ExplosionPrefab == null)
             {
@@ -47,22 +54,33 @@ namespace Features.Enemies.Scripts
             _attackStarted = true;
             Rigidbody rigidbody = _enemyFacade.Rigidbody;
 
-            _enemyFacade.SetStop(true);
-            StopHorizontalMovement(rigidbody);
-            _enemyFacade.EffectsSystem.BeginAttackTelegraph(_attackPreparationDuration);
-
             try
             {
+                _enemyFacade.SetStop(true);
+                StopHorizontalMovement(rigidbody);
+                _indicatorView?.Show(
+                    GetExplosionPosition(),
+                    _enemyConfiguration.AreaDamageRadius,
+                    _attackPreparationDuration);
+                _enemyFacade.EffectsSystem.BeginAttackTelegraph(_attackPreparationDuration);
+
                 _enemyFacade.AnimationSystem.IdleAnimation();
                 _enemyFacade.AnimationSystem.AttackAnimation();
 
-                await UniTask.Delay(
-                    TimeSpan.FromSeconds(_attackPreparationDuration),
-                    cancellationToken: cancellationToken);
+                float elapsed = 0f;
+                while (elapsed < _attackPreparationDuration)
+                {
+                    if (_enemyFacade.IsDead)
+                        return;
+
+                    elapsed += Time.deltaTime;
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                }
 
                 if (_enemyFacade.IsDead)
                     return;
 
+                _indicatorView?.Complete(GetExplosionPosition());
                 await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
 
                 if (_enemyFacade.IsDead)
@@ -73,6 +91,7 @@ namespace Features.Enemies.Scripts
             }
             finally
             {
+                _indicatorView?.Hide();
                 _enemyFacade?.EffectsSystem.ClearAttackTelegraph();
 
                 if (_enemyFacade != null && _hasDetonated == false && _enemyFacade.IsDead == false)
@@ -113,8 +132,7 @@ namespace Features.Enemies.Scripts
 
         private void Detonate()
         {
-            Vector3 explosionPosition =
-                _enemyFacade.transform.position + _enemyConfiguration.ExplosionOffset;
+            Vector3 explosionPosition = GetExplosionPosition();
 
             SpawnExplosion(explosionPosition);
 
@@ -124,11 +142,15 @@ namespace Features.Enemies.Scripts
                     _enemyConfiguration.Damage, _enemyFacade);
             }
 
+            DamageEnemiesInsideRadius(explosionPosition);
             _enemyFacade.HealthSystem.GetDamage(int.MaxValue);
 
             if (_enemyFacade != null)
                 _enemyFacade.gameObject.SetActive(false);
         }
+
+        private Vector3 GetExplosionPosition() =>
+            _enemyFacade.transform.position + _enemyConfiguration.ExplosionOffset;
 
         private void SpawnExplosion(Vector3 position)
         {
@@ -148,6 +170,41 @@ namespace Features.Enemies.Scripts
 
         private bool IsCharacterInsideDamageRadius(Vector3 explosionPosition) =>
             IsCharacterInsideRadius(_enemyConfiguration.AreaDamageRadius, explosionPosition);
+
+        private void DamageEnemiesInsideRadius(Vector3 explosionPosition)
+        {
+            if (_enemyConfiguration.DamagesEnemiesOnExplosion == false || _enemiesProvider == null)
+                return;
+
+            float radius = Mathf.Max(0f, _enemyConfiguration.AreaDamageRadius);
+            float radiusSqr = radius * radius;
+            IReadOnlyList<EnemyFacade> activeEnemies = _enemiesProvider.ActiveEnemies;
+            _enemiesInDamageRadius.Clear();
+
+            for (int index = 0; index < activeEnemies.Count; index++)
+            {
+                EnemyFacade enemy = activeEnemies[index];
+                if (enemy == null || enemy == _enemyFacade ||
+                    enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
+                    continue;
+
+                Vector3 offset = enemy.transform.position - explosionPosition;
+                offset.y = 0f;
+
+                if (offset.sqrMagnitude <= radiusSqr)
+                    _enemiesInDamageRadius.Add(enemy);
+            }
+
+            foreach (EnemyFacade enemy in _enemiesInDamageRadius)
+            {
+                if (enemy == null || enemy.IsDead)
+                    continue;
+
+                int appliedDamage = enemy.HealthSystem.GetDamage(_enemyConfiguration.Damage);
+                if (appliedDamage > 0)
+                    enemy.EffectsSystem.DealDamage();
+            }
+        }
 
         private bool IsCharacterInsideRadius(float radius)
         {

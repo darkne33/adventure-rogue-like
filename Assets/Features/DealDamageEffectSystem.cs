@@ -10,6 +10,7 @@ namespace Features.Enemies.Scripts
     {
         private const float AttackShakeStrength = 0.12f;
         private const int AttackShakeVibrato = 18;
+        private const float AttackTelegraphMaxPower = 0.6f;
 
         private static readonly int HitBlend = Shader.PropertyToID("_HitPower");
         private static readonly int AttackTelegraphBlend =
@@ -107,7 +108,8 @@ namespace Features.Enemies.Scripts
 
         private void SetAttackTelegraphProgress(float progress)
         {
-            _attackTelegraphPower = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress));
+            _attackTelegraphPower = Mathf.SmoothStep(
+                0f, AttackTelegraphMaxPower, Mathf.Clamp01(progress));
             ApplyAttackTelegraph();
         }
 

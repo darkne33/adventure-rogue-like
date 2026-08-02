@@ -35,9 +35,12 @@ public class EnemyConfiguration : ScriptableObject
     [field: SerializeField] public Vector3 ExplosionOffset { get; private set; } =
         new(0f, 0.5f, 0f);
     [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeArea)]
-    [field: Tooltip("Radius in which the detonation damages the character.")]
+    [field: Tooltip("Radius in which the detonation damages valid targets.")]
     [field: Min(0f)]
     [field: SerializeField] public float AreaDamageRadius { get; private set; } = 2f;
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeArea)]
+    [field: Tooltip("Whether the detonation also damages other enemies inside the area.")]
+    [field: SerializeField] public bool DamagesEnemiesOnExplosion { get; private set; }
     [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeArea)]
     [field: Tooltip("Seconds before the spawned explosion prefab is destroyed.")]
     [field: Min(0.1f)]

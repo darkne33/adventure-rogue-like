@@ -88,7 +88,10 @@ namespace Features.Enemies.Scripts
                 EnemyDamageType.Dash => new EnemyDashAttackSystem(
                     character, configuration, facade, dashView, attackPreparationDuration),
                 EnemyDamageType.RangeArea => new EnemyDamageAreaSystem(
-                    character, configuration, facade, attackPreparationDuration),
+                    character, configuration, facade,
+                    _enemiesProvider,
+                    facade.GetComponent<EnemyAreaDamageIndicatorView>(),
+                    attackPreparationDuration),
                 EnemyDamageType.RangeDirection => new EnemyRangedAttackSystem(
                     character, configuration, facade, rangedAttackView, attackPreparationDuration),
                 EnemyDamageType.RangeBullet => new EnemyBulletAttackSystem(

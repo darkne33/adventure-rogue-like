@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8964510341965284504}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: TargetToShoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 1413615477447292480}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.813, z: 0}
+  m_LocalPosition: {x: 0, y: 1.75, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -67,7 +67,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: -0.055999994, y: 7.3637667}
+  m_AnchoredPosition: {x: -0.055999994, y: 3.95}
   m_SizeDelta: {x: 9.4479, y: 1.3079}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &8344374084862709773
@@ -134,6 +134,96 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!1 &6212726275260011145
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 740630393486071258}
+  - component: {fileID: 3457399235835180709}
+  - component: {fileID: 4694549598699247751}
+  m_Layer: 10
+  m_Name: ExplosionIndicator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &740630393486071258
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6212726275260011145}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.1, z: 0}
+  m_LocalScale: {x: 1, y: 0.09418729, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7037138832937195801}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &3457399235835180709
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6212726275260011145}
+  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &4694549598699247751
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6212726275260011145}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 84e87aee570fca6498b98860b53e48d6, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &7037138832937157921
 GameObject:
   m_ObjectHideFlags: 0
@@ -143,7 +233,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195777}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigHubGizmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -164,7 +254,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6629305265006456585}
-  m_LocalEulerAnglesHint: {x: 0.5865642, y: -97.27445, z: -93.01688}
+  m_LocalEulerAnglesHint: {x: 0.2758741, y: -86.03306, z: -97.953064}
 --- !u!1 &7037138832937157923
 GameObject:
   m_ObjectHideFlags: 0
@@ -174,7 +264,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195779}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigJaw Down
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -195,7 +285,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7037138832937195791}
-  m_LocalEulerAnglesHint: {x: -0.000010672801, y: -0.000022249073, z: -97.71193}
+  m_LocalEulerAnglesHint: {x: -0.000011565474, y: -0.000020888401, z: -97.71193}
 --- !u!1 &7037138832937157925
 GameObject:
   m_ObjectHideFlags: 0
@@ -205,7 +295,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195781}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigJaw DownGizmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -226,7 +316,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6629305265006456585}
-  m_LocalEulerAnglesHint: {x: 0.5865526, y: -97.27443, z: 169.27118}
+  m_LocalEulerAnglesHint: {x: 0.27585277, y: -86.033035, z: 164.33499}
 --- !u!1 &7037138832937157929
 GameObject:
   m_ObjectHideFlags: 0
@@ -236,7 +326,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195785}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigFuse3Gizmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -257,7 +347,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6629305265006456585}
-  m_LocalEulerAnglesHint: {x: 6.0002046, y: -52.215153, z: 165.52652}
+  m_LocalEulerAnglesHint: {x: 9.26201, y: -41.428566, z: 161.77638}
 --- !u!1 &7037138832937157931
 GameObject:
   m_ObjectHideFlags: 0
@@ -267,7 +357,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195787}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigFuse4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -289,7 +379,7 @@ Transform:
   m_Children:
   - {fileID: 4782802089901604183}
   m_Father: {fileID: 7037138832937195799}
-  m_LocalEulerAnglesHint: {x: 17.859934, y: -4.968506, z: -15.119939}
+  m_LocalEulerAnglesHint: {x: 17.859932, y: -4.968506, z: -15.119938}
 --- !u!1 &7037138832937157933
 GameObject:
   m_ObjectHideFlags: 0
@@ -299,7 +389,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195789}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigFuse4Gizmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -320,7 +410,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6629305265006456585}
-  m_LocalEulerAnglesHint: {x: -10.119477, y: -43.06888, z: 150.86032}
+  m_LocalEulerAnglesHint: {x: -6.283583, y: -31.334608, z: 147.70306}
 --- !u!1 &7037138832937157935
 GameObject:
   m_ObjectHideFlags: 0
@@ -330,7 +420,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195791}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigHub
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -353,7 +443,7 @@ Transform:
   - {fileID: 7037138832937195807}
   - {fileID: 7037138832937195779}
   m_Father: {fileID: 6629305265006456585}
-  m_LocalEulerAnglesHint: {x: 0.5865642, y: -97.27445, z: -93.01688}
+  m_LocalEulerAnglesHint: {x: 0.2758741, y: -86.03306, z: -97.953064}
 --- !u!1 &7037138832937157937
 GameObject:
   m_ObjectHideFlags: 0
@@ -363,7 +453,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195793}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigFuse1Gizmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -384,7 +474,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6629305265006456585}
-  m_LocalEulerAnglesHint: {x: -4.658115, y: -96.99751, z: -93.026054}
+  m_LocalEulerAnglesHint: {x: -4.9273453, y: -85.30443, z: -97.982666}
 --- !u!1 &7037138832937157939
 GameObject:
   m_ObjectHideFlags: 0
@@ -394,7 +484,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195795}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigFuse2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -416,7 +506,7 @@ Transform:
   m_Children:
   - {fileID: 7037138832937195799}
   m_Father: {fileID: 7037138832937195807}
-  m_LocalEulerAnglesHint: {x: -50.473583, y: 6.617971, z: -42.286076}
+  m_LocalEulerAnglesHint: {x: -50.473583, y: 6.61797, z: -42.286076}
 --- !u!1 &7037138832937157941
 GameObject:
   m_ObjectHideFlags: 0
@@ -426,7 +516,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195797}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigFuse2Gizmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -447,7 +537,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6629305265006456585}
-  m_LocalEulerAnglesHint: {x: 3.5679657, y: -46.839977, z: -132.70393}
+  m_LocalEulerAnglesHint: {x: 7.1686306, y: -35.874706, z: -136.10939}
 --- !u!1 &7037138832937157943
 GameObject:
   m_ObjectHideFlags: 0
@@ -457,7 +547,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195799}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigFuse3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -479,7 +569,7 @@ Transform:
   m_Children:
   - {fileID: 7037138832937195787}
   m_Father: {fileID: 7037138832937195795}
-  m_LocalEulerAnglesHint: {x: 2.2626727, y: 5.43041, z: -61.212536}
+  m_LocalEulerAnglesHint: {x: 2.262674, y: 5.430409, z: -61.212536}
 --- !u!1 &7037138832937157945
 GameObject:
   m_ObjectHideFlags: 0
@@ -494,10 +584,11 @@ GameObject:
   - component: {fileID: 3139346539023277161}
   - component: {fileID: 2389879644122901291}
   - component: {fileID: 7858021558294792555}
+  - component: {fileID: 6509217219034012480}
   - component: {fileID: 3194670990935443242}
   - component: {fileID: 4017369717377863038}
   - component: {fileID: 7955118697154024051}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: BombEnemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -520,6 +611,7 @@ Transform:
   - {fileID: 8021718916136777673}
   - {fileID: 6629305265006456585}
   - {fileID: 8964510341965284504}
+  - {fileID: 740630393486071258}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &7037138832944461561
@@ -563,10 +655,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1.6
+  m_Radius: 0.78
   m_Height: 0.9
   m_Direction: 1
-  m_Center: {x: 0, y: 3.51, z: 0}
+  m_Center: {x: 0, y: 1.73, z: 0}
 --- !u!54 &3139346539023277161
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -603,7 +695,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 7037138832937157945}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 1.35
+  m_Radius: 0.78
   m_Speed: 3.5
   m_Acceleration: 20
   avoidancePriority: 50
@@ -612,7 +704,7 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 5.12
+  m_Height: 2.58
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
@@ -632,6 +724,20 @@ MonoBehaviour:
   _enemyConfiguration: {fileID: 11400000, guid: 733d9ed5c6496ff4ca093236ff1ea7df, type: 2}
   _meshRenderers:
   - {fileID: 7037138832940271673}
+--- !u!114 &6509217219034012480
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7037138832937157945}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c578d0373e724308bb8080add201c9ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyAreaDamageIndicatorView
+  _indicator: {fileID: 740630393486071258}
+  _minimumRadius: 0.05
 --- !u!114 &3194670990935443242
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -686,7 +792,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7037138832937195803}
   - component: {fileID: 7037138832940271673}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Bomb
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -783,7 +889,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195805}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Rig
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -814,7 +920,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7037138832937195807}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigFuse1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -836,7 +942,7 @@ Transform:
   m_Children:
   - {fileID: 7037138832937195795}
   m_Father: {fileID: 7037138832937195791}
-  m_LocalEulerAnglesHint: {x: 0.0000004865566, y: -5.253864, z: -1.9746458e-15}
+  m_LocalEulerAnglesHint: {x: 0.00000039184746, y: -5.2538633, z: -1.5902773e-15}
 --- !u!1 &8911965667857752486
 GameObject:
   m_ObjectHideFlags: 0
@@ -846,7 +952,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6629305265006456585}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: BombModel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -863,8 +969,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 2}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 7037138832937195803}
   - {fileID: 7037138832937195805}
@@ -1026,6 +1132,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2591572350827275295, guid: 2e78e06fcf30c0a4993cde911703d443, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 2591572351042154496, guid: 2e78e06fcf30c0a4993cde911703d443, type: 3}
       propertyPath: m_RootOrder
       value: 0
@@ -1077,6 +1187,10 @@ PrefabInstance:
     - target: {fileID: 2591572351042154621, guid: 2e78e06fcf30c0a4993cde911703d443, type: 3}
       propertyPath: m_Name
       value: FX Spark
+      objectReference: {fileID: 0}
+    - target: {fileID: 2591572351042154621, guid: 2e78e06fcf30c0a4993cde911703d443, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
