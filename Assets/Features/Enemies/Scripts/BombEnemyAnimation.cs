@@ -20,7 +20,9 @@ namespace Features.Enemies.Scripts
 
         public void AttackAnimation()
         {
-            
+            _animator.SetBool(IsRunning, false);
+            _animator.ResetTrigger(Attack);
+            _animator.SetTrigger(Attack);
         }
     }
 }

@@ -27,6 +27,21 @@ public class EnemyConfiguration : ScriptableObject
     [field: Min(0f)]
     [field: SerializeField] public float AttackPreparationDuration { get; private set; } = 0.55f;
     [field: SerializeField] public EnemyDamageType EnemyDamageType { get; private set; }
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeArea)]
+    [field: Tooltip("Particle prefab spawned when a Range Area enemy detonates.")]
+    [field: SerializeField] public GameObject ExplosionPrefab { get; private set; }
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeArea)]
+    [field: Tooltip("World-space offset applied to the spawned explosion prefab.")]
+    [field: SerializeField] public Vector3 ExplosionOffset { get; private set; } =
+        new(0f, 0.5f, 0f);
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeArea)]
+    [field: Tooltip("Radius in which the detonation damages the character.")]
+    [field: Min(0f)]
+    [field: SerializeField] public float AreaDamageRadius { get; private set; } = 2f;
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeArea)]
+    [field: Tooltip("Seconds before the spawned explosion prefab is destroyed.")]
+    [field: Min(0.1f)]
+    [field: SerializeField] public float ExplosionEffectLifetime { get; private set; } = 3f;
     [field: Tooltip("Minimum time the enemy remains stationary after releasing an attack. " +
                     "Attack-specific recovery can make the pause longer. " +
                     "Damage Cooldown starts after this pause.")]
