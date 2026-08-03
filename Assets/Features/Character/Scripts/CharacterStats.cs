@@ -37,6 +37,7 @@ public class CharacterStats
     public float JumpInertiaAirControl;
     public float RotationSpeed;
     public float GravityMultiplier;
+    public float GroundStickAcceleration;
     public float CoyoteTime;
     public float BunnyHopResetDelay;
     public float BunnyHopSpeedBonusPerJump;

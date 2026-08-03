@@ -42,6 +42,7 @@ public class CharacterSettingsConfiguration : ScriptableObject
     [field: SerializeField] public float JumpInertiaDuration { get; private set; } = 0.65f;
     [field: SerializeField, Range(0f, 1f)] public float JumpInertiaAirControl { get; private set; } = 0.18f;
     [field: SerializeField] public float GravityMultiplier { get; private set; }
+    [field: SerializeField, Min(0f)] public float GroundStickAcceleration { get; private set; } = 30f;
     [field: SerializeField] public float CoyoteTime { get; private set; } = 0.12f;
     [field: SerializeField] public float BunnyHopResetDelay { get; private set; } = 0.25f;
     [field: SerializeField] public float BunnyHopSpeedBonusPerJump { get; private set; } = 0.045f;

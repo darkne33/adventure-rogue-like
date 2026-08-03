@@ -56,6 +56,7 @@ public class RogueLikePrepareStatsState : State
         _characterStats.JumpInertiaAirControl = _characterSettingsConfiguration.JumpInertiaAirControl;
         _characterStats.RotationSpeed = _characterSettingsConfiguration.RotationSpeed;
         _characterStats.GravityMultiplier = _characterSettingsConfiguration.GravityMultiplier;
+        _characterStats.GroundStickAcceleration = _characterSettingsConfiguration.GroundStickAcceleration;
         _characterStats.CoyoteTime = _characterSettingsConfiguration.CoyoteTime;
         _characterStats.BunnyHopResetDelay = _characterSettingsConfiguration.BunnyHopResetDelay;
         _characterStats.BunnyHopSpeedBonusPerJump = _characterSettingsConfiguration.BunnyHopSpeedBonusPerJump;

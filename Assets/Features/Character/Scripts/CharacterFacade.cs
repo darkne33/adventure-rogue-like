@@ -39,6 +39,8 @@ public class CharacterFacade : MonoBehaviour
     private const float MinGroundNormalY = 0.5f;
     private const float MaxGroundedVerticalSpeed = 0.1f;
     private const float GroundCheckDistance = 0.3f;
+    private const float GroundProbeRadiusScale = 0.9f;
+    private const int GroundProbeHitCapacity = 16;
 
     private Rigidbody _rigidbody;
     private Collider _collider;
@@ -55,9 +57,20 @@ public class CharacterFacade : MonoBehaviour
     private float _invulnerableUntilTime;
     private bool _isTransitionPaused;
     private bool _wasKinematicBeforeControlLock;
+    private int _obstacleLayer = -1;
+    private int _wallLayer = -1;
+    private int _defaultLayer = -1;
+    private readonly RaycastHit[] _groundProbeHits = new RaycastHit[GroundProbeHitCapacity];
 
     private bool IsControlLocked => _isTransitionPaused ||
                                     (_pauseEntity?.IsCinematicPaused ?? false);
+
+    private void Awake()
+    {
+        _obstacleLayer = LayerMask.NameToLayer("Obstacle");
+        _wallLayer = LayerMask.NameToLayer("Wall");
+        _defaultLayer = LayerMask.NameToLayer("Default");
+    }
 
     private void Update()
     {
@@ -81,12 +94,14 @@ public class CharacterFacade : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.GetComponent<Wall>() != null ||
-            collision.gameObject.GetComponent<Obstacle>() != null)
-        {
-            _moveSystem.CanMove(true);
+        if (IsObstacleOrWall(collision.gameObject) == false)
+            return;
+
+        _moveSystem.CanMove(true);
+
+        // Obstacle tops are valid ground. Only a lateral impact should cancel movement bonuses.
+        if (HasWalkableContact(collision) == false)
             _moveSystem.ResetBunnyHopBonus();
-        }
     }
 
     public void Initialize()
@@ -283,22 +298,72 @@ public class CharacterFacade : MonoBehaviour
     private bool TryGetGroundSurface(out Vector3 groundNormal)
     {
         Bounds bounds = _collider.bounds;
-        Vector3 footPosition = _pivotGroundChecker != null
-            ? _pivotGroundChecker.position
-            : new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
-        Vector3 rayOrigin = footPosition + Vector3.up * GroundCheckDistance;
-        float rayDistance = GroundCheckDistance * 2f;
+        float probeRadius = Mathf.Max(
+            Physics.defaultContactOffset,
+            Mathf.Min(bounds.extents.x, bounds.extents.z) * GroundProbeRadiusScale);
+        Vector3 probeOrigin = bounds.center;
 
-        bool hasGround = Physics.Raycast(
-            rayOrigin,
+        if (_pivotGroundChecker != null)
+        {
+            probeOrigin.x = _pivotGroundChecker.position.x;
+            probeOrigin.z = _pivotGroundChecker.position.z;
+        }
+
+        float castDistance = Mathf.Max(0f, bounds.extents.y - probeRadius) + GroundCheckDistance;
+        int fallbackObstacleMask = _defaultLayer >= 0 ? 1 << _defaultLayer : 0;
+        int groundProbeMask = _shadowLayer.value | fallbackObstacleMask;
+        int hitCount = Physics.SphereCastNonAlloc(
+            probeOrigin,
+            probeRadius,
             Vector3.down,
-            out RaycastHit hit,
-            rayDistance,
-            _shadowLayer,
-            QueryTriggerInteraction.Ignore)
-            && hit.normal.y >= MinGroundNormalY;
+            _groundProbeHits,
+            castDistance,
+            groundProbeMask,
+            QueryTriggerInteraction.Ignore);
 
-        groundNormal = hasGround ? hit.normal.normalized : Vector3.up;
-        return hasGround;
+        float closestDistance = float.PositiveInfinity;
+        groundNormal = Vector3.up;
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            RaycastHit hit = _groundProbeHits[i];
+            if (hit.collider == null || hit.rigidbody == _rigidbody ||
+                IsGroundSurface(hit.collider) == false ||
+                hit.normal.y < MinGroundNormalY || hit.distance >= closestDistance)
+                continue;
+
+            closestDistance = hit.distance;
+            groundNormal = hit.normal.normalized;
+        }
+
+        return closestDistance < float.PositiveInfinity;
+    }
+
+    private bool IsGroundSurface(Collider surfaceCollider)
+    {
+        int surfaceLayerMask = 1 << surfaceCollider.gameObject.layer;
+        return (_shadowLayer.value & surfaceLayerMask) != 0 ||
+               surfaceCollider.GetComponentInParent<Ground>() != null ||
+               surfaceCollider.GetComponentInParent<Obstacle>() != null;
+    }
+
+    private bool IsObstacleOrWall(GameObject collisionObject)
+    {
+        int layer = collisionObject.layer;
+        return layer == _obstacleLayer ||
+               layer == _wallLayer ||
+               collisionObject.GetComponentInParent<Obstacle>() != null ||
+               collisionObject.GetComponentInParent<Wall>() != null;
+    }
+
+    private static bool HasWalkableContact(Collision collision)
+    {
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            if (collision.GetContact(i).normal.y >= MinGroundNormalY)
+                return true;
+        }
+
+        return false;
     }
 }

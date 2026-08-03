@@ -112,11 +112,18 @@ namespace Features.Enemies.Scripts
 
             Vector3 currentPosition = Enemy.transform.position;
             Vector3 navigationPosition = NavMeshAgent.nextPosition;
+            Rigidbody rigidbody = Enemy.Rigidbody;
 
             // Keep the visible enemy on the agent's path instead of lerping
-            // across NavMesh corners. Vertical movement remains physics-driven.
+            // across NavMesh corners. Dynamic grounded enemies keep their
+            // physics-driven height; kinematic and no-gravity enemies follow
+            // the height of the NavMesh instead.
             currentPosition.x = navigationPosition.x;
             currentPosition.z = navigationPosition.z;
+
+            if (rigidbody == null || rigidbody.isKinematic || rigidbody.useGravity == false)
+                currentPosition.y = navigationPosition.y;
+
             Enemy.transform.position = currentPosition;
         }
     }

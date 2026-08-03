@@ -4,6 +4,9 @@ using UnityEngine.InputSystem;
 
 public class CharacterMoveSystem
 {
+    private static readonly int MovementBlockingLayerMask = LayerMask.GetMask("Obstacle", "Wall");
+    private const int MovementBlockHitCapacity = 16;
+
     private readonly Rigidbody _rigidbody;
     private readonly ICameraService _cameraService;
     private readonly CharacterStats _characterStats;
@@ -14,9 +17,9 @@ public class CharacterMoveSystem
     private readonly PauseEntity _pauseEntity;
 
     private readonly InputSystem_Actions _inputActions = new();
+    private readonly RaycastHit[] _movementBlockHits = new RaycastHit[MovementBlockHitCapacity];
 
     private Vector3 _direction;
-    private Vector3 _currentVelocity;
     private Vector3 _groundNormal = Vector3.up;
     
     private float _dashCooldownTimer = 0f;
@@ -129,36 +132,84 @@ public class CharacterMoveSystem
         _direction = moveDirection;
         CancelGravityAlongGround();
 
-        bool blocked = false;
-        if (input.magnitude > 0.1f && Physics.Raycast(_rigidbody.transform.position, _direction, out var hit, 1f))
+        Vector3 groundMoveDirection = GetGroundMoveDirection(_direction);
+        bool blocked = groundMoveDirection != Vector3.zero &&
+                       IsMovementBlocked(groundMoveDirection);
+
+        if (blocked)
         {
-            if (hit.collider.GetComponent<Wall>() != null ||
-                hit.collider.GetComponent<Obstacle>() != null)
-            {
-                blocked = true;
-                ResetBunnyHopBonus();
-            }
+            ResetBunnyHopBonus();
         }
 
-        Vector3 desiredHorizontalVelocity = blocked
+        Vector3 desiredGroundVelocity = blocked
             ? Vector3.zero
-            : _direction * GetMovementSpeed();
-        desiredHorizontalVelocity = ApplyLandingSlideVelocity(desiredHorizontalVelocity);
+            : groundMoveDirection * GetMovementSpeed();
+        desiredGroundVelocity = ApplyLandingSlideVelocity(desiredGroundVelocity);
+        desiredGroundVelocity = Vector3.ProjectOnPlane(desiredGroundVelocity, _groundNormal);
 
-        Vector3 currentHorizontalVelocity = new Vector3(_rigidbody.linearVelocity.x, 0f, _rigidbody.linearVelocity.z);
-        Vector3 velocityDifference = desiredHorizontalVelocity - currentHorizontalVelocity;
+        Vector3 currentGroundVelocity = Vector3.ProjectOnPlane(_rigidbody.linearVelocity, _groundNormal);
+        Vector3 velocityDifference = desiredGroundVelocity - currentGroundVelocity;
 
         if (velocityDifference.magnitude > 0.01f)
         {
             _rigidbody.AddForce(velocityDifference * _characterStats.MovementAcceleration,
                 ForceMode.Acceleration);
         }
+
+        ApplyGroundStickForce();
+    }
+
+    private bool IsMovementBlocked(Vector3 groundMoveDirection)
+    {
+        int hitCount = Physics.RaycastNonAlloc(
+            _rigidbody.worldCenterOfMass,
+            groundMoveDirection,
+            _movementBlockHits,
+            1f,
+            Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore);
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider hitCollider = _movementBlockHits[i].collider;
+            if (hitCollider == null || hitCollider.attachedRigidbody == _rigidbody)
+                continue;
+
+            int hitLayerMask = 1 << hitCollider.gameObject.layer;
+            if ((MovementBlockingLayerMask & hitLayerMask) != 0 ||
+                hitCollider.GetComponentInParent<Obstacle>() != null ||
+                hitCollider.GetComponentInParent<Wall>() != null)
+                return true;
+        }
+
+        return false;
     }
 
     private void CancelGravityAlongGround()
     {
         Vector3 gravityAlongGround = Vector3.ProjectOnPlane(Physics.gravity, _groundNormal);
         _rigidbody.AddForce(-gravityAlongGround, ForceMode.Acceleration);
+    }
+
+    private Vector3 GetGroundMoveDirection(Vector3 worldDirection)
+    {
+        Vector3 groundDirection = Vector3.ProjectOnPlane(worldDirection, _groundNormal);
+        return groundDirection.sqrMagnitude > 0.0001f
+            ? groundDirection.normalized
+            : Vector3.zero;
+    }
+
+    private void ApplyGroundStickForce()
+    {
+        // Move runs before Jump in FixedUpdate. Do not counteract a jump queued for this step.
+        if (_jumpInputBufferTimer > 0f)
+            return;
+
+        float stickAcceleration = Mathf.Max(0f, _characterStats.GroundStickAcceleration);
+        if (stickAcceleration <= 0f)
+            return;
+
+        _rigidbody.AddForce(-_groundNormal * stickAcceleration, ForceMode.Acceleration);
     }
 
     public void CanMove(bool state) =>
@@ -328,10 +379,14 @@ public class CharacterMoveSystem
         if (speed < MinBunnyHopHorizontalSpeed)
             return;
 
+        Vector3 groundSlideDirection = GetGroundMoveDirection(horizontalVelocity);
+        if (groundSlideDirection == Vector3.zero)
+            return;
+
         _landingSlideTimer = duration;
         _landingSlideSpeed = speed * Mathf.Max(1f, _characterStats.LandingSlideSpeedMultiplier);
         _landingSlideTargetSpeed = 0f;
-        _landingSlideDirection = horizontalVelocity.normalized;
+        _landingSlideDirection = groundSlideDirection;
         ApplyLandingSlideStartVelocity();
     }
 
@@ -371,9 +426,9 @@ public class CharacterMoveSystem
 
     private void ApplyLandingSlideStartVelocity()
     {
-        Vector3 currentHorizontalVelocity = new(_rigidbody.linearVelocity.x, 0f, _rigidbody.linearVelocity.z);
-        Vector3 targetHorizontalVelocity = _landingSlideDirection * _landingSlideSpeed;
-        Vector3 velocityChange = targetHorizontalVelocity - currentHorizontalVelocity;
+        Vector3 currentGroundVelocity = Vector3.ProjectOnPlane(_rigidbody.linearVelocity, _groundNormal);
+        Vector3 targetGroundVelocity = _landingSlideDirection * _landingSlideSpeed;
+        Vector3 velocityChange = targetGroundVelocity - currentGroundVelocity;
 
         if (velocityChange.sqrMagnitude <= 0.0001f)
             return;
