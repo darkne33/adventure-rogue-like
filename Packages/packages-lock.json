@@ -9,13 +9,14 @@
       }
     },
     "com.coffee.ui-particle": {
-      "version": "file:ParticleEffects",
+      "version": "https://github.com/mob-sakai/ParticleEffectForUGUI.git#4.13.3",
       "depth": 0,
-      "source": "embedded",
+      "source": "git",
       "dependencies": {
         "com.unity.ugui": "1.0.0",
         "com.unity.modules.particlesystem": "1.0.0"
-      }
+      },
+      "hash": "5a305705f84549e50223d897bb95495edd78bf1a"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",

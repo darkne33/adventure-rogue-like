@@ -21,6 +21,7 @@ public class CharacterPanel : PanelBase
     [field: SerializeField] public TMP_Text GameTimerText { get; private set; }
     [field: SerializeField] public MinimapView MinimapView { get; private set; }
     [field: SerializeField] public Slider ExpProgressBar { get; private set; }
+    [field: SerializeField] public ExpBarUpgradeMarquee ExpBarUpgradeMarquee { get; private set; }
     [field: SerializeField] public UpgradeOfferPanel UpgradeOfferPanel { get; private set; }
     [field: SerializeField] public CharacterBuildView CharacterBuildView { get; private set; }
     [field: SerializeField] public RelicInventoryView RelicInventoryView { get; private set; }

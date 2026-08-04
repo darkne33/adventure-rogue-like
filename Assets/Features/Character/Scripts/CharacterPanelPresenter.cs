@@ -42,6 +42,16 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     {
         Panel.AnnouncementText.DOFade(0, 0);
         Panel.RoomTimerView?.HideImmediate();
+        if (Panel.UpgradeOfferPanel != null)
+        {
+            Panel.UpgradeOfferPanel.VisibilityChanged += SetUpgradeMarqueeVisible;
+            SetUpgradeMarqueeVisible(Panel.UpgradeOfferPanel.gameObject.activeInHierarchy);
+        }
+        else
+        {
+            SetUpgradeMarqueeVisible(false);
+        }
+
         _characterLevelService.OnUpdateAddExpView += UpdateExpView;
         _characterLevelService.OnExpAdded += ShowExpRewardView;
         RogueLikeStateMachine stateMachine = _gameModeService.Get<RogueLikeStateMachine>();
@@ -81,6 +91,10 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 
     public override UniTask OnClosed()
     {
+        if (Panel.UpgradeOfferPanel != null)
+            Panel.UpgradeOfferPanel.VisibilityChanged -= SetUpgradeMarqueeVisible;
+
+        SetUpgradeMarqueeVisible(false);
         _characterLevelService.OnUpdateAddExpView -= UpdateExpView;
         _characterLevelService.OnExpAdded -= ShowExpRewardView;
         if (_runtimeDataService != null)
@@ -117,6 +131,9 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 
     private void ShowExpRewardView(int amount) =>
         Panel.CharacterExpView.ShowExp(amount);
+
+    private void SetUpgradeMarqueeVisible(bool visible) =>
+        Panel.ExpBarUpgradeMarquee?.SetVisible(visible);
 
     private void HandleRoomChanged(RoomData previousRoom, RoomData currentRoom) =>
         UpdateRoomView(animate: true);

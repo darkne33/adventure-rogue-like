@@ -31,6 +31,8 @@ public class EnemySpawner
     private const float SpawnBoundsPadding = 0.05f;
     private const float FallbackSpawnRadius = 1f;
     private const float FallbackSpawnHeight = 2f;
+    private const float EnemySpawnRiseDuration = 0.5f;
+    private const float PortalFadeDuration = 0.3f;
 
     public EnemySpawner(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IEnemyFactory enemyFactory,
         LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider, IEffectsService effectsService,
@@ -223,31 +225,60 @@ public class EnemySpawner
         if (enemyFacade.Configuration?.EnemyRank == EnemyRank.Boss)
             _relicEventBus.PublishBossSpawned(new RelicBossSpawnEvent(enemyFacade, spawnPosition));
 
-        var portalEffect = _effectsService.GetEffect(EffectName.EnemyPortal);
-        var defaultScaleEffect = portalEffect.transform.localScale;
-        portalEffect.transform.position = spawnPosition + Vector3.up * 0.1f;
-        portalEffect.PlayWithoutRelease();
+        CancellationToken lifetimeToken = enemyFacade.GetCancellationTokenOnDestroy();
+        UniTask portalLifetime = PlaySpawnPortal(spawnPosition, lifetimeToken);
 
         try
         {
             enemyFacade.SetStop(true);
 
-            await enemyFacade.transform.DOMoveY(spawnPosition.y, 0.5f)
-                .ToUniTask(cancellationToken: enemyFacade.GetCancellationTokenOnDestroy());
+            await enemyFacade.transform.DOMoveY(spawnPosition.y, EnemySpawnRiseDuration)
+                .ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, lifetimeToken);
 
             if (enemyFacade != null)
                 enemyFacade.SetStop(false);
-
-            await portalEffect.transform.DOScale(Vector3.zero, 0.3f).ToUniTask();
         }
         catch (System.OperationCanceledException)
         {
         }
         finally
         {
+            await portalLifetime;
+        }
+    }
+
+    private async UniTask PlaySpawnPortal(Vector3 spawnPosition, CancellationToken lifetimeToken)
+    {
+        EffectPlayer portalEffect = null;
+        Vector3 defaultScale = Vector3.one;
+
+        try
+        {
+            portalEffect = _effectsService.GetEffect(EffectName.EnemyPortal);
+            if (portalEffect == null)
+                return;
+
             portalEffect.transform.DOKill();
-            portalEffect.transform.localScale = defaultScaleEffect;
-            portalEffect.Release();
+            defaultScale = portalEffect.transform.localScale;
+            portalEffect.transform.position = spawnPosition + Vector3.up * 0.1f;
+            portalEffect.PlayWithoutRelease();
+
+            await portalEffect.transform.DOScale(Vector3.zero, PortalFadeDuration)
+                .SetDelay(EnemySpawnRiseDuration)
+                .SetUpdate(true)
+                .ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, lifetimeToken);
+        }
+        catch (System.OperationCanceledException)
+        {
+        }
+        finally
+        {
+            if (portalEffect != null)
+            {
+                portalEffect.transform.DOKill();
+                portalEffect.transform.localScale = defaultScale;
+                portalEffect.Release();
+            }
         }
     }
 

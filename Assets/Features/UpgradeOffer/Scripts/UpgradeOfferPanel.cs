@@ -1,3 +1,4 @@
+using System;
 using Cysharp.Threading.Tasks;
 using UI;
 using UnityEngine;
@@ -6,6 +7,8 @@ using Zenject;
 public class UpgradeOfferPanel : MonoBehaviour
 {
     [field: SerializeField] public Transform UpgradesRoot { get; private set; }
+
+    public event Action<bool> VisibilityChanged;
 
     [Inject] private ICursorService _cursorService;
 
@@ -21,6 +24,7 @@ public class UpgradeOfferPanel : MonoBehaviour
         gameObject.SetActive(true);
         _panelAnimationsMonoComponent.ForceShow();
         _cursorService.ShowUiCursor();
+        VisibilityChanged?.Invoke(true);
         return UniTask.CompletedTask;
     }
 
@@ -29,5 +33,6 @@ public class UpgradeOfferPanel : MonoBehaviour
         await _panelAnimationsMonoComponent.Hide();
         gameObject.SetActive(false);
         _cursorService.ShowGameplayCursor();
+        VisibilityChanged?.Invoke(false);
     }
 }
