@@ -126,8 +126,15 @@ namespace Core
 
         public void StopPlay()
         {
-            if (_particleSystems[0] != null)
-                ParticleSystems[0].Stop(true);
+            foreach (ParticleSystem particleSystem in _particleSystems)
+            {
+                if (particleSystem != null)
+                {
+                    particleSystem.Stop(
+                        true,
+                        ParticleSystemStopBehavior.StopEmittingAndClear);
+                }
+            }
         }
 
         public void StopEmit()

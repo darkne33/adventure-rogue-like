@@ -42,6 +42,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
 
             if (roomData is not DefaultEnemiesRoomData &&
                 roomData is not RewardRoomData &&
+                roomData is not ShopRoomData &&
                 roomData is not StartRoomData)
                 throw new System.InvalidOperationException(
                     $"Room transition does not support {roomData.GetType().Name}.");
@@ -85,7 +86,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
                             rewardRoomData.MarkCompleted();
                         }
 
-                        if (roomData is RewardRoomData or StartRoomData)
+                        if (roomData is RewardRoomData or ShopRoomData or StartRoomData)
                             OpenRoomDoors(roomData);
 
                     },

@@ -139,6 +139,14 @@ public class LevelView : MonoBehaviour
                     RoomDoors = authoredDoors
                 });
             }
+            else if (roomNode.Type == RoomType.Shop && room.RoomData is not ShopRoomData)
+            {
+                RoomDoor[] authoredDoors = room.RoomData?.RoomDoors;
+                room.SetRoomData(new ShopRoomData
+                {
+                    RoomDoors = authoredDoors
+                });
+            }
 
             roomNode.Bind(room);
         }
@@ -256,6 +264,8 @@ public class LevelView : MonoBehaviour
                     $"{roomNode.RoomPrefab.name} must contain StartRoomData.");
             case RoomType.Reward:
                 return;
+            case RoomType.Shop:
+                return;
             case RoomType.Enemy:
             case RoomType.Exit:
                 if (roomData == null)
@@ -283,6 +293,8 @@ public class LevelView : MonoBehaviour
                     enemiesRoomData.Configuration);
                 return;
             case (RoomType.Reward, RewardRoomData):
+                return;
+            case (RoomType.Shop, ShopRoomData):
                 return;
             default:
                 throw new InvalidOperationException(
@@ -565,6 +577,7 @@ public class LevelView : MonoBehaviour
                     RoomType.Start => Color.cyan,
                     RoomType.Exit => Color.green,
                     RoomType.Reward => Color.yellow,
+                    RoomType.Shop => Color.magenta,
                     _ => Color.white
                 };
                 DrawRoomGizmo(roomNode.GridPosition, color);
@@ -607,7 +620,8 @@ public enum RoomType
     Start,
     Exit,
     Enemy,
-    Reward
+    Reward,
+    Shop
 }
 
 [Serializable]

@@ -550,6 +550,7 @@ public static class PrebuiltLevelsGenerator
             bool hasMatchingData = node?.Type switch
             {
                 RoomType.Start => node.Room?.RoomData is StartRoomData,
+                RoomType.Shop => node.Room?.RoomData is ShopRoomData,
                 RoomType.Reward or RoomType.Enemy or RoomType.Exit =>
                     node.Room?.RoomData != null,
                 _ => false

@@ -60,6 +60,8 @@ public class CharacterFacade : MonoBehaviour
     private int _obstacleLayer = -1;
     private int _wallLayer = -1;
     private int _defaultLayer = -1;
+    private Color _defaultOutlineColor;
+    private bool _isShieldOutlineActive;
     private readonly RaycastHit[] _groundProbeHits = new RaycastHit[GroundProbeHitCapacity];
 
     private bool IsControlLocked => _isTransitionPaused ||
@@ -70,6 +72,9 @@ public class CharacterFacade : MonoBehaviour
         _obstacleLayer = LayerMask.NameToLayer("Obstacle");
         _wallLayer = LayerMask.NameToLayer("Wall");
         _defaultLayer = LayerMask.NameToLayer("Default");
+
+        if (_outline != null)
+            _defaultOutlineColor = _outline.OutlineColor;
     }
 
     private void Update()
@@ -277,6 +282,21 @@ public class CharacterFacade : MonoBehaviour
 
         if (_pauseEntity.IsPauseEntity == false)
             _shieldSystem.Tick(deltaTime);
+
+        UpdateShieldOutline();
+    }
+
+    private void UpdateShieldOutline()
+    {
+        if (_outline == null)
+            return;
+
+        bool isShieldOutlineActive = _shieldSystem.CurrentShield > 0f;
+        if (_isShieldOutlineActive == isShieldOutlineActive)
+            return;
+
+        _isShieldOutlineActive = isShieldOutlineActive;
+        _outline.OutlineColor = isShieldOutlineActive ? Color.blue : _defaultOutlineColor;
     }
 
     private void UpdateGroundedState()

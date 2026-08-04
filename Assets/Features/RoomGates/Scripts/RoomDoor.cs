@@ -35,7 +35,7 @@ public sealed class RoomDoor : MonoBehaviour
             ? nextRoomEntryDoor
             : throw new ArgumentNullException(nameof(nextRoomEntryDoor));
         _isLevelExit = false;
-        _doorType = nextRoom.RoomData is RewardRoomData
+        _doorType = nextRoom.RoomData is RewardRoomData or ShopRoomData
             ? DoorType.Reward
             : DoorType.Enemy;
 
@@ -117,4 +117,3 @@ public sealed class RoomDoor : MonoBehaviour
             _transitToRoomService.Transit(_nextRoom, _nextRoomEntryDoor);
     }
 }
-

@@ -63,6 +63,11 @@ public class RewardRoomData : RoomData
 }
 
 [Serializable]
+public class ShopRoomData : RoomData
+{
+}
+
+[Serializable]
 public class StartRoomData : RoomData
 {
     [field: SerializeField] public Transform StartPoint;
