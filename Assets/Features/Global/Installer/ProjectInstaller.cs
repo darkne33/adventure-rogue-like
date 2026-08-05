@@ -51,6 +51,7 @@ namespace Core.Installer
             Container.Bind<CharacterExpConfig>().FromInstance(_characterExpConfig).AsSingle();
             Container.Bind<ICharacterLevelService>().To<CharacterLevelService>().AsSingle();
             Container.Bind<ICursorService>().To<CursorService>().AsSingle();
+            Container.Bind<ITimeScaleService>().To<TimeScaleService>().AsSingle();
             Container.Bind<IPauseService>().To<PauseService>().AsSingle();
             Container.Bind<PauseEntityDistributor>().AsSingle();
         }

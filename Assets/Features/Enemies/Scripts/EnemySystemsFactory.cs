@@ -9,28 +9,28 @@ namespace Features.Enemies.Scripts
     {
         private readonly ICharacterProvider _characterProvider;
         private readonly IEnemiesProvider _enemiesProvider;
-        private readonly ICharacterLevelService _characterLevelService;
         private readonly CharacterStats _characterStats;
         private readonly IRogueLikeRuntimeDataService _runtimeDataService;
         private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
         private readonly LevelsConfiguration _levelsConfiguration;
         private readonly GoldDropper _goldDropper;
         private readonly HeartDropper _heartDropper;
+        private readonly ExpDropper _expDropper;
 
         public EnemySystemsFactory(ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
-            ICharacterLevelService characterLevelService, CharacterStats characterStats,
-            IRogueLikeRuntimeDataService runtimeDataService, ISceneService<RogueLikeSceneProvider> sceneService,
-            LevelsConfiguration levelsConfiguration, GoldDropper goldDropper, HeartDropper heartDropper)
+            CharacterStats characterStats, IRogueLikeRuntimeDataService runtimeDataService,
+            ISceneService<RogueLikeSceneProvider> sceneService, LevelsConfiguration levelsConfiguration,
+            GoldDropper goldDropper, HeartDropper heartDropper, ExpDropper expDropper)
         {
             _characterProvider = characterProvider;
             _enemiesProvider = enemiesProvider;
-            _characterLevelService = characterLevelService;
             _characterStats = characterStats;
             _runtimeDataService = runtimeDataService;
             _sceneService = sceneService;
             _levelsConfiguration = levelsConfiguration;
             _goldDropper = goldDropper;
             _heartDropper = heartDropper;
+            _expDropper = expDropper;
         }
 
         public void Create(EnemyFacade facade)
@@ -58,8 +58,8 @@ namespace Features.Enemies.Scripts
                                  damageSystem is EnemyDamageAreaSystem areaDamageSystem
                 ? areaDamageSystem.DetonateOnDeath
                 : null;
-            var deathSystem = new EnemyDeathSystem(_enemiesProvider, facade, _characterLevelService, configuration,
-                _characterStats, character, effectsSystem, deathEffect, _goldDropper, _heartDropper);
+            var deathSystem = new EnemyDeathSystem(_enemiesProvider, facade, configuration, _characterStats,
+                character, effectsSystem, deathEffect, _goldDropper, _heartDropper, _expDropper);
             int maxHealth = GetScaledMaxHealth(configuration.MaxHealth);
             var healthSystem = new HealthSystem(maxHealth,
                 new IHealthView[] { facade.GetComponent<EnemyHealthView>() }, deathSystem,

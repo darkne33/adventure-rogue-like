@@ -17,6 +17,7 @@ public class CharacterPanel : PanelBase
     [field: SerializeField] public TMP_Text RoomNumberText { get; private set; }
     [field: SerializeField] public TMP_Text PlayerGoldCurrencyText { get; private set; }
     [field: SerializeField] public TMP_Text PlayerSilverCurrencyText { get; private set; }
+    [field: SerializeField] public TMP_Text PlayerKeysCurrencyText { get; private set; }
     [field: SerializeField] public TMP_Text PlayerKilledEnemiesText { get; private set; }
     [field: SerializeField] public TMP_Text GameTimerText { get; private set; }
     [field: SerializeField] public MinimapView MinimapView { get; private set; }

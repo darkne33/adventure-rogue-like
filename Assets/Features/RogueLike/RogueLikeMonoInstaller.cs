@@ -3,6 +3,7 @@ using Core.Services;
 using Features.Enemies.Scripts;
 using Features.Enemies.Scripts.Level.Scripts;
 using Features.Relics.Scripts;
+using Features.RewardBag;
 using UnityEngine;
 using Zenject;
 
@@ -14,12 +15,15 @@ public class RogueLikeMonoInstaller : MonoInstaller
     [SerializeField] private UpgradeOfferConfiguration _upgradeOfferConfiguration;
 
     [SerializeField] private LevelsConfiguration _levelsConfiguration;
+    [SerializeField] private RoomCompletionTimeSlowSettings _roomCompletionTimeSlowSettings = new();
 
     [SerializeField] private AllAbilitiesConfiguration _abilitiesConfiguration;
     [SerializeField] private RelicPoolConfiguration _relicPoolConfiguration;
     [SerializeField] private RelicChestConfiguration _relicChestConfiguration;
     [SerializeField] private GoldDropperConfiguration _goldDropperConfiguration;
+    [SerializeField] private ExpDropperConfiguration _expDropperConfiguration;
     [SerializeField] private HeartDropperConfiguration _heartDropperConfiguration;
+    [SerializeField] private GameObject _rewardBagPrefab;
 
     [SerializeField] private SceneNames.SceneNameType _sceneNameType;
 
@@ -32,9 +36,11 @@ public class RogueLikeMonoInstaller : MonoInstaller
         BindSpawners();
         BindObservers();
         BindCharacterWallet();
+        BindRewardBag();
         BindCharacterStats();
         BindUpgradeOffer();
         BindGoldDropper();
+        BindExpDropper();
         BindHeartDropper();
         BindRelics();
         BindDebugMode();
@@ -86,11 +92,22 @@ public class RogueLikeMonoInstaller : MonoInstaller
     private void BindSpawners() => 
         Container.Bind<EnemySpawner>().AsSingle();
 
-    private void BindObservers() => 
+    private void BindObservers()
+    {
+        _roomCompletionTimeSlowSettings ??= new RoomCompletionTimeSlowSettings();
+
+        Container.Bind<RoomCompletionTimeSlowSettings>()
+            .FromInstance(_roomCompletionTimeSlowSettings)
+            .AsSingle();
         Container.Bind<EnemyRoomObserver>().AsSingle();
+        Container.BindInterfacesAndSelfTo<RoomCompletionTimeSlowEffect>().AsSingle().NonLazy();
+    }
 
     private void BindCharacterWallet() =>
         Container.Bind<CharacterWallet>().AsSingle();
+
+    private void BindRewardBag() =>
+        Container.Bind<RewardBagSpawner>().AsSingle().WithArguments(_rewardBagPrefab);
 
     private void BindCharacterStats()
     {
@@ -113,6 +130,14 @@ public class RogueLikeMonoInstaller : MonoInstaller
 
         Container.Bind<GoldDropperConfiguration>().FromInstance(_goldDropperConfiguration).AsSingle();
         Container.Bind<GoldDropper>().AsSingle();
+    }
+
+    private void BindExpDropper()
+    {
+        _expDropperConfiguration ??= ScriptableObject.CreateInstance<ExpDropperConfiguration>();
+
+        Container.Bind<ExpDropperConfiguration>().FromInstance(_expDropperConfiguration).AsSingle();
+        Container.Bind<ExpDropper>().AsSingle();
     }
 
     private void BindHeartDropper()

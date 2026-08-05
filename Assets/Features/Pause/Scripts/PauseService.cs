@@ -1,11 +1,15 @@
 using System.Collections.Generic;
-using UnityEngine;
 
 public class PauseService : IPauseService
 {
     private readonly List<PauseEntity> _pauseEntities = new List<PauseEntity>();
-    private float _timeScaleBeforePause = 1f;
+    private readonly ITimeScaleService _timeScaleService;
     private bool _isPaused;
+
+    public PauseService(ITimeScaleService timeScaleService)
+    {
+        _timeScaleService = timeScaleService;
+    }
 
     public void Register(PauseEntity pauseEntity) =>
         _pauseEntities.Add(pauseEntity);
@@ -18,10 +22,9 @@ public class PauseService : IPauseService
             return;
         }
 
-        _timeScaleBeforePause = Time.timeScale;
         _isPaused = true;
         SetupPauseEntity(true);
-        Time.timeScale = 0f;
+        _timeScaleService.SetPaused(true);
     }
 
     public void CancelPause()
@@ -32,7 +35,7 @@ public class PauseService : IPauseService
             return;
         }
 
-        Time.timeScale = _timeScaleBeforePause;
+        _timeScaleService.SetPaused(false);
         _isPaused = false;
         SetupPauseEntity(false);
     }

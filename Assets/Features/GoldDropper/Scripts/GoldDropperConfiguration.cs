@@ -7,6 +7,7 @@ public sealed class GoldDropperConfiguration : ScriptableObject
     [field: Header("Reward")]
     [field: SerializeField] public GameObject CoinGoldPrefab { get; private set; }
     [field: SerializeField, Min(1)] public int BaseGoldAmount { get; private set; } = 1;
+    [field: SerializeField, Range(0f, 1f)] public float DropChance { get; private set; } = 0.5f;
 
     [field: Header("Effects")]
     [field: SerializeField] public GameObject PickupYellowPrefab { get; private set; }

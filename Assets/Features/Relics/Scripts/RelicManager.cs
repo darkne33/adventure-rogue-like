@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using Features.Enemies.Scripts;
 using UnityEngine;
@@ -25,7 +26,10 @@ namespace Features.Relics.Scripts
         private readonly RelicEventBus _eventBus;
         private readonly ICharacterProvider _characterProvider;
         private readonly IRelicVisualEffectService _visualEffectService;
+        private readonly ITimeScaleService _timeScaleService;
         private readonly List<RelicRuntimeState> _activeRelics = new();
+        private readonly HashSet<ITimeScaleRequest> _timeScaleRequests = new();
+        private readonly CancellationTokenSource _disposeCancellation = new();
 
         private float _stillnessTimer;
         private float _pendingMoveDistance;
@@ -38,12 +42,14 @@ namespace Features.Relics.Scripts
         public event Action Changed;
 
         public RelicManager(CharacterStatModifierLayer statModifierLayer, RelicEventBus eventBus,
-            ICharacterProvider characterProvider, IRelicVisualEffectService visualEffectService)
+            ICharacterProvider characterProvider, IRelicVisualEffectService visualEffectService,
+            ITimeScaleService timeScaleService)
         {
             _statModifierLayer = statModifierLayer;
             _eventBus = eventBus;
             _characterProvider = characterProvider;
             _visualEffectService = visualEffectService;
+            _timeScaleService = timeScaleService;
 
             _eventBus.Hit += HandleHit;
             _eventBus.Kill += HandleKill;
@@ -207,6 +213,14 @@ namespace Features.Relics.Scripts
 
         public void Dispose()
         {
+            _disposeCancellation.Cancel();
+
+            foreach (ITimeScaleRequest request in _timeScaleRequests.ToArray())
+                request.Dispose();
+
+            _timeScaleRequests.Clear();
+            _disposeCancellation.Dispose();
+
             _eventBus.Hit -= HandleHit;
             _eventBus.Kill -= HandleKill;
             _eventBus.DamageTaken -= HandleDamageTaken;
@@ -508,13 +522,20 @@ namespace Features.Relics.Scripts
 
         private async UniTaskVoid SlowTime(float duration)
         {
-            float previousScale = Time.timeScale;
-            Time.timeScale = Mathf.Min(Time.timeScale, TimeSlowScale);
-            await UniTask.Delay(TimeSpan.FromSeconds(duration), ignoreTimeScale: true);
-            await UniTask.WaitWhile(() => Mathf.Approximately(Time.timeScale, 0f));
+            ITimeScaleRequest request = _timeScaleService.Request(TimeSlowScale);
+            _timeScaleRequests.Add(request);
 
-            if (Mathf.Approximately(Time.timeScale, TimeSlowScale))
-                Time.timeScale = previousScale;
+            try
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(duration), ignoreTimeScale: true,
+                        cancellationToken: _disposeCancellation.Token)
+                    .SuppressCancellationThrow();
+            }
+            finally
+            {
+                request.Dispose();
+                _timeScaleRequests.Remove(request);
+            }
         }
 
         private static string GetCooldownKey(RelicEffectDefinition effect) =>

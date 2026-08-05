@@ -73,6 +73,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         {
             _characterWallet.Gold.CountChanged += UpdateGoldCurrencyView;
             _characterWallet.Silver.CountChanged += UpdateSilverCurrencyView;
+            _characterWallet.Keys.CountChanged += UpdateKeysCurrencyView;
         }
 
         if (_relicEventBus != null)
@@ -82,6 +83,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         UpdateRoomView();
         UpdateGoldCurrencyView(_characterWallet?.Gold.Count ?? 0);
         UpdateSilverCurrencyView(_characterWallet?.Silver.Count ?? 0);
+        UpdateKeysCurrencyView(_characterWallet?.Keys.Count ?? 0);
         ResetKilledEnemiesView();
         StartGameTimer();
         StartCrosshairTracking();
@@ -104,6 +106,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         {
             _characterWallet.Gold.CountChanged -= UpdateGoldCurrencyView;
             _characterWallet.Silver.CountChanged -= UpdateSilverCurrencyView;
+            _characterWallet.Keys.CountChanged -= UpdateKeysCurrencyView;
         }
 
         if (_relicEventBus != null)
@@ -161,6 +164,9 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 
     private void UpdateSilverCurrencyView(int amount) =>
         SetText(Panel.PlayerSilverCurrencyText, amount.ToString());
+
+    private void UpdateKeysCurrencyView(int amount) =>
+        SetText(Panel.PlayerKeysCurrencyText, amount.ToString());
 
     private void ResetKilledEnemiesView()
     {

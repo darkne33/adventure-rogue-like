@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using Features.Enemies.Scripts;
 using Features.Enemies.Scripts.Level.Scripts;
 using Features.Relics.Scripts;
+using Features.RewardBag;
 using UnityEngine;
 
 public sealed class LevelProgressionService : ILevelProgressionService, IDisposable
@@ -20,16 +21,19 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
     private readonly MinimapController _minimapController;
     private readonly RelicChestSpawner _relicChestSpawner;
     private readonly RelicEventBus _relicEventBus;
+    private readonly RewardBagSpawner _rewardBagSpawner;
 
     private bool _isTransitioning;
     private bool _isRunCompleted;
+    private DefaultEnemiesRoomData _pendingFinalRewardRoom;
 
     public LevelProgressionService(LevelsConfiguration levelsConfiguration, ILevelFactory levelFactory,
         IRogueLikeRuntimeDataService runtimeDataService, ISceneService<RogueLikeSceneProvider> sceneService,
         ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
         IRoomTransitionService roomTransitionService, EnemyRoomObserver enemyRoomObserver,
         IGameModeService gameModeService, MinimapController minimapController,
-        RelicChestSpawner relicChestSpawner, RelicEventBus relicEventBus)
+        RelicChestSpawner relicChestSpawner, RelicEventBus relicEventBus,
+        RewardBagSpawner rewardBagSpawner)
     {
         _levelsConfiguration = levelsConfiguration;
         _levelFactory = levelFactory;
@@ -43,8 +47,10 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         _minimapController = minimapController;
         _relicChestSpawner = relicChestSpawner;
         _relicEventBus = relicEventBus;
+        _rewardBagSpawner = rewardBagSpawner;
 
         _enemyRoomObserver.RoomCompleted += HandleRoomCompleted;
+        _rewardBagSpawner.RewardCollected += HandleRewardBagCollected;
     }
 
     public void TransitToNextLevel()
@@ -62,17 +68,43 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         TransitToNextLevelAsync(nextLevelIndex).Forget();
     }
 
-    public void Dispose() =>
+    public void Dispose()
+    {
         _enemyRoomObserver.RoomCompleted -= HandleRoomCompleted;
+        _rewardBagSpawner.RewardCollected -= HandleRewardBagCollected;
+    }
 
     private void HandleRoomCompleted(DefaultEnemiesRoomData roomData)
     {
         int nextLevelIndex = _runtimeDataService.CurrentIndexLevel + 1;
         LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
 
-        if (!_levelsConfiguration.HasLevel(nextLevelIndex) &&
-            currentLevel != null &&
-            currentLevel.IsExitRoom(roomData))
+        if (currentLevel == null)
+            return;
+
+        bool rewardBagSpawned = _rewardBagSpawner.TrySpawn(roomData, currentLevel);
+        bool isFinalExitRoom = _levelsConfiguration.HasLevel(nextLevelIndex) == false &&
+                               currentLevel.IsExitRoom(roomData);
+        if (isFinalExitRoom == false)
+            return;
+
+        if (rewardBagSpawned)
+        {
+            _pendingFinalRewardRoom = roomData;
+            return;
+        }
+
+        CompleteRunAsync().Forget();
+    }
+
+    private void HandleRewardBagCollected(DefaultEnemiesRoomData roomData)
+    {
+        if (_pendingFinalRewardRoom == null ||
+            ReferenceEquals(_pendingFinalRewardRoom, roomData) == false)
+            return;
+
+        _pendingFinalRewardRoom = null;
+        if (_isRunCompleted == false)
             CompleteRunAsync().Forget();
     }
 
