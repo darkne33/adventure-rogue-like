@@ -20,8 +20,8 @@ public sealed class MinimapController : IDisposable, ITickable
     private readonly Dictionary<RoomData, MinimapRoomBounds> _boundsByRoom = new();
     private readonly Dictionary<Room, MinimapRoomBounds> _boundsByRoomView = new();
     private readonly HashSet<RoomData> _visitedRooms = new();
-    private readonly HashSet<RoomData> _discoveredIconRooms = new();
-    private readonly HashSet<RoomData> _visibleIconRooms = new();
+    private readonly HashSet<RoomData> _discoveredRooms = new();
+    private readonly HashSet<RoomData> _visibleRooms = new();
     private readonly List<ConnectionEntry> _connections = new();
 
     private MinimapView _view;
@@ -63,7 +63,7 @@ public sealed class MinimapController : IDisposable, ITickable
         _level = level != null ? level : throw new ArgumentNullException(nameof(level));
         _currentRoom = null;
         _visitedRooms.Clear();
-        _discoveredIconRooms.Clear();
+        _discoveredRooms.Clear();
 
         if (_view != null)
             Build();
@@ -250,29 +250,29 @@ public sealed class MinimapController : IDisposable, ITickable
             return;
 
         var states = new Dictionary<RoomData, MinimapRoomState>();
-        _visibleIconRooms.Clear();
+        _visibleRooms.Clear();
 
         foreach (KeyValuePair<RoomData, MinimapRoomIcon> entry in _icons)
         {
+            if (CanDiscoverRoom(entry.Key))
+                _discoveredRooms.Add(entry.Key);
+
             MinimapRoomState state = GetState(entry.Key);
-            if (CanDiscoverRoomIcons(entry.Key))
-                _discoveredIconRooms.Add(entry.Key);
+            bool isRoomVisible = state != MinimapRoomState.Hidden;
 
-            bool canShowRoomIcons = _discoveredIconRooms.Contains(entry.Key);
-
-            if (canShowRoomIcons)
-                _visibleIconRooms.Add(entry.Key);
+            if (isRoomVisible)
+                _visibleRooms.Add(entry.Key);
 
             states.Add(entry.Key, state);
             entry.Value.SetState(state);
-            entry.Value.SetRoomKindMarkerVisible(canShowRoomIcons);
+            entry.Value.SetRoomKindMarkerVisible(isRoomVisible);
             entry.Value.SetCombatRoomMarkerVisible(
-                canShowRoomIcons &&
+                isRoomVisible &&
                 state == MinimapRoomState.Available &&
                 entry.Key is DefaultEnemiesRoomData { IsCompleted: false });
         }
 
-        _chestMarkerController.SetVisibleRooms(_visibleIconRooms);
+        _chestMarkerController.SetVisibleRooms(_visibleRooms);
 
         foreach (ConnectionEntry connection in _connections)
         {
@@ -280,7 +280,8 @@ public sealed class MinimapController : IDisposable, ITickable
             MinimapRoomState toState = connection.To != null
                 ? states[connection.To]
                 : MinimapRoomState.Hidden;
-            bool isVisible = true;
+            bool isVisible = fromState != MinimapRoomState.Hidden &&
+                             (connection.To == null || toState != MinimapRoomState.Hidden);
             bool isHighlighted = fromState == MinimapRoomState.Current ||
                                  toState == MinimapRoomState.Current;
             connection.View.SetState(isVisible, isHighlighted);
@@ -295,10 +296,12 @@ public sealed class MinimapController : IDisposable, ITickable
         if (_visitedRooms.Contains(room))
             return MinimapRoomState.Visited;
 
-        return MinimapRoomState.Available;
+        return _discoveredRooms.Contains(room)
+            ? MinimapRoomState.Available
+            : MinimapRoomState.Hidden;
     }
 
-    private bool CanDiscoverRoomIcons(RoomData room)
+    private bool CanDiscoverRoom(RoomData room)
     {
         if (_currentRoom == null || room == null)
             return false;
@@ -423,7 +426,7 @@ public sealed class MinimapController : IDisposable, ITickable
         _positionsByRoom.Clear();
         _boundsByRoom.Clear();
         _boundsByRoomView.Clear();
-        _visibleIconRooms.Clear();
+        _visibleRooms.Clear();
         _connections.Clear();
     }
 
