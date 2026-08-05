@@ -8,17 +8,20 @@ public sealed class HeartPickup : MonoBehaviour
     private ICharacterProvider _characterProvider;
     private CharacterStats _characterStats;
     private RelicEventBus _relicEventBus;
+    private Transform _cameraTransform;
     private float _attractionEnabledTime;
     private Vector3 _startScale;
     private bool _isCollecting;
 
     public void Construct(HeartDropperConfiguration configuration, ICharacterProvider characterProvider,
-        CharacterStats characterStats, RelicEventBus relicEventBus, Vector3 landPosition)
+        CharacterStats characterStats, RelicEventBus relicEventBus, Transform cameraTransform,
+        Vector3 landPosition)
     {
         _configuration = configuration;
         _characterProvider = characterProvider;
         _characterStats = characterStats;
         _relicEventBus = relicEventBus;
+        _cameraTransform = cameraTransform;
         _attractionEnabledTime = Time.time + Mathf.Max(0f, configuration.AttractionStartDelay);
         _startScale = transform.localScale;
 
@@ -100,7 +103,7 @@ public sealed class HeartPickup : MonoBehaviour
         if (healNumberView == null)
             healNumberView = character.gameObject.AddComponent<CharacterHealNumberView>();
 
-        healNumberView.ShowHeal(restoredHealth, _configuration.HealPopupFont);
+        healNumberView.ShowHeal(restoredHealth, _configuration.HealPopupFont, _cameraTransform);
 
         transform.DOKill();
         Destroy(gameObject);

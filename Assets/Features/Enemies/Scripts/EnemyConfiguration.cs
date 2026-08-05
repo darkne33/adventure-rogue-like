@@ -42,6 +42,9 @@ public class EnemyConfiguration : ScriptableObject
     [field: Tooltip("Whether the detonation also damages other enemies inside the area.")]
     [field: SerializeField] public bool DamagesEnemiesOnExplosion { get; private set; }
     [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeArea)]
+    [field: Tooltip("Whether this enemy also detonates when it dies.")]
+    [field: SerializeField] public bool ExplodesOnDeath { get; private set; }
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeArea)]
     [field: Tooltip("Seconds before the spawned explosion prefab is destroyed.")]
     [field: Min(0.1f)]
     [field: SerializeField] public float ExplosionEffectLifetime { get; private set; } = 3f;

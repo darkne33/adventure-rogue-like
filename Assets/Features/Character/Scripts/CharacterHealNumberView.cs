@@ -12,13 +12,15 @@ public sealed class CharacterHealNumberView : MonoBehaviour
     private static readonly Color32 OutlineColor = new(0, 0, 0, 255);
 
     private Canvas _sourceCanvas;
+    private Transform _cameraTransform;
     private RectTransform _root;
 
-    public void ShowHeal(float amount, TMP_FontAsset fontAsset)
+    public void ShowHeal(float amount, TMP_FontAsset fontAsset, Transform cameraTransform)
     {
         if (amount <= 0f)
             return;
 
+        _cameraTransform = cameraTransform;
         EnsureRoot();
         SyncRootTransform();
 
@@ -91,22 +93,25 @@ public sealed class CharacterHealNumberView : MonoBehaviour
         {
             Transform source = _sourceCanvas.transform;
             _root.position = source.position;
-            _root.rotation = source.rotation;
 
             Vector3 sourceScale = source.lossyScale;
             _root.localScale = new Vector3(Mathf.Abs(sourceScale.x), Mathf.Abs(sourceScale.y),
                 Mathf.Abs(sourceScale.z));
-            return;
+        }
+        else
+        {
+            _root.position = transform.position + Vector3.up * 1.5f;
+            _root.localScale = Vector3.one * 0.01f;
         }
 
-        _root.position = transform.position + Vector3.up * 1.5f;
-        _root.localScale = Vector3.one * 0.01f;
+        Transform cameraTransform = _cameraTransform;
+        if (cameraTransform == null)
+            cameraTransform = Camera.main != null ? Camera.main.transform : null;
 
-        Camera mainCamera = Camera.main;
-        if (mainCamera == null)
+        if (cameraTransform == null)
             return;
 
-        Vector3 directionAwayFromCamera = _root.position - mainCamera.transform.position;
+        Vector3 directionAwayFromCamera = _root.position - cameraTransform.position;
         if (directionAwayFromCamera.sqrMagnitude > 0.001f)
             _root.rotation = Quaternion.LookRotation(directionAwayFromCamera.normalized, Vector3.up);
     }

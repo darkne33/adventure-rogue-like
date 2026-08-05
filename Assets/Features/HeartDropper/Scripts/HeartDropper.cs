@@ -1,3 +1,4 @@
+using Core;
 using Features.Relics.Scripts;
 using UnityEngine;
 using Zenject;
@@ -5,17 +6,19 @@ using Zenject;
 public sealed class HeartDropper
 {
     private readonly HeartDropperConfiguration _configuration;
+    private readonly ICameraService _cameraService;
     private readonly ICharacterProvider _characterProvider;
     private readonly CharacterStats _characterStats;
     private readonly DiContainer _container;
     private readonly LevelsConfiguration _levelsConfiguration;
     private readonly RelicEventBus _relicEventBus;
 
-    public HeartDropper(HeartDropperConfiguration configuration, ICharacterProvider characterProvider,
-        CharacterStats characterStats, DiContainer container, LevelsConfiguration levelsConfiguration,
-        RelicEventBus relicEventBus)
+    public HeartDropper(HeartDropperConfiguration configuration, ICameraService cameraService,
+        ICharacterProvider characterProvider, CharacterStats characterStats, DiContainer container,
+        LevelsConfiguration levelsConfiguration, RelicEventBus relicEventBus)
     {
         _configuration = configuration;
+        _cameraService = cameraService;
         _characterProvider = characterProvider;
         _characterStats = characterStats;
         _container = container;
@@ -38,7 +41,8 @@ public sealed class HeartDropper
         if (heartPickup == null)
             heartPickup = heartObject.AddComponent<HeartPickup>();
 
-        heartPickup.Construct(_configuration, _characterProvider, _characterStats, _relicEventBus, landPosition);
+        heartPickup.Construct(_configuration, _characterProvider, _characterStats, _relicEventBus,
+            _cameraService.MainCamera != null ? _cameraService.MainCamera.transform : null, landPosition);
     }
 
     private Vector3 GetScatterOffset()

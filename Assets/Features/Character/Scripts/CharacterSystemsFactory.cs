@@ -1,7 +1,9 @@
+using System;
 using Core;
 using Features.Enemies.Scripts;
 using UI;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
 {
@@ -11,10 +13,12 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
     private readonly CharacterStats _characterStats;
     private readonly PauseEntityDistributor _pauseEntityDistributor;
     private readonly CharacterSettingsConfiguration _characterSettingsConfiguration;
+    private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
 
     public CharacterSystemsFactory(CharacterCameraSettingsConfiguration cameraSettings, ICameraService cameraService,
         IPanelService panelService, CharacterStats characterStats, PauseEntityDistributor pauseEntityDistributor,
-        CharacterSettingsConfiguration characterSettingsConfiguration)
+        CharacterSettingsConfiguration characterSettingsConfiguration,
+        ISceneService<RogueLikeSceneProvider> sceneService)
     {
         _cameraSettings = cameraSettings;
         _cameraService = cameraService;
@@ -22,6 +26,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         _characterStats = characterStats;
         _pauseEntityDistributor = pauseEntityDistributor;
         _characterSettingsConfiguration = characterSettingsConfiguration;
+        _sceneService = sceneService;
     }
 
     public void Create(CharacterFacade facade)
@@ -43,9 +48,18 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         IDamageView damageView = facade.GetComponent<CharacterDamageNumberView>();
 
         CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
+        Volume globalVolume = _sceneService.GameSceneComponentsService.GlobalVolume;
+        if (globalVolume == null)
+            throw new InvalidOperationException("Global Volume is not assigned in RogueLikeSceneProvider.");
+
+        LowHealthVignetteView lowHealthVignetteView = globalVolume.GetComponent<LowHealthVignetteView>();
+        if (lowHealthVignetteView == null)
+            throw new InvalidOperationException("Global Volume is missing LowHealthVignetteView.");
+
         var deathSystem = new CharacterDeathSystem(facade);
         var healthSystem = new HealthSystem(_characterStats.MaxHp,
-            new IHealthView[] { characterPanel.CharacterHealthView, worldHealthView }, deathSystem);
+            new IHealthView[] { characterPanel.CharacterHealthView, worldHealthView, lowHealthVignetteView },
+            deathSystem);
         var shieldSystem = new ShieldSystem(_characterSettingsConfiguration.ShieldRegenerationDelay,
             _characterSettingsConfiguration.ShieldRegenerationPerSecond, characterPanel.CharacterShieldView);
 

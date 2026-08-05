@@ -54,8 +54,12 @@ namespace Features.Enemies.Scripts
                 attackPreparationDuration);
             var effectsSystem = new DealDamageEffectSystem(
                 facade.MeshRenderers, facade.AttackTelegraphTransform);
+            Action deathEffect = configuration.ExplodesOnDeath &&
+                                 damageSystem is EnemyDamageAreaSystem areaDamageSystem
+                ? areaDamageSystem.DetonateOnDeath
+                : null;
             var deathSystem = new EnemyDeathSystem(_enemiesProvider, facade, _characterLevelService, configuration,
-                _characterStats, character, effectsSystem, _goldDropper, _heartDropper);
+                _characterStats, character, effectsSystem, deathEffect, _goldDropper, _heartDropper);
             int maxHealth = GetScaledMaxHealth(configuration.MaxHealth);
             var healthSystem = new HealthSystem(maxHealth,
                 new IHealthView[] { facade.GetComponent<EnemyHealthView>() }, deathSystem,

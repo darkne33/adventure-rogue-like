@@ -57,4 +57,4 @@ Non-unique relics stack until `MaxStacks`. Unique relics cannot be duplicated. C
 
 ## Runtime Chest Flow
 
-When an enemy room is completed, `RelicChestSpawner` spawns a chest if at least one relic is available. Press `E` near the chest to start at the lowest available rarity (normally Common). Relics of that rarity cycle while the chest shakes, then the chest can upgrade through Uncommon, Rare, and Legendary using the chances in `RelicChestConfiguration`. Every successful upgrade pumps the chest and recolors its treasure effects. The final relic is revealed, flies to the character, activates, and disappears.
+When an enemy room is completed, `RelicChestSpawner` spawns a chest if at least one relic is available. Press `E` near the chest to start at the lowest available rarity (normally Common). Relics of that rarity cycle above the chest while slowly rising, then the chest can upgrade through Uncommon, Rare, and Legendary using the chances in `RelicChestConfiguration`. Every successful upgrade pumps the chest and recolors its treasure effects. The final relic is revealed, flies to the character, activates, and disappears before the coin fountain is disabled.

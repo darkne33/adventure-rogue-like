@@ -5,6 +5,9 @@ using UnityEngine;
 
 public sealed class FireFieldDamageArea : MonoBehaviour
 {
+    [SerializeField] private Transform _puddleVisual;
+    [SerializeField, Min(0.01f)] private float _puddleBaseDiameter = 2f;
+
     private readonly List<EnemyFacade> _enemiesInRange = new();
     private readonly List<ParticleSystem> _particleSystems = new();
 
@@ -29,6 +32,7 @@ public sealed class FireFieldDamageArea : MonoBehaviour
         _damageTickTimer = 0f;
         _remainingDuration = Mathf.Max(0.1f, duration);
         ApplyParticleRadius(safeRadius);
+        ApplyPuddleRadius(safeRadius);
         _isInitialized = true;
     }
 
@@ -97,5 +101,14 @@ public sealed class FireFieldDamageArea : MonoBehaviour
 
             shape.radius = radius;
         }
+    }
+
+    private void ApplyPuddleRadius(float radius)
+    {
+        if (_puddleVisual == null)
+            return;
+
+        float scale = radius * 2f / Mathf.Max(0.01f, _puddleBaseDiameter);
+        _puddleVisual.localScale = Vector3.one * scale;
     }
 }

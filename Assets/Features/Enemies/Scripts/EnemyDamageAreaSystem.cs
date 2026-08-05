@@ -86,8 +86,7 @@ namespace Features.Enemies.Scripts
                 if (_enemyFacade.IsDead)
                     return;
 
-                _hasDetonated = true;
-                Detonate();
+                Detonate(killOwner: true);
             }
             finally
             {
@@ -130,8 +129,22 @@ namespace Features.Enemies.Scripts
             }
         }
 
-        private void Detonate()
+        public void DetonateOnDeath()
         {
+            if (_hasDetonated)
+                return;
+
+            _indicatorView?.Hide();
+            _enemyFacade.EffectsSystem.ClearAttackTelegraph();
+            Detonate(killOwner: false);
+        }
+
+        private void Detonate(bool killOwner)
+        {
+            if (_hasDetonated)
+                return;
+
+            _hasDetonated = true;
             Vector3 explosionPosition = GetExplosionPosition();
 
             SpawnExplosion(explosionPosition);
@@ -143,6 +156,10 @@ namespace Features.Enemies.Scripts
             }
 
             DamageEnemiesInsideRadius(explosionPosition);
+
+            if (killOwner == false)
+                return;
+
             _enemyFacade.HealthSystem.GetDamage(int.MaxValue);
 
             if (_enemyFacade != null)
