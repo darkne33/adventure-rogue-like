@@ -140,7 +140,10 @@ public enum AbilityUpgradeType
     TargetsDamage = 4,
     AdditionalProjectiles = 5,
     FireFieldDistance = 6,
-    FireFieldRadius = 7
+    FireFieldRadius = 7,
+    EarthRockRadius = 8,
+    EarthRockRotationSpeed = 9,
+    EarthRockStoneCount = 10
 }
 
 public readonly struct UpgradeOffer

@@ -17,5 +17,6 @@
     RegenHpScroll = 14,
     ThornsDamageScroll = 15,
     ShieldScroll = 16,
-    FireField = 17
+    FireField = 17,
+    EarthRock = 18
 }
