@@ -19,6 +19,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
     private readonly UpgradeBuildService _upgradeBuildService;
 
     private readonly List<UpgradeOfferItemView> _upgradeItems = new();
+    private readonly List<UpgradeOffer> _currentOffers = new();
 
     private int _pendingOffers;
     private bool _isOpen;
@@ -61,6 +62,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         if (_isOpen == false || _isClosing)
             return;
 
+        RecordRejectedCurrentOffers();
         DestroyViews();
         GenerateUpgrades(UpgradesRoot);
         PlayItemsAppearance();
@@ -71,6 +73,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         if (_isOpen == false || _isClosing)
             return;
 
+        RecordRejectedCurrentOffers();
         _isClosing = true;
         CloseCurrentOffer().Forget();
     }
@@ -83,6 +86,8 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
             return;
         }
 
+        _upgradeBuildService.RecordSelectedOffer(upgradeOffer);
+        RecordRejectedCurrentOffers(upgradeOffer);
         _characterProvider.CharacterFacade.CharacterAbilitySystem.AddAbility(upgradeOffer.Ability, _characterStats,
             upgradeOffer.UpgradeMultiplier, upgradeOffer.UpgradeType);
         _upgradeBuildService.RecordAppliedSelection(upgradeOffer.Ability);
@@ -140,7 +145,9 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
 
     private void GenerateUpgrades(Transform upgradesRoot)
     {
-        var upgradeOffers = _upgradeOfferGenerator.GenerateOffers();
+        List<UpgradeOffer> upgradeOffers = _upgradeOfferGenerator.GenerateOffers().ToList();
+        _currentOffers.Clear();
+        _currentOffers.AddRange(upgradeOffers);
 
         foreach (UpgradeOffer upgradeOffer in upgradeOffers)
         {
@@ -184,6 +191,20 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
             _upgradeItems.Add(offerItemView);
             upgradeItemOfferFacade.UpgradeOfferItemApplyHandler.Initialize(upgradeOffer);
         }
+    }
+
+    private void RecordRejectedCurrentOffers(UpgradeOffer? selectedOffer = null)
+    {
+        foreach (UpgradeOffer currentOffer in _currentOffers)
+        {
+            if (selectedOffer.HasValue &&
+                ReferenceEquals(currentOffer.Ability, selectedOffer.Value.Ability))
+                continue;
+
+            _upgradeBuildService.RecordRejectedOffer(currentOffer);
+        }
+
+        _currentOffers.Clear();
     }
 
     private void PlayItemsAppearance()

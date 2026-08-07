@@ -120,9 +120,9 @@ namespace Features.RewardBag
 
             try
             {
-                RewardType rewardType = UnityEngine.Random.value < 0.5f
-                    ? RewardType.Silver
-                    : RewardType.Key;
+                RewardType rewardType = UnityEngine.Random.value < 0.2f
+                    ? RewardType.Key
+                    : RewardType.Silver;
                 rewardObject = CreateRewardVisual(rewardType);
                 _ = transform.DOScale(Vector3.zero, 0.2f)
                     .SetEase(Ease.InBack)

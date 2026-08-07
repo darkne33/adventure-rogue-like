@@ -7,15 +7,16 @@ public class UpgradeOfferConfiguration : ScriptableObject
 {
     [field: SerializeField] public UpgradeOfferItemFacade UpgradeOfferItemFacade { get; private set; }
     [field: SerializeField, Min(1)] public int MaxBuildSlots { get; private set; } = 5;
-    [field: SerializeField, Min(1)] public int MaxActiveAbilities { get; private set; } = 2;
-    [field: SerializeField, Range(0f, 100f)] public float ActiveAbilityOfferChance { get; private set; } = 50f;
+    [field: SerializeField, Min(1)] public int MaxActiveAbilities { get; private set; } = 3;
+    [field: SerializeField, Range(0f, 100f)] public float ActiveAbilityOfferChance { get; private set; } = 100f;
+    [field: SerializeField, Range(0f, 100f)] public float AdditionalProjectilesUpgradeOfferChance { get; private set; } = 40f;
     [field: SerializeField, Min(0.01f)] public float ProjectileCountIncreaseStep { get; private set; } = 0.25f;
     [field: SerializeField] public UpgradeRarityData[] RarityData { get; private set; } =
     {
-        new(UpgradeRarity.Common, 1f, 70f, 0.25f, 0.75f),
-        new(UpgradeRarity.Rare, 1.5f, 22f, 0.5f, 1.25f),
-        new(UpgradeRarity.Epic, 2f, 7f, 1f, 2f),
-        new(UpgradeRarity.Legendary, 3f, 1f, 1.5f, 3f)
+        new(UpgradeRarity.Common, 1f, 70f, -10f, 0.25f, 0.75f),
+        new(UpgradeRarity.Rare, 1.5f, 22f, 7f, 0.5f, 1.25f),
+        new(UpgradeRarity.Epic, 2f, 7f, 2f, 1f, 2f),
+        new(UpgradeRarity.Legendary, 3f, 1f, 1f, 1.5f, 3f)
     };
     [field: SerializeField] public UpgradeItemSpriteSet[] ItemSpriteSets { get; private set; } =
         Array.Empty<UpgradeItemSpriteSet>();
@@ -28,10 +29,11 @@ public class UpgradeOfferConfiguration : ScriptableObject
                GetDefaultRarityData()[0];
     }
 
-    public UpgradeRarityData GetRandomRarityData()
+    public UpgradeRarityData GetRandomRarityData(int rejectedOfferCount = 0)
     {
         UpgradeRarityData[] rarityData = GetRarityDataOrDefaults();
-        float totalWeight = rarityData.Sum(data => Mathf.Max(0f, data.Weight));
+        int rejectionCount = Mathf.Max(0, rejectedOfferCount);
+        float totalWeight = rarityData.Sum(data => GetAdjustedRarityWeight(data, rejectionCount));
 
         if (totalWeight <= 0f)
             return GetRarityData(UpgradeRarity.Common);
@@ -39,7 +41,7 @@ public class UpgradeOfferConfiguration : ScriptableObject
         float roll = UnityEngine.Random.Range(0f, totalWeight);
         foreach (UpgradeRarityData data in rarityData)
         {
-            roll -= Mathf.Max(0f, data.Weight);
+            roll -= GetAdjustedRarityWeight(data, rejectionCount);
             if (roll <= 0f)
                 return data;
         }
@@ -79,22 +81,26 @@ public class UpgradeOfferConfiguration : ScriptableObject
     private static UpgradeRarityData[] GetDefaultRarityData() =>
         new[]
         {
-            new UpgradeRarityData(UpgradeRarity.Common, 1f, 70f, 0.25f, 0.75f),
-            new UpgradeRarityData(UpgradeRarity.Rare, 1.5f, 22f, 0.5f, 1.25f),
-            new UpgradeRarityData(UpgradeRarity.Epic, 2f, 7f, 1f, 2f),
-            new UpgradeRarityData(UpgradeRarity.Legendary, 3f, 1f, 1.5f, 3f)
+            new UpgradeRarityData(UpgradeRarity.Common, 1f, 70f, -10f, 0.25f, 0.75f),
+            new UpgradeRarityData(UpgradeRarity.Rare, 1.5f, 22f, 7f, 0.5f, 1.25f),
+            new UpgradeRarityData(UpgradeRarity.Epic, 2f, 7f, 2f, 1f, 2f),
+            new UpgradeRarityData(UpgradeRarity.Legendary, 3f, 1f, 1f, 1.5f, 3f)
         };
+
+    private static float GetAdjustedRarityWeight(UpgradeRarityData data, int rejectedOfferCount) =>
+        Mathf.Max(0f, data.Weight + data.RejectedOfferWeightChange * rejectedOfferCount);
 }
 
 [Serializable]
 public class UpgradeRarityData
 {
     public UpgradeRarityData(UpgradeRarity rarity, float upgradeMultiplier, float weight,
-        float minProjectileCountIncrease, float maxProjectileCountIncrease)
+        float rejectedOfferWeightChange, float minProjectileCountIncrease, float maxProjectileCountIncrease)
     {
         Rarity = rarity;
         UpgradeMultiplier = upgradeMultiplier;
         Weight = weight;
+        RejectedOfferWeightChange = rejectedOfferWeightChange;
         MinProjectileCountIncrease = minProjectileCountIncrease;
         MaxProjectileCountIncrease = maxProjectileCountIncrease;
     }
@@ -102,6 +108,7 @@ public class UpgradeRarityData
     [field: SerializeField] public UpgradeRarity Rarity { get; private set; } = UpgradeRarity.Common;
     [field: SerializeField, Min(0f)] public float UpgradeMultiplier { get; private set; } = 1f;
     [field: SerializeField, Min(0f)] public float Weight { get; private set; } = 1f;
+    [field: SerializeField, Range(-100f, 100f)] public float RejectedOfferWeightChange { get; private set; }
     [field: SerializeField, Min(0.01f)] public float MinProjectileCountIncrease { get; private set; } = 0.25f;
     [field: SerializeField, Min(0.01f)] public float MaxProjectileCountIncrease { get; private set; } = 0.75f;
 }

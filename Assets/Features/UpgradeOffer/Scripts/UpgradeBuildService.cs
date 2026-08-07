@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public sealed class UpgradeBuildService
 {
     private readonly List<UpgradeBuildEntry> _selectedUpgrades = new();
+    private readonly Dictionary<UpgradeOfferKey, int> _rejectedOfferCounts = new();
     private readonly int _maxSlots;
     private readonly int _maxActiveAbilities;
 
@@ -65,8 +66,40 @@ public sealed class UpgradeBuildService
         return true;
     }
 
+    public void RecordRejectedOffer(UpgradeOffer offer)
+    {
+        if (offer.HasRarity == false || offer.Ability == null)
+            return;
+
+        UpgradeOfferKey key = new(offer.Ability.Id, offer.UpgradeType);
+        int rejectedOfferCount = _rejectedOfferCounts.TryGetValue(key, out int count)
+            ? count
+            : 0;
+        _rejectedOfferCounts[key] = rejectedOfferCount + 1;
+    }
+
+    public void RecordSelectedOffer(UpgradeOffer offer)
+    {
+        if (offer.HasRarity == false || offer.Ability == null)
+            return;
+
+        UpgradeOfferKey key = new(offer.Ability.Id, offer.UpgradeType);
+        _rejectedOfferCounts.Remove(key);
+    }
+
+    public int GetRejectedOfferCount(CharacterAbility ability, AbilityUpgradeType upgradeType)
+    {
+        if (ability == null)
+            return 0;
+
+        UpgradeOfferKey key = new(ability.Id, upgradeType);
+        return _rejectedOfferCounts.TryGetValue(key, out int count) ? count : 0;
+    }
+
     public void Reset()
     {
+        _rejectedOfferCounts.Clear();
+
         if (_selectedUpgrades.Count == 0)
             return;
 
@@ -78,6 +111,27 @@ public sealed class UpgradeBuildService
         ability == null
             ? null
             : _selectedUpgrades.Find(entry => entry.Ability.Id == ability.Id);
+
+    private readonly struct UpgradeOfferKey : IEquatable<UpgradeOfferKey>
+    {
+        public UpgradeOfferKey(AbilityName abilityId, AbilityUpgradeType upgradeType)
+        {
+            AbilityId = abilityId;
+            UpgradeType = upgradeType;
+        }
+
+        private AbilityName AbilityId { get; }
+        private AbilityUpgradeType UpgradeType { get; }
+
+        public bool Equals(UpgradeOfferKey other) =>
+            AbilityId == other.AbilityId && UpgradeType == other.UpgradeType;
+
+        public override bool Equals(object obj) =>
+            obj is UpgradeOfferKey other && Equals(other);
+
+        public override int GetHashCode() =>
+            ((int)AbilityId * 397) ^ (int)UpgradeType;
+    }
 }
 
 public sealed class UpgradeBuildEntry

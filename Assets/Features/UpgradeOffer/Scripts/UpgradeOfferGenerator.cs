@@ -43,13 +43,7 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         bool canOfferNewActiveAbilities = _upgradeBuildService.IsFull == false &&
                                           _upgradeBuildService.ActiveAbilityCount <
                                           _upgradeBuildService.MaxActiveAbilities;
-        int requestedNewActiveAbilityCount = canOfferNewActiveAbilities
-            ? Mathf.Clamp(
-                _upgradeBuildService.MaxActiveAbilities -
-                _upgradeBuildService.ActiveAbilityCount,
-                0,
-                TotalOfferCount)
-            : 0;
+        int requestedNewActiveAbilityCount = canOfferNewActiveAbilities ? 1 : 0;
         int newActiveAbilityCount =
             Mathf.Min(requestedNewActiveAbilityCount, newActiveAbilities.Count);
         int selectedActiveAbilityCount =
@@ -91,13 +85,38 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         if (ability.IsAcquired == false)
             return UpgradeOffer.CreateNew(ability);
 
-        UpgradeRarityData rarityData = _upgradeOfferConfiguration.GetRandomRarityData();
-        AbilityUpgradeType upgradeType = ability.GetRandomUpgradeType();
+        AbilityUpgradeType upgradeType = GetRandomUpgradeType(ability);
+        int rejectedOfferCount = _upgradeBuildService.GetRejectedOfferCount(ability, upgradeType);
+        UpgradeRarityData rarityData =
+            _upgradeOfferConfiguration.GetRandomRarityData(rejectedOfferCount);
+
         float upgradeValue = upgradeType == AbilityUpgradeType.AdditionalProjectiles
             ? _upgradeOfferConfiguration.GetRandomProjectileCountIncrease(rarityData)
             : rarityData.UpgradeMultiplier;
 
         return new UpgradeOffer(ability, rarityData.Rarity, upgradeValue, upgradeType);
+    }
+
+    private AbilityUpgradeType GetRandomUpgradeType(CharacterAbility ability)
+    {
+        AbilityUpgradeType[] upgradeTypes = ability.UpgradeTypes;
+        if (upgradeTypes is not { Length: > 0 })
+            return AbilityUpgradeType.Default;
+
+        bool canIncreaseProjectileCount =
+            upgradeTypes.Contains(AbilityUpgradeType.AdditionalProjectiles);
+        if (canIncreaseProjectileCount == false)
+            return ability.GetRandomUpgradeType();
+
+        if (RollChance(_upgradeOfferConfiguration.AdditionalProjectilesUpgradeOfferChance))
+            return AbilityUpgradeType.AdditionalProjectiles;
+
+        List<AbilityUpgradeType> otherUpgradeTypes = upgradeTypes
+            .Where(type => type != AbilityUpgradeType.AdditionalProjectiles)
+            .ToList();
+        return otherUpgradeTypes.Count > 0
+            ? otherUpgradeTypes[Random.Range(0, otherUpgradeTypes.Count)]
+            : AbilityUpgradeType.AdditionalProjectiles;
     }
 
     private void AddRandomOffers<T>(IEnumerable<T> source, int requestedCount,
