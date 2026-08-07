@@ -79,18 +79,9 @@ public sealed class FireFieldAbility : CharacterActiveAbility
         if (_damage <= 0)
             _damage = _configuration.StartDamage;
 
-        switch (CurrentUpgradeType)
-        {
-            case AbilityUpgradeType.Damage:
-                _damage += GetDamageIncrease(CurrentUpgradeMultiplier);
-                break;
-            case AbilityUpgradeType.FireFieldDistance:
-                ReduceDistancePerField(CurrentUpgradeMultiplier);
-                break;
-            case AbilityUpgradeType.FireFieldRadius:
-                _damageRadius += GetRadiusIncrease(CurrentUpgradeMultiplier);
-                break;
-        }
+        ApplyUpgradeEffect(CurrentPrimaryUpgrade);
+        if (CurrentSecondaryUpgrade.HasValue)
+            ApplyUpgradeEffect(CurrentSecondaryUpgrade.Value);
 
         if (Level == 1)
         {
@@ -100,6 +91,22 @@ public sealed class FireFieldAbility : CharacterActiveAbility
 
         Stat_1 = _damage;
         Stat_2 = _distancePerField;
+    }
+
+    private void ApplyUpgradeEffect(AbilityUpgradeEffect upgrade)
+    {
+        switch (upgrade.Type)
+        {
+            case AbilityUpgradeType.Damage:
+                _damage += GetDamageIncrease(upgrade.Value);
+                break;
+            case AbilityUpgradeType.FireFieldDistance:
+                ReduceDistancePerField(upgrade.Value);
+                break;
+            case AbilityUpgradeType.FireFieldRadius:
+                _damageRadius += GetRadiusIncrease(upgrade.Value);
+                break;
+        }
     }
 
     public override void OnUnequip(CharacterStats characterStats)
@@ -122,25 +129,18 @@ public sealed class FireFieldAbility : CharacterActiveAbility
             new AbilityUpgradePreview(DistanceStatName, _configuration.DistancePerField, "m")
         };
 
-    public override AbilityUpgradePreview[] GetUpgradePreviews(AbilityUpgradeType upgradeType,
-        float upgradeMultiplier)
+    public override AbilityUpgradePreview GetUpgradePreview(AbilityUpgradeEffect upgrade)
     {
-        return upgradeType switch
+        return upgrade.Type switch
         {
-            AbilityUpgradeType.FireFieldDistance => new[]
-            {
+            AbilityUpgradeType.FireFieldDistance =>
                 new AbilityUpgradePreview(DistanceStatName, _distancePerField,
-                    GetDistanceTo(upgradeMultiplier), "m")
-            },
-            AbilityUpgradeType.FireFieldRadius => new[]
-            {
+                    GetDistanceTo(upgrade.Value), "m"),
+            AbilityUpgradeType.FireFieldRadius =>
                 new AbilityUpgradePreview(RadiusStatName, _damageRadius,
-                    _damageRadius + GetRadiusIncrease(upgradeMultiplier), "m")
-            },
-            _ => new[]
-            {
-                new AbilityUpgradePreview(DamageStatName, _damage, GetDamageTo(upgradeMultiplier))
-            }
+                    _damageRadius + GetRadiusIncrease(upgrade.Value), "m"),
+            _ => new AbilityUpgradePreview(DamageStatName, _damage,
+                GetDamageTo(upgrade.Value))
         };
     }
 

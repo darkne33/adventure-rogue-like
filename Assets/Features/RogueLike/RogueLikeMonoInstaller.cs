@@ -2,6 +2,7 @@
 using Core.Services;
 using Features.Enemies.Scripts;
 using Features.Enemies.Scripts.Level.Scripts;
+using Features.Leaderboard;
 using Features.Relics.Scripts;
 using Features.RewardBag;
 using UnityEngine;
@@ -101,6 +102,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
             .AsSingle();
         Container.Bind<EnemyRoomObserver>().AsSingle();
         Container.BindInterfacesAndSelfTo<RoomCompletionTimeSlowEffect>().AsSingle().NonLazy();
+        Container.BindInterfacesAndSelfTo<RoomLeaderboardReporter>().AsSingle().NonLazy();
     }
 
     private void BindCharacterWallet() =>

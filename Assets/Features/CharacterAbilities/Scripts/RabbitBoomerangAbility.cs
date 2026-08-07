@@ -14,9 +14,20 @@ public class RabbitBoomerangAbility : SingleShootAbility
 
     private static readonly AbilityUpgradeType[] BoomerangUpgradeTypes =
     {
-        AbilityUpgradeType.ProjectileSpeedCooldown,
-        AbilityUpgradeType.BounceRadiusDamage,
-        AbilityUpgradeType.TargetsDamage,
+        AbilityUpgradeType.Damage,
+        AbilityUpgradeType.ProjectileSpeed,
+        AbilityUpgradeType.Cooldown,
+        AbilityUpgradeType.BounceRadius,
+        AbilityUpgradeType.Targets,
+        AbilityUpgradeType.AdditionalProjectiles
+    };
+
+    private static readonly AbilityUpgradeType[] BoomerangUpgradeTypesAtMinimumCooldown =
+    {
+        AbilityUpgradeType.Damage,
+        AbilityUpgradeType.ProjectileSpeed,
+        AbilityUpgradeType.BounceRadius,
+        AbilityUpgradeType.Targets,
         AbilityUpgradeType.AdditionalProjectiles
     };
 
@@ -25,7 +36,10 @@ public class RabbitBoomerangAbility : SingleShootAbility
 
     private RabbitBoomerangAbilityConfiguration BoomerangConfig =>
         (RabbitBoomerangAbilityConfiguration)AbilityConfig;
-    public override AbilityUpgradeType[] UpgradeTypes => BoomerangUpgradeTypes;
+    public override AbilityUpgradeType[] UpgradeTypes =>
+        AbilityConfig != null && Cooldown <= MinimumCooldown + Mathf.Epsilon
+            ? BoomerangUpgradeTypesAtMinimumCooldown
+            : BoomerangUpgradeTypes;
 
     public RabbitBoomerangAbility(IEnemiesProvider enemiesProvider, ICharacterAimTargetProvider aimTargetProvider,
         CharacterDamageCalculator damageCalculator, CharacterStats characterStats, RelicEventBus relicEventBus,
@@ -47,33 +61,26 @@ public class RabbitBoomerangAbility : SingleShootAbility
             new AbilityUpgradePreview(DamageStatName, AbilityConfig.StartDamage)
         };
 
-    public override AbilityUpgradePreview[] GetUpgradePreviews(AbilityUpgradeType upgradeType, float upgradeMultiplier)
+    public override AbilityUpgradePreview GetUpgradePreview(AbilityUpgradeEffect upgrade)
     {
-        return GetBoomerangUpgradeType(upgradeType) switch
+        return upgrade.Type switch
         {
             AbilityUpgradeType.AdditionalProjectiles =>
-                GetAdditionalProjectileUpgradePreviews(upgradeMultiplier),
-            AbilityUpgradeType.BounceRadiusDamage => new[]
-            {
+                GetAdditionalProjectileUpgradePreview(upgrade),
+            AbilityUpgradeType.BounceRadius =>
                 new AbilityUpgradePreview(BounceRadiusStatName, _bounceRadius,
-                    _bounceRadius + GetBounceRadiusIncrease(upgradeMultiplier), "m"),
-                new AbilityUpgradePreview(DamageStatName, Damage,
-                    GetDamageTo(upgradeMultiplier))
-            },
-            AbilityUpgradeType.TargetsDamage => new[]
-            {
+                    _bounceRadius + GetBounceRadiusIncrease(upgrade.Value), "m"),
+            AbilityUpgradeType.Targets =>
                 new AbilityUpgradePreview(BoomerangStatName, GetTargetsFrom(),
-                    GetTargetsTo(upgradeMultiplier)),
-                new AbilityUpgradePreview(DamageStatName, Damage,
-                    GetDamageTo(upgradeMultiplier))
-            },
-            _ => new[]
-            {
+                    GetTargetsTo(upgrade.Value)),
+            AbilityUpgradeType.ProjectileSpeed =>
                 new AbilityUpgradePreview(SpeedStatName, ProjectileSpeed,
-                    ProjectileSpeed + GetSpeedIncrease(upgradeMultiplier)),
+                    ProjectileSpeed + GetSpeedIncrease(upgrade.Value)),
+            AbilityUpgradeType.Cooldown =>
                 new AbilityUpgradePreview(CooldownStatName, Cooldown,
-                    GetCooldownTo(upgradeMultiplier), "s")
-            }
+                    GetCooldownTo(upgrade.Value), "s"),
+            _ => new AbilityUpgradePreview(DamageStatName, Damage,
+                GetDamageTo(upgrade.Value))
         };
     }
 
@@ -91,23 +98,33 @@ public class RabbitBoomerangAbility : SingleShootAbility
         if (Damage <= 0)
             Damage = AbilityConfig.StartDamage;
 
-        switch (CurrentUpgradeType)
-        {
-            case AbilityUpgradeType.BounceRadiusDamage:
-                _bounceRadius += GetBounceRadiusIncrease(CurrentUpgradeMultiplier);
-                IncreaseDamage(GetDamageIncrease(CurrentUpgradeMultiplier));
-                break;
-            case AbilityUpgradeType.ProjectileSpeedCooldown:
-                IncreaseProjectileSpeed(GetSpeedIncrease(CurrentUpgradeMultiplier));
-                ReduceCooldown(GetCooldownReduction(CurrentUpgradeMultiplier));
-                break;
-            case AbilityUpgradeType.TargetsDamage:
-                _bonusTargets += GetTargetIncrease(CurrentUpgradeMultiplier);
-                IncreaseDamage(GetDamageIncrease(CurrentUpgradeMultiplier));
-                break;
-        }
+        ApplyUpgradeEffect(CurrentPrimaryUpgrade);
+        if (CurrentSecondaryUpgrade.HasValue)
+            ApplyUpgradeEffect(CurrentSecondaryUpgrade.Value);
 
         Stat_1 = GetBoomerangMaxHitCount();
+    }
+
+    private void ApplyUpgradeEffect(AbilityUpgradeEffect upgrade)
+    {
+        switch (upgrade.Type)
+        {
+            case AbilityUpgradeType.BounceRadius:
+                _bounceRadius += GetBounceRadiusIncrease(upgrade.Value);
+                break;
+            case AbilityUpgradeType.ProjectileSpeed:
+                IncreaseProjectileSpeed(GetSpeedIncrease(upgrade.Value));
+                break;
+            case AbilityUpgradeType.Cooldown:
+                ReduceCooldown(GetCooldownReduction(upgrade.Value));
+                break;
+            case AbilityUpgradeType.Targets:
+                _bonusTargets += GetTargetIncrease(upgrade.Value);
+                break;
+            case AbilityUpgradeType.Damage:
+                IncreaseDamage(GetDamageIncrease(upgrade.Value));
+                break;
+        }
     }
 
     protected override void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
@@ -206,7 +223,6 @@ public class RabbitBoomerangAbility : SingleShootAbility
         Vector3 startPosition = shootObj.transform.position;
         Vector3 targetPosition = GetEnemyTargetPosition(nextEnemy);
         Vector3 direction = targetPosition - startPosition;
-        direction.y = 0f;
 
         if (direction.sqrMagnitude <= 0.001f)
         {
@@ -294,11 +310,9 @@ public class RabbitBoomerangAbility : SingleShootAbility
         GetUpgradeValue(BoomerangConfig.CooldownUpgradeReduction, upgradeMultiplier);
 
     private float GetCooldownTo(float upgradeMultiplier) =>
-        Mathf.Max(0.05f, Cooldown - GetCooldownReduction(upgradeMultiplier));
+        Mathf.Max(MinimumCooldown, Cooldown - GetCooldownReduction(upgradeMultiplier));
 
     private float GetBounceRadiusIncrease(float upgradeMultiplier) =>
         GetUpgradeValue(BoomerangConfig.BounceRadiusUpgradeIncrease, upgradeMultiplier);
 
-    private static AbilityUpgradeType GetBoomerangUpgradeType(AbilityUpgradeType upgradeType) =>
-        upgradeType == AbilityUpgradeType.Default ? AbilityUpgradeType.ProjectileSpeedCooldown : upgradeType;
 }

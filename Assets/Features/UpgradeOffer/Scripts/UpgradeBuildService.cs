@@ -71,7 +71,8 @@ public sealed class UpgradeBuildService
         if (offer.HasRarity == false || offer.Ability == null)
             return;
 
-        UpgradeOfferKey key = new(offer.Ability.Id, offer.UpgradeType);
+        UpgradeOfferKey key = new(offer.Ability.Id, offer.PrimaryUpgrade.Type,
+            offer.SecondaryUpgrade?.Type ?? AbilityUpgradeType.Default);
         int rejectedOfferCount = _rejectedOfferCounts.TryGetValue(key, out int count)
             ? count
             : 0;
@@ -83,16 +84,18 @@ public sealed class UpgradeBuildService
         if (offer.HasRarity == false || offer.Ability == null)
             return;
 
-        UpgradeOfferKey key = new(offer.Ability.Id, offer.UpgradeType);
+        UpgradeOfferKey key = new(offer.Ability.Id, offer.PrimaryUpgrade.Type,
+            offer.SecondaryUpgrade?.Type ?? AbilityUpgradeType.Default);
         _rejectedOfferCounts.Remove(key);
     }
 
-    public int GetRejectedOfferCount(CharacterAbility ability, AbilityUpgradeType upgradeType)
+    public int GetRejectedOfferCount(CharacterAbility ability, AbilityUpgradeType primaryUpgradeType,
+        AbilityUpgradeType secondaryUpgradeType)
     {
         if (ability == null)
             return 0;
 
-        UpgradeOfferKey key = new(ability.Id, upgradeType);
+        UpgradeOfferKey key = new(ability.Id, primaryUpgradeType, secondaryUpgradeType);
         return _rejectedOfferCounts.TryGetValue(key, out int count) ? count : 0;
     }
 
@@ -114,23 +117,36 @@ public sealed class UpgradeBuildService
 
     private readonly struct UpgradeOfferKey : IEquatable<UpgradeOfferKey>
     {
-        public UpgradeOfferKey(AbilityName abilityId, AbilityUpgradeType upgradeType)
+        public UpgradeOfferKey(AbilityName abilityId, AbilityUpgradeType firstUpgradeType,
+            AbilityUpgradeType secondUpgradeType)
         {
             AbilityId = abilityId;
-            UpgradeType = upgradeType;
+            if ((int)firstUpgradeType <= (int)secondUpgradeType)
+            {
+                FirstUpgradeType = firstUpgradeType;
+                SecondUpgradeType = secondUpgradeType;
+            }
+            else
+            {
+                FirstUpgradeType = secondUpgradeType;
+                SecondUpgradeType = firstUpgradeType;
+            }
         }
 
         private AbilityName AbilityId { get; }
-        private AbilityUpgradeType UpgradeType { get; }
+        private AbilityUpgradeType FirstUpgradeType { get; }
+        private AbilityUpgradeType SecondUpgradeType { get; }
 
         public bool Equals(UpgradeOfferKey other) =>
-            AbilityId == other.AbilityId && UpgradeType == other.UpgradeType;
+            AbilityId == other.AbilityId &&
+            FirstUpgradeType == other.FirstUpgradeType &&
+            SecondUpgradeType == other.SecondUpgradeType;
 
         public override bool Equals(object obj) =>
             obj is UpgradeOfferKey other && Equals(other);
 
         public override int GetHashCode() =>
-            ((int)AbilityId * 397) ^ (int)UpgradeType;
+            (((int)AbilityId * 397) ^ (int)FirstUpgradeType) * 397 ^ (int)SecondUpgradeType;
     }
 }
 

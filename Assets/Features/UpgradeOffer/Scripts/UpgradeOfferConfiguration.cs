@@ -141,28 +141,58 @@ public enum UpgradeRarity
 public enum AbilityUpgradeType
 {
     Default = 0,
-    ProjectileSpeedCooldown = 1,
-    BounceRadiusDamage = 2,
+    ProjectileSpeed = 1,
+    BounceRadius = 2,
     Damage = 3,
-    TargetsDamage = 4,
+    Targets = 4,
     AdditionalProjectiles = 5,
     FireFieldDistance = 6,
     FireFieldRadius = 7,
     EarthRockRadius = 8,
     EarthRockRotationSpeed = 9,
-    EarthRockStoneCount = 10
+    EarthRockStoneCount = 10,
+    Cooldown = 11
+}
+
+public readonly struct AbilityUpgradeEffect
+{
+    public AbilityUpgradeEffect(AbilityUpgradeType type, float value)
+    {
+        Type = type;
+        Value = value;
+    }
+
+    public AbilityUpgradeType Type { get; }
+    public float Value { get; }
 }
 
 public readonly struct UpgradeOffer
 {
     public UpgradeOffer(CharacterAbility ability, UpgradeRarity rarity, float upgradeMultiplier,
         AbilityUpgradeType upgradeType)
+        : this(ability, rarity, new AbilityUpgradeEffect(upgradeType, upgradeMultiplier))
     {
+    }
+
+    public UpgradeOffer(CharacterAbility ability, UpgradeRarity rarity, AbilityUpgradeEffect primaryUpgrade,
+        AbilityUpgradeEffect? secondaryUpgrade = null)
+    {
+        if (ability is CharacterActiveAbility)
+        {
+            if (secondaryUpgrade.HasValue == false)
+                throw new ArgumentException("An active ability upgrade must contain two effects.");
+            if (primaryUpgrade.Type == AbilityUpgradeType.Default ||
+                secondaryUpgrade.Value.Type == AbilityUpgradeType.Default)
+                throw new ArgumentException("Active ability upgrade effects cannot be Default.");
+            if (primaryUpgrade.Type == secondaryUpgrade.Value.Type)
+                throw new ArgumentException("Active ability upgrade effects must be different.");
+        }
+
         Ability = ability;
         HasRarity = true;
         Rarity = rarity;
-        UpgradeMultiplier = upgradeMultiplier;
-        UpgradeType = upgradeType;
+        PrimaryUpgrade = primaryUpgrade;
+        SecondaryUpgrade = secondaryUpgrade;
     }
 
     private UpgradeOffer(CharacterAbility ability)
@@ -170,15 +200,17 @@ public readonly struct UpgradeOffer
         Ability = ability;
         HasRarity = false;
         Rarity = UpgradeRarity.Common;
-        UpgradeMultiplier = 1f;
-        UpgradeType = AbilityUpgradeType.Default;
+        PrimaryUpgrade = new AbilityUpgradeEffect(AbilityUpgradeType.Default, 1f);
+        SecondaryUpgrade = null;
     }
 
     public CharacterAbility Ability { get; }
     public bool HasRarity { get; }
     public UpgradeRarity Rarity { get; }
-    public float UpgradeMultiplier { get; }
-    public AbilityUpgradeType UpgradeType { get; }
+    public AbilityUpgradeEffect PrimaryUpgrade { get; }
+    public AbilityUpgradeEffect? SecondaryUpgrade { get; }
+    public float UpgradeMultiplier => PrimaryUpgrade.Value;
+    public AbilityUpgradeType UpgradeType => PrimaryUpgrade.Type;
 
     public UpgradeItemType ItemType =>
         HasRarity

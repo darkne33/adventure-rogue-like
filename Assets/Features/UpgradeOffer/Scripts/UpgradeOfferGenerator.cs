@@ -85,39 +85,79 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         if (ability.IsAcquired == false)
             return UpgradeOffer.CreateNew(ability);
 
-        AbilityUpgradeType upgradeType = GetRandomUpgradeType(ability);
-        int rejectedOfferCount = _upgradeBuildService.GetRejectedOfferCount(ability, upgradeType);
+        return ability is CharacterActiveAbility activeAbility
+            ? CreateActiveAbilityOffer(activeAbility)
+            : CreateSingleUpgradeOffer(ability);
+    }
+
+    private UpgradeOffer CreateActiveAbilityOffer(CharacterActiveAbility ability)
+    {
+        (AbilityUpgradeType primaryType, AbilityUpgradeType secondaryType) = GetRandomUpgradePair(ability);
+        int rejectedOfferCount =
+            _upgradeBuildService.GetRejectedOfferCount(ability, primaryType, secondaryType);
         UpgradeRarityData rarityData =
             _upgradeOfferConfiguration.GetRandomRarityData(rejectedOfferCount);
 
-        float upgradeValue = upgradeType == AbilityUpgradeType.AdditionalProjectiles
+        return new UpgradeOffer(ability, rarityData.Rarity,
+            CreateUpgradeEffect(primaryType, rarityData),
+            CreateUpgradeEffect(secondaryType, rarityData));
+    }
+
+    private UpgradeOffer CreateSingleUpgradeOffer(CharacterAbility ability)
+    {
+        AbilityUpgradeType upgradeType = ability.GetRandomUpgradeType();
+        int rejectedOfferCount = _upgradeBuildService.GetRejectedOfferCount(ability, upgradeType,
+            AbilityUpgradeType.Default);
+        UpgradeRarityData rarityData =
+            _upgradeOfferConfiguration.GetRandomRarityData(rejectedOfferCount);
+
+        return new UpgradeOffer(ability, rarityData.Rarity,
+            CreateUpgradeEffect(upgradeType, rarityData));
+    }
+
+    private AbilityUpgradeEffect CreateUpgradeEffect(AbilityUpgradeType upgradeType,
+        UpgradeRarityData rarityData)
+    {
+        float value = upgradeType == AbilityUpgradeType.AdditionalProjectiles
             ? _upgradeOfferConfiguration.GetRandomProjectileCountIncrease(rarityData)
             : rarityData.UpgradeMultiplier;
 
-        return new UpgradeOffer(ability, rarityData.Rarity, upgradeValue, upgradeType);
+        return new AbilityUpgradeEffect(upgradeType, value);
     }
 
-    private AbilityUpgradeType GetRandomUpgradeType(CharacterAbility ability)
+    private (AbilityUpgradeType Primary, AbilityUpgradeType Secondary) GetRandomUpgradePair(
+        CharacterActiveAbility ability)
     {
-        AbilityUpgradeType[] upgradeTypes = ability.UpgradeTypes;
-        if (upgradeTypes is not { Length: > 0 })
-            return AbilityUpgradeType.Default;
-
-        bool canIncreaseProjectileCount =
-            upgradeTypes.Contains(AbilityUpgradeType.AdditionalProjectiles);
-        if (canIncreaseProjectileCount == false)
-            return ability.GetRandomUpgradeType();
-
-        if (RollChance(_upgradeOfferConfiguration.AdditionalProjectilesUpgradeOfferChance))
-            return AbilityUpgradeType.AdditionalProjectiles;
-
-        List<AbilityUpgradeType> otherUpgradeTypes = upgradeTypes
-            .Where(type => type != AbilityUpgradeType.AdditionalProjectiles)
+        List<AbilityUpgradeType> upgradeTypes = ability.UpgradeTypes
+            .Where(type => type != AbilityUpgradeType.Default)
+            .Distinct()
             .ToList();
-        return otherUpgradeTypes.Count > 0
-            ? otherUpgradeTypes[Random.Range(0, otherUpgradeTypes.Count)]
-            : AbilityUpgradeType.AdditionalProjectiles;
+        if (upgradeTypes.Count < 2)
+            throw new System.InvalidOperationException(
+                $"{ability.GetType().Name} must provide at least two different upgrade types.");
+
+        bool canIncreaseProjectileCount = upgradeTypes.Remove(AbilityUpgradeType.AdditionalProjectiles);
+        bool includeAdditionalProjectiles = canIncreaseProjectileCount &&
+                                            (upgradeTypes.Count < 2 ||
+                                             RollChance(_upgradeOfferConfiguration
+                                                 .AdditionalProjectilesUpgradeOfferChance));
+
+        if (includeAdditionalProjectiles)
+        {
+            AbilityUpgradeType pairedType = upgradeTypes[Random.Range(0, upgradeTypes.Count)];
+            return OrderPair(AbilityUpgradeType.AdditionalProjectiles, pairedType);
+        }
+
+        int primaryIndex = Random.Range(0, upgradeTypes.Count);
+        AbilityUpgradeType primaryType = upgradeTypes[primaryIndex];
+        upgradeTypes.RemoveAt(primaryIndex);
+        AbilityUpgradeType secondaryType = upgradeTypes[Random.Range(0, upgradeTypes.Count)];
+        return OrderPair(primaryType, secondaryType);
     }
+
+    private static (AbilityUpgradeType Primary, AbilityUpgradeType Secondary) OrderPair(
+        AbilityUpgradeType first, AbilityUpgradeType second) =>
+        (int)first <= (int)second ? (first, second) : (second, first);
 
     private void AddRandomOffers<T>(IEnumerable<T> source, int requestedCount,
         List<CharacterAbility> offerAbilities, List<UpgradeOffer> offers)

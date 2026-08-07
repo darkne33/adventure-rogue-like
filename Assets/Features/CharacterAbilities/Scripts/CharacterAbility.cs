@@ -13,8 +13,11 @@ public abstract class CharacterAbility
     public Sprite Icon { get; protected set; }
     public int Level { get; protected set; } = 1;
     public bool IsAcquired { get; private set; }
-    protected float CurrentUpgradeMultiplier { get; private set; } = 1f;
-    protected AbilityUpgradeType CurrentUpgradeType { get; private set; } = AbilityUpgradeType.Default;
+    protected AbilityUpgradeEffect CurrentPrimaryUpgrade { get; private set; } =
+        new(AbilityUpgradeType.Default, 1f);
+    protected AbilityUpgradeEffect? CurrentSecondaryUpgrade { get; private set; }
+    protected float CurrentUpgradeMultiplier => CurrentPrimaryUpgrade.Value;
+    protected AbilityUpgradeType CurrentUpgradeType => CurrentPrimaryUpgrade.Type;
 
     public virtual AbilityUpgradeType[] UpgradeTypes => DefaultUpgradeTypes;
 
@@ -27,15 +30,21 @@ public abstract class CharacterAbility
     }
 
     public void ApplyUpgrade(CharacterStats characterStats, float upgradeMultiplier,
-        AbilityUpgradeType upgradeType = AbilityUpgradeType.Default)
+        AbilityUpgradeType upgradeType = AbilityUpgradeType.Default) =>
+        ApplyUpgrade(characterStats, new AbilityUpgradeEffect(upgradeType, upgradeMultiplier), null);
+
+    public void ApplyUpgrade(CharacterStats characterStats, AbilityUpgradeEffect primaryUpgrade,
+        AbilityUpgradeEffect? secondaryUpgrade)
     {
-        CurrentUpgradeMultiplier = Mathf.Max(0f, upgradeMultiplier);
-        CurrentUpgradeType = upgradeType;
-        _appliedUpgrades.Push(new AppliedAbilityUpgrade(CurrentUpgradeMultiplier, CurrentUpgradeType));
+        CurrentPrimaryUpgrade = SanitizeUpgrade(primaryUpgrade);
+        CurrentSecondaryUpgrade = secondaryUpgrade.HasValue
+            ? SanitizeUpgrade(secondaryUpgrade.Value)
+            : null;
+        _appliedUpgrades.Push(new AppliedAbilityUpgrade(CurrentPrimaryUpgrade, CurrentSecondaryUpgrade));
         OnEquip(characterStats);
         IsAcquired = true;
-        CurrentUpgradeMultiplier = 1f;
-        CurrentUpgradeType = AbilityUpgradeType.Default;
+        CurrentPrimaryUpgrade = new AbilityUpgradeEffect(AbilityUpgradeType.Default, 1f);
+        CurrentSecondaryUpgrade = null;
     }
 
     public virtual void OnEquip(CharacterStats characterStats) =>
@@ -45,9 +54,9 @@ public abstract class CharacterAbility
     {
         AppliedAbilityUpgrade appliedUpgrade = _appliedUpgrades.Count > 0
             ? _appliedUpgrades.Pop()
-            : new AppliedAbilityUpgrade(1f, AbilityUpgradeType.Default);
-        CurrentUpgradeMultiplier = appliedUpgrade.Multiplier;
-        CurrentUpgradeType = appliedUpgrade.UpgradeType;
+            : new AppliedAbilityUpgrade(new AbilityUpgradeEffect(AbilityUpgradeType.Default, 1f), null);
+        CurrentPrimaryUpgrade = appliedUpgrade.PrimaryUpgrade;
+        CurrentSecondaryUpgrade = appliedUpgrade.SecondaryUpgrade;
         Level--;
         IsAcquired = false;
     }
@@ -65,16 +74,27 @@ public abstract class CharacterAbility
 
     protected float GetUpgradeValue(float value, float upgradeMultiplier) =>
         value * Mathf.Max(0f, upgradeMultiplier);
+
+    private static AbilityUpgradeEffect SanitizeUpgrade(AbilityUpgradeEffect upgrade) =>
+        new(upgrade.Type, Mathf.Max(0f, upgrade.Value));
 }
 
 public readonly struct AppliedAbilityUpgrade
 {
     public AppliedAbilityUpgrade(float multiplier, AbilityUpgradeType upgradeType)
+        : this(new AbilityUpgradeEffect(upgradeType, multiplier), null)
     {
-        Multiplier = multiplier;
-        UpgradeType = upgradeType;
     }
 
-    public float Multiplier { get; }
-    public AbilityUpgradeType UpgradeType { get; }
+    public AppliedAbilityUpgrade(AbilityUpgradeEffect primaryUpgrade,
+        AbilityUpgradeEffect? secondaryUpgrade)
+    {
+        PrimaryUpgrade = primaryUpgrade;
+        SecondaryUpgrade = secondaryUpgrade;
+    }
+
+    public AbilityUpgradeEffect PrimaryUpgrade { get; }
+    public AbilityUpgradeEffect? SecondaryUpgrade { get; }
+    public float Multiplier => PrimaryUpgrade.Value;
+    public AbilityUpgradeType UpgradeType => PrimaryUpgrade.Type;
 }

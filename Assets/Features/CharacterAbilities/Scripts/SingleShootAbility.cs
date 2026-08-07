@@ -9,6 +9,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 {
     private const float ProjectileSpreadOffset = 0.35f;
     private const string ProjectileCountStatName = "Projectiles";
+    protected const float MinimumCooldown = 0.05f;
 
     private readonly IEnemiesProvider _enemiesProvider;
     private readonly ICharacterAimTargetProvider _aimTargetProvider;
@@ -54,8 +55,9 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     {
         base.OnEquip(characterStats);
 
-        if (CurrentUpgradeType == AbilityUpgradeType.AdditionalProjectiles)
-            _additionalProjectileCount += GetAdditionalProjectileIncrease(CurrentUpgradeMultiplier);
+        ApplyAdditionalProjectileUpgrade(CurrentPrimaryUpgrade);
+        if (CurrentSecondaryUpgrade.HasValue)
+            ApplyAdditionalProjectileUpgrade(CurrentSecondaryUpgrade.Value);
 
         OnShootableEquipped(characterStats);
     }
@@ -89,14 +91,11 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     {
     }
 
-    protected AbilityUpgradePreview[] GetAdditionalProjectileUpgradePreviews(float upgradeValue)
+    protected AbilityUpgradePreview GetAdditionalProjectileUpgradePreview(AbilityUpgradeEffect upgrade)
     {
         float projectileCount = GetCurrentProjectileCount();
-        return new[]
-        {
-            new AbilityUpgradePreview(ProjectileCountStatName, projectileCount,
-                projectileCount + GetAdditionalProjectileIncrease(upgradeValue))
-        };
+        return new AbilityUpgradePreview(ProjectileCountStatName, projectileCount,
+            projectileCount + GetAdditionalProjectileIncrease(upgrade.Value));
     }
 
     protected abstract void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
@@ -142,7 +141,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     protected void ReduceCooldown(float cooldownReduction)
     {
-        Cooldown = Mathf.Max(0.05f, Cooldown - Mathf.Max(0f, cooldownReduction));
+        Cooldown = Mathf.Max(MinimumCooldown, Cooldown - Mathf.Max(0f, cooldownReduction));
     }
 
     protected void DestroyShoot(GameObject shootObj)
@@ -250,6 +249,12 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     private float GetCurrentProjectileCount() =>
         1f + _additionalProjectileCount + Mathf.Max(0f, _characterStats.ProjectileCount);
+
+    private void ApplyAdditionalProjectileUpgrade(AbilityUpgradeEffect upgrade)
+    {
+        if (upgrade.Type == AbilityUpgradeType.AdditionalProjectiles)
+            _additionalProjectileCount += GetAdditionalProjectileIncrease(upgrade.Value);
+    }
 
     private static float GetAdditionalProjectileIncrease(float upgradeValue) =>
         Mathf.Max(0f, upgradeValue);

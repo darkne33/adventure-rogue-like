@@ -56,7 +56,15 @@ public abstract class CharacterActiveAbility : CharacterAbility
     public virtual AbilityUpgradePreview[] GetAcquirePreviews() =>
         Array.Empty<AbilityUpgradePreview>();
 
-    public abstract AbilityUpgradePreview[] GetUpgradePreviews(AbilityUpgradeType upgradeType, float upgradeMultiplier);
+    public AbilityUpgradePreview[] GetUpgradePreviews(AbilityUpgradeEffect primaryUpgrade,
+        AbilityUpgradeEffect secondaryUpgrade) =>
+        new[]
+        {
+            GetUpgradePreview(primaryUpgrade),
+            GetUpgradePreview(secondaryUpgrade)
+        };
+
+    public abstract AbilityUpgradePreview GetUpgradePreview(AbilityUpgradeEffect upgrade);
 }
 
 public readonly struct AbilityUpgradePreview

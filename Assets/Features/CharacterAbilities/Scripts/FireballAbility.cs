@@ -12,14 +12,25 @@ public class FireballAbility : SingleShootAbility
     private static readonly AbilityUpgradeType[] FireballUpgradeTypes =
     {
         AbilityUpgradeType.Damage,
-        AbilityUpgradeType.ProjectileSpeedCooldown,
+        AbilityUpgradeType.ProjectileSpeed,
+        AbilityUpgradeType.Cooldown,
+        AbilityUpgradeType.AdditionalProjectiles
+    };
+
+    private static readonly AbilityUpgradeType[] FireballUpgradeTypesAtMinimumCooldown =
+    {
+        AbilityUpgradeType.Damage,
+        AbilityUpgradeType.ProjectileSpeed,
         AbilityUpgradeType.AdditionalProjectiles
     };
 
     private float _travelDistance;
 
     private FireballAbilityConfiguration FireballConfig => (FireballAbilityConfiguration)AbilityConfig;
-    public override AbilityUpgradeType[] UpgradeTypes => FireballUpgradeTypes;
+    public override AbilityUpgradeType[] UpgradeTypes =>
+        AbilityConfig != null && Cooldown <= MinimumCooldown + Mathf.Epsilon
+            ? FireballUpgradeTypesAtMinimumCooldown
+            : FireballUpgradeTypes;
 
     public FireballAbility(IEnemiesProvider enemiesProvider, ICharacterAimTargetProvider aimTargetProvider,
         CharacterDamageCalculator damageCalculator, CharacterStats characterStats, RelicEventBus relicEventBus,
@@ -41,24 +52,20 @@ public class FireballAbility : SingleShootAbility
             new AbilityUpgradePreview(CooldownStatName, AbilityConfig.Cooldown, "s")
         };
 
-    public override AbilityUpgradePreview[] GetUpgradePreviews(AbilityUpgradeType upgradeType, float upgradeMultiplier)
+    public override AbilityUpgradePreview GetUpgradePreview(AbilityUpgradeEffect upgrade)
     {
-        return GetFireballUpgradeType(upgradeType) switch
+        return upgrade.Type switch
         {
             AbilityUpgradeType.AdditionalProjectiles =>
-                GetAdditionalProjectileUpgradePreviews(upgradeMultiplier),
-            AbilityUpgradeType.ProjectileSpeedCooldown => new[]
-            {
+                GetAdditionalProjectileUpgradePreview(upgrade),
+            AbilityUpgradeType.ProjectileSpeed =>
                 new AbilityUpgradePreview(SpeedStatName, ProjectileSpeed,
-                    ProjectileSpeed + GetSpeedIncrease(upgradeMultiplier)),
+                    ProjectileSpeed + GetSpeedIncrease(upgrade.Value)),
+            AbilityUpgradeType.Cooldown =>
                 new AbilityUpgradePreview(CooldownStatName, Cooldown,
-                    GetCooldownTo(upgradeMultiplier), "s")
-            },
-            _ => new[]
-            {
-                new AbilityUpgradePreview(DamageStatName, Damage,
-                    GetDamageTo(upgradeMultiplier))
-            }
+                    GetCooldownTo(upgrade.Value), "s"),
+            _ => new AbilityUpgradePreview(DamageStatName, Damage,
+                GetDamageTo(upgrade.Value))
         };
     }
 
@@ -73,18 +80,27 @@ public class FireballAbility : SingleShootAbility
         if (Damage <= 0)
             Damage = AbilityConfig.StartDamage;
 
-        switch (CurrentUpgradeType)
-        {
-            case AbilityUpgradeType.ProjectileSpeedCooldown:
-                IncreaseProjectileSpeed(GetSpeedIncrease(CurrentUpgradeMultiplier));
-                ReduceCooldown(GetCooldownReduction(CurrentUpgradeMultiplier));
-                break;
-            case AbilityUpgradeType.Damage:
-                IncreaseDamage(GetDamageIncrease(CurrentUpgradeMultiplier));
-                break;
-        }
+        ApplyUpgradeEffect(CurrentPrimaryUpgrade);
+        if (CurrentSecondaryUpgrade.HasValue)
+            ApplyUpgradeEffect(CurrentSecondaryUpgrade.Value);
 
         Stat_1 = Damage;
+    }
+
+    private void ApplyUpgradeEffect(AbilityUpgradeEffect upgrade)
+    {
+        switch (upgrade.Type)
+        {
+            case AbilityUpgradeType.ProjectileSpeed:
+                IncreaseProjectileSpeed(GetSpeedIncrease(upgrade.Value));
+                break;
+            case AbilityUpgradeType.Damage:
+                IncreaseDamage(GetDamageIncrease(upgrade.Value));
+                break;
+            case AbilityUpgradeType.Cooldown:
+                ReduceCooldown(GetCooldownReduction(upgrade.Value));
+                break;
+        }
     }
 
     private float GetDamageIncrease(float upgradeMultiplier) =>
@@ -100,10 +116,7 @@ public class FireballAbility : SingleShootAbility
         GetUpgradeValue(FireballConfig.CooldownUpgradeReduction, upgradeMultiplier);
 
     private float GetCooldownTo(float upgradeMultiplier) =>
-        Mathf.Max(0.05f, Cooldown - GetCooldownReduction(upgradeMultiplier));
-
-    private static AbilityUpgradeType GetFireballUpgradeType(AbilityUpgradeType upgradeType) =>
-        upgradeType == AbilityUpgradeType.Default ? AbilityUpgradeType.Damage : upgradeType;
+        Mathf.Max(MinimumCooldown, Cooldown - GetCooldownReduction(upgradeMultiplier));
 
     protected override void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
         PlayerCollisionDetector collisionDetector, EnemyFacade targetEnemy, Vector3 spawnPosition,

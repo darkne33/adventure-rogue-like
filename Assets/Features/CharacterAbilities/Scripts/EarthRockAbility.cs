@@ -67,23 +67,30 @@ public sealed class EarthRockAbility : CharacterActiveAbility
     {
         base.OnEquip(characterStats);
 
-        switch (CurrentUpgradeType)
-        {
-            case AbilityUpgradeType.Damage:
-                _damage += GetDamageIncrease(CurrentUpgradeMultiplier);
-                break;
-            case AbilityUpgradeType.EarthRockRadius:
-                _orbitRadius += GetRadiusIncrease(CurrentUpgradeMultiplier);
-                break;
-            case AbilityUpgradeType.EarthRockRotationSpeed:
-                _rotationSpeed += GetRotationSpeedIncrease(CurrentUpgradeMultiplier);
-                break;
-            case AbilityUpgradeType.EarthRockStoneCount:
-                _stoneCount += GetStoneCountIncrease(CurrentUpgradeMultiplier);
-                break;
-        }
+        ApplyUpgradeEffect(CurrentPrimaryUpgrade);
+        if (CurrentSecondaryUpgrade.HasValue)
+            ApplyUpgradeEffect(CurrentSecondaryUpgrade.Value);
 
         RefreshStats();
+    }
+
+    private void ApplyUpgradeEffect(AbilityUpgradeEffect upgrade)
+    {
+        switch (upgrade.Type)
+        {
+            case AbilityUpgradeType.Damage:
+                _damage += GetDamageIncrease(upgrade.Value);
+                break;
+            case AbilityUpgradeType.EarthRockRadius:
+                _orbitRadius += GetRadiusIncrease(upgrade.Value);
+                break;
+            case AbilityUpgradeType.EarthRockRotationSpeed:
+                _rotationSpeed += GetRotationSpeedIncrease(upgrade.Value);
+                break;
+            case AbilityUpgradeType.EarthRockStoneCount:
+                _stoneCount += GetStoneCountIncrease(upgrade.Value);
+                break;
+        }
     }
 
     public override void OnUnequip(CharacterStats characterStats)
@@ -105,30 +112,21 @@ public sealed class EarthRockAbility : CharacterActiveAbility
             new AbilityUpgradePreview(DamageStatName, _configuration.StartDamage)
         };
 
-    public override AbilityUpgradePreview[] GetUpgradePreviews(AbilityUpgradeType upgradeType,
-        float upgradeMultiplier)
+    public override AbilityUpgradePreview GetUpgradePreview(AbilityUpgradeEffect upgrade)
     {
-        return upgradeType switch
+        return upgrade.Type switch
         {
-            AbilityUpgradeType.EarthRockRadius => new[]
-            {
+            AbilityUpgradeType.EarthRockRadius =>
                 new AbilityUpgradePreview(RadiusStatName, _orbitRadius,
-                    _orbitRadius + GetRadiusIncrease(upgradeMultiplier), "m")
-            },
-            AbilityUpgradeType.EarthRockRotationSpeed => new[]
-            {
+                    _orbitRadius + GetRadiusIncrease(upgrade.Value), "m"),
+            AbilityUpgradeType.EarthRockRotationSpeed =>
                 new AbilityUpgradePreview(RotationSpeedStatName, _rotationSpeed,
-                    _rotationSpeed + GetRotationSpeedIncrease(upgradeMultiplier), "°/s")
-            },
-            AbilityUpgradeType.EarthRockStoneCount => new[]
-            {
+                    _rotationSpeed + GetRotationSpeedIncrease(upgrade.Value), "°/s"),
+            AbilityUpgradeType.EarthRockStoneCount =>
                 new AbilityUpgradePreview(StoneCountStatName, _stoneCount,
-                    _stoneCount + GetStoneCountIncrease(upgradeMultiplier))
-            },
-            _ => new[]
-            {
-                new AbilityUpgradePreview(DamageStatName, _damage, GetDamageTo(upgradeMultiplier))
-            }
+                    _stoneCount + GetStoneCountIncrease(upgrade.Value)),
+            _ => new AbilityUpgradePreview(DamageStatName, _damage,
+                GetDamageTo(upgrade.Value))
         };
     }
 

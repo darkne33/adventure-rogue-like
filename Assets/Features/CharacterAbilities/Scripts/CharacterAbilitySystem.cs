@@ -13,11 +13,16 @@ public class CharacterAbilitySystem
 
     public void AddAbility(CharacterAbility ability, CharacterStats characterStats, float upgradeMultiplier,
         AbilityUpgradeType upgradeType = AbilityUpgradeType.Default)
+        => AddAbility(ability, characterStats,
+            new AbilityUpgradeEffect(upgradeType, upgradeMultiplier), null);
+
+    public void AddAbility(CharacterAbility ability, CharacterStats characterStats,
+        AbilityUpgradeEffect primaryUpgrade, AbilityUpgradeEffect? secondaryUpgrade)
     {
         if (_abilities.Contains(ability) == false)
             _abilities.Add(ability);
         
-        ability.ApplyUpgrade(characterStats, upgradeMultiplier, upgradeType);
+        ability.ApplyUpgrade(characterStats, primaryUpgrade, secondaryUpgrade);
 
         if (ability is CharacterActiveAbility active)
             _activeAbilities[active.Id] = active;

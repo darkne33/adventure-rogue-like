@@ -1,5 +1,6 @@
 using Core.Services;
 using Core.Sounds;
+using Features.Leaderboard;
 using Infrastructure.SaveSystem;
 using UnityEngine;
 using Zenject;
@@ -38,6 +39,7 @@ namespace Core.Installer
             Container.Bind<ISoundsStorage>().To<SoundsStorage>().AsSingle();
             Container.Bind<ISoundsService>().To<SoundsService>().AsSingle();
             Container.Bind<IPlayerSaveLoadService>().To<PlayerSaveLoadService>().AsSingle();
+            Container.Bind<ILeaderboardService>().To<PlayFabLeaderboardService>().AsSingle();
             
             Container.Bind<IDynamicEffectsService>().To<DynamicEffectsService>().AsSingle();
             

@@ -89,7 +89,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         _upgradeBuildService.RecordSelectedOffer(upgradeOffer);
         RecordRejectedCurrentOffers(upgradeOffer);
         _characterProvider.CharacterFacade.CharacterAbilitySystem.AddAbility(upgradeOffer.Ability, _characterStats,
-            upgradeOffer.UpgradeMultiplier, upgradeOffer.UpgradeType);
+            upgradeOffer.PrimaryUpgrade, upgradeOffer.SecondaryUpgrade);
         _upgradeBuildService.RecordAppliedSelection(upgradeOffer.Ability);
         SkipUpgrades();
     }
@@ -177,9 +177,19 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
                         new AbilityUpgradePreview(statName, statFrom, statTo, passiveAbility.StatSuffix));
                     break;
                 case CharacterActiveAbility activeAbility:
-                    AbilityUpgradePreview[] previews = upgradeOffer.HasRarity
-                        ? activeAbility.GetUpgradePreviews(upgradeOffer.UpgradeType, upgradeOffer.UpgradeMultiplier)
-                        : activeAbility.GetAcquirePreviews();
+                    AbilityUpgradePreview[] previews;
+                    if (upgradeOffer.HasRarity)
+                    {
+                        AbilityUpgradeEffect secondaryUpgrade = upgradeOffer.SecondaryUpgrade ??
+                            throw new InvalidOperationException(
+                                "An active ability upgrade offer must contain two effects.");
+                        previews = activeAbility.GetUpgradePreviews(upgradeOffer.PrimaryUpgrade,
+                            secondaryUpgrade);
+                    }
+                    else
+                    {
+                        previews = activeAbility.GetAcquirePreviews();
+                    }
 
                     if (previews.Length > 0)
                         offerItemView.SetupSkillDescription_1(previews[0]);

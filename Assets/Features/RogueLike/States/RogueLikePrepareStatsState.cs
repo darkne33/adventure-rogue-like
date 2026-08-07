@@ -2,25 +2,30 @@
 using Core;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
+using Features.Leaderboard;
 
 public class RogueLikePrepareStatsState : State
 {
     private readonly CharacterStats _characterStats;
     private readonly CharacterStatModifierLayer _statModifierLayer;
     private readonly CharacterSettingsConfiguration _characterSettingsConfiguration;
+    private readonly RoomLeaderboardReporter _leaderboardReporter;
 
     public RogueLikePrepareStatsState(CharacterStats characterStats,
         CharacterStatModifierLayer statModifierLayer,
-        CharacterSettingsConfiguration characterSettingsConfiguration)
+        CharacterSettingsConfiguration characterSettingsConfiguration,
+        RoomLeaderboardReporter leaderboardReporter)
     {
         _characterStats = characterStats;
         _statModifierLayer = statModifierLayer;
         _characterSettingsConfiguration = characterSettingsConfiguration;
+        _leaderboardReporter = leaderboardReporter;
     }
 
     public override async UniTask Enter(CancellationToken cts)
     {
         CharacterStatsInitialize();
+        _leaderboardReporter.BeginRun();
         await StateMachine.EnterState<RogueLikePrepareState>();
     }
 
