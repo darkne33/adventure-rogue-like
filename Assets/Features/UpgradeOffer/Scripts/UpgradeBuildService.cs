@@ -7,11 +7,13 @@ public sealed class UpgradeBuildService
     private readonly Dictionary<UpgradeOfferKey, int> _rejectedOfferCounts = new();
     private readonly int _maxSlots;
     private readonly int _maxActiveAbilities;
+    private readonly int _maxPassiveAbilities;
 
     public UpgradeBuildService(UpgradeOfferConfiguration configuration)
     {
         _maxSlots = Math.Max(1, configuration.MaxBuildSlots);
         _maxActiveAbilities = Math.Max(1, configuration.MaxActiveAbilities);
+        _maxPassiveAbilities = Math.Max(1, configuration.MaxPassiveAbilities);
     }
 
     public event Action Changed;
@@ -19,6 +21,7 @@ public sealed class UpgradeBuildService
     public IReadOnlyList<UpgradeBuildEntry> SelectedUpgrades => _selectedUpgrades;
     public int MaxSlots => _maxSlots;
     public int MaxActiveAbilities => _maxActiveAbilities;
+    public int MaxPassiveAbilities => _maxPassiveAbilities;
     public bool IsFull => _selectedUpgrades.Count >= _maxSlots;
     public int ActiveAbilityCount
     {
@@ -28,6 +31,21 @@ public sealed class UpgradeBuildService
             foreach (UpgradeBuildEntry entry in _selectedUpgrades)
             {
                 if (entry.Ability is CharacterActiveAbility)
+                    count++;
+            }
+
+            return count;
+        }
+    }
+
+    public int PassiveAbilityCount
+    {
+        get
+        {
+            int count = 0;
+            foreach (UpgradeBuildEntry entry in _selectedUpgrades)
+            {
+                if (entry.Ability is CharacterPassiveAbility)
                     count++;
             }
 
@@ -47,8 +65,12 @@ public sealed class UpgradeBuildService
         if (IsFull)
             return false;
 
-        return ability is not CharacterActiveAbility ||
-               ActiveAbilityCount < _maxActiveAbilities;
+        return ability switch
+        {
+            CharacterActiveAbility => ActiveAbilityCount < _maxActiveAbilities,
+            CharacterPassiveAbility => PassiveAbilityCount < _maxPassiveAbilities,
+            _ => true
+        };
     }
 
     public bool RecordAppliedSelection(CharacterAbility ability)

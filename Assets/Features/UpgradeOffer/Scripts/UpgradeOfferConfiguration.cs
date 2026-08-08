@@ -8,6 +8,7 @@ public class UpgradeOfferConfiguration : ScriptableObject
     [field: SerializeField] public UpgradeOfferItemFacade UpgradeOfferItemFacade { get; private set; }
     [field: SerializeField, Min(1)] public int MaxBuildSlots { get; private set; } = 5;
     [field: SerializeField, Min(1)] public int MaxActiveAbilities { get; private set; } = 3;
+    [field: SerializeField, Min(1)] public int MaxPassiveAbilities { get; private set; } = 3;
     [field: SerializeField, Range(0f, 100f)] public float ActiveAbilityOfferChance { get; private set; } = 100f;
     [field: SerializeField, Range(0f, 100f)] public float AdditionalProjectilesUpgradeOfferChance { get; private set; } = 40f;
     [field: SerializeField, Min(0.01f)] public float ProjectileCountIncreaseStep { get; private set; } = 0.25f;

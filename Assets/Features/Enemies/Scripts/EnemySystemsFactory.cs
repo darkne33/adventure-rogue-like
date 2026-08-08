@@ -14,13 +14,12 @@ namespace Features.Enemies.Scripts
         private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
         private readonly LevelsConfiguration _levelsConfiguration;
         private readonly GoldDropper _goldDropper;
-        private readonly HeartDropper _heartDropper;
         private readonly ExpDropper _expDropper;
 
         public EnemySystemsFactory(ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
             CharacterStats characterStats, IRogueLikeRuntimeDataService runtimeDataService,
             ISceneService<RogueLikeSceneProvider> sceneService, LevelsConfiguration levelsConfiguration,
-            GoldDropper goldDropper, HeartDropper heartDropper, ExpDropper expDropper)
+            GoldDropper goldDropper, ExpDropper expDropper)
         {
             _characterProvider = characterProvider;
             _enemiesProvider = enemiesProvider;
@@ -29,7 +28,6 @@ namespace Features.Enemies.Scripts
             _sceneService = sceneService;
             _levelsConfiguration = levelsConfiguration;
             _goldDropper = goldDropper;
-            _heartDropper = heartDropper;
             _expDropper = expDropper;
         }
 
@@ -58,8 +56,12 @@ namespace Features.Enemies.Scripts
                                  damageSystem is EnemyDamageAreaSystem areaDamageSystem
                 ? areaDamageSystem.DetonateOnDeath
                 : null;
+            BombEnemySplitOnDeath splitOnDeath = facade.GetComponent<BombEnemySplitOnDeath>();
+            if (splitOnDeath != null)
+                deathEffect += splitOnDeath.SpawnNormalBombs;
+
             var deathSystem = new EnemyDeathSystem(_enemiesProvider, facade, configuration, _characterStats,
-                character, effectsSystem, deathEffect, _goldDropper, _heartDropper, _expDropper);
+                character, effectsSystem, deathEffect, _goldDropper, _expDropper);
             int maxHealth = GetScaledMaxHealth(configuration.MaxHealth);
             var healthSystem = new HealthSystem(maxHealth,
                 new IHealthView[] { facade.GetComponent<EnemyHealthView>() }, deathSystem,

@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using Features.Relics.Scripts;
 using UnityEngine;
@@ -9,19 +10,23 @@ public sealed class HeartPickup : MonoBehaviour
     private CharacterStats _characterStats;
     private RelicEventBus _relicEventBus;
     private Transform _cameraTransform;
+    private Action _collectedCallback;
     private float _attractionEnabledTime;
     private Vector3 _startScale;
+    private bool _collectWhenHealthFull;
     private bool _isCollecting;
 
     public void Construct(HeartDropperConfiguration configuration, ICharacterProvider characterProvider,
         CharacterStats characterStats, RelicEventBus relicEventBus, Transform cameraTransform,
-        Vector3 landPosition)
+        Vector3 landPosition, Action collectedCallback = null, bool collectWhenHealthFull = false)
     {
         _configuration = configuration;
         _characterProvider = characterProvider;
         _characterStats = characterStats;
         _relicEventBus = relicEventBus;
         _cameraTransform = cameraTransform;
+        _collectedCallback = collectedCallback;
+        _collectWhenHealthFull = collectWhenHealthFull;
         _attractionEnabledTime = Time.time + Mathf.Max(0f, configuration.AttractionStartDelay);
         _startScale = transform.localScale;
 
@@ -35,7 +40,8 @@ public sealed class HeartPickup : MonoBehaviour
             return;
 
         CharacterFacade character = _characterProvider?.CharacterFacade;
-        if (character == null || character.HealthSystem == null || IsHealthFull(character.HealthSystem))
+        if (character == null || character.HealthSystem == null ||
+            _collectWhenHealthFull == false && IsHealthFull(character.HealthSystem))
             return;
 
         Vector3 targetPosition = character.transform.position +
@@ -90,22 +96,28 @@ public sealed class HeartPickup : MonoBehaviour
         float healAmount = character.HealthSystem.MaxHealth *
                            Mathf.Clamp01(_configuration.HealPercentage);
         float restoredHealth = character.HealthSystem.IncreaseCurrentHealth(healAmount);
-        if (restoredHealth <= 0f)
+        if (restoredHealth <= 0f && _collectWhenHealthFull == false)
         {
             _isCollecting = false;
             transform.localScale = _startScale;
             return;
         }
 
-        _relicEventBus?.PublishHeal(new RelicHealEvent(character, restoredHealth));
+        if (restoredHealth > 0f)
+        {
+            _relicEventBus?.PublishHeal(new RelicHealEvent(character, restoredHealth));
 
-        CharacterHealNumberView healNumberView = character.GetComponent<CharacterHealNumberView>();
-        if (healNumberView == null)
-            healNumberView = character.gameObject.AddComponent<CharacterHealNumberView>();
+            CharacterHealNumberView healNumberView = character.GetComponent<CharacterHealNumberView>();
+            if (healNumberView == null)
+                healNumberView = character.gameObject.AddComponent<CharacterHealNumberView>();
 
-        healNumberView.ShowHeal(restoredHealth, _configuration.HealPopupFont, _cameraTransform);
+            healNumberView.ShowHeal(restoredHealth, _configuration.HealPopupFont, _cameraTransform);
+        }
 
         transform.DOKill();
+        Action collectedCallback = _collectedCallback;
+        _collectedCallback = null;
+        collectedCallback?.Invoke();
         Destroy(gameObject);
     }
 

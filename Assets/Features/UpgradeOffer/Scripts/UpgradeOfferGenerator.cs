@@ -5,15 +5,20 @@ using UnityEngine;
 public class UpgradeOfferGenerator : IUpgradeOfferGenerator
 {
     private const int TotalOfferCount = 3;
+    private const int LevelsPerGuaranteedPassiveAbility = 5;
+    private const int MaxGuaranteedPassiveAbilityCount = 2;
 
     private readonly IAbilityChoiceProvider _abilityChoiceProvider;
+    private readonly ICharacterLevelService _characterLevelService;
     private readonly UpgradeOfferConfiguration _upgradeOfferConfiguration;
     private readonly UpgradeBuildService _upgradeBuildService;
 
     public UpgradeOfferGenerator(IAbilityChoiceProvider abilityChoiceProvider,
-        UpgradeOfferConfiguration upgradeOfferConfiguration, UpgradeBuildService upgradeBuildService)
+        ICharacterLevelService characterLevelService, UpgradeOfferConfiguration upgradeOfferConfiguration,
+        UpgradeBuildService upgradeBuildService)
     {
         _abilityChoiceProvider = abilityChoiceProvider;
+        _characterLevelService = characterLevelService;
         _upgradeOfferConfiguration = upgradeOfferConfiguration;
         _upgradeBuildService = upgradeBuildService;
     }
@@ -26,6 +31,17 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         List<CharacterAbility> availableAbilities = _abilityChoiceProvider.GetCharacterAbilities().Values
             .Where(IsAvailableForCurrentBuild)
             .ToList();
+
+        if (NeedsGuaranteedPassiveAbility())
+        {
+            List<CharacterPassiveAbility> newPassiveAbilities = availableAbilities
+                .OfType<CharacterPassiveAbility>()
+                .Where(ability => _upgradeBuildService.Contains(ability) == false)
+                .ToList();
+
+            AddRandomOffers(newPassiveAbilities, TotalOfferCount, offerAbilities, offers);
+            return offers;
+        }
 
         List<CharacterPassiveAbility> passiveAbilities = availableAbilities
             .OfType<CharacterPassiveAbility>().ToList();
@@ -69,6 +85,16 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
 
     private bool IsAvailableForCurrentBuild(CharacterAbility ability) =>
         _upgradeBuildService.CanSelect(ability);
+
+    private bool NeedsGuaranteedPassiveAbility()
+    {
+        int requiredPassiveAbilityCount = Mathf.Min(
+            _characterLevelService.GetLevel / LevelsPerGuaranteedPassiveAbility,
+            MaxGuaranteedPassiveAbilityCount);
+
+        return _upgradeBuildService.IsFull == false &&
+               _upgradeBuildService.PassiveAbilityCount < requiredPassiveAbilityCount;
+    }
 
     private static bool RollChance(float chance)
     {

@@ -1,3 +1,4 @@
+using System;
 using Core;
 using Features.Relics.Scripts;
 using UnityEngine;
@@ -26,14 +27,15 @@ public sealed class HeartDropper
         _relicEventBus = relicEventBus;
     }
 
-    public void TryDropHeart(Vector3 position)
+    public bool DropHeart(Vector3 position, Action collectedCallback = null,
+        bool collectWhenHealthFull = false, float additionalDropHeight = 0f)
     {
-        if (_configuration == null || _configuration.HeartPrefab == null ||
-            Random.value >= Mathf.Clamp01(_configuration.DropChance))
-            return;
+        if (_configuration == null || _configuration.HeartPrefab == null)
+            return false;
 
         Vector3 landPosition = GetGroundedPosition(position + GetScatterOffset());
-        Vector3 spawnPosition = landPosition + Vector3.up * _configuration.DropHeight;
+        float dropHeight = _configuration.DropHeight + Mathf.Max(0f, additionalDropHeight);
+        Vector3 spawnPosition = landPosition + Vector3.up * dropHeight;
         GameObject heartObject = _container.InstantiatePrefab(_configuration.HeartPrefab, spawnPosition,
             Quaternion.identity, null);
 
@@ -42,7 +44,9 @@ public sealed class HeartDropper
             heartPickup = heartObject.AddComponent<HeartPickup>();
 
         heartPickup.Construct(_configuration, _characterProvider, _characterStats, _relicEventBus,
-            _cameraService.MainCamera != null ? _cameraService.MainCamera.transform : null, landPosition);
+            _cameraService.MainCamera != null ? _cameraService.MainCamera.transform : null, landPosition,
+            collectedCallback, collectWhenHealthFull);
+        return true;
     }
 
     private Vector3 GetScatterOffset()
@@ -51,7 +55,7 @@ public sealed class HeartDropper
         if (scatterRadius <= 0f)
             return Vector3.zero;
 
-        Vector2 offset = Random.insideUnitCircle * scatterRadius;
+        Vector2 offset = UnityEngine.Random.insideUnitCircle * scatterRadius;
         return new Vector3(offset.x, 0f, offset.y);
     }
 

@@ -14,13 +14,12 @@ public class EnemyDeathSystem : IDeathSystem
     private readonly DealDamageEffectSystem _effectsSystem;
     private readonly System.Action _deathEffect;
     private readonly GoldDropper _goldDropper;
-    private readonly HeartDropper _heartDropper;
     private readonly ExpDropper _expDropper;
 
     public EnemyDeathSystem(IEnemiesProvider enemiesProvider, EnemyFacade enemyFacade,
         EnemyConfiguration enemyConfiguration, CharacterStats characterStats, CharacterFacade characterFacade,
         DealDamageEffectSystem effectsSystem, System.Action deathEffect, GoldDropper goldDropper,
-        HeartDropper heartDropper, ExpDropper expDropper)
+        ExpDropper expDropper)
     {
         _enemyFacade = enemyFacade;
         _enemyConfiguration = enemyConfiguration;
@@ -30,7 +29,6 @@ public class EnemyDeathSystem : IDeathSystem
         _effectsSystem = effectsSystem;
         _deathEffect = deathEffect;
         _goldDropper = goldDropper;
-        _heartDropper = heartDropper;
         _expDropper = expDropper;
     }
 
@@ -41,7 +39,6 @@ public class EnemyDeathSystem : IDeathSystem
         _expDropper.DropExp(_enemyFacade.transform.position, CalculateExpReward(_enemyConfiguration.Exp));
         _characterFacade.HealthSystem.IncreaseCurrentHealth(Mathf.Max(0f, _characterStats.GainHp));
         _goldDropper.DropGold(_enemyFacade.transform.position);
-        _heartDropper.TryDropHeart(_enemyFacade.transform.position);
 
         PrepareForDeathAnimation();
 

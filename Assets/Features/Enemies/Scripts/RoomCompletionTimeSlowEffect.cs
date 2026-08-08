@@ -8,8 +8,8 @@ namespace Features.Enemies.Scripts
     public sealed class RoomCompletionTimeSlowSettings
     {
         [SerializeField, Range(0.01f, 1f)] private float _timeScale = 0.15f;
-        [SerializeField, Min(0f)] private float _holdDuration = 0.2f;
-        [SerializeField, Min(0f)] private float _recoveryDuration = 0.35f;
+        [SerializeField, Min(0f)] private float _holdDuration = 0.32f;
+        [SerializeField, Min(0f)] private float _recoveryDuration = 0.56f;
 
         public float TimeScale => Mathf.Clamp(_timeScale, 0.01f, 1f);
         public float HoldDuration => Mathf.Max(0f, _holdDuration);
