@@ -112,6 +112,7 @@ public sealed class MinimapController : IDisposable, ITickable
                 {
                     RoomType.Start => MinimapRoomKind.Start,
                     RoomType.Exit => MinimapRoomKind.Exit,
+                    RoomType.Shop => MinimapRoomKind.Shop,
                     _ => MinimapRoomKind.Normal
                 },
                 node.Type == RoomType.Exit ? node.LevelExitDirection : null))

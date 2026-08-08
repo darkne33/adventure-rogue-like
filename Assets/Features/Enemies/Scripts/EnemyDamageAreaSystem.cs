@@ -53,11 +53,16 @@ namespace Features.Enemies.Scripts
 
             _attackStarted = true;
             Rigidbody rigidbody = _enemyFacade.Rigidbody;
+            bool lockPosition =
+                _enemyConfiguration.EnemyAnimationType == EnemyAnimationType.Bomb;
+            Vector3 attackPosition = _enemyFacade.transform.position;
 
             try
             {
                 _enemyFacade.SetStop(true);
                 StopHorizontalMovement(rigidbody);
+                if (lockPosition)
+                    LockPosition(attackPosition, rigidbody);
                 _indicatorView?.Show(
                     GetExplosionPosition(),
                     _enemyConfiguration.AreaDamageRadius,
@@ -73,6 +78,9 @@ namespace Features.Enemies.Scripts
                     if (_enemyFacade.IsDead)
                         return;
 
+                    if (lockPosition)
+                        LockPosition(attackPosition, rigidbody);
+
                     elapsed += Time.deltaTime;
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
@@ -80,11 +88,17 @@ namespace Features.Enemies.Scripts
                 if (_enemyFacade.IsDead)
                     return;
 
+                if (lockPosition)
+                    LockPosition(attackPosition, rigidbody);
+
                 _indicatorView?.Complete(GetExplosionPosition());
                 await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
 
                 if (_enemyFacade.IsDead)
                     return;
+
+                if (lockPosition)
+                    LockPosition(attackPosition, rigidbody);
 
                 Detonate(killOwner: true);
             }
@@ -248,6 +262,17 @@ namespace Features.Enemies.Scripts
             velocity.x = 0f;
             velocity.z = 0f;
             rigidbody.linearVelocity = velocity;
+        }
+
+        private void LockPosition(Vector3 position, Rigidbody rigidbody)
+        {
+            if (rigidbody != null)
+            {
+                rigidbody.linearVelocity = Vector3.zero;
+                rigidbody.position = position;
+            }
+
+            _enemyFacade.transform.position = position;
         }
     }
 }

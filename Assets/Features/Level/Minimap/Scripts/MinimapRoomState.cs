@@ -10,5 +10,6 @@ public enum MinimapRoomKind
 {
     Normal,
     Start,
-    Exit
+    Exit,
+    Shop
 }

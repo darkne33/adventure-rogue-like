@@ -42,7 +42,7 @@ public class GoldDropper
         }
 
         Vector3 landPosition = GetGroundedPosition(position + GetScatterOffset());
-        Vector3 spawnPosition = landPosition + Vector3.up * _configuration.DropHeight;
+        Vector3 spawnPosition = position + Vector3.up * _configuration.DropHeight;
         GameObject coinObject = _container.InstantiatePrefab(_configuration.CoinGoldPrefab, spawnPosition,
             Quaternion.identity, null);
 

@@ -8,6 +8,7 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     [SerializeField] private Image _outline;
     [SerializeField] private Image _startMarker;
     [SerializeField] private Image _exitMarker;
+    [SerializeField] private Image _shopMarker;
     [SerializeField] private Image _chestMarker;
     [SerializeField] private Image _combatRoomMarker;
     [SerializeField] private RectTransform _playerMarker;
@@ -36,12 +37,14 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     private bool _isRoomKindMarkerVisible = true;
 
     public void Configure(Image fill, Image outline, Image startMarker,
-        Image exitMarker, Image chestMarker, RectTransform playerMarker, CanvasGroup canvasGroup)
+        Image exitMarker, Image chestMarker, RectTransform playerMarker, CanvasGroup canvasGroup,
+        Image shopMarker = null)
     {
         _fill = fill;
         _outline = outline;
         _startMarker = startMarker;
         _exitMarker = exitMarker;
+        _shopMarker = shopMarker;
         _chestMarker = chestMarker;
         _playerMarker = playerMarker;
         _canvasGroup = canvasGroup;
@@ -169,6 +172,10 @@ public sealed class MinimapRoomIcon : MonoBehaviour
         if (_exitMarker != null)
             _exitMarker.gameObject.SetActive(
                 _isRoomKindMarkerVisible && _kind == MinimapRoomKind.Exit);
+
+        if (_shopMarker != null)
+            _shopMarker.gameObject.SetActive(
+                _isRoomKindMarkerVisible && _kind == MinimapRoomKind.Shop);
     }
 
     private static Vector2 GetDirection(RoomDirection direction) =>

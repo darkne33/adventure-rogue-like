@@ -29,8 +29,8 @@ namespace Features.RewardBag
         [SerializeField] private Transform _lootRayRoot;
         [SerializeField, Min(0f)] private float _interactDistance = 4f;
         [SerializeField, Min(1)] private int _rewardAmount = 1;
-        [SerializeField, Range(0f, 1f)] private float _keyDropChance = 0.1f;
-        [SerializeField, Range(0f, 1f)] private float _heartDropChance = 0.15f;
+        [SerializeField, Range(0f, 1f)] private float _keyDropChance = 0.33f;
+        [SerializeField, Range(0f, 1f)] private float _heartDropChance = 0.33f;
         [SerializeField, Min(0.01f)] private float _rewardScale = 2f;
         [SerializeField, Min(0f)] private float _rewardExtraDropHeight = 0.5f;
         [SerializeField, Min(0f)] private float _bagDropHeight = 2f;
@@ -264,7 +264,7 @@ namespace Features.RewardBag
 
         private Vector3 GetRewardLandPosition()
         {
-            const float scatterRadius = 0.8f;
+            const float scatterRadius = 1.2f;
             const float groundOffset = 0.35f;
             const float rayStartHeight = 4f;
             const float rayDistance = 12f;

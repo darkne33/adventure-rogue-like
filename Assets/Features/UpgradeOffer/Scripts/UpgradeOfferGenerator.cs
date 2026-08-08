@@ -7,6 +7,7 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
     private const int TotalOfferCount = 3;
     private const int LevelsPerGuaranteedPassiveAbility = 5;
     private const int MaxGuaranteedPassiveAbilityCount = 2;
+    private const int MaxLevelWithGuaranteedActiveAbilityOffer = 5;
 
     private readonly IAbilityChoiceProvider _abilityChoiceProvider;
     private readonly ICharacterLevelService _characterLevelService;
@@ -65,7 +66,7 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         int selectedActiveAbilityCount =
             newActiveAbilityCount < TotalOfferCount &&
             selectedActiveAbilities.Count > 0 &&
-            RollChance(_upgradeOfferConfiguration.ActiveAbilityOfferChance)
+            ShouldOfferSelectedActiveAbility()
                 ? 1
                 : 0;
         int passiveAbilityCount =
@@ -95,6 +96,10 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         return _upgradeBuildService.IsFull == false &&
                _upgradeBuildService.PassiveAbilityCount < requiredPassiveAbilityCount;
     }
+
+    private bool ShouldOfferSelectedActiveAbility() =>
+        _characterLevelService.GetLevel <= MaxLevelWithGuaranteedActiveAbilityOffer ||
+        RollChance(_upgradeOfferConfiguration.ActiveAbilityOfferChance);
 
     private static bool RollChance(float chance)
     {

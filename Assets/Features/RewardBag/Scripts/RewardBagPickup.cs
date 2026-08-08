@@ -6,8 +6,8 @@ namespace Features.RewardBag
 {
     public sealed class RewardBagPickup : MonoBehaviour
     {
-        private const float DropJumpPower = 1.1f;
-        private const float DropDuration = 0.35f;
+        private const float DropJumpPower = 2f;
+        private const float DropDuration = 0.55f;
         private const float AttractionStartDelay = 0.2f;
         private const float AttractionRadius = 4f;
         private const float CollectDistance = 0.45f;
@@ -19,8 +19,8 @@ namespace Features.RewardBag
         private CharacterStats _characterStats;
         private Action _grantReward;
         private Action _collectedCallback;
-        private float _attractionEnabledTime;
         private Vector3 _startScale;
+        private bool _canAttract;
         private bool _isCollecting;
 
         public void Construct(ICharacterProvider characterProvider, CharacterStats characterStats,
@@ -30,7 +30,6 @@ namespace Features.RewardBag
             _characterStats = characterStats;
             _grantReward = grantReward;
             _collectedCallback = collectedCallback;
-            _attractionEnabledTime = Time.time + DropDuration + AttractionStartDelay;
             _startScale = transform.localScale;
 
             PlayDropAnimation(landPosition);
@@ -38,7 +37,7 @@ namespace Features.RewardBag
 
         private void Update()
         {
-            if (_isCollecting || Time.time < _attractionEnabledTime)
+            if (_isCollecting || _canAttract == false)
                 return;
 
             Transform character = _characterProvider?.CharacterFacade != null
@@ -65,12 +64,30 @@ namespace Features.RewardBag
         private void PlayDropAnimation(Vector3 landPosition)
         {
             transform.DOKill();
+            _canAttract = false;
 
-            _ = transform.DOJump(landPosition, DropJumpPower, 1, DropDuration)
-                .SetEase(Ease.OutQuad)
+            Vector3 startPosition = transform.position;
+            transform.localScale = _startScale * 0.75f;
+
+            Sequence sequence = DOTween.Sequence()
+                .SetTarget(transform)
                 .SetLink(gameObject);
-            _ = transform.DOPunchScale(Vector3.one * 0.2f, DropDuration, 4, 0.6f)
-                .SetLink(gameObject);
+            sequence.Append(DOVirtual.Float(0f, 1f, DropDuration, progress =>
+                {
+                    Vector3 position = Vector3.Lerp(startPosition, landPosition, progress);
+                    position.y += Mathf.Sin(progress * Mathf.PI) * DropJumpPower;
+                    transform.position = position;
+                })
+                .SetEase(Ease.Linear));
+            sequence.Join(transform.DOScale(_startScale, DropDuration * 0.7f)
+                .SetEase(Ease.OutBack));
+            sequence.AppendInterval(AttractionStartDelay);
+            sequence.OnComplete(() =>
+            {
+                transform.position = landPosition;
+                transform.localScale = _startScale;
+                _canAttract = true;
+            });
         }
 
         private void MoveToTarget(Vector3 targetPosition)

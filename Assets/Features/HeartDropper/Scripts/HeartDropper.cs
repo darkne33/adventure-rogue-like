@@ -35,7 +35,7 @@ public sealed class HeartDropper
 
         Vector3 landPosition = GetGroundedPosition(position + GetScatterOffset());
         float dropHeight = _configuration.DropHeight + Mathf.Max(0f, additionalDropHeight);
-        Vector3 spawnPosition = landPosition + Vector3.up * dropHeight;
+        Vector3 spawnPosition = position + Vector3.up * dropHeight;
         GameObject heartObject = _container.InstantiatePrefab(_configuration.HeartPrefab, spawnPosition,
             Quaternion.identity, null);
 

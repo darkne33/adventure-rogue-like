@@ -13,8 +13,8 @@ public sealed class HeartDropperConfiguration : ScriptableObject
     [field: Header("Drop")]
     [field: SerializeField, Min(0f)] public float DropHeight { get; private set; } = 1.2f;
     [field: SerializeField, Min(0f)] public float DropScatterRadius { get; private set; } = 0.8f;
-    [field: SerializeField, Min(0f)] public float DropJumpPower { get; private set; } = 1.1f;
-    [field: SerializeField, Min(0f)] public float DropDuration { get; private set; } = 0.35f;
+    [field: SerializeField, Min(0f)] public float DropJumpPower { get; private set; } = 2f;
+    [field: SerializeField, Min(0f)] public float DropDuration { get; private set; } = 0.55f;
     [field: SerializeField, Min(0f)] public float AttractionStartDelay { get; private set; } = 0.2f;
     [field: SerializeField, Min(0f)] public float GroundOffset { get; private set; } = 0.35f;
     [field: SerializeField, Min(0f)] public float GroundSnapRayStartHeight { get; private set; } = 4f;

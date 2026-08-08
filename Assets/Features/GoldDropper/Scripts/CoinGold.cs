@@ -13,8 +13,8 @@ public sealed class CoinGold : MonoBehaviour
     private CharacterStats _characterStats;
     private IPanelService _panelService;
     private int _amount;
-    private float _attractionEnabledTime;
     private Vector3 _startScale;
+    private bool _canAttract;
     private bool _isCollecting;
 
     public void Construct(int amount, GoldDropperConfiguration configuration, CharacterWallet characterWallet,
@@ -27,7 +27,6 @@ public sealed class CoinGold : MonoBehaviour
         _characterProvider = characterProvider;
         _characterStats = characterStats;
         _panelService = panelService;
-        _attractionEnabledTime = Time.time + Mathf.Max(0f, configuration.AttractionStartDelay);
         _startScale = transform.localScale;
 
         name = $"CoinGold_{_amount}";
@@ -36,7 +35,7 @@ public sealed class CoinGold : MonoBehaviour
 
     private void Update()
     {
-        if (_isCollecting || _configuration == null || Time.time < _attractionEnabledTime)
+        if (_isCollecting || _configuration == null || _canAttract == false)
             return;
 
         Transform character = _characterProvider?.CharacterFacade != null
@@ -64,15 +63,35 @@ public sealed class CoinGold : MonoBehaviour
     private void PlayDropAnimation(Vector3 landPosition)
     {
         transform.DOKill();
+        _canAttract = false;
 
-        _ = transform.DOJump(landPosition, _configuration.DropJumpPower, 1, _configuration.DropDuration)
-            .SetEase(Ease.OutQuad)
+        Vector3 startPosition = transform.position;
+        float duration = Mathf.Max(0.01f, _configuration.DropDuration);
+        transform.localScale = _startScale * 0.75f;
+
+        Sequence dropSequence = DOTween.Sequence()
+            .SetTarget(transform)
             .SetLink(gameObject);
+        dropSequence.Append(DOVirtual.Float(0f, 1f, duration, progress =>
+            {
+                Vector3 position = Vector3.Lerp(startPosition, landPosition, progress);
+                position.y += Mathf.Sin(progress * Mathf.PI) * _configuration.DropJumpPower;
+                transform.position = position;
+            })
+            .SetEase(Ease.Linear));
+        dropSequence.Join(transform.DOScale(_startScale, duration * 0.7f)
+            .SetEase(Ease.OutBack));
+        dropSequence.AppendInterval(Mathf.Max(0f, _configuration.AttractionStartDelay));
+        dropSequence.OnComplete(() =>
+        {
+            transform.position = landPosition;
+            transform.localScale = _startScale;
+            _canAttract = true;
+        });
+
         _ = transform.DORotate(new Vector3(0f, 360f, 0f), RotationDuration, RotateMode.FastBeyond360)
             .SetEase(Ease.Linear)
             .SetLoops(-1)
-            .SetLink(gameObject);
-        _ = transform.DOPunchScale(Vector3.one * 0.2f, _configuration.DropDuration, 4, 0.6f)
             .SetLink(gameObject);
     }
 

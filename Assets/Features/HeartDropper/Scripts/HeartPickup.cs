@@ -11,8 +11,8 @@ public sealed class HeartPickup : MonoBehaviour
     private RelicEventBus _relicEventBus;
     private Transform _cameraTransform;
     private Action _collectedCallback;
-    private float _attractionEnabledTime;
     private Vector3 _startScale;
+    private bool _canAttract;
     private bool _collectWhenHealthFull;
     private bool _isCollecting;
 
@@ -27,7 +27,6 @@ public sealed class HeartPickup : MonoBehaviour
         _cameraTransform = cameraTransform;
         _collectedCallback = collectedCallback;
         _collectWhenHealthFull = collectWhenHealthFull;
-        _attractionEnabledTime = Time.time + Mathf.Max(0f, configuration.AttractionStartDelay);
         _startScale = transform.localScale;
 
         name = "HeartPickup";
@@ -36,7 +35,7 @@ public sealed class HeartPickup : MonoBehaviour
 
     private void Update()
     {
-        if (_isCollecting || _configuration == null || Time.time < _attractionEnabledTime)
+        if (_isCollecting || _configuration == null || _canAttract == false)
             return;
 
         CharacterFacade character = _characterProvider?.CharacterFacade;
@@ -63,12 +62,31 @@ public sealed class HeartPickup : MonoBehaviour
     private void PlayDropAnimation(Vector3 landPosition)
     {
         transform.DOKill();
+        _canAttract = false;
 
-        _ = transform.DOJump(landPosition, _configuration.DropJumpPower, 1, _configuration.DropDuration)
-            .SetEase(Ease.OutQuad)
+        Vector3 startPosition = transform.position;
+        float duration = Mathf.Max(0.01f, _configuration.DropDuration);
+        transform.localScale = _startScale * 0.75f;
+
+        Sequence sequence = DOTween.Sequence()
+            .SetTarget(transform)
             .SetLink(gameObject);
-        _ = transform.DOPunchScale(Vector3.one * 0.2f, _configuration.DropDuration, 4, 0.6f)
-            .SetLink(gameObject);
+        sequence.Append(DOVirtual.Float(0f, 1f, duration, progress =>
+            {
+                Vector3 position = Vector3.Lerp(startPosition, landPosition, progress);
+                position.y += Mathf.Sin(progress * Mathf.PI) * _configuration.DropJumpPower;
+                transform.position = position;
+            })
+            .SetEase(Ease.Linear));
+        sequence.Join(transform.DOScale(_startScale, duration * 0.7f)
+            .SetEase(Ease.OutBack));
+        sequence.AppendInterval(Mathf.Max(0f, _configuration.AttractionStartDelay));
+        sequence.OnComplete(() =>
+        {
+            transform.position = landPosition;
+            transform.localScale = _startScale;
+            _canAttract = true;
+        });
     }
 
     private void MoveToTarget(Vector3 targetPosition)
