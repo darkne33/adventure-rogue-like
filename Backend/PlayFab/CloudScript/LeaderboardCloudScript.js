@@ -67,8 +67,8 @@ handlers.VisitLeaderboardRoom = function (args, context) {
     state.visitedRooms = args.roomSequence;
     state.lastAcceptedAt = now;
 
-    // The statistic uses Maximum aggregation. Updating it first makes a retry safe
-    // if saving the internal run state fails after the statistic request succeeds.
+    // The update helper preserves the player's best score. Updating it first makes
+    // a retry safe if saving the internal run state fails afterward.
     updateLeaderboardStatistic(state.visitedRooms);
     saveRunState(state);
 
@@ -117,6 +117,10 @@ function saveRunState(state) {
 }
 
 function updateLeaderboardStatistic(score) {
+    var currentScore = getCurrentLeaderboardScore();
+    if (currentScore !== null && currentScore >= score)
+        return;
+
     server.UpdatePlayerStatistics({
         PlayFabId: currentPlayerId,
         ForceUpdate: false,
@@ -125,4 +129,22 @@ function updateLeaderboardStatistic(score) {
             Value: score
         }]
     });
+}
+
+function getCurrentLeaderboardScore() {
+    var result = server.GetPlayerStatistics({
+        PlayFabId: currentPlayerId,
+        StatisticNames: [LEADERBOARD_STATISTIC_NAME]
+    });
+
+    if (!result.Statistics)
+        return null;
+
+    for (var i = 0; i < result.Statistics.length; i++) {
+        var statistic = result.Statistics[i];
+        if (statistic.StatisticName === LEADERBOARD_STATISTIC_NAME)
+            return statistic.Value;
+    }
+
+    return null;
 }
