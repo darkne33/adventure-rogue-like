@@ -73,7 +73,7 @@ namespace Features.Enemies.Scripts
 
                 await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
 
-                if (_enemyFacade.IsDead)
+                if (_enemyFacade.IsDead || _enemyFacade.CanAttack == false)
                     return;
 
                 RotateTowardsCharacter(enemyTransform, true);
@@ -104,7 +104,7 @@ namespace Features.Enemies.Scripts
             while (!cancellationToken.IsCancellationRequested)
             {
                 float distanceToCharacter = GetFlatDistanceToCharacter();
-                _cooldown -= Time.deltaTime;
+                _cooldown -= Time.deltaTime * _enemyFacade.RelicTimeScale;
 
                 if (_enemyFacade.IsDead == false &&
                     _enemyFacade.IsAggro &&
@@ -140,7 +140,8 @@ namespace Features.Enemies.Scripts
 
             EnemyCannonball projectile = UnityEngine.Object.Instantiate(
                 _attackView.ProjectilePrefab, startPosition, rotation);
-            projectile.Launch(startPosition, targetPosition, _attackView.ProjectileFlightDuration,
+            projectile.Launch(startPosition, targetPosition,
+                _attackView.ProjectileFlightDuration / Mathf.Max(0.05f, _enemyFacade.RelicTimeScale),
                 _attackView.ProjectileArcHeight, _attackView.ImpactRadius, _enemyConfiguration.Damage,
                 _enemyFacade, _characterFacade, cancellationToken);
         }

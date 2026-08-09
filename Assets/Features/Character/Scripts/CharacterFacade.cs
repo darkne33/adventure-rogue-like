@@ -150,8 +150,17 @@ public class CharacterFacade : MonoBehaviour
         if (Random.value < evasionChance)
             return false;
 
+        if (_relicManager != null && _relicManager.TryBlockIncomingDamage(this))
+            return false;
+
         float armorMultiplier = 100f / (100f + Mathf.Max(0f, _characterStats.Armor));
         int reducedDamage = Mathf.Max(1, Mathf.RoundToInt(rawDamage * armorMultiplier));
+        if (_relicManager != null)
+            reducedDamage = _relicManager.ModifyIncomingDamage(this, reducedDamage);
+
+        if (reducedDamage <= 0)
+            return false;
+
         int absorbedDamage = _shieldSystem.AbsorbDamage(reducedDamage);
         int healthDamage = reducedDamage - absorbedDamage;
 

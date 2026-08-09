@@ -59,7 +59,7 @@ namespace Features.Enemies.Scripts
 
                 await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
 
-                if (_enemyFacade.IsDead)
+                if (_enemyFacade.IsDead || _enemyFacade.CanAttack == false)
                     return;
 
                 if (CanHitCharacter(enemyTransform, attackDirection) &&
@@ -96,7 +96,7 @@ namespace Features.Enemies.Scripts
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                _cooldown -= Time.deltaTime;
+                _cooldown -= Time.deltaTime * _enemyFacade.RelicTimeScale;
 
                 if (_enemyFacade.IsDead == false &&
                     _enemyFacade.IsAggro &&

@@ -79,7 +79,7 @@ namespace Features.Enemies.Scripts
 
                 await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
 
-                if (_enemyFacade.IsDead)
+                if (_enemyFacade.IsDead || _enemyFacade.CanAttack == false)
                     return;
 
                 RotateTowards(enemyTransform, dashDirection, true);
@@ -125,10 +125,11 @@ namespace Features.Enemies.Scripts
             {
                 float distanceToCharacter =
                     Vector3.Distance(_characterFacade.transform.position, _enemyFacade.transform.position);
-                _cooldown -= Time.deltaTime;
+                _cooldown -= Time.deltaTime * _enemyFacade.RelicTimeScale;
 
                 if (_enemyFacade.IsDead == false &&
                     _enemyFacade.IsAggro &&
+                    _enemyFacade.CanAttack &&
                     _enemyFacade.IsStopped == false &&
                     _cooldown <= 0f &&
                     distanceToCharacter <= _distanceExecuteDamage)
@@ -143,7 +144,7 @@ namespace Features.Enemies.Scripts
 
         private void ApplyDamage()
         {
-            if (_canDamage == false || _enemyFacade.IsDead)
+            if (_canDamage == false || _enemyFacade.IsDead || _enemyFacade.CanAttack == false)
                 return;
 
             _canDamage = false;

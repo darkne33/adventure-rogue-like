@@ -78,7 +78,7 @@ namespace Features.Enemies.Scripts
 
                 await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
 
-                if (_enemyFacade.IsDead)
+                if (_enemyFacade.IsDead || _enemyFacade.CanAttack == false)
                     return;
 
                 RotateTowardsCharacter(enemyTransform, true);
@@ -112,7 +112,7 @@ namespace Features.Enemies.Scripts
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                _cooldown -= Time.deltaTime;
+                _cooldown -= Time.deltaTime * _enemyFacade.RelicTimeScale;
 
                 if (_enemyFacade.IsDead == false &&
                     _enemyFacade.IsAggro &&
@@ -158,8 +158,9 @@ namespace Features.Enemies.Scripts
             Quaternion rotation = Quaternion.LookRotation(direction);
             EnemyBullet projectile = UnityEngine.Object.Instantiate(
                 _bulletConfiguration.ProjectilePrefab, startPosition, rotation);
-            projectile.Launch(startPosition, direction, _bulletConfiguration.Speed,
-                _bulletConfiguration.Lifetime, _enemyConfiguration.Damage, _enemyFacade,
+            float relicTimeScale = Mathf.Max(0.05f, _enemyFacade.RelicTimeScale);
+            projectile.Launch(startPosition, direction, _bulletConfiguration.Speed * relicTimeScale,
+                _bulletConfiguration.Lifetime / relicTimeScale, _enemyConfiguration.Damage, _enemyFacade,
                 _characterFacade, cancellationToken);
         }
 

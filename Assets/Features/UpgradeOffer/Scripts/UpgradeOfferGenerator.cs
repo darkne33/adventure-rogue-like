@@ -77,7 +77,8 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         AddRandomOffers(selectedActiveAbilities, selectedActiveAbilityCount, offerAbilities, offers);
 
         List<CharacterAbility> fallbackAbilities = availableAbilities
-            .Where(ability => ability is not CharacterActiveAbility)
+            .Where(ability => ability is not CharacterActiveAbility ||
+                              _upgradeBuildService.Contains(ability))
             .ToList();
         AddRandomOffers(fallbackAbilities, TotalOfferCount - offers.Count, offerAbilities, offers);
 

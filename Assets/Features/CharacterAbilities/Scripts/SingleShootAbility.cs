@@ -118,7 +118,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
             _relicEventBus.PublishHeal(new RelicHealEvent(character, healed));
 
         enemyFacade.EffectsSystem.DealDamage();
-        _relicEventBus.PublishHit(new RelicHitEvent(character, enemyFacade, appliedDamage,
+        _relicEventBus.PublishHit(new RelicHitEvent(character, enemyFacade, finalDamage,
             damageResult.IsCritical, AbilityConfig.AbilityName.ToString(), enemyFacade.transform.position));
 
         if (killedByDirectHit)

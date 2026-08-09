@@ -20,7 +20,10 @@ namespace Features.Enemies.Scripts
         public bool IsStopped => _navMeshAgent.isStopped;
         public bool IsDead => _healthSystem?.IsDead == true;
         public bool IsAggro { get; private set; }
-        public bool CanAttack => _movementSystem?.CanAttack != false;
+        public bool CanAttack => _movementSystem?.CanAttack != false && _isRelicStunned == false;
+        public float RelicTimeScale => _isRelicStunned
+            ? 0f
+            : Mathf.Clamp(_persistentRelicSlow * _temporaryRelicSlow, 0.05f, 1f);
 
         public EnemyConfiguration Configuration => _enemyConfiguration;
         public Renderer[] MeshRenderers => _meshRenderers;
@@ -38,6 +41,13 @@ namespace Features.Enemies.Scripts
         private HealthSystem _healthSystem;
         private DealDamageEffectSystem _effectsSystem;
         private EnemyAggroIndicatorView _aggroIndicatorView;
+        private float _persistentRelicSlow = 1f;
+        private float _temporaryRelicSlow = 1f;
+        private float _temporaryRelicSlowUntil;
+        private float _relicStunnedUntil;
+        private bool _isRelicStunned;
+        private bool _wasStoppedBeforeRelicStun;
+        private bool _releaseStopAfterRelicStun;
 
         [Inject]
         private void CreateSystems(IEnemySystemsFactory systemsFactory)
@@ -52,8 +62,11 @@ namespace Features.Enemies.Scripts
             _damageSystem.Tick(gameObject.GetCancellationTokenOnDestroy()).Forget();
         }
 
-        private void FixedUpdate() =>
+        private void FixedUpdate()
+        {
+            RefreshRelicStatuses();
             _movementSystem.Tick();
+        }
 
         public void Construct(Rigidbody rigidbody, NavMeshAgent navMeshAgent,
             EnemyCollisionDetector collisionDetector, IEnemyAnimationSystem animationSystem,
@@ -88,6 +101,12 @@ namespace Features.Enemies.Scripts
             if (state == false && IsDead)
                 return;
 
+            if (state == false && _isRelicStunned)
+            {
+                _releaseStopAfterRelicStun = true;
+                return;
+            }
+
             _navMeshAgent.isStopped = state;
 
             if (state && _navMeshAgent.isOnNavMesh)
@@ -100,6 +119,47 @@ namespace Features.Enemies.Scripts
 
             if (state == false)
                 _movementSystem.Reset();
+        }
+
+        public void SetPersistentRelicSlow(float multiplier)
+        {
+            multiplier = Mathf.Clamp(multiplier, 0.05f, 1f);
+            if (Mathf.Approximately(_persistentRelicSlow, multiplier))
+                return;
+
+            _persistentRelicSlow = multiplier;
+            UpdateRelicNavigationSpeed();
+        }
+
+        public void ApplyRelicSlow(float multiplier, float duration)
+        {
+            _temporaryRelicSlow = Mathf.Min(_temporaryRelicSlow, Mathf.Clamp(multiplier, 0.05f, 1f));
+            _temporaryRelicSlowUntil = Mathf.Max(_temporaryRelicSlowUntil,
+                Time.time + Mathf.Max(0.05f, duration));
+            UpdateRelicNavigationSpeed();
+        }
+
+        public void ApplyRelicStun(float duration)
+        {
+            if (_isRelicStunned == false)
+            {
+                _wasStoppedBeforeRelicStun = IsStopped;
+                _releaseStopAfterRelicStun = false;
+            }
+
+            _relicStunnedUntil = Mathf.Max(_relicStunnedUntil, Time.time + Mathf.Max(0.05f, duration));
+            _isRelicStunned = true;
+            SetStop(true);
+
+            if (_rigidbody != null)
+            {
+                Vector3 velocity = _rigidbody.linearVelocity;
+                velocity.x = 0f;
+                velocity.z = 0f;
+                _rigidbody.linearVelocity = velocity;
+            }
+
+            UpdateRelicNavigationSpeed();
         }
 
         public void SyncNavigationPosition()
@@ -175,6 +235,40 @@ namespace Features.Enemies.Scripts
                     $"Enemy {name} could not be placed on NavMesh at {navMeshPosition}.");
 
             transform.position = visualPosition;
+            UpdateRelicNavigationSpeed();
+        }
+
+        private void RefreshRelicStatuses()
+        {
+            bool speedChanged = false;
+
+            if (_temporaryRelicSlow < 1f && Time.time >= _temporaryRelicSlowUntil)
+            {
+                _temporaryRelicSlow = 1f;
+                speedChanged = true;
+            }
+
+            if (_isRelicStunned && Time.time >= _relicStunnedUntil)
+            {
+                bool shouldReleaseStop = _releaseStopAfterRelicStun || _wasStoppedBeforeRelicStun == false;
+                _isRelicStunned = false;
+                _releaseStopAfterRelicStun = false;
+                _wasStoppedBeforeRelicStun = false;
+                if (shouldReleaseStop)
+                    SetStop(false);
+                speedChanged = true;
+            }
+
+            if (speedChanged)
+                UpdateRelicNavigationSpeed();
+        }
+
+        private void UpdateRelicNavigationSpeed()
+        {
+            if (_navMeshAgent == null || _enemyConfiguration == null)
+                return;
+
+            _navMeshAgent.speed = _enemyConfiguration.Speed * RelicTimeScale;
         }
     }
 }

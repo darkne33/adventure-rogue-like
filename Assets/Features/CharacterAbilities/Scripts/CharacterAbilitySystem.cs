@@ -54,4 +54,14 @@ public class CharacterAbilitySystem
             ability.Use(character);
         }
     }
+
+    public void ReduceActiveCooldowns(float seconds)
+    {
+        float reduction = Mathf.Max(0f, seconds);
+        if (reduction <= 0f)
+            return;
+
+        foreach (CharacterActiveAbility ability in _activeAbilities.Values)
+            ability.CurrentCooldown = Mathf.Max(0f, ability.CurrentCooldown - reduction);
+    }
 }

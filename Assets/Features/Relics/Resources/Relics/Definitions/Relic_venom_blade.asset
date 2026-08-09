@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c6dd3b5329c40c3ad1375b2a2bad5f0, type: 3}
+  m_Name: Relic_venom_blade
+  m_EditorClassIdentifier:
+  <Id>k__BackingField: venom_blade
+  <DisplayName>k__BackingField: "Venom Blade"
+  <Description>k__BackingField: "On hit, has a 40% chance per stack to apply poison dealing 15% of hit damage per stack each second for 4 seconds, up to 3 poison stacks."
+  <Rarity>k__BackingField: 0
+  <Tags>k__BackingField:
+  - 5
+  - 13
+  - 0
+  <Icon>k__BackingField: {fileID: 21300000, guid: 8a82591089964a9db4bcf839c801fb30, type: 3}
+  <IsUnique>k__BackingField: 0
+  <MaxStacks>k__BackingField: 5
+  <UnlockQuestId>k__BackingField:
+  <UnlockCost>k__BackingField: 0
+  <Effects>k__BackingField:
+  - <TriggerType>k__BackingField: 4
+    <StatType>k__BackingField: 0
+    <Value>k__BackingField: 0.15
+    <BossValue>k__BackingField: 0
+    <Chance>k__BackingField: 0.4
+    <Cooldown>k__BackingField: 0
+    <Duration>k__BackingField: 4
+    <Radius>k__BackingField: 0
+    <Cap>k__BackingField: 3
+    <ScalingType>k__BackingField: 0
+    <StatusEffectId>k__BackingField: 
+    <EffectPrefabId>k__BackingField: venom_blade

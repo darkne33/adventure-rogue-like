@@ -4,8 +4,8 @@ public sealed class ShieldSystem
 {
     private const float ShieldValueEpsilon = 0.001f;
 
-    public int MaxShield => _maxShield;
-    public float CurrentShield => _currentShield;
+    public int MaxShield => _maxShield + Mathf.CeilToInt(_temporaryShield);
+    public float CurrentShield => _currentShield + _temporaryShield;
 
     private readonly float _regenerationDelay;
     private readonly float _regenerationPerSecond;
@@ -13,6 +13,7 @@ public sealed class ShieldSystem
 
     private int _maxShield;
     private float _currentShield;
+    private float _temporaryShield;
     private float _timeSinceLastDamage;
 
     public ShieldSystem(float regenerationDelay, float regenerationPerSecond, IShieldView shieldView)
@@ -26,25 +27,39 @@ public sealed class ShieldSystem
     {
         _maxShield = NormalizeMaximumShield(maximumShield);
         _currentShield = _maxShield;
+        _temporaryShield = 0f;
         _timeSinceLastDamage = _regenerationDelay;
         UpdateView();
     }
 
     public int AbsorbDamage(int damage)
     {
-        if (damage <= 0 || _maxShield <= 0)
+        if (damage <= 0 || CurrentShield <= 0f)
             return 0;
 
         _timeSinceLastDamage = 0f;
 
-        int availableShield = Mathf.FloorToInt(_currentShield + ShieldValueEpsilon);
+        int availableShield = Mathf.FloorToInt(CurrentShield + ShieldValueEpsilon);
         int absorbedDamage = Mathf.Min(availableShield, damage);
         if (absorbedDamage <= 0)
             return 0;
 
-        _currentShield = Mathf.Max(0f, _currentShield - absorbedDamage);
+        float temporaryAbsorption = Mathf.Min(_temporaryShield, absorbedDamage);
+        _temporaryShield -= temporaryAbsorption;
+        _currentShield = Mathf.Max(0f, _currentShield - (absorbedDamage - temporaryAbsorption));
         UpdateView();
         return absorbedDamage;
+    }
+
+    public float AddTemporaryShield(float amount)
+    {
+        amount = Mathf.Max(0f, amount);
+        if (amount <= 0f)
+            return 0f;
+
+        _temporaryShield += amount;
+        UpdateView();
+        return amount;
     }
 
     public void Tick(float deltaTime)
@@ -87,5 +102,5 @@ public sealed class ShieldSystem
         Mathf.Max(0, Mathf.RoundToInt(maximumShield));
 
     private void UpdateView() =>
-        _shieldView?.UpdateShield(_currentShield, _maxShield);
+        _shieldView?.UpdateShield(CurrentShield, MaxShield);
 }

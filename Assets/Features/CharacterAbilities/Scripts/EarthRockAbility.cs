@@ -273,7 +273,7 @@ public sealed class EarthRockAbility : CharacterActiveAbility
             _relicEventBus.PublishHeal(new RelicHealEvent(character, healed));
 
         enemy.EffectsSystem.DealDamage();
-        _relicEventBus.PublishHit(new RelicHitEvent(character, enemy, appliedDamage,
+        _relicEventBus.PublishHit(new RelicHitEvent(character, enemy, finalDamage,
             damageResult.IsCritical, Id.ToString(), hitPosition));
 
         if (killedByHit)

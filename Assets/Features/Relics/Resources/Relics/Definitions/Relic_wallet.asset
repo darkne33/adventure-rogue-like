@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c6dd3b5329c40c3ad1375b2a2bad5f0, type: 3}
+  m_Name: Relic_wallet
+  m_EditorClassIdentifier:
+  <Id>k__BackingField: wallet
+  <DisplayName>k__BackingField: "Wallet"
+  <Description>k__BackingField: "Each chest opened permanently grants +2.5% damage per stack, up to +100%."
+  <Rarity>k__BackingField: 0
+  <Tags>k__BackingField:
+  - 3
+  - 18
+  - 0
+  <Icon>k__BackingField: {fileID: 21300000, guid: 62eab74503144a18a396f4a20dfc230a, type: 3}
+  <IsUnique>k__BackingField: 0
+  <MaxStacks>k__BackingField: 5
+  <UnlockQuestId>k__BackingField:
+  <UnlockCost>k__BackingField: 0
+  <Effects>k__BackingField:
+  - <TriggerType>k__BackingField: 10
+    <StatType>k__BackingField: 0
+    <Value>k__BackingField: 0.025
+    <BossValue>k__BackingField: 0
+    <Chance>k__BackingField: 1
+    <Cooldown>k__BackingField: 0
+    <Duration>k__BackingField: 0
+    <Radius>k__BackingField: 0
+    <Cap>k__BackingField: 1
+    <ScalingType>k__BackingField: 7
+    <StatusEffectId>k__BackingField: 
+    <EffectPrefabId>k__BackingField: 

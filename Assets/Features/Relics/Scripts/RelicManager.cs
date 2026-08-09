@@ -9,7 +9,7 @@ using Zenject;
 
 namespace Features.Relics.Scripts
 {
-    public sealed class RelicManager : ITickable, IDisposable
+    public sealed partial class RelicManager : ITickable, IDisposable
     {
         private const float MoveDistanceEventStep = 1f;
         private const float MaxTrackedMovementDelta = 15f;
@@ -27,6 +27,8 @@ namespace Features.Relics.Scripts
         private readonly ICharacterProvider _characterProvider;
         private readonly IRelicVisualEffectService _visualEffectService;
         private readonly ITimeScaleService _timeScaleService;
+        private readonly CharacterStats _characterStats;
+        private readonly CharacterWallet _characterWallet;
         private readonly List<RelicRuntimeState> _activeRelics = new();
         private readonly HashSet<ITimeScaleRequest> _timeScaleRequests = new();
         private readonly CancellationTokenSource _disposeCancellation = new();
@@ -43,13 +45,16 @@ namespace Features.Relics.Scripts
 
         public RelicManager(CharacterStatModifierLayer statModifierLayer, RelicEventBus eventBus,
             ICharacterProvider characterProvider, IRelicVisualEffectService visualEffectService,
-            ITimeScaleService timeScaleService)
+            ITimeScaleService timeScaleService, CharacterStats characterStats,
+            CharacterWallet characterWallet)
         {
             _statModifierLayer = statModifierLayer;
             _eventBus = eventBus;
             _characterProvider = characterProvider;
             _visualEffectService = visualEffectService;
             _timeScaleService = timeScaleService;
+            _characterStats = characterStats;
+            _characterWallet = characterWallet;
 
             _eventBus.Hit += HandleHit;
             _eventBus.Kill += HandleKill;
@@ -71,6 +76,7 @@ namespace Features.Relics.Scripts
             }
 
             TrackMoveDistance(character);
+            TickSpecialRelics(character);
 
             float stillnessHeal = 0f;
             float requiredStillnessTime = 0f;
@@ -122,6 +128,7 @@ namespace Features.Relics.Scripts
 
             state = new RelicRuntimeState(relic);
             _activeRelics.Add(state);
+            InitializeSpecialState(state);
             AddPassiveModifiers(state, 1);
             ProcessTrigger(state, RelicTriggerType.OnPickup, null);
             Changed?.Invoke();
@@ -141,6 +148,7 @@ namespace Features.Relics.Scripts
                 return false;
 
             _statModifierLayer.RemoveModifiers(GetModifierSourceId(state));
+            RemoveSpecialStateModifiers(state);
             _activeRelics.Remove(state);
             Changed?.Invoke();
             return true;
@@ -149,9 +157,13 @@ namespace Features.Relics.Scripts
         public void ClearRelics()
         {
             foreach (RelicRuntimeState state in _activeRelics)
+            {
                 _statModifierLayer.RemoveModifiers(GetModifierSourceId(state));
+                RemoveSpecialStateModifiers(state);
+            }
 
             _activeRelics.Clear();
+            ApplyStopWatchSlow(1f);
             Changed?.Invoke();
         }
 
@@ -199,7 +211,8 @@ namespace Features.Relics.Scripts
                 }
             }
 
-            return Mathf.Max(1, Mathf.RoundToInt(damage * multiplier));
+            int modifiedDamage = Mathf.Max(1, Mathf.RoundToInt(damage * multiplier));
+            return ModifySpecialOutgoingDamage(modifiedDamage, target);
         }
 
         public string PrintActiveRelics()
@@ -229,6 +242,7 @@ namespace Features.Relics.Scripts
             _eventBus.MoveDistance -= HandleMoveDistance;
             _eventBus.BossSpawned -= HandleBossSpawned;
             _eventBus.ChestOpened -= HandleChestOpened;
+            DisposeSpecialRelics();
         }
 
         private void HandleHit(RelicHitEvent hitEvent)
@@ -250,6 +264,8 @@ namespace Features.Relics.Scripts
 
         private void HandleDamageTaken(RelicDamageTakenEvent damageTakenEvent)
         {
+            _lastDamageTakenTime = Time.time;
+
             foreach (RelicRuntimeState state in _activeRelics.ToArray())
                 ProcessTrigger(state, RelicTriggerType.OnDamageTaken, damageTakenEvent);
         }
@@ -265,7 +281,10 @@ namespace Features.Relics.Scripts
             ResetMoveTracking(roomEvent.CharacterPosition);
 
             foreach (RelicRuntimeState state in _activeRelics.ToArray())
+            {
+                ResetSpecialRoomState(state);
                 ProcessTrigger(state, RelicTriggerType.OnRoomStart, roomEvent);
+            }
         }
 
         private void HandleMoveDistance(RelicMoveDistanceEvent moveDistanceEvent)
@@ -293,17 +312,24 @@ namespace Features.Relics.Scripts
 
             foreach (RelicEffectDefinition effect in state.Definition.Effects)
             {
-                if (effect.TriggerType != triggerType || RollEffect(state, effect) == false)
+                if (effect.TriggerType != triggerType)
                     continue;
 
-                if (TryApplyTriggeredScaling(state, effect, context))
-                    continue;
+                int procCount = RollTriggerEffect(state, effect, triggerType);
+                for (int procIndex = 0; procIndex < procCount; procIndex++)
+                {
+                    if (TryApplySpecialEffect(state, effect, triggerType, context))
+                        continue;
 
-                if (triggerType == RelicTriggerType.OnHit && context is RelicHitEvent hitEvent)
-                    ApplyOnHitEffect(state, effect, hitEvent);
+                    if (TryApplyTriggeredScaling(state, effect, context))
+                        continue;
 
-                if (triggerType == RelicTriggerType.OnKill && context is RelicKillEvent killEvent)
-                    ApplyOnKillEffect(state, effect, killEvent);
+                    if (triggerType == RelicTriggerType.OnHit && context is RelicHitEvent hitEvent)
+                        ApplyOnHitEffect(state, effect, hitEvent);
+
+                    if (triggerType == RelicTriggerType.OnKill && context is RelicKillEvent killEvent)
+                        ApplyOnKillEffect(state, effect, killEvent);
+                }
             }
         }
 
@@ -313,7 +339,7 @@ namespace Features.Relics.Scripts
             if (state.CooldownTimers.TryGetValue(cooldownKey, out float readyTime) && Time.time < readyTime)
                 return false;
 
-            if (UnityEngine.Random.value > effect.GetChance(state.StackCount))
+            if (RollSpecialChance(GetEffectChance(state, effect)) == false)
                 return false;
 
             if (effect.Cooldown > 0f)
@@ -466,6 +492,9 @@ namespace Features.Relics.Scripts
                 if (effect.TriggerType == RelicTriggerType.PassiveStat)
                 {
                     if (effect.EffectPrefabId == EliteBossDamageEffectId)
+                        continue;
+
+                    if (IsSpecialPassiveEffect(effect))
                         continue;
 
                     AddStatModifier(state, effect, effect.Value * stackDelta);

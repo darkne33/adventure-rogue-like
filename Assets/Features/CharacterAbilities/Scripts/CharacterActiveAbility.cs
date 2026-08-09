@@ -30,7 +30,7 @@ public abstract class CharacterActiveAbility : CharacterAbility
         OnUse(character);
 
         float attackSpeedMultiplier =
-            1f + Mathf.Max(0f, _characterStats?.AttackSpeed ?? 0f) * PERCENT_MULTIPLIER;
+            1f + Mathf.Max(-90f, _characterStats?.AttackSpeed ?? 0f) * PERCENT_MULTIPLIER;
         float cooldownReductionMultiplier =
             1f - Mathf.Clamp(_characterStats?.CooldownReduction ?? 0f, 0f, CooldownReductionCap) * PERCENT_MULTIPLIER;
         CurrentCooldown = Cooldown * cooldownReductionMultiplier / attackSpeedMultiplier;

@@ -85,7 +85,7 @@ namespace Features.Enemies.Scripts
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
 
-                if (_enemyFacade.IsDead)
+                if (_enemyFacade.IsDead || _enemyFacade.CanAttack == false)
                     return;
 
                 if (lockPosition)
@@ -94,7 +94,7 @@ namespace Features.Enemies.Scripts
                 _indicatorView?.Complete(GetExplosionPosition());
                 await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
 
-                if (_enemyFacade.IsDead)
+                if (_enemyFacade.IsDead || _enemyFacade.CanAttack == false)
                     return;
 
                 if (lockPosition)
@@ -121,7 +121,7 @@ namespace Features.Enemies.Scripts
         {
             while (cancellationToken.IsCancellationRequested == false)
             {
-                _cooldown -= Time.deltaTime;
+                _cooldown -= Time.deltaTime * _enemyFacade.RelicTimeScale;
 
                 if (_attackStarted == false &&
                     _enemyFacade.IsDead == false &&
