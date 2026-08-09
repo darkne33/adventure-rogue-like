@@ -370,6 +370,8 @@ namespace Features.FortuneWheel
                 }
                 else
                 {
+                    rewardView.transform.DOKill();
+                    rewardView.transform.localScale = rewardPrefab.transform.localScale;
                     CopyRewardView(rewardPrefab, rewardView);
                     rewardView.SetActive(true);
                 }
