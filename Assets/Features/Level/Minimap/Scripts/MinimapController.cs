@@ -266,6 +266,8 @@ public sealed class MinimapController : IDisposable, ITickable
 
             states.Add(entry.Key, state);
             entry.Value.SetState(state);
+            if (TryGetDirectionToCurrentRoom(entry.Key, out RoomDirection entranceDirection))
+                entry.Value.SetRoomMarkerDirection(entranceDirection);
             entry.Value.SetRoomKindMarkerVisible(isRoomVisible);
             entry.Value.SetCombatRoomMarkerVisible(
                 isRoomVisible &&
@@ -332,6 +334,29 @@ public sealed class MinimapController : IDisposable, ITickable
         }
 
         return false;
+    }
+
+    private bool TryGetDirectionToCurrentRoom(RoomData room, out RoomDirection direction)
+    {
+        direction = default;
+        if (room == null || _currentRoom == null || ReferenceEquals(room, _currentRoom) ||
+            !_positionsByRoom.TryGetValue(room, out Vector2Int roomPosition) ||
+            !_positionsByRoom.TryGetValue(_currentRoom, out Vector2Int currentRoomPosition))
+            return false;
+
+        Vector2Int offset = currentRoomPosition - roomPosition;
+        if (offset == Vector2Int.up)
+            direction = RoomDirection.Up;
+        else if (offset == Vector2Int.down)
+            direction = RoomDirection.Down;
+        else if (offset == Vector2Int.left)
+            direction = RoomDirection.Left;
+        else if (offset == Vector2Int.right)
+            direction = RoomDirection.Right;
+        else
+            return false;
+
+        return IsConnectedToCurrentRoom(room);
     }
 
     private Vector2 ToUiPosition(Vector2Int gridPosition, Vector2 center) =>

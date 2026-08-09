@@ -21,6 +21,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
     private const string GiveRandomRelicCommand = "debug.relic.random";
     private const string ClearRelicsCommand = "debug.relic.clear";
     private const string PrintRelicsCommand = "debug.relics";
+    private const string AddGoldCommand = "debug.gold";
 
     private readonly ICharacterLevelService _characterLevelService;
     private readonly CharacterExpConfig _characterExpConfig;
@@ -34,6 +35,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
     private readonly IPauseService _pauseService;
     private readonly RelicManager _relicManager;
     private readonly RelicPool _relicPool;
+    private readonly CharacterWallet _characterWallet;
 
     private bool _commandsRegistered;
     private bool _isRestartingGame;
@@ -44,7 +46,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
         IGameModeService gameModeService, ISceneLoader sceneLoader,
         ISceneService<RogueLikeSceneProvider> sceneService,
         IRoomTransitionService roomTransitionService, IPauseService pauseService,
-        RelicManager relicManager, RelicPool relicPool)
+        RelicManager relicManager, RelicPool relicPool, CharacterWallet characterWallet)
     {
         _characterLevelService = characterLevelService;
         _characterExpConfig = characterExpConfig;
@@ -58,6 +60,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
         _pauseService = pauseService;
         _relicManager = relicManager;
         _relicPool = relicPool;
+        _characterWallet = characterWallet;
     }
 
     public void Initialize()
@@ -85,6 +88,8 @@ public sealed class GameDebugService : IInitializable, IDisposable
             "Clears all active relics", ClearRelics);
         DebugLogConsole.AddCommand(PrintRelicsCommand,
             "Prints active relics", PrintRelics);
+        DebugLogConsole.AddCommand<int, string>(AddGoldCommand,
+            "Adds gold coins to the character", AddGold, "amount");
 
         _commandsRegistered = true;
     }
@@ -104,6 +109,7 @@ public sealed class GameDebugService : IInitializable, IDisposable
         DebugLogConsole.RemoveCommand(GiveRandomRelicCommand);
         DebugLogConsole.RemoveCommand(ClearRelicsCommand);
         DebugLogConsole.RemoveCommand(PrintRelicsCommand);
+        DebugLogConsole.RemoveCommand(AddGoldCommand);
         _commandsRegistered = false;
     }
 
@@ -207,6 +213,16 @@ public sealed class GameDebugService : IInitializable, IDisposable
 
     private string PrintRelics() =>
         _relicManager.PrintActiveRelics();
+
+    private string AddGold(int amount)
+    {
+        if (amount <= 0)
+            return "Gold amount must be greater than zero.";
+
+        int previousGold = _characterWallet.Gold.Count;
+        _characterWallet.Gold.Add(amount);
+        return $"Gold: {previousGold} -> {_characterWallet.Gold.Count}.";
+    }
 
     private string ValidateRoomCommand(bool requireEnemies)
     {

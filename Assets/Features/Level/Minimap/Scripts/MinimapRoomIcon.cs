@@ -83,6 +83,24 @@ public sealed class MinimapRoomIcon : MonoBehaviour
             _combatRoomMarker.gameObject.SetActive(isVisible);
     }
 
+    public void SetRoomMarkerDirection(RoomDirection direction)
+    {
+        float zRotation = direction switch
+        {
+            RoomDirection.Up => 180f,
+            RoomDirection.Down => 0f,
+            RoomDirection.Left => -90f,
+            RoomDirection.Right => 90f,
+            _ => 0f
+        };
+
+        SetMarkerRotation(_startMarker, zRotation);
+        SetMarkerRotation(_exitMarker, zRotation);
+        SetMarkerRotation(_shopMarker, zRotation);
+        SetMarkerRotation(_chestMarker, zRotation);
+        SetMarkerRotation(_combatRoomMarker, zRotation);
+    }
+
     public void SetChestPosition(Vector2 normalizedPosition)
     {
         if (_chestMarker == null)
@@ -161,6 +179,12 @@ public sealed class MinimapRoomIcon : MonoBehaviour
             marker.gameObject.SetActive(false);
             _enemyMarkers.Add(marker);
         }
+    }
+
+    private static void SetMarkerRotation(Image marker, float zRotation)
+    {
+        if (marker != null)
+            marker.rectTransform.localRotation = Quaternion.Euler(0f, 0f, zRotation);
     }
 
     private void RefreshRoomKindMarkers()
