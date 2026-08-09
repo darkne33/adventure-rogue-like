@@ -79,6 +79,13 @@ namespace Features.FortuneWheel
         [SerializeField, Min(0f)] private float _anticipationAngle = 8f;
         [SerializeField, Min(1)] private int _slowdownSlotCount = 5;
 
+        [Header("Grade FX")]
+        [SerializeField] private Transform _gradeFxRoot;
+        [SerializeField, ColorUsage(true, true)] private Color _grade1FxColor = Color.green;
+        [SerializeField, ColorUsage(true, true)] private Color _grade2FxColor = Color.blue;
+        [SerializeField, ColorUsage(true, true)] private Color _grade3FxColor = new(0.6f, 0.15f, 1f);
+        [SerializeField, ColorUsage(true, true)] private Color _rewardFxColor = Color.yellow;
+
         [Header("Reward Amounts")]
         [SerializeField, Min(1)] private int _silverAmount = 1;
         [SerializeField, Min(1)] private int _keyAmount = 1;
@@ -99,6 +106,8 @@ namespace Features.FortuneWheel
         private bool _premiumRelicConsumed;
         private bool _premiumKeyConsumed;
         private bool _isSpinning;
+        private ParticleSystem[] _gradeFxSystems = Array.Empty<ParticleSystem>();
+        private Vector3 _wheelBaseScale = Vector3.one;
 
         private void Awake()
         {
@@ -106,7 +115,10 @@ namespace Features.FortuneWheel
             _interactionView.Initialize(gameObject);
             CacheRelicRewardPrefabs();
             CreateSpinRoot();
+            if (_wheelTransform != null)
+                _wheelBaseScale = _wheelTransform.localScale;
             InitializeRewards();
+            InitializeGradeFx();
 
             if (_betSelectionHintText != null)
                 _betSelectionHintText.text = "Q  <  BET  >  R";
@@ -184,6 +196,8 @@ namespace Features.FortuneWheel
             _selectedTier = (WheelTier)tierIndex;
             RefreshDisplayedRewards(true);
             UpdatePriceView();
+            PlayGradeFx();
+            PlayWheelGradePunch();
 
             if (_priceText == null)
                 return;
@@ -193,6 +207,52 @@ namespace Features.FortuneWheel
             priceTransform.localScale = Vector3.one;
             priceTransform.DOPunchScale(Vector3.one * 0.12f, 0.22f, 5, 0.55f)
                 .SetLink(_priceText.gameObject);
+        }
+
+        private void InitializeGradeFx()
+        {
+            if (_gradeFxRoot == null)
+                return;
+
+            _gradeFxSystems = _gradeFxRoot.GetComponentsInChildren<ParticleSystem>(true);
+            foreach (ParticleSystem particleSystem in _gradeFxSystems)
+                particleSystem.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+
+        private void PlayGradeFx()
+        {
+            Color color = _selectedTier switch
+            {
+                WheelTier.Improved => _grade2FxColor,
+                WheelTier.Premium => _grade3FxColor,
+                _ => _grade1FxColor
+            };
+
+            PlayGradeFx(color);
+        }
+
+        private void PlayGradeFx(Color color)
+        {
+
+            foreach (ParticleSystem particleSystem in _gradeFxSystems)
+            {
+                particleSystem.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+                ParticleSystem.MainModule main = particleSystem.main;
+                main.startColor = color;
+                particleSystem.Play(false);
+            }
+        }
+
+        private void PlayWheelGradePunch()
+        {
+            if (_wheelTransform == null)
+                return;
+
+            _wheelTransform.DOKill();
+            _wheelTransform.localScale = _wheelBaseScale;
+            _wheelTransform.DOPunchScale(_wheelBaseScale * 0.12f,
+                    0.28f, 6, 0.5f)
+                .SetLink(_wheelTransform.gameObject);
         }
 
         private void CreateSpinRoot()
@@ -726,10 +786,13 @@ namespace Features.FortuneWheel
 
         private void DropReward(RewardType rewardType)
         {
+            if (rewardType == RewardType.None)
+                return;
+
+            PlayGradeFx(_rewardFxColor);
+
             switch (rewardType)
             {
-                case RewardType.None:
-                    return;
                 case RewardType.Heart:
                     _heartDropper?.DropHeart(GetRewardSpawnPosition(),
                         collectWhenHealthFull: true, additionalDropHeight: 0.5f);
