@@ -90,6 +90,9 @@ namespace Core
                 {
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
 
+                    if (_enemyRoomObserver.IsRoomCompleted)
+                        break;
+
                     float deltaTime = Time.deltaTime;
                     remainingTime -= deltaTime;
                     spawnTimer -= deltaTime;

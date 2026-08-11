@@ -29,6 +29,7 @@ namespace Features.Relics.Scripts
         private readonly ITimeScaleService _timeScaleService;
         private readonly CharacterStats _characterStats;
         private readonly CharacterWallet _characterWallet;
+        private readonly EnemyRoomObserver _enemyRoomObserver;
         private readonly List<RelicRuntimeState> _activeRelics = new();
         private readonly HashSet<ITimeScaleRequest> _timeScaleRequests = new();
         private readonly CancellationTokenSource _disposeCancellation = new();
@@ -46,7 +47,7 @@ namespace Features.Relics.Scripts
         public RelicManager(CharacterStatModifierLayer statModifierLayer, RelicEventBus eventBus,
             ICharacterProvider characterProvider, IRelicVisualEffectService visualEffectService,
             ITimeScaleService timeScaleService, CharacterStats characterStats,
-            CharacterWallet characterWallet)
+            CharacterWallet characterWallet, EnemyRoomObserver enemyRoomObserver)
         {
             _statModifierLayer = statModifierLayer;
             _eventBus = eventBus;
@@ -55,6 +56,7 @@ namespace Features.Relics.Scripts
             _timeScaleService = timeScaleService;
             _characterStats = characterStats;
             _characterWallet = characterWallet;
+            _enemyRoomObserver = enemyRoomObserver;
 
             _eventBus.Hit += HandleHit;
             _eventBus.Kill += HandleKill;
@@ -64,6 +66,7 @@ namespace Features.Relics.Scripts
             _eventBus.MoveDistance += HandleMoveDistance;
             _eventBus.BossSpawned += HandleBossSpawned;
             _eventBus.ChestOpened += HandleChestOpened;
+            _enemyRoomObserver.RoomCompleted += HandleRoomCompleted;
         }
 
         public void Tick()
@@ -242,6 +245,7 @@ namespace Features.Relics.Scripts
             _eventBus.MoveDistance -= HandleMoveDistance;
             _eventBus.BossSpawned -= HandleBossSpawned;
             _eventBus.ChestOpened -= HandleChestOpened;
+            _enemyRoomObserver.RoomCompleted -= HandleRoomCompleted;
             DisposeSpecialRelics();
         }
 
@@ -291,6 +295,12 @@ namespace Features.Relics.Scripts
         {
             foreach (RelicRuntimeState state in _activeRelics.ToArray())
                 ProcessTrigger(state, RelicTriggerType.OnMoveDistance, moveDistanceEvent);
+        }
+
+        private void HandleRoomCompleted(DefaultEnemiesRoomData roomData)
+        {
+            foreach (RelicRuntimeState state in _activeRelics.ToArray())
+                ProcessTrigger(state, RelicTriggerType.OnRoomCompleted, roomData);
         }
 
         private void HandleBossSpawned(RelicBossSpawnEvent bossSpawnEvent)

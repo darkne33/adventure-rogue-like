@@ -6,10 +6,11 @@ using Features.Enemies.Scripts.Level.Scripts;
 using Features.Relics.Scripts;
 using IngameDebugConsole;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using Zenject;
 
-public sealed class GameDebugService : IInitializable, IDisposable
+public sealed class GameDebugService : IInitializable, ITickable, IDisposable
 {
     private const string AddExpCommand = "debug.exp";
     private const string AddLevelCommand = "debug.level";
@@ -94,6 +95,16 @@ public sealed class GameDebugService : IInitializable, IDisposable
         _commandsRegistered = true;
     }
 
+    public void Tick()
+    {
+        if (_commandsRegistered == false || Keyboard.current == null ||
+            DebugLogManager.Instance?.IsLogWindowVisible == true)
+            return;
+
+        if (Keyboard.current.digit1Key.wasPressedThisFrame)
+            CompleteRoom();
+    }
+
     public void Dispose()
     {
         if (_commandsRegistered == false)
@@ -146,9 +157,11 @@ public sealed class GameDebugService : IInitializable, IDisposable
             return validationError;
 
         int defeatedEnemies = _enemiesProvider.DefeatAllEnemies();
+        int removedEnemies = _enemiesProvider.ClearEnemies();
         _enemyRoomObserver.CompleteCurrentRoom();
 
-        return $"Room completed. Defeated enemies: {defeatedEnemies}.";
+        return $"Room completed. Defeated enemies: {defeatedEnemies}, " +
+               $"removed spawned enemies: {removedEnemies}.";
     }
 
     private string RestartRoom()

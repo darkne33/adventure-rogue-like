@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Relic_golden_sneakers
   m_EditorClassIdentifier:
   <Id>k__BackingField: golden_sneakers
-  <DisplayName>k__BackingField: "Golden Sneakers"
-  <Description>k__BackingField: "Grants 1 Gold per 10 m traveled per stack."
+  <DisplayName>k__BackingField: "Golden Boot"
+  <Description>k__BackingField: "Grants 1 Gold per completed combat room per stack."
   <Rarity>k__BackingField: 1
   <Tags>k__BackingField:
   - 2
@@ -26,9 +26,9 @@ MonoBehaviour:
   <UnlockQuestId>k__BackingField:
   <UnlockCost>k__BackingField: 0
   <Effects>k__BackingField:
-  - <TriggerType>k__BackingField: 9
+  - <TriggerType>k__BackingField: 13
     <StatType>k__BackingField: 11
-    <Value>k__BackingField: 0.1
+    <Value>k__BackingField: 1
     <BossValue>k__BackingField: 0
     <Chance>k__BackingField: 1
     <Cooldown>k__BackingField: 0

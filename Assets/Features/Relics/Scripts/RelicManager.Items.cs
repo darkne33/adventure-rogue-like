@@ -54,7 +54,6 @@ namespace Features.Relics.Scripts
         private const string PredatoryStacksKey = "predatory_stacks";
         private const string TeslaCycleStartKey = "tesla_cycle_start";
         private const string TeslaNextZapKey = "tesla_next_zap";
-        private const string GoldenSneakersGoldKey = "golden_sneakers_gold";
         private const string SpikyShieldAppliedKey = "spiky_shield_applied";
         private const string TurboSkatesAppliedKey = "turbo_skates_applied";
         private const float DefaultTeslaDamage = 12f;
@@ -459,10 +458,11 @@ namespace Features.Relics.Scripts
                 }
             }
 
-            if (triggerType == RelicTriggerType.OnMoveDistance &&
-                context is RelicMoveDistanceEvent moveDistanceEvent && effectId == GoldenSneakersId)
+            if (triggerType == RelicTriggerType.OnRoomCompleted &&
+                context is DefaultEnemiesRoomData && effectId == GoldenSneakersId)
             {
-                ApplyGoldenSneakersGold(state, effect, moveDistanceEvent);
+                _characterWallet.Gold.Add(Mathf.Max(1,
+                    Mathf.RoundToInt(effect.Value * state.StackCount)));
                 return true;
             }
 
@@ -493,22 +493,6 @@ namespace Features.Relics.Scripts
                 (Mathf.Max(0f, _characterStats.ThornsDamage) +
                  Mathf.Max(0f, effect.Value) * state.StackCount) * damageMultiplier));
             DealAreaDamage(victim.transform.position, Mathf.Max(1f, effect.Radius), damage, CactusId);
-        }
-
-        private void ApplyGoldenSneakersGold(RelicRuntimeState state, RelicEffectDefinition effect,
-            RelicMoveDistanceEvent moveDistanceEvent)
-        {
-            state.CustomCounters.TryGetValue(GoldenSneakersGoldKey, out float pendingGold);
-            pendingGold += Mathf.Max(0f, moveDistanceEvent.Distance) *
-                           Mathf.Max(0f, effect.Value) * state.StackCount;
-            int payout = Mathf.FloorToInt(pendingGold);
-            if (payout > 0)
-            {
-                _characterWallet.Gold.Add(payout);
-                pendingGold -= payout;
-            }
-
-            state.CustomCounters[GoldenSneakersGoldKey] = pendingGold;
         }
 
         private void ApplyVoodooDollSelfDamage(RelicRuntimeState state, RelicEffectDefinition effect,

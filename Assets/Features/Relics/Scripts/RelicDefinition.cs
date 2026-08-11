@@ -64,7 +64,8 @@ namespace Features.Relics.Scripts
         OnMoveDistance,
         OnChestOpen,
         OnBossSpawn,
-        OnFatalDamage
+        OnFatalDamage,
+        OnRoomCompleted
     }
 
     public enum RelicStatType
