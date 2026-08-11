@@ -4195,18 +4195,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DefaultRoom
   <RoomData>k__BackingField:
-    rid: 8228228630200451996
+    rid: 2492060962838806685
   references:
     version: 2
     RefIds:
-    - rid: 8228228630200451996
-      type: {class: DefaultEnemiesRoomData, ns: , asm: Assembly-CSharp}
+    - rid: 2492060962838806685
+      type: {class: RewardRoomData, ns: , asm: Assembly-CSharp}
       data:
         <RoomDoors>k__BackingField:
         - {fileID: 4207560191339781971}
         - {fileID: 142037117150895729}
         - {fileID: 5118936729290982198}
         - {fileID: 2090343243049106532}
+        <MinChests>k__BackingField: 1
+        <MaxChests>k__BackingField: 2
 --- !u!1001 &382772769116296352
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -6819,9 +6819,6 @@ MonoBehaviour:
       type: {class: ShopRoomData, ns: , asm: Assembly-CSharp}
       data:
         <RoomDoors>k__BackingField:
-        - {fileID: 3928121395848701975}
-        - {fileID: 4994992353598762839}
-        - {fileID: 5438361758760862542}
         - {fileID: 6244456865177434700}
 --- !u!1 &8861198979572900091
 GameObject:
@@ -8048,22 +8045,15 @@ PrefabInstance:
       propertyPath: m_Name
       value: UpDoor
       objectReference: {fileID: 0}
+    - target: {fileID: 8087100465863157442, guid: 8438e04ae0a39f44d918cecbbd099bc6, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8438e04ae0a39f44d918cecbbd099bc6, type: 3}
---- !u!114 &3928121395848701975 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4551908310260861939, guid: 8438e04ae0a39f44d918cecbbd099bc6, type: 3}
-  m_PrefabInstance: {fileID: 696050119271982052}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8e8f620244e34ef4ab532ae52bd9eb63, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LevelDoor
 --- !u!4 &8009887384038681816 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7385916335824375612, guid: 8438e04ae0a39f44d918cecbbd099bc6, type: 3}
@@ -11309,6 +11299,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: RightDoor
       objectReference: {fileID: 0}
+    - target: {fileID: 8087100465863157442, guid: 8438e04ae0a39f44d918cecbbd099bc6, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11319,17 +11313,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7385916335824375612, guid: 8438e04ae0a39f44d918cecbbd099bc6, type: 3}
   m_PrefabInstance: {fileID: 8382132705646463165}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5438361758760862542 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4551908310260861939, guid: 8438e04ae0a39f44d918cecbbd099bc6, type: 3}
-  m_PrefabInstance: {fileID: 8382132705646463165}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8e8f620244e34ef4ab532ae52bd9eb63, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LevelDoor
 --- !u!1001 &8825480120576025764
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11386,6 +11369,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: DownDoor
       objectReference: {fileID: 0}
+    - target: {fileID: 8087100465863157442, guid: 8438e04ae0a39f44d918cecbbd099bc6, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11396,17 +11383,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7385916335824375612, guid: 8438e04ae0a39f44d918cecbbd099bc6, type: 3}
   m_PrefabInstance: {fileID: 8825480120576025764}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &4994992353598762839 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4551908310260861939, guid: 8438e04ae0a39f44d918cecbbd099bc6, type: 3}
-  m_PrefabInstance: {fileID: 8825480120576025764}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8e8f620244e34ef4ab532ae52bd9eb63, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LevelDoor
 --- !u!1001 &8940282418161883516
 PrefabInstance:
   m_ObjectHideFlags: 0

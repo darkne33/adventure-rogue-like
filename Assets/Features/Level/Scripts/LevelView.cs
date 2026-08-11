@@ -40,6 +40,7 @@ public class LevelView : MonoBehaviour
         Dictionary<Vector2Int, Room> roomsByPosition = ValidateAndBuildRoomMap();
         ValidateRoomDoors(roomsByPosition.Values);
         ValidateRequiredDoors(roomsByPosition, hasNextLevel);
+        ValidateConnectivity(roomsByPosition);
         ResetDoors(roomsByPosition.Values);
         ConnectAdjacentRooms(roomsByPosition);
         ConfigureLevelExit(hasNextLevel);
@@ -92,8 +93,8 @@ public class LevelView : MonoBehaviour
         }
 
         ValidateTopology(sourcesByPosition, startCount, exitCount);
-        ValidateConnectivity(sourcesByPosition.Keys);
         ValidateAuthoringDoors(sourcesByPosition);
+        ValidateConnectivity(sourcesByPosition);
 
         LevelRoomNode exitNode = GetRoomNode(RoomType.Exit);
         if (!GetAvailableDirections(exitNode.RoomPrefab)
@@ -166,7 +167,34 @@ public class LevelView : MonoBehaviour
                 throw new InvalidOperationException(
                     $"{room.name} does not contain authored RoomDoor objects.");
 
-            room.RoomData.RoomDoors = authoredDoors;
+            RoomDoor[] configuredDoors = room.RoomData.RoomDoors;
+            if (configuredDoors == null || configuredDoors.Length == 0)
+                throw new InvalidOperationException(
+                    $"{room.name} does not have active doors configured in RoomData.");
+
+            var configuredDirections = new HashSet<RoomDirection>();
+            var resolvedDoors = new RoomDoor[configuredDoors.Length];
+            for (int i = 0; i < configuredDoors.Length; i++)
+            {
+                RoomDoor configuredDoor = configuredDoors[i];
+                if (configuredDoor == null)
+                    throw new InvalidOperationException(
+                        $"{room.name} contains a missing active door in RoomData.");
+                if (!configuredDirections.Add(configuredDoor.Direction))
+                    throw new InvalidOperationException(
+                        $"{room.name} contains duplicate {configuredDoor.Direction} active doors.");
+
+                RoomDoor[] matches = authoredDoors
+                    .Where(door => door.Direction == configuredDoor.Direction)
+                    .ToArray();
+                if (matches.Length != 1)
+                    throw new InvalidOperationException(
+                        $"{room.name} must contain exactly one authored {configuredDoor.Direction} door.");
+
+                resolvedDoors[i] = matches[0];
+            }
+
+            room.RoomData.RoomDoors = resolvedDoors;
         }
     }
 
@@ -227,7 +255,6 @@ public class LevelView : MonoBehaviour
         }
 
         ValidateTopology(roomsByPosition, startCount, exitCount);
-        ValidateConnectivity(roomsByPosition.Keys);
         return roomsByPosition;
     }
 
@@ -339,79 +366,40 @@ public class LevelView : MonoBehaviour
     private void ValidateRequiredDoors(
         IReadOnlyDictionary<Vector2Int, Room> roomsByPosition, bool hasNextLevel)
     {
-        var levelExits = _rooms
-            .Where(roomNode => roomNode.Type == RoomType.Exit)
-            .ToDictionary(roomNode => roomNode.GridPosition,
-                roomNode => roomNode.LevelExitDirection);
+        if (!hasNextLevel)
+            return;
 
-        foreach (KeyValuePair<Vector2Int, Room> roomEntry in roomsByPosition)
-        {
-            foreach (RoomDirection direction in Enum.GetValues(typeof(RoomDirection)))
-            {
-                Vector2Int neighbourPosition =
-                    roomEntry.Key + direction.ToGridOffset();
-                bool hasNeighbour = roomsByPosition.TryGetValue(
-                    neighbourPosition, out Room neighbourRoom);
-                bool requiresExitDoor = hasNextLevel &&
-                                        levelExits.TryGetValue(roomEntry.Key,
-                                            out RoomDirection exitDirection) &&
-                                        exitDirection == direction;
-
-                if (!hasNeighbour && !requiresExitDoor)
-                    continue;
-
-                if (!HasDoor(roomEntry.Value, direction))
-                {
-                    string destination = hasNeighbour
-                        ? neighbourRoom.name
-                        : "the next level";
-                    throw new InvalidOperationException(
-                        $"{roomEntry.Value.name} does not contain a {direction} door for " +
-                        $"{destination}.");
-                }
-
-                if (hasNeighbour && !HasDoor(neighbourRoom, direction.Opposite()))
-                    throw new InvalidOperationException(
-                        $"{neighbourRoom.name} does not contain the " +
-                        $"{direction.Opposite()} opposite door.");
-            }
-        }
+        LevelRoomNode exitNode = GetRoomNode(RoomType.Exit);
+        Room exitRoom = roomsByPosition[exitNode.GridPosition];
+        if (!HasDoor(exitRoom, exitNode.LevelExitDirection))
+            throw new InvalidOperationException(
+                $"{exitRoom.name} does not contain the " +
+                $"{exitNode.LevelExitDirection} level-exit door.");
     }
 
     private static bool HasDoor(Room room, RoomDirection direction) =>
-        room.RoomData.RoomDoors.Any(door => door.Direction == direction);
+        FindDoor(room, direction) != null;
 
     private void ValidateAuthoringDoors(
         IReadOnlyDictionary<Vector2Int, Room> sourcesByPosition)
     {
-        foreach (KeyValuePair<Vector2Int, Room> roomEntry in sourcesByPosition)
-        {
-            HashSet<RoomDirection> availableDirections =
-                GetAvailableDirections(roomEntry.Value);
-
-            foreach (RoomDirection direction in Enum.GetValues(typeof(RoomDirection)))
-            {
-                Vector2Int neighbour = roomEntry.Key + direction.ToGridOffset();
-                if (sourcesByPosition.ContainsKey(neighbour) &&
-                    !availableDirections.Contains(direction))
-                {
-                    throw new InvalidOperationException(
-                        $"{roomEntry.Value.name} does not contain a {direction} door.");
-                }
-            }
-        }
+        foreach (Room room in sourcesByPosition.Values)
+            GetAvailableDirections(room);
     }
 
     private static HashSet<RoomDirection> GetAvailableDirections(Room room)
     {
-        RoomDoor[] authoredDoors = room.GetComponentsInChildren<RoomDoor>(true);
-        if (authoredDoors.Length == 0)
+        RoomDoor[] configuredDoors = room.RoomData?.RoomDoors;
+        if (configuredDoors == null || configuredDoors.Length == 0)
             throw new InvalidOperationException(
-                $"{room.name} does not contain authored RoomDoor objects.");
+                $"{room.name} does not have active doors configured in RoomData.");
 
         var result = new HashSet<RoomDirection>();
-        foreach (RoomDoor door in authoredDoors)
+        foreach (RoomDoor door in configuredDoors)
         {
+            if (door == null)
+                throw new InvalidOperationException(
+                    $"{room.name} contains a missing active door in RoomData.");
             if (!door.HasConfiguredVisuals)
                 throw new InvalidOperationException(
                     $"{door.name} must contain assigned EnemyDoor and RewardDoor roots and two door leaves for each variant.");
@@ -436,8 +424,11 @@ public class LevelView : MonoBehaviour
                 if (!roomsByPosition.TryGetValue(neighbourPosition, out Room neighbourRoom))
                     continue;
 
-                RoomDoor neighbourDoor = GetRequiredDoor(neighbourRoom,
+                RoomDoor neighbourDoor = FindDoor(neighbourRoom,
                     currentDoor.Direction.Opposite());
+                if (neighbourDoor == null)
+                    continue;
+
                 currentDoor.Configure(neighbourRoom, neighbourDoor);
             }
         }
@@ -503,14 +494,14 @@ public class LevelView : MonoBehaviour
     {
         foreach (Room room in rooms)
         {
-            foreach (RoomDoor door in room.RoomData.RoomDoors)
+            foreach (RoomDoor door in room.GetComponentsInChildren<RoomDoor>(true))
                 door.ClearDestination();
         }
     }
 
-    private void ValidateConnectivity(IEnumerable<Vector2Int> roomPositions)
+    private void ValidateConnectivity(
+        IReadOnlyDictionary<Vector2Int, Room> roomsByPosition)
     {
-        var positions = new HashSet<Vector2Int>(roomPositions);
         var visited = new HashSet<Vector2Int>();
         var pending = new Queue<Vector2Int>();
         pending.Enqueue(StartRoomGridPosition);
@@ -521,26 +512,35 @@ public class LevelView : MonoBehaviour
             if (!visited.Add(position))
                 continue;
 
-            foreach (RoomDirection direction in Enum.GetValues(typeof(RoomDirection)))
+            Room room = roomsByPosition[position];
+            foreach (RoomDoor roomDoor in room.RoomData.RoomDoors)
             {
-                Vector2Int neighbour = position + direction.ToGridOffset();
-                if (positions.Contains(neighbour) && !visited.Contains(neighbour))
-                    pending.Enqueue(neighbour);
+                Vector2Int neighbourPosition =
+                    position + roomDoor.Direction.ToGridOffset();
+                if (!roomsByPosition.TryGetValue(neighbourPosition,
+                        out Room neighbourRoom) ||
+                    !HasDoor(neighbourRoom, roomDoor.Direction.Opposite()) ||
+                    visited.Contains(neighbourPosition))
+                    continue;
+
+                pending.Enqueue(neighbourPosition);
             }
         }
 
-        if (visited.Count != positions.Count)
+        if (visited.Count != roomsByPosition.Count)
             throw new InvalidOperationException(
                 $"{name} contains rooms that cannot be reached from the start room.");
     }
 
+    private static RoomDoor FindDoor(Room room, RoomDirection direction) =>
+        room.RoomData.RoomDoors.FirstOrDefault(door =>
+            door != null && door.Direction == direction);
+
     private static RoomDoor GetRequiredDoor(Room room, RoomDirection direction)
     {
-        foreach (RoomDoor roomDoor in room.RoomData.RoomDoors)
-        {
-            if (roomDoor.Direction == direction)
-                return roomDoor;
-        }
+        RoomDoor roomDoor = FindDoor(room, direction);
+        if (roomDoor != null)
+            return roomDoor;
 
         throw new InvalidOperationException($"{room.name} does not contain a {direction} door.");
     }

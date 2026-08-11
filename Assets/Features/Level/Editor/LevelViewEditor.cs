@@ -12,7 +12,7 @@ public sealed class LevelViewEditor : Editor
         EditorGUILayout.HelpBox(
             "Assign the start-room prefab and room prefabs with their Grid Position. " +
             "The runtime creates room instances, disables their authored doors, and enables only " +
-            "the directions required by the grid topology. Each room prefab must already contain " +
+            "the doors assigned in RoomData and required by the grid topology. Each room prefab must already contain " +
             "its directional RoomDoor objects; no doors are instantiated or replaced. " +
             "Each RoomDoor selects EnemyDoor or RewardDoor from the destination room type. " +
             "Enemy and Exit rooms require an Enemy Configuration assigned on their room node.",

@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RainbowLineParticle
+  m_Shader: {fileID: 4800000, guid: 7c8e04d1693b4a57a1f6cd917f4f5510, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: 42db998579832c148abb2fefeaa9946b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AlphaClipThreshold: 0.01
+    - _AtlasRows: 8
+    - _Glow: 1
+    - _SegmentsPerSecond: 5
+    - _VisibleSegments: 7
+    m_Colors:
+    - _RainbowBlue: {r: 0.2392157, g: 0.3882353, b: 1, a: 1}
+    - _RainbowCyan: {r: 0.145098, g: 0.7843137, b: 0.9568627, a: 1}
+    - _RainbowGreen: {r: 0.1921569, g: 0.8392157, b: 0.427451, a: 1}
+    - _RainbowOrange: {r: 1, g: 0.5411765, b: 0.1411765, a: 1}
+    - _RainbowPink: {r: 1, g: 0.1882353, b: 0.2823529, a: 1}
+    - _RainbowPurple: {r: 0.4705882, g: 0.2392157, b: 1, a: 1}
+    - _RainbowYellow: {r: 1, g: 0.8862745, b: 0.2196078, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
