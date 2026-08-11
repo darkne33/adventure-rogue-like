@@ -247,6 +247,8 @@ namespace Features.Relics.Scripts
             await transform.DOScale(Vector3.zero, 0.14f)
                 .SetEase(Ease.InBack)
                 .ToUniTask(cancellationToken: this.GetCancellationTokenOnDestroy());
+
+            _eventBus.PublishRelicCollected(_relic);
             Destroy(gameObject);
             return true;
         }

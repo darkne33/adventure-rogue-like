@@ -165,6 +165,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.BindInterfacesAndSelfTo<RelicChestSpawner>().AsSingle();
         Container.BindInterfacesAndSelfTo<MinimapChestMarkerController>().AsSingle();
         Container.BindInterfacesAndSelfTo<RelicInventoryViewService>().AsSingle();
+        Container.BindInterfacesAndSelfTo<RelicDescriptionHandler>().AsSingle().NonLazy();
     }
 
     private void BindDebugMode() =>
