@@ -46,7 +46,7 @@ namespace Features.Relics.Scripts
             _relicIcon.gameObject.SetActive(relic.Icon != null);
 
             gameObject.SetActive(true);
-            _panelAnimations.ForceShow();
+            _panelAnimations.Show().Forget();
             _cursorService.ShowUiCursor();
         }
 
