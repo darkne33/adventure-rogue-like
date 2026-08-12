@@ -11,8 +11,6 @@ using UnityEngine;
 
 public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 {
-    private const float CrosshairTargetLostGraceDuration = 0.08f;
-
     private readonly ICharacterLevelService _characterLevelService;
     private readonly IGameModeService _gameModeService;
 
@@ -24,10 +22,8 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     private UpgradeBuildViewService _upgradeBuildViewService;
     private CharacterWallet _characterWallet;
     private RelicEventBus _relicEventBus;
-    private ICharacterAimTargetProvider _aimTargetProvider;
     private readonly HashSet<EnemyFacade> _countedKilledEnemies = new();
     private CancellationTokenSource _gameTimerCancellation;
-    private CancellationTokenSource _crosshairCancellation;
     private int _killedEnemies;
     private int _shownRoomCount = -1;
 
@@ -63,8 +59,6 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         _upgradeBuildViewService = stateMachine.Resolve<UpgradeBuildViewService>();
         _characterWallet = stateMachine.Resolve<CharacterWallet>();
         _relicEventBus = stateMachine.Resolve<RelicEventBus>();
-        _aimTargetProvider = stateMachine.Resolve<ICharacterAimTargetProvider>();
-
         _runtimeDataService.RoomChanged += HandleRoomChanged;
         _minimapController.Attach(Panel.MinimapView);
         _relicInventoryViewService.Attach(Panel);
@@ -86,7 +80,6 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         UpdateKeysCurrencyView(_characterWallet?.Keys.Count ?? 0);
         ResetKilledEnemiesView();
         StartGameTimer();
-        StartCrosshairTracking();
 
         return UniTask.CompletedTask;
     }
@@ -113,7 +106,6 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
             _relicEventBus.Kill -= UpdateKilledEnemiesView;
 
         StopGameTimer();
-        StopCrosshairTracking();
         _minimapController?.Detach(Panel.MinimapView);
         _relicInventoryViewService?.Detach();
         _upgradeBuildViewService?.Detach();
@@ -202,25 +194,6 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
         _gameTimerCancellation = null;
     }
 
-    private void StartCrosshairTracking()
-    {
-        StopCrosshairTracking();
-        Panel.CrosshairView?.SetTargeted(false);
-        _crosshairCancellation = new CancellationTokenSource();
-        RunCrosshairTracking(_crosshairCancellation.Token).Forget();
-    }
-
-    private void StopCrosshairTracking()
-    {
-        if (_crosshairCancellation == null)
-            return;
-
-        _crosshairCancellation.Cancel();
-        _crosshairCancellation.Dispose();
-        _crosshairCancellation = null;
-        Panel.CrosshairView?.SetTargeted(false);
-    }
-
     private async UniTask RunGameTimer(CancellationToken cancellationToken)
     {
         float elapsedTime = 0f;
@@ -239,31 +212,6 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 
                 lastShownSeconds = seconds;
                 UpdateGameTimerView(seconds);
-            }
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-        }
-    }
-
-    private async UniTask RunCrosshairTracking(CancellationToken cancellationToken)
-    {
-        float lastTargetSeenTime = float.NegativeInfinity;
-
-        try
-        {
-            while (cancellationToken.IsCancellationRequested == false)
-            {
-                await UniTask.Yield(PlayerLoopTiming.PostLateUpdate, cancellationToken);
-
-                bool hasTarget = _aimTargetProvider?.GetAimedEnemy() != null;
-                if (hasTarget)
-                    lastTargetSeenTime = Time.unscaledTime;
-
-                bool showTargeted = hasTarget ||
-                                    Time.unscaledTime - lastTargetSeenTime <=
-                                    CrosshairTargetLostGraceDuration;
-                Panel.CrosshairView?.SetTargeted(showTargeted);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

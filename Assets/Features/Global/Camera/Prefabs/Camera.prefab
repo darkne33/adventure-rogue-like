@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 8984467283065180852}
   - component: {fileID: 2469336938099408020}
   - component: {fileID: 4928020278616185225}
-  - component: {fileID: 1110561580327224513}
   - component: {fileID: 3297121907627390702}
   - component: {fileID: 5776625840662279152}
   m_Layer: 0
@@ -114,24 +113,6 @@ MonoBehaviour:
     CameraRadius: 0.2
     DampingIntoCollision: 0
     DampingFromCollision: 0.5
---- !u!114 &1110561580327224513
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4240162585960212285}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2588cc5dedbb75e49a44aada63f7b939, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineThirdPersonAim
-  AimCollisionFilter:
-    serializedVersion: 2
-    m_Bits: 1
-  IgnoreTag: 
-  AimDistance: 200
-  NoiseCancellation: 0
 --- !u!114 &3297121907627390702
 MonoBehaviour:
   m_ObjectHideFlags: 0

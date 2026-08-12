@@ -8,11 +8,11 @@ using UnityEngine;
 public abstract class SingleShootAbility : CharacterActiveAbility
 {
     private const float ProjectileSpreadOffset = 0.35f;
+    private const float AutoTargetingDistance = 100f;
     private const string ProjectileCountStatName = "Projectiles";
     protected const float MinimumCooldown = 0.05f;
 
     private readonly IEnemiesProvider _enemiesProvider;
-    private readonly ICharacterAimTargetProvider _aimTargetProvider;
     private readonly CharacterDamageCalculator _damageCalculator;
     private readonly CharacterStats _characterStats;
     private readonly RelicEventBus _relicEventBus;
@@ -27,12 +27,10 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     protected int Damage { get; set; }
     protected float ProjectileSpeed { get; private set; }
 
-    protected SingleShootAbility(IEnemiesProvider enemiesProvider, ICharacterAimTargetProvider aimTargetProvider,
-        CharacterDamageCalculator damageCalculator, CharacterStats characterStats, RelicEventBus relicEventBus,
-        RelicManager relicManager)
+    protected SingleShootAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
+        CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager)
     {
         _enemiesProvider = enemiesProvider;
-        _aimTargetProvider = aimTargetProvider;
         _damageCalculator = damageCalculator;
         _characterStats = characterStats;
         _relicEventBus = relicEventBus;
@@ -76,11 +74,10 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     protected override void OnUse(CharacterFacade character)
     {
-        EnemyFacade aimedEnemy = _aimTargetProvider.GetAimedEnemy();
         int projectileCount = CalculateProjectileCount();
         int launchSequence = ++_projectileLaunchSequence;
         _isLaunchingProjectiles = true;
-        LaunchProjectiles(character, aimedEnemy, projectileCount, launchSequence).Forget();
+        LaunchProjectiles(character, projectileCount, launchSequence).Forget();
     }
 
     protected virtual void OnShootableInitialized()
@@ -165,8 +162,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         return Mathf.Max(1, Mathf.RoundToInt(Damage * multiplier));
     }
 
-    private async UniTask LaunchProjectiles(CharacterFacade character, EnemyFacade aimedEnemy,
-        int projectileCount, int launchSequence)
+    private async UniTask LaunchProjectiles(CharacterFacade character, int projectileCount, int launchSequence)
     {
         try
         {
@@ -182,7 +178,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
                 if (launchSequence != _projectileLaunchSequence)
                     return;
 
-                ShootProjectile(character, aimedEnemy, index, projectileCount);
+                ShootProjectile(character, index, projectileCount);
             }
         }
         finally
@@ -192,13 +188,10 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         }
     }
 
-    private void ShootProjectile(CharacterFacade character, EnemyFacade aimedEnemy, int projectileIndex,
-        int projectileCount)
+    private void ShootProjectile(CharacterFacade character, int projectileIndex, int projectileCount)
     {
-        EnemyFacade targetEnemy = IsValidAimedEnemy(aimedEnemy, character)
-            ? aimedEnemy
-            : _enemiesProvider.GetRandomClosestEnemyByCharacter(character.transform,
-                _aimTargetProvider.TargetingDistance);
+        EnemyFacade targetEnemy = _enemiesProvider.GetRandomClosestEnemyByCharacter(character.transform,
+            AutoTargetingDistance);
 
         if (targetEnemy == null)
             return;
@@ -223,15 +216,6 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
         playerCollisionDetector.Initialize(character.transform);
         OnProjectileCreated(character, shootObj, playerCollisionDetector, targetEnemy, spawnPosition, shootDirection);
-    }
-
-    private bool IsValidAimedEnemy(EnemyFacade aimedEnemy, CharacterFacade character)
-    {
-        if (aimedEnemy == null || aimedEnemy.gameObject.activeInHierarchy == false || aimedEnemy.IsDead)
-            return false;
-
-        float maxSqrDistance = _aimTargetProvider.TargetingDistance * _aimTargetProvider.TargetingDistance;
-        return (aimedEnemy.transform.position - character.transform.position).sqrMagnitude < maxSqrDistance;
     }
 
     private int CalculateProjectileCount()

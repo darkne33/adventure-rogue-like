@@ -41,10 +41,9 @@ public class RabbitBoomerangAbility : SingleShootAbility
             ? BoomerangUpgradeTypesAtMinimumCooldown
             : BoomerangUpgradeTypes;
 
-    public RabbitBoomerangAbility(IEnemiesProvider enemiesProvider, ICharacterAimTargetProvider aimTargetProvider,
-        CharacterDamageCalculator damageCalculator, CharacterStats characterStats, RelicEventBus relicEventBus,
-        RelicManager relicManager)
-        : base(enemiesProvider, aimTargetProvider, damageCalculator, characterStats, relicEventBus, relicManager)
+    public RabbitBoomerangAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
+        CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager)
+        : base(enemiesProvider, damageCalculator, characterStats, relicEventBus, relicManager)
     {
     }
 

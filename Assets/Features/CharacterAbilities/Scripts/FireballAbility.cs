@@ -32,10 +32,9 @@ public class FireballAbility : SingleShootAbility
             ? FireballUpgradeTypesAtMinimumCooldown
             : FireballUpgradeTypes;
 
-    public FireballAbility(IEnemiesProvider enemiesProvider, ICharacterAimTargetProvider aimTargetProvider,
-        CharacterDamageCalculator damageCalculator, CharacterStats characterStats, RelicEventBus relicEventBus,
-        RelicManager relicManager)
-        : base(enemiesProvider, aimTargetProvider, damageCalculator, characterStats, relicEventBus, relicManager)
+    public FireballAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
+        CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager)
+        : base(enemiesProvider, damageCalculator, characterStats, relicEventBus, relicManager)
     {
     }
 

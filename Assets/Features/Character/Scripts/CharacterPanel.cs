@@ -27,5 +27,4 @@ public class CharacterPanel : PanelBase
     [field: SerializeField] public CharacterBuildView CharacterBuildView { get; private set; }
     [field: SerializeField] public RelicInventoryView RelicInventoryView { get; private set; }
     [field: SerializeField] public RelicDescriptionPanel RelicDescriptionPanel { get; private set; }
-    [field: SerializeField] public CharacterCrosshairView CrosshairView { get; private set; }
 }
