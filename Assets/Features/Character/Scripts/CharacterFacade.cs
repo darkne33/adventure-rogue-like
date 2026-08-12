@@ -49,7 +49,6 @@ public class CharacterFacade : MonoBehaviour
     private HealthSystem _healthSystem;
     private ShieldSystem _shieldSystem;
     private CharacterAbilitySystem _abilitySystem;
-    private CharacterAnimationSystem _animationSystem;
     private CharacterMoveSystem _moveSystem;
     private CharacterCameraMoveSystem _cameraSystem;
     private DealDamageEffectSystem _damageEffectSystem;
@@ -131,7 +130,6 @@ public class CharacterFacade : MonoBehaviour
         _healthSystem = healthSystem;
         _shieldSystem = shieldSystem;
         _abilitySystem = abilitySystem;
-        _animationSystem = animationSystem;
         _moveSystem = moveSystem;
         _cameraSystem = cameraSystem;
         _damageEffectSystem = damageEffectSystem;
