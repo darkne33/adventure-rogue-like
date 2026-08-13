@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using UI;
 using UnityEngine;
@@ -17,9 +18,12 @@ public sealed class CoinGold : MonoBehaviour
     private bool _canAttract;
     private bool _isCollecting;
 
+    public RoomData RoomData { get; private set; }
+    public event Action<CoinGold> Destroyed;
+
     public void Construct(int amount, GoldDropperConfiguration configuration, CharacterWallet characterWallet,
         ICharacterProvider characterProvider, CharacterStats characterStats, IPanelService panelService,
-        Vector3 landPosition)
+        Vector3 landPosition, RoomData roomData)
     {
         _amount = Mathf.Max(1, amount);
         _configuration = configuration;
@@ -27,6 +31,7 @@ public sealed class CoinGold : MonoBehaviour
         _characterProvider = characterProvider;
         _characterStats = characterStats;
         _panelService = panelService;
+        RoomData = roomData;
         _startScale = transform.localScale;
 
         name = $"CoinGold_{_amount}";
@@ -57,8 +62,12 @@ public sealed class CoinGold : MonoBehaviour
             Collect();
     }
 
-    private void OnDestroy() =>
+    private void OnDestroy()
+    {
         transform.DOKill();
+        Destroyed?.Invoke(this);
+        Destroyed = null;
+    }
 
     private void PlayDropAnimation(Vector3 landPosition)
     {

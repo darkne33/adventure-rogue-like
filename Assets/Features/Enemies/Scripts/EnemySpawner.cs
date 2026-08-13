@@ -21,7 +21,13 @@ public class EnemySpawner
     private readonly EnemyRoomObserver _enemyRoomObserver;
     private readonly Dictionary<GameObject, EnemySpawnVolume> _spawnVolumes = new();
     private readonly Collider[] _spawnOverlapResults = new Collider[64];
+    private DefaultEnemiesRoomData _activeRoomData;
+    private CharacterFacade _activeCharacter;
     private int _spawnedEnemiesInCurrentRoom;
+    private int _allEnemiesInCurrentRoom;
+    private int _waveEnemyCount;
+    private ReinforcementSpawnMode _reinforcementSpawnMode;
+    private bool _isRoomSpawningActive;
 
     private const float RayStartHeight = 50f;
     private const float RayDistance = 100f;
@@ -33,6 +39,7 @@ public class EnemySpawner
     private const float FallbackSpawnHeight = 2f;
     private const float EnemySpawnRiseDuration = 0.5f;
     private const float PortalFadeDuration = 0.3f;
+    private const float InitialWaveSpawnExclusionRadius = 8f;
 
     public EnemySpawner(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IEnemyFactory enemyFactory,
         LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider, IEffectsService effectsService,
@@ -47,6 +54,7 @@ public class EnemySpawner
         _relicEventBus = relicEventBus;
         _sceneService = sceneService;
         _enemyRoomObserver = enemyRoomObserver;
+        _enemiesProvider.EnemyRemoved += HandleEnemyRemoved;
     }
 
     public async UniTask LoadEnemyPrefabs(CancellationToken cts)
@@ -68,35 +76,46 @@ public class EnemySpawner
 
     public void TrySpawnEnemies(CharacterFacade characterFacade)
     {
-        EnemyRoomConfiguration configuration = GetCurrentConfiguration(characterFacade,
+        EnemyRoomSettings configuration = GetCurrentConfiguration(characterFacade,
             out DefaultEnemiesRoomData currentRoomData, out LevelSettings levelSettings);
 
         LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
         if (currentLevel == null)
             throw new System.InvalidOperationException("Current level view is not available.");
 
-        EnemyRoomScalingConfiguration scalingConfiguration =
-            _levelsConfiguration.GetEnemyRoomScalingConfiguration();
-        List<EnemyType> enemyTypes = BuildSpawnQueue(scalingConfiguration, configuration,
-            _rogueLikeRuntimeDataService.CurrentIndexLevel, _enemyRoomObserver.CompletedRooms);
+        int roomIndex = currentLevel.GetEnemyRoomIndex(currentRoomData);
+        _waveEnemyCount = levelSettings.GetStartEnemyCount(roomIndex);
+        _allEnemiesInCurrentRoom = levelSettings.GetAllEnemyCount(roomIndex);
+        _activeRoomData = currentRoomData;
+        _activeCharacter = characterFacade;
+        _spawnedEnemiesInCurrentRoom = 0;
+        _reinforcementSpawnMode = GetReinforcementSpawnMode(roomIndex);
+        _isRoomSpawningActive = true;
+
+        int initialEnemyCount = Mathf.Min(_waveEnemyCount, _allEnemiesInCurrentRoom);
+        List<EnemyType> enemyTypes = BuildSpawnQueue(configuration, initialEnemyCount);
         Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
-        _spawnedEnemiesInCurrentRoom = SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes);
+        _spawnedEnemiesInCurrentRoom = SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes,
+            characterFacade.transform.position);
+
+        if (_spawnedEnemiesInCurrentRoom >= _allEnemiesInCurrentRoom ||
+            _spawnedEnemiesInCurrentRoom == 0)
+        {
+            FinishCurrentRoomSpawning();
+        }
     }
 
-    public void TrySpawnAdditionalEnemies(CharacterFacade characterFacade, int enemyCount)
+    public int TrySpawnAdditionalEnemies(CharacterFacade characterFacade, int enemyCount)
     {
         if (enemyCount <= 0)
-            return;
+            return 0;
 
-        EnemyRoomConfiguration configuration = GetCurrentConfiguration(characterFacade,
+        EnemyRoomSettings configuration = GetCurrentConfiguration(characterFacade,
             out DefaultEnemiesRoomData currentRoomData, out LevelSettings levelSettings);
-        EnemyRoomScalingConfiguration scalingConfiguration =
-            _levelsConfiguration.GetEnemyRoomScalingConfiguration();
-        int remainingCapacity =
-            scalingConfiguration.MaxEnemiesPerRoom - _spawnedEnemiesInCurrentRoom;
+        int remainingCapacity = _allEnemiesInCurrentRoom - _spawnedEnemiesInCurrentRoom;
         int clampedEnemyCount = Mathf.Min(enemyCount, Mathf.Max(0, remainingCapacity));
         if (clampedEnemyCount <= 0)
-            return;
+            return 0;
 
         List<EnemyType> enemyTypes =
             BuildAdditionalSpawnQueue(configuration, clampedEnemyCount);
@@ -106,11 +125,65 @@ public class EnemySpawner
             throw new System.InvalidOperationException("Current level view is not available.");
 
         Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
-        _spawnedEnemiesInCurrentRoom +=
-            SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes);
+        int spawnedEnemyCount = SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes);
+        _spawnedEnemiesInCurrentRoom += spawnedEnemyCount;
+        return spawnedEnemyCount;
     }
 
-    private EnemyRoomConfiguration GetCurrentConfiguration(CharacterFacade characterFacade,
+    private void HandleEnemyRemoved(int activeEnemyCount)
+    {
+        if (_isRoomSpawningActive == false || _enemyRoomObserver.IsRoomCompleted)
+            return;
+
+        if (_rogueLikeRuntimeDataService.CurrentRoomData is not DefaultEnemiesRoomData currentRoomData ||
+            ReferenceEquals(currentRoomData, _activeRoomData) == false)
+        {
+            return;
+        }
+
+        int remainingEnemyCount = _allEnemiesInCurrentRoom - _spawnedEnemiesInCurrentRoom;
+        if (remainingEnemyCount <= 0)
+        {
+            FinishCurrentRoomSpawning();
+            return;
+        }
+
+        int spawnCount;
+        if (_reinforcementSpawnMode == ReinforcementSpawnMode.AfterEachEnemy)
+        {
+            spawnCount = 1;
+        }
+        else
+        {
+            if (activeEnemyCount > 0)
+                return;
+
+            spawnCount = Mathf.Min(_waveEnemyCount, remainingEnemyCount);
+        }
+
+        int spawnedEnemyCount = TrySpawnAdditionalEnemies(_activeCharacter, spawnCount);
+        if (_spawnedEnemiesInCurrentRoom >= _allEnemiesInCurrentRoom ||
+            (spawnedEnemyCount == 0 && activeEnemyCount <= 0))
+        {
+            FinishCurrentRoomSpawning();
+        }
+    }
+
+    private void FinishCurrentRoomSpawning()
+    {
+        if (_isRoomSpawningActive == false)
+            return;
+
+        _isRoomSpawningActive = false;
+        _enemyRoomObserver.FinishEnemySpawning(_enemiesProvider.Count);
+    }
+
+    private static ReinforcementSpawnMode GetReinforcementSpawnMode(int roomIndex) =>
+        roomIndex % 2 == 0
+            ? ReinforcementSpawnMode.AfterEachEnemy
+            : ReinforcementSpawnMode.AfterAllEnemies;
+
+    private EnemyRoomSettings GetCurrentConfiguration(CharacterFacade characterFacade,
         out DefaultEnemiesRoomData currentRoomData, out LevelSettings levelSettings)
     {
         if (characterFacade == null)
@@ -119,10 +192,10 @@ public class EnemySpawner
         if (_rogueLikeRuntimeDataService.CurrentRoomData is not DefaultEnemiesRoomData roomData)
             throw new System.InvalidOperationException("Enemies can only be spawned in a default enemies room.");
 
-        EnemyRoomConfiguration configuration = roomData.Configuration;
+        EnemyRoomSettings configuration = roomData.EnemySettings;
         if (configuration == null || !configuration.HasSpawnableEnemies)
             throw new System.InvalidOperationException(
-                "The current enemy room configuration does not contain spawnable enemies.");
+                "The current enemy room settings do not contain spawnable enemies.");
 
         levelSettings =
             _levelsConfiguration.GetLevel(_rogueLikeRuntimeDataService.CurrentIndexLevel);
@@ -136,7 +209,7 @@ public class EnemySpawner
     }
 
     private int SpawnEnemyTypes(Room currentRoom, LevelSettings levelSettings,
-        IReadOnlyList<EnemyType> enemyTypes)
+        IReadOnlyList<EnemyType> enemyTypes, Vector3? excludedPosition = null)
     {
         Physics.SyncTransforms();
 
@@ -156,7 +229,7 @@ public class EnemySpawner
             EnemySpawnVolume spawnVolume = GetSpawnVolume(enemy);
 
             if (!TryFindValidSpawnPosition(currentRoom, groundColliders, spawnVolume,
-                    out var spawnPosition))
+                    excludedPosition, out var spawnPosition))
             {
                 Debug.LogWarning(
                     $"Could not find valid spawn position for enemy {enemyType} in room {currentRoom.name} " +
@@ -171,8 +244,8 @@ public class EnemySpawner
         return spawnedEnemyCount;
     }
 
-    private static List<EnemyType> BuildSpawnQueue(EnemyRoomScalingConfiguration scalingConfiguration,
-        EnemyRoomConfiguration configuration, int levelIndex, int completedCombatRooms)
+    private static List<EnemyType> BuildSpawnQueue(EnemyRoomSettings configuration,
+        int enemyCount)
     {
         var baseEnemyTypes = new List<EnemyType>(configuration.EnemyTypes.Length);
         for (int i = 0; i < configuration.EnemyTypes.Length; i++)
@@ -185,8 +258,6 @@ public class EnemySpawner
             throw new System.InvalidOperationException(
                 "The enemy room configuration does not contain spawnable enemy types.");
 
-        int enemyCount = scalingConfiguration.GetEnemyCount(baseEnemyTypes.Count,
-            levelIndex, completedCombatRooms);
         var spawnQueue = new List<EnemyType>(enemyCount);
         for (int i = 0; i < enemyCount; i++)
             spawnQueue.Add(baseEnemyTypes[i % baseEnemyTypes.Count]);
@@ -195,7 +266,7 @@ public class EnemySpawner
     }
 
     private static List<EnemyType> BuildAdditionalSpawnQueue(
-        EnemyRoomConfiguration configuration, int enemyCount)
+        EnemyRoomSettings configuration, int enemyCount)
     {
         var baseEnemyTypes = new List<EnemyType>(configuration.EnemyTypes.Length);
         for (int i = 0; i < configuration.EnemyTypes.Length; i++)
@@ -314,7 +385,7 @@ public class EnemySpawner
     }
 
     private bool TryFindValidSpawnPosition(Room room, IReadOnlyList<Collider> groundColliders,
-        EnemySpawnVolume spawnVolume, out Vector3 validPosition)
+        EnemySpawnVolume spawnVolume, Vector3? excludedPosition, out Vector3 validPosition)
     {
         const int maxAttempts = 50;
 
@@ -323,12 +394,26 @@ public class EnemySpawner
             Vector3 candidate = GetRandomSpawnCandidate(groundColliders, spawnVolume.Bounds);
             if (IsPositionValid(room, candidate, spawnVolume, out validPosition))
             {
+                if (excludedPosition.HasValue &&
+                    GetFlatSqrDistance(validPosition, excludedPosition.Value) <
+                    InitialWaveSpawnExclusionRadius * InitialWaveSpawnExclusionRadius)
+                {
+                    continue;
+                }
+
                 return true;
             }
         }
 
         validPosition = Vector3.zero;
         return false;
+    }
+
+    private static float GetFlatSqrDistance(Vector3 first, Vector3 second)
+    {
+        float deltaX = first.x - second.x;
+        float deltaZ = first.z - second.z;
+        return deltaX * deltaX + deltaZ * deltaZ;
     }
 
     private static Vector3 GetRandomSpawnCandidate(IReadOnlyList<Collider> groundColliders,
@@ -793,4 +878,10 @@ public class EnemySpawner
 
     private static float GetHorizontalArea(Collider collider) =>
         collider.bounds.size.x * collider.bounds.size.z;
+
+    private enum ReinforcementSpawnMode
+    {
+        AfterEachEnemy,
+        AfterAllEnemies
+    }
 }

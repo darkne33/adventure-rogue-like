@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UI;
 using UnityEngine;
 using Zenject;
@@ -11,10 +12,15 @@ public class GoldDropper
     private readonly IPanelService _panelService;
     private readonly DiContainer _container;
     private readonly LevelsConfiguration _levelsConfiguration;
+    private readonly IRogueLikeRuntimeDataService _runtimeDataService;
+    private readonly List<CoinGold> _activeCoins = new();
+
+    public IReadOnlyList<CoinGold> ActiveCoins => _activeCoins;
 
     public GoldDropper(GoldDropperConfiguration configuration, CharacterWallet characterWallet,
         ICharacterProvider characterProvider, CharacterStats characterStats, IPanelService panelService,
-        DiContainer container, LevelsConfiguration levelsConfiguration)
+        DiContainer container, LevelsConfiguration levelsConfiguration,
+        IRogueLikeRuntimeDataService runtimeDataService)
     {
         _configuration = configuration;
         _characterWallet = characterWallet;
@@ -23,6 +29,7 @@ public class GoldDropper
         _panelService = panelService;
         _container = container;
         _levelsConfiguration = levelsConfiguration;
+        _runtimeDataService = runtimeDataService;
     }
 
     public void DropGold(Vector3 position)
@@ -51,7 +58,9 @@ public class GoldDropper
             coinGold = coinObject.AddComponent<CoinGold>();
 
         coinGold.Construct(amount, _configuration, _characterWallet, _characterProvider, _characterStats,
-            _panelService, landPosition);
+            _panelService, landPosition, _runtimeDataService.CurrentRoomData);
+        coinGold.Destroyed += HandleCoinDestroyed;
+        _activeCoins.Add(coinGold);
     }
 
     private int GetBaseGoldAmount() =>
@@ -107,4 +116,7 @@ public class GoldDropper
         if (_panelService?.GetPanel(PanelName.CharacterPanel) is CharacterPanel characterPanel)
             characterPanel.CharacterGoldView.ShowGold(amount);
     }
+
+    private void HandleCoinDestroyed(CoinGold coinGold) =>
+        _activeCoins.Remove(coinGold);
 }

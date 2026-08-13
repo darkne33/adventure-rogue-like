@@ -3,8 +3,6 @@ using System.Threading;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
 using Features.Enemies.Scripts;
-using UI;
-using UnityEngine;
 
 namespace Core
 {
@@ -14,22 +12,15 @@ namespace Core
         private readonly EnemyRoomObserver _enemyRoomObserver;
         private readonly EnemySpawner _enemySpawner;
         private readonly ICharacterProvider _characterProvider;
-        private readonly IEnemiesProvider _enemiesProvider;
-        private readonly IPanelService _panelService;
-        private readonly LevelsConfiguration _levelsConfiguration;
 
         public RogueLikeRoomPrepareState(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService,
             EnemyRoomObserver enemyRoomObserver, EnemySpawner enemySpawner,
-            ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
-            IPanelService panelService, LevelsConfiguration levelsConfiguration)
+            ICharacterProvider characterProvider)
         {
             _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
             _enemyRoomObserver = enemyRoomObserver;
             _enemySpawner = enemySpawner;
             _characterProvider = characterProvider;
-            _enemiesProvider = enemiesProvider;
-            _panelService = panelService;
-            _levelsConfiguration = levelsConfiguration;
         }
 
         public override async UniTask Enter(CancellationToken cts)
@@ -54,81 +45,6 @@ namespace Core
             }
 
             _enemySpawner.TrySpawnEnemies(_characterProvider.CharacterFacade);
-
-            RunTimedAdditionalSpawning(currentRoomData.Configuration, cts).Forget();
-        }
-
-        private async UniTask RunTimedAdditionalSpawning(EnemyRoomConfiguration configuration,
-            CancellationToken cancellationToken)
-        {
-            EnemyTimedSpawnScalingConfiguration scalingConfiguration =
-                _levelsConfiguration.GetEnemyTimedSpawnScalingConfiguration();
-            float duration = scalingConfiguration.GetDuration(configuration.TimedSpawnDuration,
-                _enemyRoomObserver.CompletedRooms);
-            if (duration <= 0f)
-            {
-                _enemyRoomObserver.FinishEnemySpawning(_enemiesProvider.Count);
-                return;
-            }
-
-            float spawnInterval = Mathf.Max(0.1f, configuration.AdditionalSpawnInterval);
-            float spawnTimer = spawnInterval;
-            float remainingTime = duration;
-            int shownSeconds = Mathf.CeilToInt(remainingTime);
-            bool timerCompleted = false;
-            RoomTimerView timerView = null;
-
-            try
-            {
-                CharacterPanel panel = _panelService
-                    .GetPanelPresenter<CharacterPanelPresenter>(PanelName.CharacterPanel)
-                    .Panel;
-                timerView = panel.RoomTimerView;
-                timerView?.Show(shownSeconds);
-
-                while (remainingTime > 0f)
-                {
-                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
-
-                    if (_enemyRoomObserver.IsRoomCompleted)
-                        break;
-
-                    float deltaTime = Time.deltaTime;
-                    remainingTime -= deltaTime;
-                    spawnTimer -= deltaTime;
-
-                    if (spawnTimer <= 0f && remainingTime > 0f)
-                    {
-                        _enemySpawner.TrySpawnAdditionalEnemies(_characterProvider.CharacterFacade,
-                            configuration.AdditionalEnemiesPerSpawn);
-                        spawnTimer += spawnInterval;
-                    }
-
-                    int seconds = Mathf.Max(0, Mathf.CeilToInt(remainingTime));
-                    if (seconds == shownSeconds)
-                        continue;
-
-                    shownSeconds = seconds;
-                    timerView?.UpdateValue(shownSeconds);
-                }
-
-                timerCompleted = true;
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-            }
-            catch (Exception exception)
-            {
-                Debug.LogException(exception);
-                timerCompleted = true;
-            }
-            finally
-            {
-                timerView?.Hide();
-
-                if (timerCompleted)
-                    _enemyRoomObserver.FinishEnemySpawning(_enemiesProvider.Count);
-            }
         }
     }
 }

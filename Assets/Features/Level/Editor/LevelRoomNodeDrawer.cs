@@ -7,8 +7,8 @@ public sealed class LevelRoomNodeDrawer : PropertyDrawer
     private const string RoomPrefabPropertyName = "_roomPrefab";
     private const string GridPositionPropertyName = "<GridPosition>k__BackingField";
     private const string TypePropertyName = "<Type>k__BackingField";
-    private const string EnemyConfigurationPropertyName =
-        "<EnemyConfiguration>k__BackingField";
+    private const string EnemySettingsPropertyName =
+        "<EnemySettings>k__BackingField";
     private const string ExitDirectionPropertyName = "<LevelExitDirection>k__BackingField";
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -23,7 +23,7 @@ public sealed class LevelRoomNodeDrawer : PropertyDrawer
 
         SerializedProperty typeProperty = property.FindPropertyRelative(TypePropertyName);
         if (IsCombatRoom(typeProperty))
-            height += GetFieldHeight(property, EnemyConfigurationPropertyName);
+            height += GetFieldHeight(property, EnemySettingsPropertyName);
 
         if ((RoomType)typeProperty.intValue == RoomType.Exit)
             height += GetFieldHeight(property, ExitDirectionPropertyName);
@@ -54,7 +54,7 @@ public sealed class LevelRoomNodeDrawer : PropertyDrawer
             if (IsCombatRoom(typeProperty))
             {
                 DrawField(ref line,
-                    property.FindPropertyRelative(EnemyConfigurationPropertyName));
+                    property.FindPropertyRelative(EnemySettingsPropertyName));
             }
 
             if ((RoomType)typeProperty.intValue == RoomType.Exit)

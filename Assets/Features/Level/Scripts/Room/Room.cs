@@ -25,13 +25,11 @@ public class RoomData
 [Serializable]
 public class DefaultEnemiesRoomData : RoomData
 {
-    public EnemyRoomConfiguration Configuration { get; private set; }
+    public EnemyRoomSettings EnemySettings { get; private set; }
     public bool IsCompleted { get; private set; }
 
-    internal void Configure(EnemyRoomConfiguration configuration) =>
-        Configuration = configuration != null
-            ? configuration
-            : throw new ArgumentNullException(nameof(configuration));
+    internal void Configure(EnemyRoomSettings enemySettings) =>
+        EnemySettings = enemySettings ?? throw new ArgumentNullException(nameof(enemySettings));
 
     public void MarkCompleted() =>
         IsCompleted = true;

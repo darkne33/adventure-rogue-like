@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System;
 using CustomPackages.Package.Extensions;
 using UnityEngine;
 
@@ -11,6 +12,7 @@ namespace Features.Enemies.Scripts
 
         public int Count => _enemies.Count;
         public IReadOnlyList<EnemyFacade> ActiveEnemies => _enemies;
+        public event Action<int> EnemyRemoved;
 
         private readonly EnemyRoomObserver _enemyRoomObserver;
         private readonly List<EnemyFacade> _enemies = new();
@@ -26,10 +28,14 @@ namespace Features.Enemies.Scripts
 
         public void RemoveEnemy(EnemyFacade enemyFacade)
         {
-            _enemies.Remove(enemyFacade);
+            if (_enemies.Remove(enemyFacade) == false)
+                return;
 
             if (_isBatchChange == false)
+            {
+                EnemyRemoved?.Invoke(_enemies.Count);
                 _enemyRoomObserver.Observe(_enemies);
+            }
         }
 
         public int DefeatAllEnemies()
@@ -56,7 +62,7 @@ namespace Features.Enemies.Scripts
             _enemies.Clear();
 
             foreach (EnemyFacade enemy in enemies)
-                Object.Destroy(enemy.gameObject);
+                UnityEngine.Object.Destroy(enemy.gameObject);
 
             return enemies.Length;
         }

@@ -342,7 +342,7 @@ public static class PrebuiltLevelsGenerator
                     roomType,
                     ExitDirections[levelNumber - 1],
                     roomType is RoomType.Enemy or RoomType.Exit
-                        ? enemyRoomConfiguration
+                        ? new EnemyRoomSettings(enemyRoomConfiguration)
                         : null);
 
                 RemoveUnusedDoors(rooms[roomIndex], layout[roomIndex], roomPositions,
@@ -567,8 +567,8 @@ public static class PrebuiltLevelsGenerator
                     $"Level {levelNumber} contains a room without doors.");
 
             if (node.Type is RoomType.Enemy or RoomType.Exit &&
-                (node.EnemyConfiguration == null ||
-                 !node.EnemyConfiguration.HasSpawnableEnemies))
+                (node.EnemySettings == null ||
+                 !node.EnemySettings.HasSpawnableEnemies))
             {
                 throw new InvalidOperationException(
                     $"Level {levelNumber} contains an invalid enemy room.");

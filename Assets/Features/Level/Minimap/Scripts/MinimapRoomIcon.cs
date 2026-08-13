@@ -14,6 +14,8 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     [SerializeField] private RectTransform _playerMarker;
     [SerializeField] private RectTransform _enemyMarkerRoot;
     [SerializeField] private RectTransform _enemyMarkerPrefab;
+    [SerializeField] private RectTransform _goldMarkerRoot;
+    [SerializeField] private RectTransform _goldMarkerPrefab;
     [SerializeField] private CanvasGroup _canvasGroup;
     [SerializeField] private Color _availableOutlineColor =
         new(1f, 1f, 1f, 0.34f);
@@ -28,10 +30,12 @@ public sealed class MinimapRoomIcon : MonoBehaviour
         new(0.02f, 0.02f, 0.02f, 0.22f);
     [SerializeField] private Vector2 _playerMarkerRange = new(18f, 18f);
     [SerializeField] private Vector2 _enemyMarkerRange = new(18f, 18f);
+    [SerializeField] private Vector2 _goldMarkerRange = new(18f, 18f);
     [SerializeField] private Vector2 _chestMarkerRange = new(18f, 18f);
     [SerializeField, Min(0f)] private float _exitMarkerDistance = 38f;
 
     private readonly List<RectTransform> _enemyMarkers = new();
+    private readonly List<RectTransform> _goldMarkers = new();
     private MinimapRoomKind _kind;
     private RoomDirection? _exitDirection;
     private bool _isRoomKindMarkerVisible = true;
@@ -168,16 +172,43 @@ public sealed class MinimapRoomIcon : MonoBehaviour
         }
     }
 
+    public void SetGoldPositions(IReadOnlyList<Vector2> normalizedPositions)
+    {
+        int count = normalizedPositions?.Count ?? 0;
+        EnsureMarkers(_goldMarkers, _goldMarkerRoot, _goldMarkerPrefab, count);
+
+        for (int index = 0; index < _goldMarkers.Count; index++)
+        {
+            RectTransform marker = _goldMarkers[index];
+            bool isVisible = index < count;
+            marker.gameObject.SetActive(isVisible);
+
+            if (!isVisible)
+                continue;
+
+            Vector2 normalizedPosition = normalizedPositions[index];
+            normalizedPosition.x = Mathf.Clamp(normalizedPosition.x, -1f, 1f);
+            normalizedPosition.y = Mathf.Clamp(normalizedPosition.y, -1f, 1f);
+            marker.anchoredPosition = normalizedPosition * _goldMarkerRange;
+        }
+    }
+
     private void EnsureEnemyMarkers(int count)
     {
-        if (_enemyMarkerRoot == null || _enemyMarkerPrefab == null)
+        EnsureMarkers(_enemyMarkers, _enemyMarkerRoot, _enemyMarkerPrefab, count);
+    }
+
+    private static void EnsureMarkers(List<RectTransform> markers, RectTransform markerRoot,
+        RectTransform markerPrefab, int count)
+    {
+        if (markerRoot == null || markerPrefab == null)
             return;
 
-        while (_enemyMarkers.Count < count)
+        while (markers.Count < count)
         {
-            RectTransform marker = Instantiate(_enemyMarkerPrefab, _enemyMarkerRoot);
+            RectTransform marker = Instantiate(markerPrefab, markerRoot);
             marker.gameObject.SetActive(false);
-            _enemyMarkers.Add(marker);
+            markers.Add(marker);
         }
     }
 

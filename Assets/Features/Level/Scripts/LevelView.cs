@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Zenject;
@@ -129,7 +128,7 @@ public class LevelView : MonoBehaviour
                                       {
                                           RoomDoors = authoredDoors
                                       };
-                enemiesRoomData.Configure(roomNode.EnemyConfiguration);
+                enemiesRoomData.Configure(roomNode.EnemySettings);
                 room.SetRoomData(enemiesRoomData);
             }
             else if (roomNode.Type == RoomType.Reward && room.RoomData is not RewardRoomData)
@@ -298,8 +297,8 @@ public class LevelView : MonoBehaviour
                 if (roomData == null)
                     throw new InvalidOperationException(
                         $"{roomNode.RoomPrefab.name} does not contain room data.");
-                ValidateEnemyConfiguration(roomNode.RoomPrefab.name,
-                    roomNode.EnemyConfiguration);
+                ValidateEnemySettings(roomNode.RoomPrefab.name,
+                    roomNode.EnemySettings);
                 return;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -316,8 +315,8 @@ public class LevelView : MonoBehaviour
                         $"{roomNode.Room.name} does not have a start point.");
                 return;
             case (RoomType.Enemy or RoomType.Exit, DefaultEnemiesRoomData enemiesRoomData):
-                ValidateEnemyConfiguration(roomNode.Room.name,
-                    enemiesRoomData.Configuration);
+                ValidateEnemySettings(roomNode.Room.name,
+                    enemiesRoomData.EnemySettings);
                 return;
             case (RoomType.Reward, RewardRoomData):
                 return;
@@ -329,16 +328,16 @@ public class LevelView : MonoBehaviour
         }
     }
 
-    private static void ValidateEnemyConfiguration(string roomName,
-        EnemyRoomConfiguration configuration)
+    private static void ValidateEnemySettings(string roomName,
+        EnemyRoomSettings enemySettings)
     {
-        if (configuration == null)
+        if (enemySettings == null)
             throw new InvalidOperationException(
-                $"{roomName} does not contain an enemy room configuration.");
+                $"{roomName} does not contain enemy room settings.");
 
-        if (!configuration.HasSpawnableEnemies)
+        if (!enemySettings.HasSpawnableEnemies)
             throw new InvalidOperationException(
-                $"{roomName} enemy room configuration does not contain spawnable enemies.");
+                $"{roomName} enemy room settings do not contain spawnable enemies.");
     }
 
     private static void ValidateRoomDoors(IEnumerable<Room> rooms)
@@ -636,22 +635,21 @@ public sealed class LevelRoomNode
     [field: SerializeField] public Vector2Int GridPosition { get; private set; }
     [field: SerializeField] public RoomType Type { get; private set; } = RoomType.Enemy;
     [field: SerializeField]
-    [field: Expandable]
     [field: Tooltip("Used by combat rooms (Enemy and Exit).")]
-    public EnemyRoomConfiguration EnemyConfiguration { get; private set; }
+    public EnemyRoomSettings EnemySettings { get; private set; } = new();
     [field: SerializeField]
     [field: Tooltip("Used only when Type is Exit.")]
     public RoomDirection LevelExitDirection { get; private set; }
 
     public LevelRoomNode(Room roomPrefab, Vector2Int gridPosition, RoomType type,
         RoomDirection levelExitDirection = default,
-        EnemyRoomConfiguration enemyConfiguration = null)
+        EnemyRoomSettings enemySettings = null)
     {
         _roomPrefab = roomPrefab;
         GridPosition = gridPosition;
         Type = type;
         LevelExitDirection = levelExitDirection;
-        EnemyConfiguration = enemyConfiguration;
+        EnemySettings = enemySettings ?? new EnemyRoomSettings();
     }
 
     public void Bind(Room room) =>

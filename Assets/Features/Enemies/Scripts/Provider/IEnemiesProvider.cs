@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,6 +8,7 @@ namespace Features.Enemies.Scripts
     {
         public int Count { get; }
         public IReadOnlyList<EnemyFacade> ActiveEnemies { get; }
+        public event Action<int> EnemyRemoved;
         public void AddEnemy(EnemyFacade enemyFacade);
         public void RemoveEnemy(EnemyFacade enemyFacade);
         public int DefeatAllEnemies();

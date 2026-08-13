@@ -11,6 +11,7 @@ public sealed class MinimapController : IDisposable, ITickable
     private readonly MinimapElementFactory _elementFactory;
     private readonly ICharacterProvider _characterProvider;
     private readonly IEnemiesProvider _enemiesProvider;
+    private readonly GoldDropper _goldDropper;
     private readonly MinimapChestMarkerController _chestMarkerController;
     private readonly Dictionary<RoomData, MinimapRoomIcon> _icons = new();
     private readonly Dictionary<Room, MinimapRoomIcon> _iconsByRoom = new();
@@ -28,15 +29,18 @@ public sealed class MinimapController : IDisposable, ITickable
     private LevelView _level;
     private RoomData _currentRoom;
     private readonly List<Vector2> _enemyPositions = new();
+    private readonly Dictionary<RoomData, List<Vector2>> _goldPositionsByRoom = new();
 
     public MinimapController(IRogueLikeRuntimeDataService runtimeDataService,
         MinimapElementFactory elementFactory, ICharacterProvider characterProvider,
-        IEnemiesProvider enemiesProvider, MinimapChestMarkerController chestMarkerController)
+        IEnemiesProvider enemiesProvider, GoldDropper goldDropper,
+        MinimapChestMarkerController chestMarkerController)
     {
         _runtimeDataService = runtimeDataService;
         _elementFactory = elementFactory;
         _characterProvider = characterProvider;
         _enemiesProvider = enemiesProvider;
+        _goldDropper = goldDropper;
         _chestMarkerController = chestMarkerController;
         _runtimeDataService.RoomChanged += HandleRoomChanged;
     }
@@ -76,7 +80,12 @@ public sealed class MinimapController : IDisposable, ITickable
 
     public void Tick()
     {
-        if (_view == null || _currentRoom == null ||
+        if (_view == null)
+            return;
+
+        UpdateGoldMarkers();
+
+        if (_currentRoom == null ||
             !_icons.TryGetValue(_currentRoom, out MinimapRoomIcon currentIcon) ||
             !_roomViews.TryGetValue(_currentRoom, out Room currentRoomView))
             return;
@@ -127,6 +136,7 @@ public sealed class MinimapController : IDisposable, ITickable
             MinimapRoomBounds bounds = CalculateRoomBounds(room.View);
             _boundsByRoom.Add(room.Data, bounds);
             _boundsByRoomView.Add(room.View, bounds);
+            _goldPositionsByRoom.Add(room.Data, new List<Vector2>());
         }
 
         BuildConnections(rooms, center);
@@ -234,6 +244,38 @@ public sealed class MinimapController : IDisposable, ITickable
         }
 
         currentIcon.SetEnemyPositions(_enemyPositions);
+    }
+
+    private void UpdateGoldMarkers()
+    {
+        foreach (List<Vector2> positions in _goldPositionsByRoom.Values)
+            positions.Clear();
+
+        IReadOnlyList<CoinGold> activeCoins = _goldDropper.ActiveCoins;
+        for (int index = 0; index < activeCoins.Count; index++)
+        {
+            CoinGold coin = activeCoins[index];
+            if (coin == null || coin.gameObject.activeInHierarchy == false || coin.RoomData == null ||
+                !_goldPositionsByRoom.TryGetValue(coin.RoomData, out List<Vector2> positions) ||
+                !_roomViews.TryGetValue(coin.RoomData, out Room roomView))
+                continue;
+
+            Vector3 localPosition = roomView.transform.InverseTransformPoint(coin.transform.position);
+            Vector2 normalizedPosition = _boundsByRoom.TryGetValue(coin.RoomData,
+                out MinimapRoomBounds bounds)
+                ? bounds.Normalize(localPosition)
+                : NormalizeByDefaultRoomSize(localPosition);
+            positions.Add(normalizedPosition);
+        }
+
+        foreach (KeyValuePair<RoomData, MinimapRoomIcon> entry in _icons)
+        {
+            IReadOnlyList<Vector2> positions = _goldPositionsByRoom.TryGetValue(entry.Key,
+                out List<Vector2> roomPositions)
+                ? roomPositions
+                : null;
+            entry.Value.SetGoldPositions(positions);
+        }
     }
 
     private void SyncCurrentRoomMarkers()
@@ -452,6 +494,7 @@ public sealed class MinimapController : IDisposable, ITickable
         _positionsByRoom.Clear();
         _boundsByRoom.Clear();
         _boundsByRoomView.Clear();
+        _goldPositionsByRoom.Clear();
         _visibleRooms.Clear();
         _connections.Clear();
     }
