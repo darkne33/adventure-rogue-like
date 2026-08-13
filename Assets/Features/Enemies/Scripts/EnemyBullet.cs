@@ -30,7 +30,10 @@ namespace Features.Enemies.Scripts
 
                 while (elapsed < lifetime && IsResolved == false)
                 {
-                    transform.position += direction * (speed * Time.deltaTime);
+                    Vector3 nextPosition = transform.position + direction * (speed * Time.deltaTime);
+                    if (TryMoveTo(nextPosition) == false)
+                        break;
+
                     elapsed += Time.deltaTime;
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }

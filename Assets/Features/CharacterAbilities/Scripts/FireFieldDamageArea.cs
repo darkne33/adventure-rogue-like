@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using Features.Enemies.Scripts;
 using UnityEngine;
 
@@ -7,6 +8,8 @@ public sealed class FireFieldDamageArea : MonoBehaviour
 {
     [SerializeField] private Transform _puddleVisual;
     [SerializeField, Min(0.01f)] private float _puddleBaseDiameter = 2f;
+    [SerializeField, Range(0f, 1f)] private float _puddleSpawnScale = 0.15f;
+    [SerializeField, Min(0f)] private float _puddleSpreadDuration = 0.35f;
 
     private readonly List<EnemyFacade> _enemiesInRange = new();
     private readonly List<ParticleSystem> _particleSystems = new();
@@ -19,6 +22,7 @@ public sealed class FireFieldDamageArea : MonoBehaviour
     private float _damageTickTimer;
     private float _remainingDuration;
     private bool _isInitialized;
+    private Tween _puddleSpreadTween;
 
     public void Initialize(IEnemiesProvider enemiesProvider, float radius, float height,
         float damageTickInterval, float duration, Action<EnemyFacade> damageEnemy)
@@ -109,6 +113,20 @@ public sealed class FireFieldDamageArea : MonoBehaviour
             return;
 
         float scale = radius * 2f / Mathf.Max(0.01f, _puddleBaseDiameter);
-        _puddleVisual.localScale = Vector3.one * scale;
+        Vector3 targetScale = Vector3.one * scale;
+
+        _puddleSpreadTween?.Kill();
+
+        if (_puddleSpreadDuration <= 0f)
+        {
+            _puddleVisual.localScale = targetScale;
+            return;
+        }
+
+        _puddleVisual.localScale = targetScale * _puddleSpawnScale;
+        _puddleSpreadTween = _puddleVisual
+            .DOScale(targetScale, _puddleSpreadDuration)
+            .SetEase(Ease.OutCubic)
+            .SetLink(gameObject);
     }
 }

@@ -27,7 +27,8 @@ namespace Features.Enemies.Scripts
                 while (elapsed < flightDuration && IsResolved == false)
                 {
                     float progress = Mathf.Clamp01(elapsed / flightDuration);
-                    UpdatePosition(startPosition, targetPosition, arcHeight, progress);
+                    if (UpdatePosition(startPosition, targetPosition, arcHeight, progress) == false)
+                        break;
 
                     elapsed += Time.deltaTime;
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
@@ -35,8 +36,8 @@ namespace Features.Enemies.Scripts
 
                 if (IsResolved == false)
                 {
-                    UpdatePosition(startPosition, targetPosition, arcHeight, 1f);
-                    ResolveHitAtRadius(impactRadius);
+                    if (UpdatePosition(startPosition, targetPosition, arcHeight, 1f))
+                        ResolveHitAtRadius(impactRadius);
                 }
             }
             catch (OperationCanceledException)
@@ -49,7 +50,7 @@ namespace Features.Enemies.Scripts
             }
         }
 
-        private void UpdatePosition(Vector3 startPosition, Vector3 targetPosition, float arcHeight,
+        private bool UpdatePosition(Vector3 startPosition, Vector3 targetPosition, float arcHeight,
             float progress)
         {
             Vector3 nextPosition = Vector3.Lerp(startPosition, targetPosition, progress);
@@ -59,7 +60,7 @@ namespace Features.Enemies.Scripts
             if (direction.sqrMagnitude > 0.0001f)
                 transform.rotation = Quaternion.LookRotation(direction.normalized);
 
-            transform.position = nextPosition;
+            return TryMoveTo(nextPosition);
         }
     }
 }

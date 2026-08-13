@@ -13,6 +13,6 @@ namespace Features.Enemies.Scripts
         public void RemoveEnemy(EnemyFacade enemyFacade);
         public int DefeatAllEnemies();
         public int ClearEnemies();
-        public EnemyFacade GetRandomClosestEnemyByCharacter(Transform character, float distance);
+        public EnemyFacade GetClosestEnemyByCharacter(Transform character, float distance);
     }
 }

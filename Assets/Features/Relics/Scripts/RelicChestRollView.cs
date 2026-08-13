@@ -17,7 +17,7 @@ namespace Features.Relics.Scripts
         [SerializeField] private Transform _rewardRoot;
         [SerializeField] private Transform _coinSilverFountain;
         [SerializeField] private ParticleSystem[] _treasureRaysParticles;
-        [SerializeField] private ParticleSystem[] _treasureOpenParticles;
+        [SerializeField] private ParticleSystem _treasureOpenParticle;
 
         private GameObject _owner;
         private Vector3 _initialLocalPosition;
@@ -43,6 +43,8 @@ namespace Features.Relics.Scripts
 
             if (_rewardRoot != null)
                 _initialRewardRootLocalPosition = _rewardRoot.localPosition;
+
+            StopParticle(_treasureOpenParticle);
         }
 
         public async UniTask PlayOpenAnimationAsync(CancellationToken cancellationToken)
@@ -66,7 +68,7 @@ namespace Features.Relics.Scripts
         {
             Color color = RelicRarityPalette.GetColor(rarity);
             SetParticleColor(_treasureRaysParticles, color);
-            SetParticleColor(_treasureOpenParticles, color);
+            SetParticleColor(_treasureOpenParticle, color);
         }
 
         public void Begin(float previewRiseSpeed)
@@ -89,7 +91,6 @@ namespace Features.Relics.Scripts
         {
             SetRarity(rarity);
             PlayParticles(_treasureRaysParticles, true);
-            PlayParticles(_treasureOpenParticles, true);
 
             if (_shakeTarget == null)
                 return;
@@ -105,7 +106,7 @@ namespace Features.Relics.Scripts
         {
             StopPreviewRise(false);
             ResetShakeTarget();
-            PlayParticles(_treasureOpenParticles, true);
+            PlayParticle(_treasureOpenParticle);
 
             if (preview != null)
             {
@@ -125,7 +126,7 @@ namespace Features.Relics.Scripts
             StopPreviewRise(true);
             ResetShakeTarget();
             StopParticles(_treasureRaysParticles);
-            StopParticles(_treasureOpenParticles);
+            StopParticle(_treasureOpenParticle);
         }
 
         private void StartPreviewRise(float speed)
@@ -183,6 +184,14 @@ namespace Features.Relics.Scripts
             }
         }
 
+        private static void SetParticleColor(ParticleSystem particle, Color color)
+        {
+            if (particle == null)
+                return;
+
+            SetParticleColor(particle.GetComponentsInChildren<ParticleSystem>(true), color);
+        }
+
         private static void PlayParticles(ParticleSystem[] particles, bool restart)
         {
             if (particles == null)
@@ -211,6 +220,21 @@ namespace Features.Relics.Scripts
                 if (particle != null)
                     particle.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
             }
+        }
+
+        private static void PlayParticle(ParticleSystem particle)
+        {
+            if (particle == null)
+                return;
+
+            particle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particle.Play(true);
+        }
+
+        private static void StopParticle(ParticleSystem particle)
+        {
+            if (particle != null)
+                particle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
     }
 }

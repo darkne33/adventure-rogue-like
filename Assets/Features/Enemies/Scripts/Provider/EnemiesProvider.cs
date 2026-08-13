@@ -1,15 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System;
-using CustomPackages.Package.Extensions;
 using UnityEngine;
 
 namespace Features.Enemies.Scripts
 {
     public class EnemiesProvider : IEnemiesProvider
     {
-        private const int ClosestEnemiesPoolSize = 3;
-
         public int Count => _enemies.Count;
         public IReadOnlyList<EnemyFacade> ActiveEnemies => _enemies;
         public event Action<int> EnemyRemoved;
@@ -67,23 +64,30 @@ namespace Features.Enemies.Scripts
             return enemies.Length;
         }
 
-        public EnemyFacade GetRandomClosestEnemyByCharacter(Transform character, float distance)
+        public EnemyFacade GetClosestEnemyByCharacter(Transform character, float distance)
         {
             if (character == null || distance <= 0f)
                 return null;
 
             Vector3 characterPosition = character.position;
             float maxSqrDistance = distance * distance;
-            List<EnemyFacade> closestEnemies = _enemies
-                .Where(enemy => enemy != null &&
-                                enemy.gameObject.activeInHierarchy &&
-                                enemy.IsDead == false &&
-                                (enemy.transform.position - characterPosition).sqrMagnitude < maxSqrDistance)
-                .OrderBy(enemy => (enemy.transform.position - characterPosition).sqrMagnitude)
-                .Take(ClosestEnemiesPoolSize)
-                .ToList();
+            float closestSqrDistance = maxSqrDistance;
+            EnemyFacade closestEnemy = null;
 
-            return closestEnemies.GetRandom();
+            foreach (EnemyFacade enemy in _enemies)
+            {
+                if (enemy == null || enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
+                    continue;
+
+                float sqrDistance = (enemy.transform.position - characterPosition).sqrMagnitude;
+                if (sqrDistance >= closestSqrDistance)
+                    continue;
+
+                closestSqrDistance = sqrDistance;
+                closestEnemy = enemy;
+            }
+
+            return closestEnemy;
         }
     }
 }

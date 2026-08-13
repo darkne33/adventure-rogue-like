@@ -83,7 +83,7 @@ public class EnemySpawner
         if (currentLevel == null)
             throw new System.InvalidOperationException("Current level view is not available.");
 
-        int roomIndex = currentLevel.GetEnemyRoomIndex(currentRoomData);
+        int roomIndex = _enemyRoomObserver.CompletedRooms;
         _waveEnemyCount = levelSettings.GetStartEnemyCount(roomIndex);
         _allEnemiesInCurrentRoom = levelSettings.GetAllEnemyCount(roomIndex);
         _activeRoomData = currentRoomData;

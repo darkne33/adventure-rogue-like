@@ -190,7 +190,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     private void ShootProjectile(CharacterFacade character, int projectileIndex, int projectileCount)
     {
-        EnemyFacade targetEnemy = _enemiesProvider.GetRandomClosestEnemyByCharacter(character.transform,
+        EnemyFacade targetEnemy = _enemiesProvider.GetClosestEnemyByCharacter(character.transform,
             AutoTargetingDistance);
 
         if (targetEnemy == null)
