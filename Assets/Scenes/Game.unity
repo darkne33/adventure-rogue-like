@@ -234,6 +234,10 @@ MonoBehaviour:
   _characterSettingsConfiguration: {fileID: 11400000, guid: 8131cc83f4eedc24b83896f3fecfe4f7, type: 2}
   _upgradeOfferConfiguration: {fileID: 11400000, guid: 244cc95a28f755744b05647eff6a36ae, type: 2}
   _levelsConfiguration: {fileID: 11400000, guid: 504fff6e5ab243b45bbf880dbfb12ef0, type: 2}
+  _roomCompletionTimeSlowSettings:
+    _timeScale: 0.15
+    _holdDuration: 0.32
+    _recoveryDuration: 0.56
   _abilitiesConfiguration: {fileID: 11400000, guid: 95689d23e4162724db50e9057f9f3493, type: 2}
   _relicPoolConfiguration: {fileID: 11400000, guid: ec0f1ce1254e4368ad2b72ec676faafd, type: 2}
   _relicChestConfiguration: {fileID: 11400000, guid: b02a631e2a1543aeaf760d0cfcde96fa, type: 2}
@@ -363,7 +367,7 @@ Light:
   serializedVersion: 13
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1.2
+  m_Intensity: 0.9
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
