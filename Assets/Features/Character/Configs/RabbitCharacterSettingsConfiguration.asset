@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1346f476fc924cdab468481737149f7b, type: 3}
-  m_Name: Duke Character Settings
+  m_Name: Rabbit Character Settings
   m_EditorClassIdentifier: 
-  <DamageInPercent>k__BackingField: 12
-  <AttackSpeed>k__BackingField: 0
+  <DamageInPercent>k__BackingField: 0
+  <AttackSpeed>k__BackingField: 12
   <AbilityDuration>k__BackingField: 1
-  <CritChance>k__BackingField: 50
+  <CritChance>k__BackingField: 40
   <CritDamage>k__BackingField: 100
   <LifeSteal>k__BackingField: 0
   <ThornsDamage>k__BackingField: 1
   <CooldownReduction>k__BackingField: 0
   <ProjectileCount>k__BackingField: 0
-  <MaxHp>k__BackingField: 60
+  <MaxHp>k__BackingField: 45
   <RegenHp>k__BackingField: 0
   <Shield>k__BackingField: 0
   <ShieldRegenerationDelay>k__BackingField: 4
@@ -29,15 +29,15 @@ MonoBehaviour:
   <Armor>k__BackingField: 0
   <Evasion>k__BackingField: 0
   <GainHp>k__BackingField: 0
-  <Luck>k__BackingField: 0.8
+  <Luck>k__BackingField: 1.2
   <GainGold>k__BackingField: 1
   <XPBonus>k__BackingField: 0
   <PickupRange>k__BackingField: 0
-  <MovementSpeed>k__BackingField: 9
-  <RotationSpeed>k__BackingField: 55
-  <Acceleration>k__BackingField: 36
+  <MovementSpeed>k__BackingField: 12
+  <RotationSpeed>k__BackingField: 75
+  <Acceleration>k__BackingField: 48
   <Deceleration>k__BackingField: 10
-  <JumpForce>k__BackingField: 330
+  <JumpForce>k__BackingField: 380
   <JumpForwardImpulse>k__BackingField: 1.35
   <JumpInertiaDuration>k__BackingField: 0.65
   <JumpInertiaAirControl>k__BackingField: 0.18
@@ -45,13 +45,13 @@ MonoBehaviour:
   <GroundStickAcceleration>k__BackingField: 30
   <CoyoteTime>k__BackingField: 0.3
   <BunnyHopResetDelay>k__BackingField: 0.25
-  <BunnyHopSpeedBonusPerJump>k__BackingField: 0.01
-  <MaxBunnyHopSpeedBonus>k__BackingField: 0.1
+  <BunnyHopSpeedBonusPerJump>k__BackingField: 0.015
+  <MaxBunnyHopSpeedBonus>k__BackingField: 0.12
   <BunnyHopCameraAlignment>k__BackingField: 0.25
   <BunnyHopCameraTurnSlowdownSpeed>k__BackingField: 260
   <BunnyHopCameraTurnSlowdownStrength>k__BackingField: 0.35
-  <DefaultAirAcceleration>k__BackingField: 22
-  <AirTurnSpeed>k__BackingField: 210
+  <DefaultAirAcceleration>k__BackingField: 24
+  <AirTurnSpeed>k__BackingField: 230
   <DefaultAirDeceleration>k__BackingField: 16
   <LandingSlideDuration>k__BackingField: 0.09
   <LandingSlideDeceleration>k__BackingField: 3

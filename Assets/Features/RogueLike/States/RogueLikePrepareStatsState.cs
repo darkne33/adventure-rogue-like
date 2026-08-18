@@ -8,17 +8,17 @@ public class RogueLikePrepareStatsState : State
 {
     private readonly CharacterStats _characterStats;
     private readonly CharacterStatModifierLayer _statModifierLayer;
-    private readonly CharacterSettingsConfiguration _characterSettingsConfiguration;
+    private readonly CharacterConfiguration _characterConfiguration;
     private readonly RoomLeaderboardReporter _leaderboardReporter;
 
     public RogueLikePrepareStatsState(CharacterStats characterStats,
         CharacterStatModifierLayer statModifierLayer,
-        CharacterSettingsConfiguration characterSettingsConfiguration,
+        CharacterConfiguration characterConfiguration,
         RoomLeaderboardReporter leaderboardReporter)
     {
         _characterStats = characterStats;
         _statModifierLayer = statModifierLayer;
-        _characterSettingsConfiguration = characterSettingsConfiguration;
+        _characterConfiguration = characterConfiguration;
         _leaderboardReporter = leaderboardReporter;
     }
 
@@ -31,53 +31,55 @@ public class RogueLikePrepareStatsState : State
 
     private void CharacterStatsInitialize()
     {
-        _characterStats.DamageInPercent = _characterSettingsConfiguration.DamageInPercent;
-        _characterStats.AttackSpeed = _characterSettingsConfiguration.AttackSpeed;
-        _characterStats.AbilityDuration = _characterSettingsConfiguration.AbilityDuration;
-        _characterStats.CritChance = _characterSettingsConfiguration.CritChance;
-        _characterStats.CritDamage = _characterSettingsConfiguration.CritDamage;
-        _characterStats.LifeSteal = _characterSettingsConfiguration.LifeSteal;
-        _characterStats.ThornsDamage = _characterSettingsConfiguration.ThornsDamage;
-        _characterStats.CooldownReduction = _characterSettingsConfiguration.CooldownReduction;
-        _characterStats.ProjectileCount = _characterSettingsConfiguration.ProjectileCount;
+        CharacterSettingsConfiguration settings = _characterConfiguration.CharacterSettings;
+
+        _characterStats.DamageInPercent = settings.DamageInPercent;
+        _characterStats.AttackSpeed = settings.AttackSpeed;
+        _characterStats.AbilityDuration = settings.AbilityDuration;
+        _characterStats.CritChance = settings.CritChance;
+        _characterStats.CritDamage = settings.CritDamage;
+        _characterStats.LifeSteal = settings.LifeSteal;
+        _characterStats.ThornsDamage = settings.ThornsDamage;
+        _characterStats.CooldownReduction = settings.CooldownReduction;
+        _characterStats.ProjectileCount = settings.ProjectileCount;
         
-        _characterStats.MaxHp = _characterSettingsConfiguration.MaxHp;
-        _characterStats.RegenHp = _characterSettingsConfiguration.RegenHp;
-        _characterStats.Shield = _characterSettingsConfiguration.Shield;
-        _characterStats.Armor = _characterSettingsConfiguration.Armor;
-        _characterStats.Evasion = _characterSettingsConfiguration.Evasion;
+        _characterStats.MaxHp = settings.MaxHp;
+        _characterStats.RegenHp = settings.RegenHp;
+        _characterStats.Shield = settings.Shield;
+        _characterStats.Armor = settings.Armor;
+        _characterStats.Evasion = settings.Evasion;
         
-        _characterStats.GainHp = _characterSettingsConfiguration.GainHp;
-        _characterStats.Luck = _characterSettingsConfiguration.Luck;
-        _characterStats.GainGold = _characterSettingsConfiguration.GainGold;
-        _characterStats.XPBonus = _characterSettingsConfiguration.XPBonus;
-        _characterStats.PickupRange = _characterSettingsConfiguration.PickupRange;
+        _characterStats.GainHp = settings.GainHp;
+        _characterStats.Luck = settings.Luck;
+        _characterStats.GainGold = settings.GainGold;
+        _characterStats.XPBonus = settings.XPBonus;
+        _characterStats.PickupRange = settings.PickupRange;
         
-        _characterStats.MovementSpeed = _characterSettingsConfiguration.MovementSpeed;
-        _characterStats.MovementAcceleration = _characterSettingsConfiguration.Acceleration;
-        _characterStats.JumpForce = _characterSettingsConfiguration.JumpForce;
-        _characterStats.JumpForwardImpulse = _characterSettingsConfiguration.JumpForwardImpulse;
-        _characterStats.JumpInertiaDuration = _characterSettingsConfiguration.JumpInertiaDuration;
-        _characterStats.JumpInertiaAirControl = _characterSettingsConfiguration.JumpInertiaAirControl;
-        _characterStats.RotationSpeed = _characterSettingsConfiguration.RotationSpeed;
-        _characterStats.GravityMultiplier = _characterSettingsConfiguration.GravityMultiplier;
-        _characterStats.GroundStickAcceleration = _characterSettingsConfiguration.GroundStickAcceleration;
-        _characterStats.CoyoteTime = _characterSettingsConfiguration.CoyoteTime;
-        _characterStats.BunnyHopResetDelay = _characterSettingsConfiguration.BunnyHopResetDelay;
-        _characterStats.BunnyHopSpeedBonusPerJump = _characterSettingsConfiguration.BunnyHopSpeedBonusPerJump;
-        _characterStats.MaxBunnyHopSpeedBonus = _characterSettingsConfiguration.MaxBunnyHopSpeedBonus;
-        _characterStats.BunnyHopCameraAlignment = _characterSettingsConfiguration.BunnyHopCameraAlignment;
+        _characterStats.MovementSpeed = settings.MovementSpeed;
+        _characterStats.MovementAcceleration = settings.Acceleration;
+        _characterStats.JumpForce = settings.JumpForce;
+        _characterStats.JumpForwardImpulse = settings.JumpForwardImpulse;
+        _characterStats.JumpInertiaDuration = settings.JumpInertiaDuration;
+        _characterStats.JumpInertiaAirControl = settings.JumpInertiaAirControl;
+        _characterStats.RotationSpeed = settings.RotationSpeed;
+        _characterStats.GravityMultiplier = settings.GravityMultiplier;
+        _characterStats.GroundStickAcceleration = settings.GroundStickAcceleration;
+        _characterStats.CoyoteTime = settings.CoyoteTime;
+        _characterStats.BunnyHopResetDelay = settings.BunnyHopResetDelay;
+        _characterStats.BunnyHopSpeedBonusPerJump = settings.BunnyHopSpeedBonusPerJump;
+        _characterStats.MaxBunnyHopSpeedBonus = settings.MaxBunnyHopSpeedBonus;
+        _characterStats.BunnyHopCameraAlignment = settings.BunnyHopCameraAlignment;
         _characterStats.BunnyHopCameraTurnSlowdownSpeed =
-            _characterSettingsConfiguration.BunnyHopCameraTurnSlowdownSpeed;
+            settings.BunnyHopCameraTurnSlowdownSpeed;
         _characterStats.BunnyHopCameraTurnSlowdownStrength =
-            _characterSettingsConfiguration.BunnyHopCameraTurnSlowdownStrength;
-        _characterStats.DefaultAirAcceleration = _characterSettingsConfiguration.DefaultAirAcceleration;
-        _characterStats.AirTurnSpeed = _characterSettingsConfiguration.AirTurnSpeed;
-        _characterStats.DefaultAirDeceleration = _characterSettingsConfiguration.DefaultAirDeceleration;
-        _characterStats.LandingSlideDuration = _characterSettingsConfiguration.LandingSlideDuration;
-        _characterStats.LandingSlideDeceleration = _characterSettingsConfiguration.LandingSlideDeceleration;
-        _characterStats.LandingSlideSpeedMultiplier = _characterSettingsConfiguration.LandingSlideSpeedMultiplier;
-        _characterStats.LandingSlideInputCarry = _characterSettingsConfiguration.LandingSlideInputCarry;
+            settings.BunnyHopCameraTurnSlowdownStrength;
+        _characterStats.DefaultAirAcceleration = settings.DefaultAirAcceleration;
+        _characterStats.AirTurnSpeed = settings.AirTurnSpeed;
+        _characterStats.DefaultAirDeceleration = settings.DefaultAirDeceleration;
+        _characterStats.LandingSlideDuration = settings.LandingSlideDuration;
+        _characterStats.LandingSlideDeceleration = settings.LandingSlideDeceleration;
+        _characterStats.LandingSlideSpeedMultiplier = settings.LandingSlideSpeedMultiplier;
+        _characterStats.LandingSlideInputCarry = settings.LandingSlideInputCarry;
 
         _statModifierLayer.Reset();
     }

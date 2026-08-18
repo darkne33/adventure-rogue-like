@@ -12,12 +12,12 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
     private readonly IPanelService _panelService;
     private readonly CharacterStats _characterStats;
     private readonly PauseEntityDistributor _pauseEntityDistributor;
-    private readonly CharacterSettingsConfiguration _characterSettingsConfiguration;
+    private readonly CharacterConfiguration _characterConfiguration;
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
 
     public CharacterSystemsFactory(CharacterCameraSettingsConfiguration cameraSettings, ICameraService cameraService,
         IPanelService panelService, CharacterStats characterStats, PauseEntityDistributor pauseEntityDistributor,
-        CharacterSettingsConfiguration characterSettingsConfiguration,
+        CharacterConfiguration characterConfiguration,
         ISceneService<RogueLikeSceneProvider> sceneService)
     {
         _cameraSettings = cameraSettings;
@@ -25,7 +25,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         _panelService = panelService;
         _characterStats = characterStats;
         _pauseEntityDistributor = pauseEntityDistributor;
-        _characterSettingsConfiguration = characterSettingsConfiguration;
+        _characterConfiguration = characterConfiguration;
         _sceneService = sceneService;
     }
 
@@ -60,8 +60,9 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         var healthSystem = new HealthSystem(_characterStats.MaxHp,
             new IHealthView[] { characterPanel.CharacterHealthView, worldHealthView, lowHealthVignetteView },
             deathSystem);
-        var shieldSystem = new ShieldSystem(_characterSettingsConfiguration.ShieldRegenerationDelay,
-            _characterSettingsConfiguration.ShieldRegenerationPerSecond, characterPanel.CharacterShieldView);
+        CharacterSettingsConfiguration settings = _characterConfiguration.CharacterSettings;
+        var shieldSystem = new ShieldSystem(settings.ShieldRegenerationDelay,
+            settings.ShieldRegenerationPerSecond, characterPanel.CharacterShieldView);
 
         facade.Construct(rigidbody, collider, _characterStats, pauseEntity, healthSystem, shieldSystem, abilitySystem,
             animationSystem, moveSystem, cameraSystem, damageEffectSystem, damageView);

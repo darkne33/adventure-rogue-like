@@ -18,6 +18,7 @@ namespace Core
         private readonly ICameraService _cameraService;
         private readonly IAbilityChoiceProvider _abilityChoiceProvider;
         private readonly CharacterStats _characterStats;
+        private readonly CharacterConfiguration _characterConfiguration;
         private readonly MinimapController _minimapController;
         private readonly RelicChestSpawner _relicChestSpawner;
         private readonly RelicEventBus _relicEventBus;
@@ -29,7 +30,7 @@ namespace Core
             IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IAbilityChoiceProvider abilityChoiceProvider,
             ICameraService cameraService, IUpgradeOfferHandler upgradeOfferHandler, CharacterStats characterStats,
             MinimapController minimapController, RelicChestSpawner relicChestSpawner, RelicEventBus relicEventBus,
-            UpgradeBuildService upgradeBuildService)
+            UpgradeBuildService upgradeBuildService, CharacterConfiguration characterConfiguration)
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
@@ -40,6 +41,7 @@ namespace Core
             _abilityChoiceProvider = abilityChoiceProvider;
             _cameraService = cameraService;
             _characterStats = characterStats;
+            _characterConfiguration = characterConfiguration;
             _minimapController = minimapController;
             _relicChestSpawner = relicChestSpawner;
             _relicEventBus = relicEventBus;
@@ -89,7 +91,14 @@ namespace Core
             _relicEventBus.PublishRoomStarted(new RelicRoomEvent(startRoomData, currentLevel.StartRoom,
                 _characterProvider.CharacterFacade.transform.position));
 
-            CharacterAbility startingAbility = _abilityChoiceProvider.GetAbility(AbilityName.RabbitBoomerang);
+            CharacterAbility startingAbility = _abilityChoiceProvider.GetAbility(
+                _characterConfiguration.GetConfiguredSelectedCharacter().StartingAbility);
+            if (startingAbility == null)
+            {
+                throw new System.InvalidOperationException(
+                    "The selected character's starting ability is missing from AllAbilitiesConfiguration.");
+            }
+
             _characterProvider.CharacterFacade.CharacterAbilitySystem.AddAbility(startingAbility, _characterStats);
             _upgradeBuildService.RecordAppliedSelection(startingAbility);
 

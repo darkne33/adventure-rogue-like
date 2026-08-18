@@ -43,6 +43,10 @@ public class RewardRoomData : RoomData
 {
     [field: SerializeField, Min(1)] public int MinChests { get; private set; } = 1;
     [field: SerializeField, Min(1)] public int MaxChests { get; private set; } = 2;
+    [field: SerializeField]
+    [field: Tooltip("Element 0 contains points for one chest, element 1 for two chests, and so on.")]
+    public RewardChestSpawnPoints[] ChestSpawnPointsByCount { get; private set; } =
+        Array.Empty<RewardChestSpawnPoints>();
 
     public bool IsCompleted { get; private set; }
 
@@ -53,11 +57,31 @@ public class RewardRoomData : RoomData
         return UnityEngine.Random.Range(min, max + 1);
     }
 
+    public Transform GetChestSpawnPoint(int chestCount, int chestIndex)
+    {
+        int pointsIndex = chestCount - 1;
+        if (pointsIndex < 0 || ChestSpawnPointsByCount == null ||
+            pointsIndex >= ChestSpawnPointsByCount.Length)
+            return null;
+
+        RewardChestSpawnPoints spawnPoints = ChestSpawnPointsByCount[pointsIndex];
+        if (spawnPoints?.Points == null || chestIndex < 0 || chestIndex >= spawnPoints.Points.Length)
+            return null;
+
+        return spawnPoints.Points[chestIndex];
+    }
+
     public void MarkCompleted() =>
         IsCompleted = true;
 
     public void ResetProgress() =>
         IsCompleted = false;
+}
+
+[Serializable]
+public sealed class RewardChestSpawnPoints
+{
+    [field: SerializeField] public Transform[] Points { get; private set; } = Array.Empty<Transform>();
 }
 
 [Serializable]

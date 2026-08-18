@@ -78,7 +78,8 @@ namespace Features.Relics.Scripts
                     if (remainingChestRewards <= 0)
                         return;
 
-                    if (SpawnChest(room, roomData))
+                    Transform spawnPoint = roomData.GetChestSpawnPoint(chestCount, chestIndex);
+                    if (SpawnChest(room, roomData, spawnPoint))
                         remainingChestRewards--;
                 }
             }
@@ -95,9 +96,14 @@ namespace Features.Relics.Scripts
                 .ToList();
         }
 
-        private bool SpawnChest(Room room, RoomData roomData)
+        private bool SpawnChest(Room room, RoomData roomData, Transform spawnPoint)
         {
-            if (TryGetGroundPoint(room, out Vector3 groundPoint) == false)
+            Vector3 groundPoint;
+            if (spawnPoint != null)
+            {
+                groundPoint = spawnPoint.position;
+            }
+            else if (TryGetGroundPoint(room, out groundPoint) == false)
             {
                 Debug.LogWarning($"Could not find grounded spawn position for relic chest in {room.name}.");
                 return false;

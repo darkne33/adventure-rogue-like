@@ -11,11 +11,32 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7ce74999f59545d5b881a1e76da2ffae, type: 3}
   m_Name: PlayerConfiguration
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerConfiguration
-  <CharacterContainer>k__BackingField:
-    _assetReference:
-      m_AssetGUID: b01ae7b714362ad45b3aa623d5bf15b3
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterConfiguration
+  _characters:
+  - _id: rabbit
+    _displayName: RABBIT
+    _description: Quick and nimble. Rabbit controls the fight with a returning boomerang and superior movement.
+    _portrait: {fileID: 0}
+    _characterContainer:
+      _assetReference:
+        m_AssetGUID: 64de7549990d3a34ca5522bee0f91730
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_SubObjectGUID: 
+        m_EditorAssetChanged: 0
+    _characterSettings: {fileID: 11400000, guid: 6f79d5b17e1a45b1a6b9eb4b73f38d57, type: 2}
+    _startingAbility: 1
+  - _id: duke
+    _displayName: DUKE
+    _description: Tough and deliberate. Duke trades speed for durability, raw damage, and a direct fireball attack.
+    _portrait: {fileID: 0}
+    _characterContainer:
+      _assetReference:
+        m_AssetGUID: b01ae7b714362ad45b3aa623d5bf15b3
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_SubObjectGUID: 
+        m_EditorAssetChanged: 0
+    _characterSettings: {fileID: 11400000, guid: 8131cc83f4eedc24b83896f3fecfe4f7, type: 2}
+    _startingAbility: 0
+  _defaultCharacterIndex: 0
