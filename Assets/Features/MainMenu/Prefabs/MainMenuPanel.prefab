@@ -1872,7 +1872,7 @@ RectTransform:
   m_Children:
   - {fileID: 3271892205744799675}
   - {fileID: 5148812109941874415}
-  - {fileID: 6380000000000000001}
+  - {fileID: 6380000000000100001}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1922,38 +1922,9 @@ MonoBehaviour:
   <QuestsButton>k__BackingField: {fileID: 8599005399601002561}
   <UnlocksButton>k__BackingField: {fileID: 4406662540890842708}
   <SettingsButton>k__BackingField: {fileID: 7060385293110496800}
-  <CharacterSelection>k__BackingField: {fileID: 6380000000000000002}
+  <CharacterSelection>k__BackingField: {fileID: 6380000000000100004}
   _leaderboardPrefab: {fileID: 900100000000000001, guid: b4e3896e65ce4d80a2d4eaa8930db93a, type: 3}
   _characterConfiguration: {fileID: 11400000, guid: be05ce8837771144c9ba7e96c1ee06de, type: 2}
---- !u!1001 &6380000000000000000
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 4147265663433041483}
-    m_Modifications: []
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 9af82d5be31e4ab38a4e12f73ee9c0a1, type: 3}
---- !u!224 &6380000000000000001 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 100001, guid: 9af82d5be31e4ab38a4e12f73ee9c0a1, type: 3}
-  m_PrefabInstance: {fileID: 6380000000000000000}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &6380000000000000002 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 100004, guid: 9af82d5be31e4ab38a4e12f73ee9c0a1, type: 3}
-  m_PrefabInstance: {fileID: 6380000000000000000}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3ac9e602472f46f0a4415533761f9fd9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectionView
 --- !u!114 &4899535573512295474
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2328,3 +2299,36 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1001 &6380000000000000000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4147265663433041483}
+    m_Modifications:
+    - target: {fileID: 100000, guid: 9af82d5be31e4ab38a4e12f73ee9c0a1, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 9af82d5be31e4ab38a4e12f73ee9c0a1, type: 3}
+--- !u!224 &6380000000000100001 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: 9af82d5be31e4ab38a4e12f73ee9c0a1, type: 3}
+  m_PrefabInstance: {fileID: 6380000000000000000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6380000000000100004 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100004, guid: 9af82d5be31e4ab38a4e12f73ee9c0a1, type: 3}
+  m_PrefabInstance: {fileID: 6380000000000000000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ac9e602472f46f0a4415533761f9fd9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectionView

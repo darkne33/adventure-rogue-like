@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -8,15 +9,21 @@ using UnityEngine.UI;
 
 public sealed class CharacterSelectionView : MonoBehaviour
 {
+    private const int CarouselCenterSlotIndex = 2;
+    private const int CarouselSlotCount = 5;
+
     [Header("Roster")]
     [SerializeField] private Sprite _portraitPlaceholder;
-    [SerializeField] private HorizontalLayoutGroup _portraitLayout;
+    [SerializeField] private RectTransform _portraitStrip;
     [SerializeField] private CharacterPortraitSlotView[] _portraitSlots;
+
+    [Header("Carousel")]
+    [SerializeField] private float _carouselSpacing = 240f;
+    [SerializeField] private float _carouselDuration = 0.22f;
 
     [Header("Character")]
     [SerializeField] private Image _selectedPortrait;
     [SerializeField] private TMP_Text _characterName;
-    [SerializeField] private TMP_Text _characterCounter;
     [SerializeField] private TMP_Text _description;
 
     [Header("Stats")]
@@ -34,8 +41,10 @@ public sealed class CharacterSelectionView : MonoBehaviour
     private IReadOnlyList<CharacterDefinition> _characters;
     private int _selectedIndex;
     private bool _isInteractable;
+    private bool _isAnimating;
+    private Sequence _carouselTween;
 
-    public event Action<int> SelectionRequested;
+    public event Action<int, int> SelectionRequested;
     public event Action StartRequested;
     public event Action BackRequested;
 
@@ -44,8 +53,9 @@ public sealed class CharacterSelectionView : MonoBehaviour
         if (characters == null || characters.Count == 0)
             throw new InvalidOperationException("Character selection requires at least one configured character.");
 
-        if (_portraitSlots == null || _portraitSlots.Length == 0)
-            throw new InvalidOperationException("Character selection prefab does not contain portrait slots.");
+        if (_portraitSlots == null || _portraitSlots.Length < CarouselSlotCount)
+            throw new InvalidOperationException(
+                $"Character selection prefab requires at least {CarouselSlotCount} carousel slots.");
 
         _characters = characters;
         gameObject.SetActive(true);
@@ -54,14 +64,31 @@ public sealed class CharacterSelectionView : MonoBehaviour
         FocusStart();
     }
 
-    public void Hide() =>
+    public void Hide()
+    {
+        StopCarouselAnimation();
         gameObject.SetActive(false);
+    }
 
-    public void SetSelectedIndex(int index)
+    public void SetSelectedIndex(int index, int direction = 0)
     {
         if (_characters == null || _characters.Count == 0)
             return;
 
+        int targetIndex = WrapIndex(index);
+        if (direction == 0 || !gameObject.activeInHierarchy || targetIndex == _selectedIndex)
+        {
+            _selectedIndex = targetIndex;
+            RefreshPortraitSlots();
+            RefreshCharacterDetails();
+            return;
+        }
+
+        AnimateCarousel(targetIndex, ResolveTransitionDirection(targetIndex, direction));
+    }
+
+    private void ApplySelectedIndexImmediately(int index)
+    {
         _selectedIndex = WrapIndex(index);
         RefreshPortraitSlots();
         RefreshCharacterDetails();
@@ -70,14 +97,21 @@ public sealed class CharacterSelectionView : MonoBehaviour
     public void SetInteractable(bool interactable)
     {
         _isInteractable = interactable;
-        _previousButton.interactable = interactable;
-        _nextButton.interactable = interactable;
-        _startButton.interactable = interactable &&
-            _characters is { Count: > 0 } && _characters[_selectedIndex].IsConfigured;
+        ApplyInteractableState();
+    }
+
+    private void ApplyInteractableState()
+    {
+        bool interactable = _isInteractable;
+        bool canChangeCharacter = interactable && _characters is { Count: > 1 };
+        _previousButton.interactable = canChangeCharacter;
+        _nextButton.interactable = canChangeCharacter;
+        _startButton.interactable = interactable && _characters is { Count: > 0 } &&
+            _characters[_selectedIndex].IsConfigured;
         _backButton.interactable = interactable;
 
         foreach (CharacterPortraitSlotView slot in _portraitSlots)
-            slot.SetInteractable(interactable);
+            slot.SetInteractable(interactable && slot.IsVisible);
     }
 
     public void HandleMove(AxisEventData eventData)
@@ -115,39 +149,69 @@ public sealed class CharacterSelectionView : MonoBehaviour
     public void RequestNextCharacter() =>
         RequestRelativeSelection(1);
 
-    public void RequestStart() =>
+    public void RequestStart()
+    {
+        if (!_isInteractable || _isAnimating)
+            return;
+
         StartRequested?.Invoke();
+    }
 
-    public void RequestBack() =>
+    public void RequestBack()
+    {
+        if (!_isInteractable || _isAnimating)
+            return;
+
         BackRequested?.Invoke();
+    }
 
-    internal void RequestSelectionFromSlot(int index) =>
-        RequestSelection(index);
+    internal void RequestSelectionFromSlot(int index, int relativeDirection) =>
+        RequestSelection(index, relativeDirection);
 
     private void RefreshPortraitSlots()
     {
-        int visibleCount = Mathf.Min(_portraitSlots.Length, _characters.Count);
-        int firstCharacterIndex = _characters.Count <= _portraitSlots.Length
-            ? 0
-            : Mathf.Clamp(_selectedIndex - _portraitSlots.Length / 2,
-                0, _characters.Count - _portraitSlots.Length);
-        float availableWidth = 1100f - _portraitLayout.spacing * Mathf.Max(0, visibleCount - 1);
-        float slotWidth = Mathf.Clamp(availableWidth / visibleCount, 84f, 190f);
-
         for (int slotIndex = 0; slotIndex < _portraitSlots.Length; slotIndex++)
         {
             CharacterPortraitSlotView slot = _portraitSlots[slotIndex];
-            if (slotIndex >= visibleCount)
+            if (slotIndex >= CarouselSlotCount)
             {
                 slot.Clear();
                 continue;
             }
 
-            int characterIndex = firstCharacterIndex + slotIndex;
-            slot.Bind(characterIndex, _characters[characterIndex], _portraitPlaceholder, slotWidth);
-            slot.SetSelected(characterIndex == _selectedIndex);
-            slot.SetInteractable(_isInteractable);
+            int relativeDirection = slotIndex - CarouselCenterSlotIndex;
+            int characterIndex = GetCharacterIndexForRole(relativeDirection);
+            if (characterIndex < 0)
+            {
+                slot.Clear();
+                continue;
+            }
+
+            slot.Bind(characterIndex, relativeDirection, _characters[characterIndex],
+                _portraitPlaceholder);
+            slot.RectTransform.anchoredPosition =
+                new Vector2(relativeDirection * _carouselSpacing, 0f);
+            slot.SetSelected(relativeDirection == 0, false);
+            slot.SetInteractable(_isInteractable && !_isAnimating);
         }
+    }
+
+    private int GetCharacterIndexForRole(int relativeDirection)
+    {
+        if (_characters.Count == 1)
+            return relativeDirection == 0 ? _selectedIndex : -1;
+
+        if (_characters.Count == 2)
+        {
+            if (relativeDirection == 0)
+                return _selectedIndex;
+
+            int otherCharacterIndex = _selectedIndex == 0 ? 1 : 0;
+            int otherCharacterSide = _selectedIndex == 0 ? 1 : -1;
+            return relativeDirection == otherCharacterSide ? otherCharacterIndex : -1;
+        }
+
+        return WrapIndex(_selectedIndex + relativeDirection);
     }
 
     private void RefreshCharacterDetails()
@@ -158,7 +222,6 @@ public sealed class CharacterSelectionView : MonoBehaviour
         _selectedPortrait.sprite = portrait;
         _selectedPortrait.enabled = portrait != null;
         _characterName.text = character.DisplayName.ToUpperInvariant();
-        _characterCounter.text = $"{_selectedIndex + 1} / {_characters.Count}";
         _description.text = !character.IsConfigured
             ? character.ConfigurationError.ToUpperInvariant()
             : string.IsNullOrWhiteSpace(character.Description)
@@ -185,16 +248,81 @@ public sealed class CharacterSelectionView : MonoBehaviour
 
     private void RequestRelativeSelection(int direction)
     {
-        if (_characters == null || _characters.Count == 0)
+        if (!_isInteractable || _isAnimating || _characters == null || _characters.Count < 2)
             return;
 
-        RequestSelection(_selectedIndex + direction);
+        RequestSelection(_selectedIndex + direction, direction);
     }
 
-    private void RequestSelection(int index)
+    private void RequestSelection(int index, int direction)
     {
+        if (!_isInteractable || _isAnimating || _characters == null || _characters.Count < 2)
+            return;
+
         int wrappedIndex = WrapIndex(index);
-        SelectionRequested?.Invoke(wrappedIndex);
+        if (wrappedIndex == _selectedIndex)
+            return;
+
+        SelectionRequested?.Invoke(wrappedIndex, direction);
+    }
+
+    private int ResolveTransitionDirection(int targetIndex, int requestedDirection)
+    {
+        if (_characters.Count == 2)
+            return _selectedIndex == 0 && targetIndex == 1 ? 1 : -1;
+
+        return requestedDirection < 0 ? -1 : 1;
+    }
+
+    private void AnimateCarousel(int targetIndex, int direction)
+    {
+        if (_isAnimating)
+            return;
+
+        _isAnimating = true;
+        ApplyInteractableState();
+
+        int incomingSlotIndex = CarouselCenterSlotIndex + direction;
+        for (int slotIndex = 0; slotIndex < CarouselSlotCount; slotIndex++)
+        {
+            CharacterPortraitSlotView slot = _portraitSlots[slotIndex];
+            if (slot.IsVisible)
+                slot.SetSelected(slotIndex == incomingSlotIndex, true);
+        }
+
+        _carouselTween = DOTween.Sequence()
+            .SetUpdate(true)
+            .SetLink(gameObject);
+
+        for (int slotIndex = 0; slotIndex < CarouselSlotCount; slotIndex++)
+        {
+            CharacterPortraitSlotView slot = _portraitSlots[slotIndex];
+            if (!slot.IsVisible)
+                continue;
+
+            float targetPosition = slot.RectTransform.anchoredPosition.x -
+                direction * _carouselSpacing;
+            _carouselTween.Join(slot.RectTransform.DOAnchorPosX(targetPosition, _carouselDuration)
+                .SetEase(Ease.OutCubic));
+        }
+
+        _carouselTween.OnComplete(() =>
+        {
+            _carouselTween = null;
+            _isAnimating = false;
+            ApplySelectedIndexImmediately(targetIndex);
+            ApplyInteractableState();
+        });
+    }
+
+    private void StopCarouselAnimation()
+    {
+        _carouselTween?.Kill();
+        _carouselTween = null;
+        _isAnimating = false;
+
+        if (_characters is { Count: > 0 })
+            RefreshPortraitSlots();
     }
 
     private void FocusStart()
@@ -224,5 +352,12 @@ public sealed class CharacterSelectionView : MonoBehaviour
     {
         string prefix = value > 0f ? "+" : string.Empty;
         return $"{prefix}{FormatNumber(value)}%";
+    }
+
+    private void OnDisable()
+    {
+        _carouselTween?.Kill();
+        _carouselTween = null;
+        _isAnimating = false;
     }
 }

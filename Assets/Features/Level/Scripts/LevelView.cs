@@ -558,7 +558,7 @@ public class LevelView : MonoBehaviour
             ToWorldPosition(gridPosition), Quaternion.identity);
     }
 
-    private void OnDrawGizmosSelected()
+    private void OnDrawGizmos()
     {
         Matrix4x4 previousMatrix = Gizmos.matrix;
         Color previousColor = Gizmos.color;

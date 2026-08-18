@@ -105,10 +105,10 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
             _characterConfiguration.SelectedCharacterIndex);
     }
 
-    private void SelectCharacter(int index)
+    private void SelectCharacter(int index, int direction)
     {
         _characterConfiguration.SelectCharacter(index);
-        _characterSelectionView.SetSelectedIndex(index);
+        _characterSelectionView.SetSelectedIndex(index, direction);
     }
 
     private void ReturnToMainMenu()
