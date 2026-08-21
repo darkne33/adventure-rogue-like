@@ -7,6 +7,8 @@ namespace LittleRush.Rendering
 {
     public sealed class HeightFogRendererFeature : ScriptableRendererFeature
     {
+        private static bool renderingEnabled = true;
+
         [SerializeField]
         private Material material;
 
@@ -14,6 +16,9 @@ namespace LittleRush.Rendering
         private RenderPassEvent injectionPoint = RenderPassEvent.BeforeRenderingTransparents;
 
         private HeightFogPass heightFogPass;
+
+        public static void SetRenderingEnabled(bool enabled) =>
+            renderingEnabled = enabled;
 
         public override void Create()
         {
@@ -27,7 +32,7 @@ namespace LittleRush.Rendering
             ScriptableRenderer renderer,
             ref RenderingData renderingData)
         {
-            if (material == null || heightFogPass == null)
+            if (!renderingEnabled || material == null || heightFogPass == null)
                 return;
 
             var cameraData = renderingData.cameraData;

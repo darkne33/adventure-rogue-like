@@ -3,6 +3,7 @@ using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
 using Features.Enemies.Scripts.Level.Scripts;
 using Infrastructure.SceneProvider;
+using LittleRush.Rendering;
 using UI;
 using Zenject;
 using Log = Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Core.Log;
@@ -19,6 +20,8 @@ namespace Core
 
         public override async UniTask Enter(CancellationToken cts)
         {
+            HeightFogRendererFeature.SetRenderingEnabled(false);
+
             await _sceneLoader.LoadSceneFromAddressable(SceneNames.GameScene);
             _sceneLoader.UnloadBootstrapScene();
 
@@ -60,6 +63,7 @@ namespace Core
                         await _panelService.HidePanelForce(PanelName.MainMenuPanel);
                         isPanelOpen = false;
 
+                        HeightFogRendererFeature.SetRenderingEnabled(true);
                         await rogueLikeStateMachine.EnterState<RogueLikePrepareStatsState>();
                     },
                     _cursorService.ShowGameplayCursor);

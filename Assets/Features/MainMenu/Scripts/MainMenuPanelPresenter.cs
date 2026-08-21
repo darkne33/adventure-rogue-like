@@ -25,7 +25,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
     {
         _playRequested = false;
         _isCharacterSelectionOpen = false;
-        _leaderboardView = Panel.EnsureLeaderboardView();
+        _leaderboardView = Panel.Leaderboard;
         _characterSelectionView = Panel.CharacterSelection;
         _characterConfiguration = Panel.CharacterConfiguration;
 
