@@ -56,6 +56,7 @@ namespace Core.Installer
             Container.Bind<ITimeScaleService>().To<TimeScaleService>().AsSingle();
             Container.Bind<IPauseService>().To<PauseService>().AsSingle();
             Container.Bind<PauseEntityDistributor>().AsSingle();
+            Container.Bind<RunRestartService>().AsSingle();
         }
     }
 }

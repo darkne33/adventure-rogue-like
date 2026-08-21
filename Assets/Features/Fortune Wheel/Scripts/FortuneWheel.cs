@@ -44,6 +44,7 @@ namespace Features.FortuneWheel
         [Inject] private RelicManager _relicManager;
         [Inject] private RelicEventBus _relicEventBus;
         [Inject] private RelicChestConfiguration _relicChestConfiguration;
+        [Inject] private ITimeScaleService _timeScaleService;
 
         [SerializeField] private RelicChestInteractionView _interactionView = new();
 
@@ -175,7 +176,8 @@ namespace Features.FortuneWheel
 
         private bool CanInteract()
         {
-            if (_isSpinning || _spinRoot == null || HasAvailableRewards() == false ||
+            if (_timeScaleService.IsPaused || _isSpinning || _spinRoot == null ||
+                HasAvailableRewards() == false ||
                 _characterProvider?.CharacterFacade == null)
                 return false;
 

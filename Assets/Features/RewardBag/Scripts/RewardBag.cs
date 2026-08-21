@@ -22,6 +22,7 @@ namespace Features.RewardBag
         [Inject] private HeartDropper _heartDropper;
         [Inject] private CharacterStats _characterStats;
         [Inject] private LevelsConfiguration _levelsConfiguration;
+        [Inject] private ITimeScaleService _timeScaleService;
 
         [SerializeField] private RelicChestInteractionView _interactionView = new();
         [SerializeField] private GameObject _silverRewardPrefab;
@@ -91,8 +92,8 @@ namespace Features.RewardBag
 
         private bool CanInteract()
         {
-            if (_isReady == false || _isOpened || _characterProvider?.CharacterFacade == null ||
-                _characterWallet == null)
+            if (_timeScaleService.IsPaused || _isReady == false || _isOpened ||
+                _characterProvider?.CharacterFacade == null || _characterWallet == null)
                 return false;
 
             return Vector3.Distance(transform.position,

@@ -43,6 +43,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         BindExpDropper();
         BindHeartDropper();
         BindRelics();
+        BindPauseMenu();
         BindDebugMode();
     }
 
@@ -164,6 +165,9 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.BindInterfacesAndSelfTo<RelicInventoryViewService>().AsSingle();
         Container.BindInterfacesAndSelfTo<RelicDescriptionHandler>().AsSingle().NonLazy();
     }
+
+    private void BindPauseMenu() =>
+        Container.BindInterfacesAndSelfTo<PauseMenuController>().AsSingle().NonLazy();
 
     private void BindDebugMode() =>
         Container.BindInterfacesAndSelfTo<GameDebugService>().AsSingle().NonLazy();

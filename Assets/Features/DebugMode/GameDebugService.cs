@@ -7,7 +7,6 @@ using Features.Relics.Scripts;
 using IngameDebugConsole;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 using Zenject;
 
 public sealed class GameDebugService : IInitializable, ITickable, IDisposable
@@ -30,23 +29,24 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
     private readonly EnemyRoomObserver _enemyRoomObserver;
     private readonly IRogueLikeRuntimeDataService _runtimeDataService;
     private readonly IGameModeService _gameModeService;
-    private readonly ISceneLoader _sceneLoader;
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
     private readonly IRoomTransitionService _roomTransitionService;
+    private readonly RunRestartService _runRestartService;
     private readonly IPauseService _pauseService;
+    private readonly ITimeScaleService _timeScaleService;
     private readonly RelicManager _relicManager;
     private readonly RelicPool _relicPool;
     private readonly CharacterWallet _characterWallet;
 
     private bool _commandsRegistered;
-    private bool _isRestartingGame;
 
     public GameDebugService(ICharacterLevelService characterLevelService,
         CharacterExpConfig characterExpConfig, IEnemiesProvider enemiesProvider,
         EnemyRoomObserver enemyRoomObserver, IRogueLikeRuntimeDataService runtimeDataService,
-        IGameModeService gameModeService, ISceneLoader sceneLoader,
+        IGameModeService gameModeService,
         ISceneService<RogueLikeSceneProvider> sceneService,
         IRoomTransitionService roomTransitionService, IPauseService pauseService,
+        ITimeScaleService timeScaleService, RunRestartService runRestartService,
         RelicManager relicManager, RelicPool relicPool, CharacterWallet characterWallet)
     {
         _characterLevelService = characterLevelService;
@@ -55,10 +55,11 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         _enemyRoomObserver = enemyRoomObserver;
         _runtimeDataService = runtimeDataService;
         _gameModeService = gameModeService;
-        _sceneLoader = sceneLoader;
         _sceneService = sceneService;
         _roomTransitionService = roomTransitionService;
+        _runRestartService = runRestartService;
         _pauseService = pauseService;
+        _timeScaleService = timeScaleService;
         _relicManager = relicManager;
         _relicPool = relicPool;
         _characterWallet = characterWallet;
@@ -182,13 +183,15 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
 
     private string RestartGame()
     {
-        if (_isRestartingGame)
+        if (_runRestartService.IsRestarting)
             return "Game restart is already in progress.";
+
+        if (_timeScaleService.IsPaused)
+            return "Resume the game before restarting it from the debug console.";
 
         if (_roomTransitionService.IsPlaying)
             return "Wait until the room transition is complete.";
 
-        _isRestartingGame = true;
         RestartGameAsync().Forget();
         return "Game restart scheduled.";
     }
@@ -239,8 +242,11 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
 
     private string ValidateRoomCommand(bool requireEnemies)
     {
-        if (_isRestartingGame)
+        if (_runRestartService.IsRestarting)
             return "Game restart is in progress.";
+
+        if (_timeScaleService.IsPaused)
+            return "Resume the game before running a room command.";
 
         if (_roomTransitionService.IsPlaying)
             return "Wait until the room transition is complete.";
@@ -259,41 +265,8 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
 
     private async UniTask RestartGameAsync()
     {
-        try
-        {
-            string sceneName = _sceneService.GameSceneComponentsService.gameObject.scene.name;
-            _pauseService.CancelPause();
-            _characterLevelService.Reset();
-            _gameModeService.Remove<RogueLikeStateMachine>();
-
-            if (_sceneLoader.HasActiveScene(sceneName))
-            {
-                await _sceneLoader.UnloadScene(sceneName);
-                await _sceneLoader.LoadSceneFromAddressable(sceneName);
-            }
-            else
-            {
-                await SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single).ToUniTask();
-            }
-
-            RogueLikeSceneProvider sceneProvider =
-                _sceneLoader.GetGameSceneComponentsProvider<RogueLikeSceneProvider>(sceneName);
-            if (sceneProvider == null)
-                throw new InvalidOperationException(
-                    $"Scene {sceneName} does not contain {nameof(RogueLikeSceneProvider)}.");
-
-            SceneContext sceneContext = sceneProvider.GetSceneContext();
-            _gameModeService.Add<RogueLikeStateMachine>(sceneContext.Container);
-
-            sceneProvider.EnableScene();
-            await _gameModeService.Get<RogueLikeStateMachine>()
-                .EnterState<RogueLikePrepareStatsState>();
-        }
-        catch (Exception exception)
-        {
-            Debug.LogException(exception);
-            _isRestartingGame = false;
-        }
+        string sceneName = _sceneService.GameSceneComponentsService.gameObject.scene.name;
+        await _runRestartService.Restart(sceneName);
     }
 
     private static bool IsDebugModeAvailable()

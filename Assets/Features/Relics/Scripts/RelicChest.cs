@@ -11,6 +11,7 @@ namespace Features.Relics.Scripts
     public sealed class RelicChest : MonoBehaviour
     {
         [Inject] private RelicChestRollService _rollService;
+        [Inject] private ITimeScaleService _timeScaleService;
 
         [SerializeField] private RelicChestInteractionView _interactionView = new();
         [SerializeField] private RelicChestRollView _rollView = new();
@@ -84,7 +85,8 @@ namespace Features.Relics.Scripts
 
         private bool CanInteract()
         {
-            if (_isOpened || _configuration == null || _characterProvider?.CharacterFacade == null)
+            if (_timeScaleService.IsPaused || _isOpened || _configuration == null ||
+                _characterProvider?.CharacterFacade == null)
                 return false;
 
             CharacterFacade character = _characterProvider.CharacterFacade;

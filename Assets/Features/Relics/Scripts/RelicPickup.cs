@@ -16,6 +16,7 @@ namespace Features.Relics.Scripts
 
         [Inject] private ICameraService _cameraService;
         [Inject] private CharacterStats _characterStats;
+        [Inject] private ITimeScaleService _timeScaleService;
 
         [SerializeField] private ParticleSystem[] _treasureCircleRaysParticles;
 
@@ -114,7 +115,8 @@ namespace Features.Relics.Scripts
 
         private void Update()
         {
-            if (_isPicked || _configuration == null || _characterProvider?.CharacterFacade == null)
+            if (_timeScaleService.IsPaused || _isPicked || _configuration == null ||
+                _characterProvider?.CharacterFacade == null)
                 return;
 
             Transform character = _characterProvider.CharacterFacade.transform;

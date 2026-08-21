@@ -1,5 +1,20 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &7418034936127592842
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2aef8b3cc25e43bfbfe92ad141a21157, type: 3}
+  m_Name: Height Fog
+  m_EditorClassIdentifier: Assembly-CSharp::LittleRush.Rendering.HeightFogRendererFeature
+  m_Active: 1
+  material: {fileID: 2100000, guid: b742ea269db04ac8b0c324cdd4b7d6e1, type: 2}
+  injectionPoint: 450
 --- !u!114 &-8466990393036994979
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -53,7 +68,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: 5761865970047159037}
   - {fileID: -8466990393036994979}
-  m_RendererFeatureMap: fd8a12749242f64f5d8662fa18357f8a
+  - {fileID: 7418034936127592842}
+  m_RendererFeatureMap: fd8a12749242f64f5d8662fa18357f8a8a9952d37827f266
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   m_AssetVersion: 3
