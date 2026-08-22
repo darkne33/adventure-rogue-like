@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 100001}
   - component: {fileID: 100002}
   - component: {fileID: 100003}
-  - component: {fileID: 100004}
   - component: {fileID: 4420495858328661870}
   m_Layer: 5
   m_Name: MenuButton
@@ -105,23 +104,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &100004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 100000}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa745cae54a14f349a98ea4c746fcfea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UI.UIHoverScaler
-  _scaleTarget: {fileID: 100001}
-  _hoverScale: 1.035
-  _scaleDuration: 0.08
-  _ease: 6
-  _useUnscaledTime: 1
 --- !u!114 &4420495858328661870
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -135,9 +117,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.UIButtonJuice
   _scaleTarget: {fileID: 100001}
-  _hoverScale: 1.06
-  _pressedScale: 0.92
-  _pumpScale: 1.1
+  _hoverScale: 1.05
+  _pressedScale: 0.979
+  _pumpScale: 1
   _hoverDuration: 0.12
   _pressDuration: 0.08
   _pumpDuration: 0.2
@@ -312,7 +294,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 34
+  m_fontSize: 68
   m_fontSizeBase: 64
   m_fontWeight: 400
   m_enableAutoSizing: 1
