@@ -33,6 +33,8 @@ public sealed class BulletExplosionAbility : SingleShootAbility
     protected override int BaseProjectileCount =>
         Mathf.Max(1, BulletExplosionConfig.StartProjectileCount);
 
+    protected override bool StartCooldownImmediately => false;
+
     public override AbilityUpgradeType[] UpgradeTypes =>
         AbilityConfig != null && Cooldown <= MinimumCooldown + Mathf.Epsilon
             ? BulletExplosionUpgradeTypesAtMinimumCooldown
@@ -91,6 +93,9 @@ public sealed class BulletExplosionAbility : SingleShootAbility
 
         Stat_1 = Damage;
     }
+
+    protected override void OnProjectileLaunchCompleted() =>
+        StartCooldown();
 
     protected override int GetProjectileDamage(int projectileIndex, int projectileCount)
     {

@@ -89,6 +89,10 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     {
     }
 
+    protected virtual void OnProjectileLaunchCompleted()
+    {
+    }
+
     protected AbilityUpgradePreview GetAdditionalProjectileUpgradePreview(AbilityUpgradeEffect upgrade)
     {
         float projectileCount = GetCurrentProjectileCount();
@@ -194,7 +198,10 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         finally
         {
             if (launchSequence == _projectileLaunchSequence)
+            {
                 _isLaunchingProjectiles = false;
+                OnProjectileLaunchCompleted();
+            }
         }
     }
 

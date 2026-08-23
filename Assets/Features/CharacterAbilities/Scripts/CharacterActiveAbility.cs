@@ -17,6 +17,8 @@ public abstract class CharacterActiveAbility : CharacterAbility
     public float Stat_2 { get; protected set; }
     public string StatName_2 { get; protected set; }
 
+    protected virtual bool StartCooldownImmediately => true;
+
     public virtual bool CanUse(CharacterFacade character) =>
         CurrentCooldown <= 0f && IsReady(character);
 
@@ -29,6 +31,12 @@ public abstract class CharacterActiveAbility : CharacterAbility
 
         OnUse(character);
 
+        if (StartCooldownImmediately)
+            StartCooldown();
+    }
+
+    protected void StartCooldown()
+    {
         float attackSpeedMultiplier =
             1f + Mathf.Max(-90f, _characterStats?.AttackSpeed ?? 0f) * PERCENT_MULTIPLIER;
         float cooldownReductionMultiplier =
