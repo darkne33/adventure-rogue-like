@@ -7,7 +7,7 @@ using Zenject;
 
 public class LevelView : MonoBehaviour
 {
-    public const float RoomWorldSize = 160f;
+    public const float RoomWorldSize = 320f;
 
     [SerializeField] private LevelRoomNode[] _rooms;
 

@@ -9,7 +9,7 @@ public static class PrebuiltLevelsGenerator
 {
     private const int LevelsCount = 3;
     private const int RoomsPerLevel = 4;
-    private const float RoomSpacing = 160f;
+    private const float RoomSpacing = 320f;
     private const string LevelsRoot = "Assets/Features/Level";
     private const string BaseRoomPath =
         "Assets/Features/Level/Editor/Templates/DefaultRoomTemplate.prefab";
