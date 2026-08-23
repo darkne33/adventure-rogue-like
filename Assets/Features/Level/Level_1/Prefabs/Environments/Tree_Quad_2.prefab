@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2419698324527431010}
   - component: {fileID: 6598202450652307814}
   - component: {fileID: 8762108580389050468}
+  - component: {fileID: 1806172062279076810}
   m_Layer: 0
   m_Name: Tree_Quad_2
   m_TagString: Untagged
@@ -90,3 +91,20 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1806172062279076810
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1094290485010273805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371e1d08fa214e4fa132ebd20dcf3169, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ViewToCameraObject
+  _transformToRotate: {fileID: 2419698324527431010}
+  _targetSource: 0
+  _customTarget: {fileID: 0}
+  _faceAwayFromTarget: 1
+  _rotationOffset: {x: 0, y: 0, z: 0}

@@ -349,6 +349,7 @@ GameObject:
   - component: {fileID: 7295583861066422398}
   - component: {fileID: 4698695082712709878}
   - component: {fileID: 7864151193294084650}
+  - component: {fileID: 5944273679145097952}
   m_Layer: 0
   m_Name: Tree_Quad_3
   m_TagString: Untagged
@@ -428,6 +429,23 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &5944273679145097952
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2138629984679229399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371e1d08fa214e4fa132ebd20dcf3169, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ViewToCameraObject
+  _transformToRotate: {fileID: 7295583861066422398}
+  _targetSource: 0
+  _customTarget: {fileID: 0}
+  _faceAwayFromTarget: 1
+  _rotationOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &2383873910678023602
 GameObject:
   m_ObjectHideFlags: 0
@@ -1849,6 +1867,7 @@ GameObject:
   - component: {fileID: 64549843505046991}
   - component: {fileID: 7428886951743614259}
   - component: {fileID: 3559177770965496877}
+  - component: {fileID: 1596949649112626795}
   m_Layer: 0
   m_Name: Tree_Quad_6
   m_TagString: Untagged
@@ -1928,6 +1947,23 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1596949649112626795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3668512698328819332}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371e1d08fa214e4fa132ebd20dcf3169, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ViewToCameraObject
+  _transformToRotate: {fileID: 64549843505046991}
+  _targetSource: 0
+  _customTarget: {fileID: 0}
+  _faceAwayFromTarget: 1
+  _rotationOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &3849795585324349996
 GameObject:
   m_ObjectHideFlags: 0
@@ -2571,6 +2607,7 @@ GameObject:
   - component: {fileID: 7428723653404819677}
   - component: {fileID: 2612499204571525420}
   - component: {fileID: 9133771351018987979}
+  - component: {fileID: 6322811791793368801}
   m_Layer: 0
   m_Name: Tree_Quad_8
   m_TagString: Untagged
@@ -2650,6 +2687,23 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &6322811791793368801
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5754078060827551564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371e1d08fa214e4fa132ebd20dcf3169, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ViewToCameraObject
+  _transformToRotate: {fileID: 7428723653404819677}
+  _targetSource: 0
+  _customTarget: {fileID: 0}
+  _faceAwayFromTarget: 1
+  _rotationOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &5830738442233911147
 GameObject:
   m_ObjectHideFlags: 0
@@ -2751,6 +2805,7 @@ GameObject:
   - component: {fileID: 7332814863280271045}
   - component: {fileID: 6996009684107147321}
   - component: {fileID: 4393689652898505833}
+  - component: {fileID: 3823711376200278948}
   m_Layer: 0
   m_Name: Tree_Quad_5
   m_TagString: Untagged
@@ -2830,6 +2885,23 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &3823711376200278948
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5857839935564265104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371e1d08fa214e4fa132ebd20dcf3169, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ViewToCameraObject
+  _transformToRotate: {fileID: 7332814863280271045}
+  _targetSource: 0
+  _customTarget: {fileID: 0}
+  _faceAwayFromTarget: 1
+  _rotationOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &6029581784137994651
 GameObject:
   m_ObjectHideFlags: 0
@@ -2931,6 +3003,7 @@ GameObject:
   - component: {fileID: 8243809802067710569}
   - component: {fileID: 3722187451647906558}
   - component: {fileID: 7486055296271985518}
+  - component: {fileID: 2180577623229686564}
   m_Layer: 0
   m_Name: Tree_Quad_7
   m_TagString: Untagged
@@ -3010,6 +3083,23 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &2180577623229686564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6098136403684459546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371e1d08fa214e4fa132ebd20dcf3169, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ViewToCameraObject
+  _transformToRotate: {fileID: 8243809802067710569}
+  _targetSource: 0
+  _customTarget: {fileID: 0}
+  _faceAwayFromTarget: 1
+  _rotationOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &6321632545449470357
 GameObject:
   m_ObjectHideFlags: 0
@@ -3723,6 +3813,7 @@ GameObject:
   - component: {fileID: 4509402522855359574}
   - component: {fileID: 8382744931591314724}
   - component: {fileID: 1790077309449957228}
+  - component: {fileID: 2777586731517567964}
   m_Layer: 0
   m_Name: Tree_Quad_9
   m_TagString: Untagged
@@ -3802,6 +3893,23 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &2777586731517567964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7984811930710166030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371e1d08fa214e4fa132ebd20dcf3169, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ViewToCameraObject
+  _transformToRotate: {fileID: 4509402522855359574}
+  _targetSource: 0
+  _customTarget: {fileID: 0}
+  _faceAwayFromTarget: 1
+  _rotationOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &8036223449693762334
 GameObject:
   m_ObjectHideFlags: 0
@@ -3898,6 +4006,7 @@ GameObject:
   - component: {fileID: 7536341976801198322}
   - component: {fileID: 6816334398815355348}
   - component: {fileID: 3810007384811541950}
+  - component: {fileID: 7846538883002374143}
   m_Layer: 0
   m_Name: Tree_Quad_4
   m_TagString: Untagged
@@ -3977,6 +4086,23 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &7846538883002374143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8488540373187992999}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371e1d08fa214e4fa132ebd20dcf3169, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ViewToCameraObject
+  _transformToRotate: {fileID: 7536341976801198322}
+  _targetSource: 0
+  _customTarget: {fileID: 0}
+  _faceAwayFromTarget: 1
+  _rotationOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &8700827569662048231
 GameObject:
   m_ObjectHideFlags: 0
@@ -3988,6 +4114,7 @@ GameObject:
   - component: {fileID: 8624787612467133332}
   - component: {fileID: 3752960955564930544}
   - component: {fileID: 1739325855669329261}
+  - component: {fileID: 3350231353633133346}
   m_Layer: 0
   m_Name: Tree_Quad_10
   m_TagString: Untagged
@@ -4067,6 +4194,23 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &3350231353633133346
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8700827569662048231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 371e1d08fa214e4fa132ebd20dcf3169, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ViewToCameraObject
+  _transformToRotate: {fileID: 8624787612467133332}
+  _targetSource: 0
+  _customTarget: {fileID: 0}
+  _faceAwayFromTarget: 1
+  _rotationOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &8936115603132463029
 GameObject:
   m_ObjectHideFlags: 0
