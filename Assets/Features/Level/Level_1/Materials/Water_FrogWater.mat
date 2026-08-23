@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Water
+  m_Name: Water_FrogWater
   m_Shader: {fileID: 4800000, guid: f23ad0d2c87e4d48a9efbff6433ff10b, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -34,24 +34,24 @@ Material:
     - _ContactFoamPixelSize: 2
     - _ContactFoamSharpness: 2.2
     - _ContactFoamStrength: 1
-    - _FlowSpeed: 0.67
+    - _FlowSpeed: 3
     - _FoamAmount: 0.9
     - _FoamWidth: 0.035
     - _Glow: 1.2
     - _PatternScale: 0.57
     - _PixelSize: 0.22
     - _SparkleAmount: 0.75
-    - _WarpStrength: 1.35
+    - _WarpStrength: 2.92
     - _WaveHeight: 0
     - _WaveScale: 0.72
     - _WaveSpeed: 0.55
     m_Colors:
     - _ContactFoamColor: {r: 0.15546334, g: 0.4822362, b: 0.67261684, a: 1}
     - _DeepColor: {r: 0.04209684, g: 0.052032113, b: 0.20754719, a: 1}
-    - _FlowDirection: {r: 1, g: 0.28, b: 0, a: 0}
+    - _FlowDirection: {r: 0, g: 1, b: 0, a: 1}
     - _FoamColor: {r: 1.1, g: 2.35, b: 3, a: 1}
     - _LightColor: {r: 0.02, g: 1.15, b: 2.1, a: 1}
     - _MidColor: {r: 0.07365153, g: 0.17242277, b: 0.31865555, a: 1}
-    - _PatternOffset: {r: 0, g: 0, b: 0, a: 0}
+    - _PatternOffset: {r: 1, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
