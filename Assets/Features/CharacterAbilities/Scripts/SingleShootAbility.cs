@@ -26,6 +26,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     protected IEnemiesProvider EnemiesProvider => _enemiesProvider;
     protected int Damage { get; set; }
     protected float ProjectileSpeed { get; private set; }
+    protected virtual int BaseProjectileCount => 1;
 
     protected SingleShootAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
         CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager)
@@ -97,11 +98,20 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     protected abstract void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
         PlayerCollisionDetector collisionDetector, EnemyFacade targetEnemy, Vector3 spawnPosition,
-        Vector3 shootDirection);
+        Vector3 shootDirection, int projectileDamage);
 
-    protected void ApplyDamage(CharacterFacade character, EnemyFacade enemyFacade)
+    protected virtual int GetProjectileDamage(int projectileIndex, int projectileCount) =>
+        Damage;
+
+    protected void ApplyDamage(CharacterFacade character, EnemyFacade enemyFacade) =>
+        ApplyDamage(character, enemyFacade, Damage);
+
+    protected void ApplyDamage(CharacterFacade character, EnemyFacade enemyFacade, int baseDamage)
     {
-        CharacterDamageResult damageResult = _damageCalculator.Calculate(GetRolledDamage());
+        if (baseDamage <= 0)
+            return;
+
+        CharacterDamageResult damageResult = _damageCalculator.Calculate(GetRolledDamage(baseDamage));
         int finalDamage = _relicManager.ModifyOutgoingDamage(damageResult.Damage, enemyFacade);
         int appliedDamage = enemyFacade.HealthSystem.GetDamage(finalDamage, damageResult.IsCritical);
         bool killedByDirectHit = enemyFacade.HealthSystem.IsDead;
@@ -155,11 +165,11 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     protected static Vector3 GetEnemyTargetPosition(EnemyFacade enemy) =>
         enemy.TargetToShootDamage != null ? enemy.TargetToShootDamage.position : enemy.transform.position;
 
-    private int GetRolledDamage()
+    private int GetRolledDamage(int baseDamage)
     {
         float variation = Mathf.Max(0f, AbilityConfig.DamageVariationPercent) * 0.01f;
         float multiplier = Random.Range(1f - variation, 1f + variation);
-        return Mathf.Max(1, Mathf.RoundToInt(Damage * multiplier));
+        return Mathf.Max(1, Mathf.RoundToInt(baseDamage * multiplier));
     }
 
     private async UniTask LaunchProjectiles(CharacterFacade character, int projectileCount, int launchSequence)
@@ -215,14 +225,16 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         }
 
         playerCollisionDetector.Initialize(character.transform);
-        OnProjectileCreated(character, shootObj, playerCollisionDetector, targetEnemy, spawnPosition, shootDirection);
+        int projectileDamage = GetProjectileDamage(projectileIndex, projectileCount);
+        OnProjectileCreated(character, shootObj, playerCollisionDetector, targetEnemy, spawnPosition, shootDirection,
+            projectileDamage);
     }
 
     private int CalculateProjectileCount()
     {
         float projectileBonus = Mathf.Max(0f, _characterStats.ProjectileCount) +
                                 Mathf.Max(0f, _additionalProjectileCount);
-        int projectileCount = 1 + Mathf.FloorToInt(projectileBonus);
+        int projectileCount = Mathf.Max(1, BaseProjectileCount) + Mathf.FloorToInt(projectileBonus);
         float fractionalProjectile = projectileBonus - Mathf.Floor(projectileBonus);
 
         if (Random.value < fractionalProjectile)
@@ -232,7 +244,8 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     }
 
     private float GetCurrentProjectileCount() =>
-        1f + _additionalProjectileCount + Mathf.Max(0f, _characterStats.ProjectileCount);
+        Mathf.Max(1, BaseProjectileCount) + _additionalProjectileCount +
+        Mathf.Max(0f, _characterStats.ProjectileCount);
 
     private void ApplyAdditionalProjectileUpgrade(AbilityUpgradeEffect upgrade)
     {

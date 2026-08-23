@@ -9,6 +9,7 @@ public sealed class MainMenuPanel : PanelBase
     [field: SerializeField] public Button QuestsButton { get; private set; }
     [field: SerializeField] public Button UnlocksButton { get; private set; }
     [field: SerializeField] public Button SettingsButton { get; private set; }
+    [field: SerializeField] public Button ExitButton { get; private set; }
     [field: SerializeField] public CharacterSelectionView CharacterSelection { get; private set; }
     [field: SerializeField] public LeaderboardView Leaderboard { get; private set; }
 
@@ -22,6 +23,9 @@ public sealed class MainMenuPanel : PanelBase
 
         if (Leaderboard != null)
             Leaderboard.gameObject.SetActive(visible);
+
+        if (ExitButton != null)
+            ExitButton.gameObject.SetActive(visible);
     }
 
     public void SetButtonsInteractable(bool interactable)
@@ -30,5 +34,6 @@ public sealed class MainMenuPanel : PanelBase
         QuestsButton.interactable = interactable;
         UnlocksButton.interactable = interactable;
         SettingsButton.interactable = interactable;
+        ExitButton.interactable = interactable;
     }
 }

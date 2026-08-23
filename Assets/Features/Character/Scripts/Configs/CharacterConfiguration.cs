@@ -1,4 +1,5 @@
 ﻿using Core;
+using Features.Relics.Scripts;
 using UnityEngine;
 using System;
 using System.Collections.Generic;
@@ -96,6 +97,8 @@ public sealed class CharacterDefinition
     [SerializeField] private AddressableLoadContainerGameObject _characterContainer = new();
     [SerializeField] private CharacterSettingsConfiguration _characterSettings;
     [SerializeField] private AbilityName _startingAbility;
+    [SerializeField] private AbilityConfiguration _startingAbilityDetails;
+    [SerializeField] private RelicDefinition _startingRelic;
 
     public string Id => _id;
     public string DisplayName => string.IsNullOrWhiteSpace(_displayName)
@@ -106,6 +109,8 @@ public sealed class CharacterDefinition
     public AddressableLoadContainerGameObject CharacterContainer => _characterContainer;
     public CharacterSettingsConfiguration CharacterSettings => _characterSettings;
     public AbilityName StartingAbility => _startingAbility;
+    public AbilityConfiguration StartingAbilityDetails => _startingAbilityDetails;
+    public RelicDefinition StartingRelic => _startingRelic;
 
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(_id) &&

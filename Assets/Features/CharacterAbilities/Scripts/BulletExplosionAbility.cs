@@ -3,13 +3,14 @@ using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
 using UnityEngine;
 
-public class FireballAbility : SingleShootAbility
+public sealed class BulletExplosionAbility : SingleShootAbility
 {
     private const string DamageStatName = "Damage";
+    private const string ProjectileCountStatName = "Projectiles";
     private const string SpeedStatName = "Speed";
     private const string CooldownStatName = "Cooldown";
 
-    private static readonly AbilityUpgradeType[] FireballUpgradeTypes =
+    private static readonly AbilityUpgradeType[] BulletExplosionUpgradeTypes =
     {
         AbilityUpgradeType.Damage,
         AbilityUpgradeType.ProjectileSpeed,
@@ -17,7 +18,7 @@ public class FireballAbility : SingleShootAbility
         AbilityUpgradeType.AdditionalProjectiles
     };
 
-    private static readonly AbilityUpgradeType[] FireballUpgradeTypesAtMinimumCooldown =
+    private static readonly AbilityUpgradeType[] BulletExplosionUpgradeTypesAtMinimumCooldown =
     {
         AbilityUpgradeType.Damage,
         AbilityUpgradeType.ProjectileSpeed,
@@ -26,13 +27,18 @@ public class FireballAbility : SingleShootAbility
 
     private float _travelDistance;
 
-    private FireballAbilityConfiguration FireballConfig => (FireballAbilityConfiguration)AbilityConfig;
+    private BulletExplosionAbilityConfiguration BulletExplosionConfig =>
+        (BulletExplosionAbilityConfiguration)AbilityConfig;
+
+    protected override int BaseProjectileCount =>
+        Mathf.Max(1, BulletExplosionConfig.StartProjectileCount);
+
     public override AbilityUpgradeType[] UpgradeTypes =>
         AbilityConfig != null && Cooldown <= MinimumCooldown + Mathf.Epsilon
-            ? FireballUpgradeTypesAtMinimumCooldown
-            : FireballUpgradeTypes;
+            ? BulletExplosionUpgradeTypesAtMinimumCooldown
+            : BulletExplosionUpgradeTypes;
 
-    public FireballAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
+    public BulletExplosionAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
         CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager)
         : base(enemiesProvider, damageCalculator, characterStats, relicEventBus, relicManager)
     {
@@ -48,7 +54,7 @@ public class FireballAbility : SingleShootAbility
         new[]
         {
             new AbilityUpgradePreview(DamageStatName, AbilityConfig.StartDamage),
-            new AbilityUpgradePreview(CooldownStatName, AbilityConfig.Cooldown, "s")
+            new AbilityUpgradePreview(ProjectileCountStatName, BaseProjectileCount)
         };
 
     public override AbilityUpgradePreview GetUpgradePreview(AbilityUpgradeEffect upgrade)
@@ -71,7 +77,7 @@ public class FireballAbility : SingleShootAbility
     protected override void OnShootableInitialized()
     {
         StatName_1 = DamageStatName;
-        _travelDistance = FireballConfig.TravelDistance;
+        _travelDistance = BulletExplosionConfig.TravelDistance;
     }
 
     protected override void OnShootableEquipped(CharacterStats characterStats)
@@ -84,6 +90,25 @@ public class FireballAbility : SingleShootAbility
             ApplyUpgradeEffect(CurrentSecondaryUpgrade.Value);
 
         Stat_1 = Damage;
+    }
+
+    protected override int GetProjectileDamage(int projectileIndex, int projectileCount)
+    {
+        int safeProjectileCount = Mathf.Max(1, projectileCount);
+        int totalDamage = Mathf.Max(0, Damage);
+        int damagePerProjectile = totalDamage / safeProjectileCount;
+        int remainder = totalDamage % safeProjectileCount;
+        return damagePerProjectile + (projectileIndex < remainder ? 1 : 0);
+    }
+
+    protected override void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
+        PlayerCollisionDetector collisionDetector, EnemyFacade targetEnemy, Vector3 spawnPosition,
+        Vector3 shootDirection, int projectileDamage)
+    {
+        Vector3 endPosition = spawnPosition + shootDirection * _travelDistance;
+        MoveProjectile(shootObj, endPosition).OnComplete(() => DestroyShoot(shootObj));
+        collisionDetector.OnHit = enemyFacade =>
+            DamageDeal(character, shootObj, enemyFacade, projectileDamage);
     }
 
     private void ApplyUpgradeEffect(AbilityUpgradeEffect upgrade)
@@ -102,30 +127,6 @@ public class FireballAbility : SingleShootAbility
         }
     }
 
-    private float GetDamageIncrease(float upgradeMultiplier) =>
-        GetUpgradeValue(FireballConfig.DamageUpgradeIncrease, upgradeMultiplier);
-
-    private float GetDamageTo(float upgradeMultiplier) =>
-        (Damage <= 0 ? AbilityConfig.StartDamage : Damage) + GetDamageIncrease(upgradeMultiplier);
-
-    private float GetSpeedIncrease(float upgradeMultiplier) =>
-        GetUpgradeValue(FireballConfig.SpeedUpgradeIncrease, upgradeMultiplier);
-
-    private float GetCooldownReduction(float upgradeMultiplier) =>
-        GetUpgradeValue(FireballConfig.CooldownUpgradeReduction, upgradeMultiplier);
-
-    private float GetCooldownTo(float upgradeMultiplier) =>
-        Mathf.Max(MinimumCooldown, Cooldown - GetCooldownReduction(upgradeMultiplier));
-
-    protected override void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
-        PlayerCollisionDetector collisionDetector, EnemyFacade targetEnemy, Vector3 spawnPosition,
-        Vector3 shootDirection, int projectileDamage)
-    {
-        Vector3 endPosition = spawnPosition + shootDirection * _travelDistance;
-        MoveProjectile(shootObj, endPosition).OnComplete(() => DestroyShoot(shootObj));
-        collisionDetector.OnHit = enemyFacade => DamageDeal(character, shootObj, enemyFacade, projectileDamage);
-    }
-
     private void DamageDeal(CharacterFacade character, GameObject shootObj, EnemyFacade enemyFacade,
         int projectileDamage)
     {
@@ -138,4 +139,19 @@ public class FireballAbility : SingleShootAbility
         ApplyDamage(character, enemyFacade, projectileDamage);
         DestroyShoot(shootObj);
     }
+
+    private float GetDamageIncrease(float upgradeMultiplier) =>
+        GetUpgradeValue(BulletExplosionConfig.DamageUpgradeIncrease, upgradeMultiplier);
+
+    private float GetDamageTo(float upgradeMultiplier) =>
+        (Damage <= 0 ? AbilityConfig.StartDamage : Damage) + GetDamageIncrease(upgradeMultiplier);
+
+    private float GetSpeedIncrease(float upgradeMultiplier) =>
+        GetUpgradeValue(BulletExplosionConfig.SpeedUpgradeIncrease, upgradeMultiplier);
+
+    private float GetCooldownReduction(float upgradeMultiplier) =>
+        GetUpgradeValue(BulletExplosionConfig.CooldownUpgradeReduction, upgradeMultiplier);
+
+    private float GetCooldownTo(float upgradeMultiplier) =>
+        Mathf.Max(MinimumCooldown, Cooldown - GetCooldownReduction(upgradeMultiplier));
 }

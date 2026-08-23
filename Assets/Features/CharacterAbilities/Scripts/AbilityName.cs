@@ -18,5 +18,6 @@
     ThornsDamageScroll = 15,
     ShieldScroll = 16,
     FireField = 17,
-    EarthRock = 18
+    EarthRock = 18,
+    BulletExplosion = 19
 }

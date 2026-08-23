@@ -33,6 +33,9 @@ public class CharacterAbilityChoiceProvider : IAbilityChoiceProvider
                 case AbilityName.EarthRock:
                     CreateAbility<EarthRockAbility>(abilityConfig, abilityConfig.AbilityName);
                     break;
+                case AbilityName.BulletExplosion:
+                    CreateAbility<BulletExplosionAbility>(abilityConfig, abilityConfig.AbilityName);
+                    break;
                 case AbilityName.AbilityDurationScroll:
                     CreateAbility<CharacterScrollAbilityDurationAbility>(abilityConfig, abilityConfig.AbilityName);
                     break;

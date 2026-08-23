@@ -1,4 +1,5 @@
 using DG.Tweening;
+using TMPro;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +13,7 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
     [SerializeField] private UIButtonJuice _buttonJuice;
     [SerializeField] private RectTransform _selectionFrame;
     [SerializeField] private CanvasGroup _selectionFrameCanvasGroup;
+    [SerializeField] private TMP_Text _lockedLabel;
 
     [Header("Selection Style")]
     [SerializeField] private float _selectedScale = 1.22f;
@@ -29,6 +31,7 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
     private Tween _selectionFadeTween;
     private Tween _selectionPulseScaleTween;
     private Tween _selectionPulseAlphaTween;
+    private bool _isLocked;
 
     public RectTransform RectTransform => _rectTransform;
     public bool IsVisible => gameObject.activeSelf;
@@ -36,24 +39,62 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
     public void Bind(int characterIndex, int relativeDirection, CharacterDefinition character,
         Sprite portraitPlaceholder)
     {
+        _isLocked = false;
         _characterIndex = characterIndex;
         _relativeDirection = relativeDirection;
-        _portrait.sprite = character.Portrait != null ? character.Portrait : portraitPlaceholder;
-        _portrait.enabled = _portrait.sprite != null;
+        if (_portrait != null)
+        {
+            _portrait.sprite = character.Portrait != null ? character.Portrait : portraitPlaceholder;
+            _portrait.enabled = _portrait.sprite != null;
+            _portrait.color = Color.white;
+        }
+
+        SetLockedLabelVisible(false);
         gameObject.SetActive(true);
+    }
+
+    public void BindLocked(Sprite portraitPlaceholder)
+    {
+        _isLocked = true;
+        _characterIndex = -1;
+        _relativeDirection = 0;
+        if (_portrait != null)
+        {
+            _portrait.sprite = portraitPlaceholder;
+            _portrait.enabled = portraitPlaceholder != null;
+            _portrait.color = new Color(0.08f, 0.08f, 0.08f, 0.72f);
+        }
+
+        gameObject.SetActive(true);
+        SetSelected(false, false);
+        SetLockedLabelVisible(true);
+        _button.interactable = false;
+    }
+
+    public void SetPortrait(Sprite portrait)
+    {
+        if (_isLocked || portrait == null || _portrait == null)
+            return;
+
+        _portrait.sprite = portrait;
+        _portrait.enabled = true;
+        _portrait.color = Color.white;
     }
 
     public void Clear()
     {
         KillAnimations();
+        _isLocked = false;
+        SetLockedLabelVisible(false);
         gameObject.SetActive(false);
     }
 
     public void SetInteractable(bool interactable) =>
-        _button.interactable = interactable;
+        _button.interactable = interactable && !_isLocked;
 
     public void SetSelected(bool selected, bool animate)
     {
+        selected &= !_isLocked;
         _buttonJuice.SetBaseScaleMultiplier(
             selected ? _selectedScale : 1f,
             animate,
@@ -66,8 +107,17 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
             HideSelectionFrame(animate);
     }
 
-    public void RequestSelection() =>
-        _owner.RequestSelectionFromSlot(_characterIndex, _relativeDirection);
+    public void RequestSelection()
+    {
+        if (!_isLocked)
+            _owner.RequestSelectionFromSlot(_characterIndex, _relativeDirection);
+    }
+
+    private void SetLockedLabelVisible(bool visible)
+    {
+        if (_lockedLabel != null)
+            _lockedLabel.gameObject.SetActive(visible);
+    }
 
     private void ShowSelectionFrame(bool animate)
     {

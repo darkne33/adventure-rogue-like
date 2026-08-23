@@ -67,6 +67,7 @@ Shader "Little Rush/Environment/PixelWater"
             struct Attributes
             {
                 float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -75,6 +76,7 @@ Shader "Little Rush/Environment/PixelWater"
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 half fogFactor : TEXCOORD1;
+                float3 normalWS : TEXCOORD2;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -149,6 +151,23 @@ Shader "Little Rush/Environment/PixelWater"
                 return direction * rsqrt(max(dot(direction, direction), 0.0001));
             }
 
+            float2 GetProjectionCoordinates(float3 positionWS, float3 normalWS)
+            {
+                float3 dominantAxis = abs(normalize(normalWS));
+
+                if (dominantAxis.y >= dominantAxis.x && dominantAxis.y >= dominantAxis.z)
+                {
+                    return positionWS.xz;
+                }
+
+                if (dominantAxis.x >= dominantAxis.z)
+                {
+                    return float2(positionWS.z, positionWS.y);
+                }
+
+                return positionWS.xy;
+            }
+
             float WaterField(float2 worldXZ, float timeValue, float2 flowDirection)
             {
                 float2 p = worldXZ * _PatternScale;
@@ -176,12 +195,15 @@ Shader "Little Rush/Environment/PixelWater"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+                float2 wavePosition = GetProjectionCoordinates(positionWS, normalWS);
                 float waveTime = _Time.y * _WaveSpeed;
-                float waveA = sin(dot(positionWS.xz, float2(0.86, 0.50)) * _WaveScale + waveTime);
-                float waveB = sin(dot(positionWS.xz, float2(-0.36, 0.93)) * (_WaveScale * 1.37) - waveTime * 1.21);
-                positionWS.y += (waveA + waveB) * 0.5 * _WaveHeight;
+                float waveA = sin(dot(wavePosition, float2(0.86, 0.50)) * _WaveScale + waveTime);
+                float waveB = sin(dot(wavePosition, float2(-0.36, 0.93)) * (_WaveScale * 1.37) - waveTime * 1.21);
+                positionWS += normalWS * ((waveA + waveB) * 0.5 * _WaveHeight);
 
                 output.positionWS = positionWS;
+                output.normalWS = normalWS;
                 output.positionCS = TransformWorldToHClip(positionWS);
                 output.fogFactor = ComputeFogFactor(output.positionCS.z);
                 return output;
@@ -192,7 +214,7 @@ Shader "Little Rush/Environment/PixelWater"
                 UNITY_SETUP_INSTANCE_ID(input);
 
                 float pixelSize = max(_PixelSize, 0.0001);
-                float2 patternPosition = input.positionWS.xz + _PatternOffset.xy;
+                float2 patternPosition = GetProjectionCoordinates(input.positionWS, input.normalWS) + _PatternOffset.xy;
                 patternPosition = (floor(patternPosition / pixelSize) + 0.5) * pixelSize;
 
                 float timeValue = _Time.y * _FlowSpeed;

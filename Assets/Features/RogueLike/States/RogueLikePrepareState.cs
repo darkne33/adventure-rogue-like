@@ -22,6 +22,7 @@ namespace Core
         private readonly MinimapController _minimapController;
         private readonly RelicChestSpawner _relicChestSpawner;
         private readonly RelicEventBus _relicEventBus;
+        private readonly RelicManager _relicManager;
         private readonly UpgradeBuildService _upgradeBuildService;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
@@ -30,7 +31,8 @@ namespace Core
             IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IAbilityChoiceProvider abilityChoiceProvider,
             ICameraService cameraService, IUpgradeOfferHandler upgradeOfferHandler, CharacterStats characterStats,
             MinimapController minimapController, RelicChestSpawner relicChestSpawner, RelicEventBus relicEventBus,
-            UpgradeBuildService upgradeBuildService, CharacterConfiguration characterConfiguration)
+            RelicManager relicManager, UpgradeBuildService upgradeBuildService,
+            CharacterConfiguration characterConfiguration)
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
@@ -45,6 +47,7 @@ namespace Core
             _minimapController = minimapController;
             _relicChestSpawner = relicChestSpawner;
             _relicEventBus = relicEventBus;
+            _relicManager = relicManager;
             _upgradeBuildService = upgradeBuildService;
         }
 
@@ -88,11 +91,17 @@ namespace Core
             _characterProvider.CharacterFacade =
                 await _characterFactory.CreatePlayer(startRoomData.StartPoint, cts);
             _characterProvider.CharacterFacade.Initialize();
+
+            CharacterDefinition selectedCharacter =
+                _characterConfiguration.GetConfiguredSelectedCharacter();
+            if (selectedCharacter.StartingRelic != null)
+                _relicManager.AddRelic(selectedCharacter.StartingRelic);
+
             _relicEventBus.PublishRoomStarted(new RelicRoomEvent(startRoomData, currentLevel.StartRoom,
                 _characterProvider.CharacterFacade.transform.position));
 
             CharacterAbility startingAbility = _abilityChoiceProvider.GetAbility(
-                _characterConfiguration.GetConfiguredSelectedCharacter().StartingAbility);
+                selectedCharacter.StartingAbility);
             if (startingAbility == null)
             {
                 throw new System.InvalidOperationException(

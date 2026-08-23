@@ -128,16 +128,16 @@ public class RabbitBoomerangAbility : SingleShootAbility
 
     protected override void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
         PlayerCollisionDetector collisionDetector, EnemyFacade targetEnemy, Vector3 spawnPosition,
-        Vector3 shootDirection)
+        Vector3 shootDirection, int projectileDamage)
     {
         HashSet<EnemyFacade> hitEnemies = new();
         collisionDetector.OnHit = enemyFacade =>
-            DamageDeal(character, shootObj, enemyFacade, collisionDetector, hitEnemies);
-        MoveBoomerangToEnemy(character, shootObj, collisionDetector, hitEnemies, targetEnemy);
+            DamageDeal(character, shootObj, enemyFacade, collisionDetector, hitEnemies, projectileDamage);
+        MoveBoomerangToEnemy(character, shootObj, collisionDetector, hitEnemies, targetEnemy, projectileDamage);
     }
 
     private void DamageDeal(CharacterFacade character, GameObject shootObj, EnemyFacade enemyFacade,
-        PlayerCollisionDetector collisionDetector, HashSet<EnemyFacade> hitEnemies)
+        PlayerCollisionDetector collisionDetector, HashSet<EnemyFacade> hitEnemies, int projectileDamage)
     {
         if (shootObj == null)
             return;
@@ -167,7 +167,7 @@ public class RabbitBoomerangAbility : SingleShootAbility
         }
 
         hitEnemies.Add(enemyFacade);
-        ApplyDamage(character, enemyFacade);
+        ApplyDamage(character, enemyFacade, projectileDamage);
 
         if (hitEnemies.Count >= GetBoomerangMaxHitCount())
         {
@@ -175,11 +175,11 @@ public class RabbitBoomerangAbility : SingleShootAbility
             return;
         }
 
-        TryBounceBoomerang(character, shootObj, collisionDetector, hitEnemies);
+        TryBounceBoomerang(character, shootObj, collisionDetector, hitEnemies, projectileDamage);
     }
 
     private void TryBounceBoomerang(CharacterFacade character, GameObject shootObj,
-        PlayerCollisionDetector collisionDetector, HashSet<EnemyFacade> hitEnemies)
+        PlayerCollisionDetector collisionDetector, HashSet<EnemyFacade> hitEnemies, int projectileDamage)
     {
         EnemyFacade nextEnemy = FindNextBoomerangTarget(shootObj.transform.position, hitEnemies);
         if (nextEnemy == null)
@@ -188,7 +188,7 @@ public class RabbitBoomerangAbility : SingleShootAbility
             return;
         }
 
-        MoveBoomerangToEnemy(character, shootObj, collisionDetector, hitEnemies, nextEnemy);
+        MoveBoomerangToEnemy(character, shootObj, collisionDetector, hitEnemies, nextEnemy, projectileDamage);
     }
 
     private EnemyFacade FindNextBoomerangTarget(Vector3 projectilePosition, HashSet<EnemyFacade> hitEnemies)
@@ -214,7 +214,8 @@ public class RabbitBoomerangAbility : SingleShootAbility
     }
 
     private void MoveBoomerangToEnemy(CharacterFacade character, GameObject shootObj,
-        PlayerCollisionDetector collisionDetector, HashSet<EnemyFacade> hitEnemies, EnemyFacade nextEnemy)
+        PlayerCollisionDetector collisionDetector, HashSet<EnemyFacade> hitEnemies, EnemyFacade nextEnemy,
+        int projectileDamage)
     {
         if (shootObj == null || nextEnemy == null)
             return;
@@ -225,7 +226,7 @@ public class RabbitBoomerangAbility : SingleShootAbility
 
         if (direction.sqrMagnitude <= 0.001f)
         {
-            DamageDeal(character, shootObj, nextEnemy, collisionDetector, hitEnemies);
+            DamageDeal(character, shootObj, nextEnemy, collisionDetector, hitEnemies, projectileDamage);
             return;
         }
 

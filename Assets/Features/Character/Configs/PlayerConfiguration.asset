@@ -26,9 +26,11 @@ MonoBehaviour:
         m_EditorAssetChanged: 0
     _characterSettings: {fileID: 11400000, guid: 6f79d5b17e1a45b1a6b9eb4b73f38d57, type: 2}
     _startingAbility: 1
+    _startingAbilityDetails: {fileID: 11400000, guid: d1f61c5394e93294ab79fe9496bb9e40, type: 2}
+    _startingRelic: {fileID: 0}
   - _id: duke
     _displayName: DUKE
-    _description: Tough and deliberate. Duke trades speed for durability, raw damage, and a direct fireball attack.
+    _description: Tough and deliberate. Duke trades speed for durability, raw damage, and a burst of explosive bullets.
     _portrait: {fileID: 0}
     _characterContainer:
       _assetReference:
@@ -38,5 +40,7 @@ MonoBehaviour:
         m_SubObjectGUID: 
         m_EditorAssetChanged: 0
     _characterSettings: {fileID: 11400000, guid: 8131cc83f4eedc24b83896f3fecfe4f7, type: 2}
-    _startingAbility: 0
+    _startingAbility: 19
+    _startingAbilityDetails: {fileID: 11400000, guid: c4e9a1b2d3f54768a9b0c1d2e3f40516, type: 2}
+    _startingRelic: {fileID: 0}
   _defaultCharacterIndex: 0
