@@ -96,6 +96,8 @@ public sealed class CharacterDefinition
     [SerializeField] private Sprite _portrait;
     [SerializeField] private AddressableLoadContainerGameObject _characterContainer = new();
     [SerializeField] private CharacterSettingsConfiguration _characterSettings;
+    [SerializeField, Range(-0.5f, 0.5f)] private float _previewOffsetY;
+    [SerializeField, Min(0.1f)] private float _previewZoom = 1f;
     [SerializeField] private AbilityName _startingAbility;
     [SerializeField] private AbilityConfiguration _startingAbilityDetails;
     [SerializeField] private RelicDefinition _startingRelic;
@@ -108,6 +110,8 @@ public sealed class CharacterDefinition
     public Sprite Portrait => _portrait;
     public AddressableLoadContainerGameObject CharacterContainer => _characterContainer;
     public CharacterSettingsConfiguration CharacterSettings => _characterSettings;
+    public float PreviewOffsetY => _previewOffsetY;
+    public float PreviewZoom => _previewZoom > 0f ? _previewZoom : 1f;
     public AbilityName StartingAbility => _startingAbility;
     public AbilityConfiguration StartingAbilityDetails => _startingAbilityDetails;
     public RelicDefinition StartingRelic => _startingRelic;

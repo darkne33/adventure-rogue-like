@@ -44,6 +44,8 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
     private RenderTexture _portraitRenderTexture;
 
     private GameObject _currentPreview;
+    private float _currentPreviewOffsetY;
+    private float _currentPreviewZoom = 1f;
     private AsyncOperationHandle<GameObject> _currentCharacterHandle;
     private bool _hasCurrentCharacterHandle;
     private Sequence _appearanceSequence;
@@ -123,8 +125,11 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
                 _currentCharacterHandle = loadHandle;
                 _hasCurrentCharacterHandle = true;
                 ownsLoadHandle = false;
+                _currentPreviewOffsetY = character.PreviewOffsetY;
+                _currentPreviewZoom = character.PreviewZoom;
 
-                FrameCamera(_previewCamera, _currentPreview, MainStagePadding);
+                FrameCamera(_previewCamera, _currentPreview, MainStagePadding,
+                    _currentPreviewOffsetY, _currentPreviewZoom);
                 PlayAppearanceAccent(_currentPreview.transform);
 
                 await RenderAndCachePortraitAsync(character, characterPrefab,
@@ -235,7 +240,8 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
             cancellationToken.ThrowIfCancellationRequested();
             portraitInstance = CreateVisualInstance(characterPrefab, _portraitStage,
                 $"CharacterPortrait_{character.Id}");
-            FrameCamera(_portraitCamera, portraitInstance, PortraitStagePadding);
+            FrameCamera(_portraitCamera, portraitInstance, PortraitStagePadding,
+                character.PreviewOffsetY, character.PreviewZoom);
 
             _portraitCamera.enabled = true;
             try
@@ -407,7 +413,8 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
             .OnComplete(() => _appearanceSequence = null);
     }
 
-    private static void FrameCamera(Camera camera, GameObject visualRoot, float padding)
+    private static void FrameCamera(Camera camera, GameObject visualRoot, float padding,
+        float previewOffsetY, float previewZoom)
     {
         Bounds bounds = CalculateVisualBounds(visualRoot);
         Vector3 extents = bounds.extents;
@@ -422,9 +429,13 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
         float horizontalHalfFov = Mathf.Atan(Mathf.Tan(verticalHalfFov) * aspect);
         float verticalDistance = extents.y / Mathf.Tan(verticalHalfFov);
         float horizontalDistance = extents.x / Mathf.Tan(horizontalHalfFov);
-        float distance = (Mathf.Max(verticalDistance, horizontalDistance) + extents.z) * padding;
+        float zoom = Mathf.Max(0.1f, previewZoom);
+        float distance = (Mathf.Max(verticalDistance, horizontalDistance) + extents.z) *
+                         padding / zoom;
 
         Vector3 focus = bounds.center + Vector3.up * extents.y * 0.035f;
+        float viewportWorldHeight = 2f * distance * Mathf.Tan(verticalHalfFov);
+        focus -= Vector3.up * previewOffsetY * viewportWorldHeight;
         camera.transform.SetPositionAndRotation(
             focus + Vector3.forward * distance,
             Quaternion.LookRotation(Vector3.back, Vector3.up));
@@ -610,7 +621,10 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
         _previewRenderTexture = replacement;
 
         if (_currentPreview != null)
-            FrameCamera(_previewCamera, _currentPreview, MainStagePadding);
+        {
+            FrameCamera(_previewCamera, _currentPreview, MainStagePadding,
+                _currentPreviewOffsetY, _currentPreviewZoom);
+        }
     }
 
     private void GetPreviewResolution(out int width, out int height)
@@ -680,6 +694,9 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
             DestroyUnityObject(_currentPreview);
             _currentPreview = null;
         }
+
+        _currentPreviewOffsetY = 0f;
+        _currentPreviewZoom = 1f;
 
         if (_hasCurrentCharacterHandle)
         {
