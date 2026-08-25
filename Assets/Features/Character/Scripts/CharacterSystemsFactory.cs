@@ -43,6 +43,8 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
             facade.CameraPivot, _cameraSettings, _cameraService, pauseEntity);
         var moveSystem = new CharacterMoveSystem(rigidbody, _cameraService, _characterStats, fxSystem,
             facade.CharacterModel, animationSystem, cameraSystem, pauseEntity);
+        var proximityTransparencySystem =
+            new CharacterProximityTransparencySystem(facade.transform, collider);
         var abilitySystem = new CharacterAbilitySystem();
         var damageEffectSystem = new DealDamageEffectSystem(facade.MeshRenderers);
         IDamageView damageView = facade.GetComponent<CharacterDamageNumberView>();
@@ -65,6 +67,6 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
             settings.ShieldRegenerationPerSecond, characterPanel.CharacterShieldView);
 
         facade.Construct(rigidbody, collider, _characterStats, pauseEntity, healthSystem, shieldSystem, abilitySystem,
-            animationSystem, moveSystem, cameraSystem, damageEffectSystem, damageView);
+            animationSystem, moveSystem, cameraSystem, proximityTransparencySystem, damageEffectSystem, damageView);
     }
 }

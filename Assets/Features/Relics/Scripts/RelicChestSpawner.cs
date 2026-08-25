@@ -85,6 +85,29 @@ namespace Features.Relics.Scripts
             }
         }
 
+        public bool TrySpawnAt(Room room, Transform spawnPoint,
+            out RelicChest spawnedChest)
+        {
+            spawnedChest = null;
+
+            if (room == null)
+                throw new ArgumentNullException(nameof(room));
+            if (spawnPoint == null)
+                throw new ArgumentNullException(nameof(spawnPoint));
+
+            if (_configuration.ChestPrefab == null ||
+                _configuration.RelicPickupPrefab == null)
+            {
+                return false;
+            }
+
+            if (!_relicPool.GetAvailable(_relicManager.ActiveRelics).Any())
+                return false;
+
+            return SpawnChest(room, room.RoomData, spawnPoint,
+                spawnPoint.rotation, out spawnedChest);
+        }
+
         private static int GetChestCount(RewardRoomData roomData) =>
             roomData.GetChestCount();
 
@@ -96,8 +119,14 @@ namespace Features.Relics.Scripts
                 .ToList();
         }
 
-        private bool SpawnChest(Room room, RoomData roomData, Transform spawnPoint)
+        private bool SpawnChest(Room room, RoomData roomData, Transform spawnPoint) =>
+            SpawnChest(room, roomData, spawnPoint, Quaternion.identity, out _);
+
+        private bool SpawnChest(Room room, RoomData roomData, Transform spawnPoint,
+            Quaternion rotation, out RelicChest spawnedChest)
         {
+            spawnedChest = null;
+
             Vector3 groundPoint;
             if (spawnPoint != null)
             {
@@ -110,7 +139,7 @@ namespace Features.Relics.Scripts
             }
 
             GameObject chestObject = _container.InstantiatePrefab(_configuration.ChestPrefab,
-                groundPoint + Vector3.up * _configuration.ChestSpawnHeight, Quaternion.identity, room.transform);
+                groundPoint + Vector3.up * _configuration.ChestSpawnHeight, rotation, room.transform);
 
             RelicChest chest = chestObject.GetComponent<RelicChest>();
             if (chest == null)
@@ -122,6 +151,7 @@ namespace Features.Relics.Scripts
             chest.Construct(_configuration, _relicPool, _relicManager, _eventBus,
                 _characterProvider, _container, roomData, room);
             _eventBus.PublishChestSpawned(roomData, room, chestObject.transform.position);
+            spawnedChest = chest;
             return true;
         }
 

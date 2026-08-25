@@ -51,6 +51,7 @@ public class CharacterFacade : MonoBehaviour
     private CharacterAbilitySystem _abilitySystem;
     private CharacterMoveSystem _moveSystem;
     private CharacterCameraMoveSystem _cameraSystem;
+    private CharacterProximityTransparencySystem _proximityTransparencySystem;
     private DealDamageEffectSystem _damageEffectSystem;
     private IDamageView _damageView;
     private float _invulnerableUntilTime;
@@ -86,8 +87,12 @@ public class CharacterFacade : MonoBehaviour
         if (_pauseEntity.IsPauseEntity == false)
             _abilitySystem.TickAbilities(this);
 
+        _proximityTransparencySystem.Tick(Time.deltaTime);
         _cameraSystem.Move();
     }
+
+    private void OnDestroy() =>
+        _proximityTransparencySystem?.Dispose();
 
     private void FixedUpdate()
     {
@@ -121,6 +126,7 @@ public class CharacterFacade : MonoBehaviour
         PauseEntity pauseEntity, HealthSystem healthSystem, ShieldSystem shieldSystem,
         CharacterAbilitySystem abilitySystem, CharacterAnimationSystem animationSystem,
         CharacterMoveSystem moveSystem, CharacterCameraMoveSystem cameraSystem,
+        CharacterProximityTransparencySystem proximityTransparencySystem,
         DealDamageEffectSystem damageEffectSystem, IDamageView damageView)
     {
         _rigidbody = rigidbody;
@@ -132,6 +138,7 @@ public class CharacterFacade : MonoBehaviour
         _abilitySystem = abilitySystem;
         _moveSystem = moveSystem;
         _cameraSystem = cameraSystem;
+        _proximityTransparencySystem = proximityTransparencySystem;
         _damageEffectSystem = damageEffectSystem;
         _damageView = damageView;
     }

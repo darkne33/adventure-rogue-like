@@ -90,8 +90,7 @@ namespace Features.Relics.Scripts
                 return false;
 
             CharacterFacade character = _characterProvider.CharacterFacade;
-            return _rollService.IsRolling == false &&
-                   Vector3.Distance(transform.position, character.transform.position) <=
+            return Vector3.Distance(transform.position, character.transform.position) <=
                    _configuration.InteractDistance;
         }
 
@@ -119,13 +118,15 @@ namespace Features.Relics.Scripts
                 return;
             }
 
-            if (_rollService.TryBegin() == false)
+            if (_rollService.TryBegin(availableRelics, _relicManager.ActiveRelics,
+                    _configuration, out RelicChestRollPlan rollPlan) == false)
                 return;
 
             _isOpened = true;
             _interactionView.SetAvailable(false);
-            _rollSequence.PlayAsync(availableRelics, transform.position,
-                _rollService.Finish, this.GetCancellationTokenOnDestroy()).Forget();
+            _rollSequence.PlayAsync(rollPlan, transform.position,
+                () => _rollService.Finish(rollPlan),
+                this.GetCancellationTokenOnDestroy()).Forget();
         }
     }
 }

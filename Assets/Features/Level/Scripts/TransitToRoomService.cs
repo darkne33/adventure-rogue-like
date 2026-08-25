@@ -11,17 +11,21 @@ namespace Features.Enemies.Scripts.Level.Scripts
         private readonly ICharacterProvider _characterProvider;
         private readonly IGameModeService _gameModeService;
         private readonly IRoomTransitionService _roomTransitionService;
+        private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
         private readonly RelicEventBus _relicEventBus;
         private bool _isTransitioning;
 
         public TransitToRoomService(IRogueLikeRuntimeDataService runtimeDataService,
             ICharacterProvider characterProvider, IGameModeService gameModeService,
-            IRoomTransitionService roomTransitionService, RelicEventBus relicEventBus)
+            IRoomTransitionService roomTransitionService,
+            ISceneService<RogueLikeSceneProvider> sceneService,
+            RelicEventBus relicEventBus)
         {
             _runtimeDataService = runtimeDataService;
             _characterProvider = characterProvider;
             _gameModeService = gameModeService;
             _roomTransitionService = roomTransitionService;
+            _sceneService = sceneService;
             _relicEventBus = relicEventBus;
         }
 
@@ -66,6 +70,16 @@ namespace Features.Enemies.Scripts.Level.Scripts
                     {
                         _runtimeDataService.SetCurrentRoomData(roomData);
 
+                        LevelView level = nextRoom.GetComponentInParent<LevelView>();
+                        if (level == null)
+                        {
+                            throw new System.InvalidOperationException(
+                                $"{nextRoom.name} does not belong to a LevelView.");
+                        }
+
+                        if (level.TrySpawnKeyRoom(nextRoom, entryDoor))
+                            RebuildNavMesh();
+
                         Transform teleportPlayerTarget = entryDoor.transform;
                         const int offset = 10;
                         Vector3 characterPosition = teleportPlayerTarget.position +
@@ -104,6 +118,20 @@ namespace Features.Enemies.Scripts.Level.Scripts
                     _isTransitioning = false;
                 }
             }
+        }
+
+        private void RebuildNavMesh()
+        {
+            RogueLikeSceneProvider sceneProvider =
+                _sceneService.GameSceneComponentsService;
+            if (sceneProvider?.NavMeshSurface == null)
+            {
+                throw new System.InvalidOperationException(
+                    "NavMeshSurface is not available for Key_Room spawning.");
+            }
+
+            Physics.SyncTransforms();
+            sceneProvider.NavMeshSurface.BuildNavMesh();
         }
 
         private void TeleportCharacter(Vector3 position)

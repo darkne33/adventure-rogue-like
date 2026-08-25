@@ -63,19 +63,19 @@ MonoBehaviour:
     <EnemySettings>k__BackingField:
       <EnemyTypes>k__BackingField: 02000000
     <LevelExitDirection>k__BackingField: 0
-  - _roomPrefab: {fileID: 4465193699951163159, guid: 8a48182cad7be4142a89602667d5c032, type: 3}
+  - _roomPrefab: {fileID: 4465193699951163159, guid: ee68b0185f35e8f4e83403d3551dac54, type: 3}
     <GridPosition>k__BackingField: {x: 1, y: 1}
     <Type>k__BackingField: 2
     <EnemySettings>k__BackingField:
       <EnemyTypes>k__BackingField: 0400000004000000
     <LevelExitDirection>k__BackingField: 0
-  - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
+  - _roomPrefab: {fileID: 4465193699951163159, guid: ee68b0185f35e8f4e83403d3551dac54, type: 3}
     <GridPosition>k__BackingField: {x: 2, y: 1}
     <Type>k__BackingField: 2
     <EnemySettings>k__BackingField:
       <EnemyTypes>k__BackingField: 0500000004000000
     <LevelExitDirection>k__BackingField: 0
-  - _roomPrefab: {fileID: 4465193699951163159, guid: bff90761a5d4f50479b01a207c222efb, type: 3}
+  - _roomPrefab: {fileID: 4465193699951163159, guid: ee68b0185f35e8f4e83403d3551dac54, type: 3}
     <GridPosition>k__BackingField: {x: 2, y: 2}
     <Type>k__BackingField: 2
     <EnemySettings>k__BackingField:
@@ -99,3 +99,7 @@ MonoBehaviour:
     <EnemySettings>k__BackingField:
       <EnemyTypes>k__BackingField: 0500000004000000
     <LevelExitDirection>k__BackingField: 0
+  _keyRoomPrefab: {fileID: 7944717177983287746, guid: 7de62fab3ebbd1149add6be51be95a73, type: 3}
+  _keyRoomSpawnChancePercent: 50
+  _keyRoomStartProgressPercent: 50
+  _roomsBetweenKeyRoomSpawns: 2

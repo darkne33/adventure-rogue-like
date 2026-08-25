@@ -1,22 +1,42 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.AI.Navigation;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Serialization;
 using Zenject;
 
 public class LevelView : MonoBehaviour
 {
     public const float RoomWorldSize = 320f;
+    private const string WallLayerName = "Wall";
+    private const string NotWalkableAreaName = "Not Walkable";
 
     [SerializeField] private LevelRoomNode[] _rooms;
+
+    [Header("Key Room Spawning")]
+    [Tooltip("Prefab spawned at the point configured in DefaultEnemiesRoomData.")]
+    [SerializeField] private GameObject _keyRoomPrefab;
+    [Tooltip("Chance for each eligible combat room after the start-progress threshold. " +
+             "The last remaining candidate is forced if no Key_Room has spawned.")]
+    [SerializeField, Range(0f, 100f)] private float _keyRoomSpawnChancePercent = 50f;
+    [Tooltip("Percent of unique non-start rooms that must be visited before spawning can begin.")]
+    [SerializeField, Range(0f, 100f)] private float _keyRoomStartProgressPercent = 50f;
+    [Tooltip("Number of newly visited rooms skipped after a successful Key_Room spawn.")]
+    [SerializeField, Min(0)] private int _roomsBetweenKeyRoomSpawns = 2;
 
     public Room StartRoomPrefab => GetRoomNode(RoomType.Start).RoomPrefab;
     public Room StartRoom => GetRoomNode(RoomType.Start).Room;
     public Vector2Int StartRoomGridPosition => GetRoomNode(RoomType.Start).GridPosition;
     public IReadOnlyList<LevelRoomNode> Rooms => _rooms;
 
+    private readonly HashSet<RoomData> _keyRoomVisitedRooms = new();
+    private DiContainer _container;
     private bool _isInitialized;
+    private int _visitedNonStartRooms;
+    private int _spawnedKeyRooms;
+    private int _roomsUntilNextKeyRoomChance;
 
     public void Configure(LevelRoomNode[] rooms)
     {
@@ -32,17 +52,20 @@ public class LevelView : MonoBehaviour
         if (container == null)
             throw new ArgumentNullException(nameof(container));
 
+        _container = container;
         MaterializeRooms(container);
         ResolveAuthoredDoors();
         ResetRoomProgress();
 
         Dictionary<Vector2Int, Room> roomsByPosition = ValidateAndBuildRoomMap();
+        ValidateKeyRoomConfiguration(useRuntimeRooms: true);
         ValidateRoomDoors(roomsByPosition.Values);
         ValidateRequiredDoors(roomsByPosition, hasNextLevel);
         ValidateConnectivity(roomsByPosition);
         ResetDoors(roomsByPosition.Values);
         ConnectAdjacentRooms(roomsByPosition);
         ConfigureLevelExit(hasNextLevel);
+        ResetKeyRoomSpawnState();
 
         _isInitialized = true;
     }
@@ -91,6 +114,7 @@ public class LevelView : MonoBehaviour
                 exitCount++;
         }
 
+        ValidateKeyRoomConfiguration(useRuntimeRooms: false);
         ValidateTopology(sourcesByPosition, startCount, exitCount);
         ValidateAuthoringDoors(sourcesByPosition);
         ValidateConnectivity(sourcesByPosition);
@@ -297,6 +321,8 @@ public class LevelView : MonoBehaviour
                 if (roomData == null)
                     throw new InvalidOperationException(
                         $"{roomNode.RoomPrefab.name} does not contain room data.");
+                if (roomData is DefaultEnemiesRoomData enemiesRoomData)
+                    ValidateKeyRoomSpawnPoint(roomNode.RoomPrefab.name, enemiesRoomData);
                 ValidateEnemySettings(roomNode.RoomPrefab.name,
                     roomNode.EnemySettings);
                 return;
@@ -317,6 +343,7 @@ public class LevelView : MonoBehaviour
             case (RoomType.Enemy or RoomType.Exit, DefaultEnemiesRoomData enemiesRoomData):
                 ValidateEnemySettings(roomNode.Room.name,
                     enemiesRoomData.EnemySettings);
+                ValidateKeyRoomSpawnPoint(roomNode.Room.name, enemiesRoomData);
                 return;
             case (RoomType.Reward, RewardRoomData):
                 return;
@@ -338,6 +365,41 @@ public class LevelView : MonoBehaviour
         if (!enemySettings.HasSpawnableEnemies)
             throw new InvalidOperationException(
                 $"{roomName} enemy room settings do not contain spawnable enemies.");
+    }
+
+    private static void ValidateKeyRoomSpawnPoint(string roomName,
+        DefaultEnemiesRoomData roomData)
+    {
+        if (roomData.CanSpawnKeyRoom && roomData.KeyRoomSpawnPoint == null)
+        {
+            throw new InvalidOperationException(
+                $"{roomName} allows Key_Room spawning but does not have a spawn point.");
+        }
+    }
+
+    private void ValidateKeyRoomConfiguration(bool useRuntimeRooms)
+    {
+        bool hasKeyRoomCandidate = _rooms.Any(roomNode =>
+        {
+            Room room = useRuntimeRooms ? roomNode?.Room : roomNode?.RoomPrefab;
+            return room?.RoomData is DefaultEnemiesRoomData { CanSpawnKeyRoom: true };
+        });
+
+        if (!hasKeyRoomCandidate)
+            return;
+
+        if (_keyRoomPrefab == null)
+            throw new InvalidOperationException(
+                $"{name} contains Key_Room candidates but does not have a Key_Room prefab.");
+
+        KeyRoomController controller = _keyRoomPrefab.GetComponent<KeyRoomController>();
+        if (controller == null)
+        {
+            throw new InvalidOperationException(
+                $"{_keyRoomPrefab.name} must contain KeyRoomController on its root.");
+        }
+
+        controller.ValidateConfiguration();
     }
 
     private static void ValidateRoomDoors(IEnumerable<Room> rooms)
@@ -445,6 +507,179 @@ public class LevelView : MonoBehaviour
                 $"{roomNode.Room.name} level exit direction is occupied by another room.");
 
         exitDoor.ConfigureLevelExit();
+    }
+
+    public bool TrySpawnKeyRoom(Room room, RoomDoor entryDoor)
+    {
+        if (!_isInitialized || _container == null)
+            throw new InvalidOperationException($"{name} is not initialized.");
+        if (room == null)
+            throw new ArgumentNullException(nameof(room));
+        if (entryDoor == null)
+            throw new ArgumentNullException(nameof(entryDoor));
+        if (!IsRoomOwnedByLevel(room))
+            throw new InvalidOperationException(
+                $"{room.name} does not belong to {name}.");
+
+        RoomData roomData = room.RoomData ??
+                            throw new InvalidOperationException(
+                                $"{room.name} does not contain room data.");
+        if (!_keyRoomVisitedRooms.Add(roomData))
+            return false;
+        if (roomData is StartRoomData)
+            return false;
+
+        _visitedNonStartRooms++;
+
+        if (_roomsUntilNextKeyRoomChance > 0)
+        {
+            _roomsUntilNextKeyRoomChance--;
+            return false;
+        }
+
+        int nonStartRoomCount = _rooms.Count(roomNode =>
+            roomNode != null && roomNode.Type != RoomType.Start);
+        if (nonStartRoomCount == 0)
+            return false;
+
+        float levelProgress = (float)_visitedNonStartRooms / nonStartRoomCount;
+        if (levelProgress < Mathf.Clamp01(_keyRoomStartProgressPercent / 100f))
+            return false;
+
+        if (roomData is not DefaultEnemiesRoomData enemiesRoomData ||
+            !enemiesRoomData.CanSpawnKeyRoom)
+        {
+            return false;
+        }
+
+        ValidateKeyRoomSpawnPoint(room.name, enemiesRoomData);
+
+        bool mustGuaranteeFirstSpawn = _spawnedKeyRooms == 0 &&
+                                       !HasUnvisitedKeyRoomCandidate();
+        if (!mustGuaranteeFirstSpawn && !PassedKeyRoomSpawnChance())
+            return false;
+
+        SpawnKeyRoom(room, enemiesRoomData.KeyRoomSpawnPoint, entryDoor);
+        _spawnedKeyRooms++;
+        _roomsUntilNextKeyRoomChance = Mathf.Max(0, _roomsBetweenKeyRoomSpawns);
+        return true;
+    }
+
+    private bool PassedKeyRoomSpawnChance()
+    {
+        float chance = Mathf.Clamp01(_keyRoomSpawnChancePercent / 100f);
+        return chance >= 1f || chance > 0f && UnityEngine.Random.value < chance;
+    }
+
+    private bool HasUnvisitedKeyRoomCandidate() =>
+        _rooms.Any(roomNode =>
+        {
+            if (roomNode?.Room?.RoomData is not DefaultEnemiesRoomData roomData)
+                return false;
+
+            return roomData.CanSpawnKeyRoom &&
+                   !_keyRoomVisitedRooms.Contains(roomData);
+        });
+
+    private void SpawnKeyRoom(Room room, Transform spawnPoint, RoomDoor entryDoor)
+    {
+        GameObject keyRoom = _container.InstantiatePrefab(_keyRoomPrefab,
+            spawnPoint.position, spawnPoint.rotation, room.transform);
+
+        KeyRoomController controller = keyRoom.GetComponent<KeyRoomController>();
+        if (controller == null)
+        {
+            throw new InvalidOperationException(
+                $"{keyRoom.name} must contain KeyRoomController on its root.");
+        }
+
+        controller.Initialize(room, entryDoor.transform.forward);
+        ConfigureKeyRoomEnemyExclusion(keyRoom);
+    }
+
+    private static void ConfigureKeyRoomEnemyExclusion(GameObject keyRoom)
+    {
+        int wallLayer = LayerMask.NameToLayer(WallLayerName);
+        if (wallLayer < 0)
+            throw new InvalidOperationException($"Layer {WallLayerName} does not exist.");
+
+        int notWalkableArea = NavMesh.GetAreaFromName(NotWalkableAreaName);
+        if (notWalkableArea < 0)
+        {
+            throw new InvalidOperationException(
+                $"NavMesh area {NotWalkableAreaName} does not exist.");
+        }
+
+        Collider[] colliders = keyRoom.GetComponentsInChildren<Collider>(true)
+            .Where(collider => collider.enabled && !collider.isTrigger &&
+                               collider.gameObject.activeInHierarchy)
+            .ToArray();
+        if (colliders.Length == 0)
+            throw new InvalidOperationException(
+                $"{keyRoom.name} does not contain colliders for enemy exclusion.");
+
+        foreach (Collider collider in colliders)
+            collider.gameObject.layer = wallLayer;
+
+        Physics.SyncTransforms();
+        Bounds localBounds = GetLocalBounds(keyRoom.transform, colliders);
+
+        var exclusionObject = new GameObject("EnemyNavMeshExclusion")
+        {
+            layer = wallLayer
+        };
+        exclusionObject.transform.SetParent(keyRoom.transform, false);
+
+        NavMeshModifierVolume modifier =
+            exclusionObject.AddComponent<NavMeshModifierVolume>();
+        modifier.center = localBounds.center;
+        modifier.size = localBounds.size;
+        modifier.area = notWalkableArea;
+    }
+
+    private static Bounds GetLocalBounds(Transform root,
+        IReadOnlyList<Collider> colliders)
+    {
+        Bounds localBounds = default;
+        bool hasPoint = false;
+
+        foreach (Collider collider in colliders)
+        {
+            Bounds worldBounds = collider.bounds;
+            for (int x = 0; x < 2; x++)
+            for (int y = 0; y < 2; y++)
+            for (int z = 0; z < 2; z++)
+            {
+                Vector3 worldPoint = new(
+                    x == 0 ? worldBounds.min.x : worldBounds.max.x,
+                    y == 0 ? worldBounds.min.y : worldBounds.max.y,
+                    z == 0 ? worldBounds.min.z : worldBounds.max.z);
+                Vector3 localPoint = root.InverseTransformPoint(worldPoint);
+
+                if (!hasPoint)
+                {
+                    localBounds = new Bounds(localPoint, Vector3.zero);
+                    hasPoint = true;
+                }
+                else
+                {
+                    localBounds.Encapsulate(localPoint);
+                }
+            }
+        }
+
+        return localBounds;
+    }
+
+    private void ResetKeyRoomSpawnState()
+    {
+        _keyRoomVisitedRooms.Clear();
+        _visitedNonStartRooms = 0;
+        _spawnedKeyRooms = 0;
+        _roomsUntilNextKeyRoomChance = 0;
+
+        if (StartRoom?.RoomData != null)
+            _keyRoomVisitedRooms.Add(StartRoom.RoomData);
     }
 
     public bool IsExitRoom(RoomData roomData) =>

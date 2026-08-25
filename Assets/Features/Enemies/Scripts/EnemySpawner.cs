@@ -26,6 +26,8 @@ public class EnemySpawner
     private int _spawnedEnemiesInCurrentRoom;
     private int _allEnemiesInCurrentRoom;
     private int _waveEnemyCount;
+    private int _pendingEnemySpawnCount;
+    private int _spawnGeneration;
     private ReinforcementSpawnMode _reinforcementSpawnMode;
     private bool _isRoomSpawningActive;
 
@@ -39,7 +41,7 @@ public class EnemySpawner
     private const float FallbackSpawnHeight = 2f;
     private const float EnemySpawnRiseDuration = 0.5f;
     private const float PortalFadeDuration = 0.3f;
-    private const float InitialWaveSpawnExclusionRadius = 8f;
+    private const float SpawnExclusionRadius = 8f;
 
     public EnemySpawner(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IEnemyFactory enemyFactory,
         LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider, IEffectsService effectsService,
@@ -89,6 +91,8 @@ public class EnemySpawner
         _activeRoomData = currentRoomData;
         _activeCharacter = characterFacade;
         _spawnedEnemiesInCurrentRoom = 0;
+        _pendingEnemySpawnCount = 0;
+        _spawnGeneration++;
         _reinforcementSpawnMode = GetReinforcementSpawnMode(roomIndex);
         _isRoomSpawningActive = true;
 
@@ -96,10 +100,11 @@ public class EnemySpawner
         List<EnemyType> enemyTypes = BuildSpawnQueue(configuration, initialEnemyCount);
         Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
         _spawnedEnemiesInCurrentRoom = SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes,
-            characterFacade.transform.position);
+            characterFacade);
 
-        if (_spawnedEnemiesInCurrentRoom >= _allEnemiesInCurrentRoom ||
-            _spawnedEnemiesInCurrentRoom == 0)
+        if (_pendingEnemySpawnCount == 0 &&
+            (_spawnedEnemiesInCurrentRoom >= _allEnemiesInCurrentRoom ||
+             _spawnedEnemiesInCurrentRoom == 0))
         {
             FinishCurrentRoomSpawning();
         }
@@ -125,7 +130,8 @@ public class EnemySpawner
             throw new System.InvalidOperationException("Current level view is not available.");
 
         Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
-        int spawnedEnemyCount = SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes);
+        int spawnedEnemyCount = SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes,
+            characterFacade);
         _spawnedEnemiesInCurrentRoom += spawnedEnemyCount;
         return spawnedEnemyCount;
     }
@@ -133,6 +139,9 @@ public class EnemySpawner
     private void HandleEnemyRemoved(int activeEnemyCount)
     {
         if (_isRoomSpawningActive == false || _enemyRoomObserver.IsRoomCompleted)
+            return;
+
+        if (_pendingEnemySpawnCount > 0)
             return;
 
         if (_rogueLikeRuntimeDataService.CurrentRoomData is not DefaultEnemiesRoomData currentRoomData ||
@@ -162,8 +171,9 @@ public class EnemySpawner
         }
 
         int spawnedEnemyCount = TrySpawnAdditionalEnemies(_activeCharacter, spawnCount);
-        if (_spawnedEnemiesInCurrentRoom >= _allEnemiesInCurrentRoom ||
-            (spawnedEnemyCount == 0 && activeEnemyCount <= 0))
+        if (_pendingEnemySpawnCount == 0 &&
+            (_spawnedEnemiesInCurrentRoom >= _allEnemiesInCurrentRoom ||
+             (spawnedEnemyCount == 0 && activeEnemyCount <= 0)))
         {
             FinishCurrentRoomSpawning();
         }
@@ -209,18 +219,18 @@ public class EnemySpawner
     }
 
     private int SpawnEnemyTypes(Room currentRoom, LevelSettings levelSettings,
-        IReadOnlyList<EnemyType> enemyTypes, Vector3? excludedPosition = null)
+        IReadOnlyList<EnemyType> enemyTypes, CharacterFacade characterFacade)
     {
         Physics.SyncTransforms();
 
         List<Collider> groundColliders = GetGroundColliders(currentRoom);
         if (groundColliders.Count == 0)
-        {
-            Debug.LogWarning($"Could not find ground colliders in room {currentRoom.name}.");
-            return 0;
-        }
+            Debug.LogWarning($"Could not find ground colliders in room {currentRoom.name}. " +
+                             "Enemy spawning will keep retrying.");
 
-        int spawnedEnemyCount = 0;
+        int scheduledEnemyCount = 0;
+        var reusableSpawnPositions = new Dictionary<EnemySpawnVolume, Vector3>();
+        var pendingEnemySpawns = new List<PendingEnemySpawn>();
         for (int i = 0; i < enemyTypes.Count; i++)
         {
             var enemyType = enemyTypes[i];
@@ -228,21 +238,94 @@ public class EnemySpawner
                 enemyType, _enemyRoomObserver.CompletedRooms);
             EnemySpawnVolume spawnVolume = GetSpawnVolume(enemy);
 
-            if (!TryFindValidSpawnPosition(currentRoom, groundColliders, spawnVolume,
-                    excludedPosition, out var spawnPosition))
+            Vector3 spawnPosition = default;
+            bool hasSpawnPosition = groundColliders.Count > 0 &&
+                                    (TryFindValidSpawnPosition(currentRoom, groundColliders,
+                                         spawnVolume, characterFacade, out spawnPosition) ||
+                                     reusableSpawnPositions.TryGetValue(spawnVolume,
+                                         out spawnPosition));
+            if (hasSpawnPosition == false)
             {
-                Debug.LogWarning(
-                    $"Could not find valid spawn position for enemy {enemyType} in room {currentRoom.name} " +
-                    "after max attempts.");
+                pendingEnemySpawns.Add(new PendingEnemySpawn(enemy, spawnVolume));
+                scheduledEnemyCount++;
                 continue;
             }
 
+            reusableSpawnPositions[spawnVolume] = spawnPosition;
             SpawnEnemy(enemy, spawnPosition).Forget();
-            spawnedEnemyCount++;
+            scheduledEnemyCount++;
         }
 
-        return spawnedEnemyCount;
+        if (pendingEnemySpawns.Count > 0)
+        {
+            _pendingEnemySpawnCount += pendingEnemySpawns.Count;
+            RetryPendingEnemySpawns(currentRoom, groundColliders, pendingEnemySpawns,
+                characterFacade, _spawnGeneration).Forget();
+        }
+
+        return scheduledEnemyCount;
     }
+
+    private async UniTask RetryPendingEnemySpawns(Room room,
+        IReadOnlyList<Collider> groundColliders, List<PendingEnemySpawn> pendingEnemySpawns,
+        CharacterFacade characterFacade, int spawnGeneration)
+    {
+        var reusableSpawnPositions = new Dictionary<EnemySpawnVolume, Vector3>();
+        IReadOnlyList<Collider> availableGroundColliders = groundColliders;
+        int pendingSpawnIndex = 0;
+
+        while (pendingEnemySpawns.Count > 0 &&
+               IsSpawnRequestActive(room, characterFacade, spawnGeneration))
+        {
+            if (availableGroundColliders.Count == 0)
+                availableGroundColliders = GetGroundColliders(room);
+
+            if (availableGroundColliders.Count > 0)
+            {
+                if (pendingSpawnIndex >= pendingEnemySpawns.Count)
+                    pendingSpawnIndex = 0;
+
+                PendingEnemySpawn pendingSpawn = pendingEnemySpawns[pendingSpawnIndex];
+                bool hasSpawnPosition = reusableSpawnPositions.TryGetValue(
+                                            pendingSpawn.SpawnVolume, out Vector3 spawnPosition) ||
+                                        TryFindValidSpawnPosition(room, availableGroundColliders,
+                                            pendingSpawn.SpawnVolume, characterFacade,
+                                            out spawnPosition);
+                if (hasSpawnPosition)
+                {
+                    reusableSpawnPositions[pendingSpawn.SpawnVolume] = spawnPosition;
+                    SpawnEnemy(pendingSpawn.Enemy, spawnPosition).Forget();
+                    pendingEnemySpawns.RemoveAt(pendingSpawnIndex);
+                    _pendingEnemySpawnCount--;
+                }
+                else
+                {
+                    pendingSpawnIndex++;
+                }
+            }
+
+            if (pendingEnemySpawns.Count > 0)
+                await UniTask.Yield();
+        }
+
+        if (IsSpawnRequestActive(room, characterFacade, spawnGeneration) &&
+            _pendingEnemySpawnCount == 0 &&
+            _spawnedEnemiesInCurrentRoom >= _allEnemiesInCurrentRoom)
+        {
+            FinishCurrentRoomSpawning();
+        }
+    }
+
+    private bool IsSpawnRequestActive(Room room, CharacterFacade characterFacade,
+        int spawnGeneration) =>
+        _isRoomSpawningActive &&
+        _spawnGeneration == spawnGeneration &&
+        room != null &&
+        characterFacade != null &&
+        _enemyRoomObserver.IsRoomCompleted == false &&
+        _rogueLikeRuntimeDataService.CurrentRoomData is DefaultEnemiesRoomData currentRoomData &&
+        ReferenceEquals(currentRoomData, _activeRoomData) &&
+        ReferenceEquals(room.RoomData, _activeRoomData);
 
     private static List<EnemyType> BuildSpawnQueue(EnemyRoomSettings configuration,
         int enemyCount)
@@ -385,18 +468,19 @@ public class EnemySpawner
     }
 
     private bool TryFindValidSpawnPosition(Room room, IReadOnlyList<Collider> groundColliders,
-        EnemySpawnVolume spawnVolume, Vector3? excludedPosition, out Vector3 validPosition)
+        EnemySpawnVolume spawnVolume, CharacterFacade characterFacade,
+        out Vector3 validPosition)
     {
         const int maxAttempts = 50;
+        Vector3 characterPosition = characterFacade.transform.position;
 
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
             Vector3 candidate = GetRandomSpawnCandidate(groundColliders, spawnVolume.Bounds);
             if (IsPositionValid(room, candidate, spawnVolume, out validPosition))
             {
-                if (excludedPosition.HasValue &&
-                    GetFlatSqrDistance(validPosition, excludedPosition.Value) <
-                    InitialWaveSpawnExclusionRadius * InitialWaveSpawnExclusionRadius)
+                if (GetFlatSqrDistance(validPosition, characterPosition) <
+                    SpawnExclusionRadius * SpawnExclusionRadius)
                 {
                     continue;
                 }
@@ -870,6 +954,18 @@ public class EnemySpawner
                 bounds.Encapsulate(shapes[i].Bounds);
 
             Bounds = bounds;
+        }
+    }
+
+    private readonly struct PendingEnemySpawn
+    {
+        public GameObject Enemy { get; }
+        public EnemySpawnVolume SpawnVolume { get; }
+
+        public PendingEnemySpawn(GameObject enemy, EnemySpawnVolume spawnVolume)
+        {
+            Enemy = enemy;
+            SpawnVolume = spawnVolume;
         }
     }
 

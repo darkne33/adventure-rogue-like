@@ -25,6 +25,16 @@ public class RoomData
 [Serializable]
 public class DefaultEnemiesRoomData : RoomData
 {
+    [field: SerializeField]
+    [field: Tooltip("Allows Key_Room to spawn in this combat room.")]
+    public bool CanSpawnKeyRoom { get; private set; }
+
+    [field: SerializeField]
+    [field: NaughtyAttributes.ShowIf(nameof(CanSpawnKeyRoom))]
+    [field: NaughtyAttributes.AllowNesting]
+    [field: Tooltip("Position where Key_Room will be spawned.")]
+    public Transform KeyRoomSpawnPoint { get; private set; }
+
     public EnemyRoomSettings EnemySettings { get; private set; }
     public bool IsCompleted { get; private set; }
 

@@ -26,7 +26,7 @@ namespace Features.Relics.Scripts
             _rewardPresenter = rewardPresenter;
         }
 
-        public async UniTask PlayAsync(IReadOnlyList<RelicDefinition> availableRelics,
+        public async UniTask PlayAsync(RelicChestRollPlan rollPlan,
             Vector3 chestPosition,
             Action onFinished, CancellationToken cancellationToken)
         {
@@ -36,7 +36,8 @@ namespace Features.Relics.Scripts
             {
                 await _view.PlayOpenAnimationAsync(cancellationToken);
 
-                if (TryGetInitialStage(availableRelics, out RelicRarity rarity,
+                if (rollPlan?.Reward == null ||
+                    TryGetInitialStage(rollPlan.AvailableRelics, out RelicRarity rarity,
                         out List<RelicDefinition> stageCandidates) == false)
                 {
                     Debug.LogError("Relic chest has no available rewards.");
@@ -62,7 +63,9 @@ namespace Features.Relics.Scripts
                     displayedRelic = await PlayPreviewRoll(preview, stageCandidates,
                         displayedRelic, stageDuration, cancellationToken);
 
-                    if (TryUpgradeRarity(rarity, availableRelics, out RelicRarity upgradedRarity,
+                    if (rarity == rollPlan.Reward.Rarity ||
+                        TryGetNextRarity(rarity, out RelicRarity upgradedRarity) == false ||
+                        TryGetCandidates(rollPlan.AvailableRelics, upgradedRarity,
                             out List<RelicDefinition> upgradedCandidates) == false)
                         break;
 
@@ -82,8 +85,7 @@ namespace Features.Relics.Scripts
                     stageCandidates = upgradedCandidates;
                 }
 
-                RelicDefinition reward =
-                    stageCandidates[UnityEngine.Random.Range(0, stageCandidates.Count)];
+                RelicDefinition reward = rollPlan.Reward;
                 _rewardPresenter.UpdatePreview(preview, reward);
                 _view.Reveal(preview.transform);
 
@@ -137,21 +139,6 @@ namespace Features.Relics.Scripts
             }
 
             return current;
-        }
-
-        private bool TryUpgradeRarity(RelicRarity currentRarity,
-            IReadOnlyList<RelicDefinition> availableRelics, out RelicRarity upgradedRarity,
-            out List<RelicDefinition> upgradedCandidates)
-        {
-            upgradedCandidates = null;
-            if (TryGetNextRarity(currentRarity, out upgradedRarity) == false)
-                return false;
-
-            if (TryGetCandidates(availableRelics, upgradedRarity, out upgradedCandidates) == false)
-                return false;
-
-            float upgradeChance = _configuration.GetRarityUpgradeChance(currentRarity);
-            return upgradeChance > 0f && UnityEngine.Random.value < upgradeChance;
         }
 
         private static bool TryGetInitialStage(IReadOnlyList<RelicDefinition> availableRelics,
