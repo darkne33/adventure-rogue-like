@@ -27,6 +27,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     protected int Damage { get; set; }
     protected float ProjectileSpeed { get; private set; }
     protected virtual int BaseProjectileCount => 1;
+    protected virtual int ShotsPerProjectile => 1;
 
     protected SingleShootAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
         CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager)
@@ -181,7 +182,9 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         try
         {
             float launchDelay = Mathf.Max(0f, AbilityConfig.AdditionalProjectileLaunchDelay);
-            for (int index = 0; index < projectileCount; index++)
+            int shotsPerProjectile = Mathf.Max(1, ShotsPerProjectile);
+            int totalShotCount = Mathf.Max(1, projectileCount) * shotsPerProjectile;
+            for (int index = 0; index < totalShotCount; index++)
             {
                 if (index > 0 && launchDelay > 0f)
                 {
@@ -192,7 +195,9 @@ public abstract class SingleShootAbility : CharacterActiveAbility
                 if (launchSequence != _projectileLaunchSequence)
                     return;
 
-                ShootProjectile(character, index, projectileCount);
+                int shotIndex = shotsPerProjectile > 1 ? index % shotsPerProjectile : index;
+                int shotCount = shotsPerProjectile > 1 ? shotsPerProjectile : projectileCount;
+                ShootProjectile(character, shotIndex, shotCount);
             }
         }
         finally

@@ -30,7 +30,7 @@ public sealed class BulletExplosionAbility : SingleShootAbility
     private BulletExplosionAbilityConfiguration BulletExplosionConfig =>
         (BulletExplosionAbilityConfiguration)AbilityConfig;
 
-    protected override int BaseProjectileCount =>
+    protected override int ShotsPerProjectile =>
         Mathf.Max(1, BulletExplosionConfig.StartProjectileCount);
 
     protected override bool StartCooldownImmediately => false;

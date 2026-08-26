@@ -12,6 +12,9 @@ public sealed class CharacterProximityTransparencySystem
     private const float FadeDuration = 0.35f;
     private const float ProximityCheckInterval = 0.1f;
     private const float CandidateRefreshInterval = 1f;
+    private const string UniversalLitShaderName = "Universal Render Pipeline/Lit";
+    private const string ProximityFadeLitShaderName = "Little Rush/Proximity Fade Lit";
+    private const string ProximityFadeLitResourcePath = "ProximityFadeLit";
 
     private static readonly int BaseColorProperty = Shader.PropertyToID("_BaseColor");
     private static readonly int ColorProperty = Shader.PropertyToID("_Color");
@@ -27,6 +30,13 @@ public sealed class CharacterProximityTransparencySystem
     private static readonly int BlendSrcProperty = Shader.PropertyToID("_BlendSrc");
     private static readonly int BlendDstProperty = Shader.PropertyToID("_BlendDst");
     private static readonly int ZWriteProperty = Shader.PropertyToID("_ZWrite");
+    // Standard URP/Lit keeps this value in UnityPerMaterial but does not use it
+    // unless a clear-coat keyword is present. The proximity shader has no such
+    // keyword and reuses the slot as its dither coverage.
+    private static readonly int DitherFadeProperty =
+        Shader.PropertyToID("_ClearCoatMask");
+
+    private static Shader _proximityFadeLitShader;
 
     private readonly Transform _characterRoot;
     private readonly Collider _characterCollider;
@@ -176,7 +186,7 @@ public sealed class CharacterProximityTransparencySystem
         for (int i = 0; i < originalMaterials.Length; i++)
         {
             Material originalMaterial = originalMaterials[i];
-            Material transparentMaterial = CreateTransparentMaterial(originalMaterial);
+            Material transparentMaterial = CreateFadeMaterial(originalMaterial);
             transparentMaterials[i] = transparentMaterial;
 
             if (ReferenceEquals(originalMaterial, transparentMaterial) == false)
@@ -190,6 +200,79 @@ public sealed class CharacterProximityTransparencySystem
             renderer, originalMaterials, transparentMaterials);
         _rendererStates.Add(renderer, state);
         return state;
+    }
+
+    private static Material CreateFadeMaterial(Material originalMaterial)
+    {
+        Material ditherMaterial = CreateOpaqueDitherMaterial(originalMaterial);
+        return ditherMaterial != null
+            ? ditherMaterial
+            : CreateTransparentMaterial(originalMaterial);
+    }
+
+    private static Material CreateOpaqueDitherMaterial(Material originalMaterial)
+    {
+        if (originalMaterial == null || originalMaterial.shader == null ||
+            originalMaterial.shader.name != UniversalLitShaderName ||
+            originalMaterial.renderQueue >= (int)RenderQueue.Transparent ||
+            originalMaterial.HasProperty(SurfaceProperty) &&
+            originalMaterial.GetFloat(SurfaceProperty) > 0.5f)
+        {
+            return null;
+        }
+
+        Shader fadeShader = GetProximityFadeLitShader();
+        if (fadeShader == null)
+            return null;
+
+        LocalKeyword[] originalKeywords = originalMaterial.enabledKeywords;
+        string originalRenderType = originalMaterial.GetTag("RenderType", false);
+        int originalRenderQueue = originalMaterial.renderQueue;
+
+        var fadeMaterial = new Material(originalMaterial)
+        {
+            shader = fadeShader,
+            name = $"{originalMaterial.name} (Nearby Dithered)",
+            hideFlags = HideFlags.DontSave
+        };
+
+        foreach (LocalKeyword keyword in originalKeywords)
+            fadeMaterial.EnableKeyword(keyword.name);
+
+        SetFloatIfPresent(fadeMaterial, SurfaceProperty, 0f);
+        SetFloatIfPresent(fadeMaterial, SrcBlendProperty, (float)BlendMode.One);
+        SetFloatIfPresent(fadeMaterial, DstBlendProperty, (float)BlendMode.Zero);
+        SetFloatIfPresent(fadeMaterial, SrcBlendAlphaProperty, (float)BlendMode.One);
+        SetFloatIfPresent(fadeMaterial, DstBlendAlphaProperty, (float)BlendMode.Zero);
+        SetFloatIfPresent(fadeMaterial, ZWriteProperty, 1f);
+        fadeMaterial.SetFloat(DitherFadeProperty, 1f);
+
+        fadeMaterial.DisableKeyword("_ALPHABLEND_ON");
+        fadeMaterial.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        fadeMaterial.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        fadeMaterial.SetShaderPassEnabled("ShadowCaster", false);
+        fadeMaterial.SetShaderPassEnabled("DepthOnly", true);
+        fadeMaterial.SetShaderPassEnabled("DepthNormals", true);
+        fadeMaterial.renderQueue = originalRenderQueue;
+
+        if (string.IsNullOrEmpty(originalRenderType) == false)
+            fadeMaterial.SetOverrideTag("RenderType", originalRenderType);
+
+        return fadeMaterial;
+    }
+
+    private static Shader GetProximityFadeLitShader()
+    {
+        if (_proximityFadeLitShader == null)
+        {
+            _proximityFadeLitShader =
+                Resources.Load<Shader>(ProximityFadeLitResourcePath);
+
+            if (_proximityFadeLitShader == null)
+                _proximityFadeLitShader = Shader.Find(ProximityFadeLitShaderName);
+        }
+
+        return _proximityFadeLitShader;
     }
 
     private static Material CreateTransparentMaterial(Material originalMaterial)
@@ -502,6 +585,7 @@ public sealed class CharacterProximityTransparencySystem
         private readonly Material _material;
         private readonly bool _hasBaseColor;
         private readonly bool _hasColor;
+        private readonly bool _usesDitherFade;
         private readonly bool _usesAlphaClip;
         private readonly Color _originalBaseColor;
         private readonly Color _originalColor;
@@ -512,6 +596,8 @@ public sealed class CharacterProximityTransparencySystem
             _material = material;
             _hasBaseColor = material.HasProperty(BaseColorProperty);
             _hasColor = material.HasProperty(ColorProperty);
+            _usesDitherFade = material.shader != null &&
+                              material.shader.name == ProximityFadeLitShaderName;
             _usesAlphaClip = material.HasProperty(AlphaClipProperty) &&
                              material.GetFloat(AlphaClipProperty) > 0.5f &&
                              material.HasProperty(CutoffProperty);
@@ -528,6 +614,13 @@ public sealed class CharacterProximityTransparencySystem
         {
             if (_material == null)
                 return;
+
+            if (_usesDitherFade)
+            {
+                _material.SetFloat(DitherFadeProperty,
+                    Mathf.Lerp(1f, NearbyAlpha, progress));
+                return;
+            }
 
             float originalAlpha = 1f;
             float currentAlpha = 1f;
