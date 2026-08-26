@@ -4,5 +4,6 @@ public enum EnemyMovementType
     Skirmisher,
     AggressiveChase,
     Aggressive,
-    RangeChase
+    RangeChase,
+    Stationary
 }

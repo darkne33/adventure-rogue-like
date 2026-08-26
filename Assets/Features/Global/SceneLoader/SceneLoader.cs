@@ -44,7 +44,11 @@ namespace Core
         public bool HasActiveScene(string sceneName) => 
             _activeScenes.Any(x => x.Scene.name == sceneName);
 
-        public void UnloadBootstrapScene() => 
-            SceneManager.UnloadSceneAsync(SceneNames.BootstrapScene);
+        public void UnloadBootstrapScene()
+        {
+            Scene bootstrapScene = SceneManager.GetSceneByName(SceneNames.BootstrapScene);
+            if (bootstrapScene.IsValid() && bootstrapScene.isLoaded)
+                SceneManager.UnloadSceneAsync(bootstrapScene);
+        }
     }
 }

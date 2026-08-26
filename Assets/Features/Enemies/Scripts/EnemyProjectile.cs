@@ -18,6 +18,7 @@ namespace Features.Enemies.Scripts
         private bool _isResolved;
 
         protected bool IsResolved => _isResolved;
+        protected virtual bool ResolvesDirectHits => true;
 
         private void Awake() =>
             _blockingLayerMask = LayerMask.GetMask("Obstacle", "Wall");
@@ -81,9 +82,15 @@ namespace Features.Enemies.Scripts
             if (_target == null)
                 return;
 
-            if (impactRadius.HasValue &&
-                Vector3.Distance(transform.position, _target.transform.position) > impactRadius.Value)
-                return;
+            if (impactRadius.HasValue)
+            {
+                Vector3 offset = _target.transform.position - transform.position;
+                offset.y = 0f;
+                float radius = impactRadius.Value;
+
+                if (offset.sqrMagnitude > radius * radius)
+                    return;
+            }
 
             _target.ReceiveDamage(_damage, _source);
         }
@@ -94,7 +101,7 @@ namespace Features.Enemies.Scripts
                 return;
 
             CharacterFacade character = other.GetComponentInParent<CharacterFacade>();
-            if (character != null && character == _target)
+            if (ResolvesDirectHits && character != null && character == _target)
             {
                 ResolveHit();
                 Destroy(gameObject);

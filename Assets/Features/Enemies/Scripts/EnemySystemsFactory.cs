@@ -120,6 +120,8 @@ namespace Features.Enemies.Scripts
                     facade, character, configuration, navMeshAgent, animationSystem),
                 EnemyMovementType.RangeChase => new EnemyRangeChaseMovementSystem(
                     facade, character, configuration, navMeshAgent, animationSystem),
+                EnemyMovementType.Stationary => new EnemyStationaryMovementSystem(
+                    facade, character, configuration, animationSystem),
                 _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyMovementType),
                     configuration.EnemyMovementType, "Enemy movement type is not supported.")
             };

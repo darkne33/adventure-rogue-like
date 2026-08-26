@@ -14,11 +14,12 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
     private readonly PauseEntityDistributor _pauseEntityDistributor;
     private readonly CharacterConfiguration _characterConfiguration;
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
+    private readonly RunRestartService _runRestartService;
 
     public CharacterSystemsFactory(CharacterCameraSettingsConfiguration cameraSettings, ICameraService cameraService,
         IPanelService panelService, CharacterStats characterStats, PauseEntityDistributor pauseEntityDistributor,
         CharacterConfiguration characterConfiguration,
-        ISceneService<RogueLikeSceneProvider> sceneService)
+        ISceneService<RogueLikeSceneProvider> sceneService, RunRestartService runRestartService)
     {
         _cameraSettings = cameraSettings;
         _cameraService = cameraService;
@@ -27,6 +28,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         _pauseEntityDistributor = pauseEntityDistributor;
         _characterConfiguration = characterConfiguration;
         _sceneService = sceneService;
+        _runRestartService = runRestartService;
     }
 
     public void Create(CharacterFacade facade)
@@ -58,7 +60,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         if (lowHealthVignetteView == null)
             throw new InvalidOperationException("Global Volume is missing LowHealthVignetteView.");
 
-        var deathSystem = new CharacterDeathSystem(facade);
+        var deathSystem = new CharacterDeathSystem(facade, _runRestartService);
         var healthSystem = new HealthSystem(_characterStats.MaxHp,
             new IHealthView[] { characterPanel.CharacterHealthView, worldHealthView, lowHealthVignetteView },
             deathSystem);

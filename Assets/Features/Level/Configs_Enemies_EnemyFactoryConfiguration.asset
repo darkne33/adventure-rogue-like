@@ -28,7 +28,7 @@ MonoBehaviour:
         m_SubObjectGUID: 
         m_EditorAssetChanged: 0
     EliteSpawnChance: 0
-    RequiredCompletedRoomsForElite: 0
+    RequiredCompletedRoomsForElite: 3
     EnemyType: 1
   - NormalPrefabContainer:
       _assetReference:
@@ -45,7 +45,7 @@ MonoBehaviour:
         m_SubObjectGUID: 
         m_EditorAssetChanged: 0
     EliteSpawnChance: 0.3
-    RequiredCompletedRoomsForElite: 0
+    RequiredCompletedRoomsForElite: 3
     EnemyType: 2
   - NormalPrefabContainer:
       _assetReference:
@@ -79,7 +79,7 @@ MonoBehaviour:
         m_SubObjectGUID: 
         m_EditorAssetChanged: 0
     EliteSpawnChance: 0
-    RequiredCompletedRoomsForElite: 0
+    RequiredCompletedRoomsForElite: 3
     EnemyType: 4
   - NormalPrefabContainer:
       _assetReference:
@@ -96,5 +96,22 @@ MonoBehaviour:
         m_SubObjectGUID: 
         m_EditorAssetChanged: 0
     EliteSpawnChance: 0.3
-    RequiredCompletedRoomsForElite: 0
+    RequiredCompletedRoomsForElite: 3
     EnemyType: 5
+  - NormalPrefabContainer:
+      _assetReference:
+        m_AssetGUID: 61a014a42b9b61244b2806f7b78af4fd
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_SubObjectGUID: 
+        m_EditorAssetChanged: 0
+    ElitePrefabContainer:
+      _assetReference:
+        m_AssetGUID: 
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_SubObjectGUID: 
+        m_EditorAssetChanged: 0
+    EliteSpawnChance: 0.3
+    RequiredCompletedRoomsForElite: 0
+    EnemyType: 6
