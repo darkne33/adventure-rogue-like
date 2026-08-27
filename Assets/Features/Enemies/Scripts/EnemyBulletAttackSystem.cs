@@ -17,6 +17,7 @@ namespace Features.Enemies.Scripts
         private EnemyBulletConfiguration _bulletConfiguration;
         private float _cooldown;
         private float _attackDistance;
+        private bool _initialAttackDelayPending;
 
         public EnemyBulletAttackSystem(CharacterFacade characterFacade,
             EnemyConfiguration enemyConfiguration, EnemyFacade enemyFacade,
@@ -41,7 +42,10 @@ namespace Features.Enemies.Scripts
                     $"{_bulletConfiguration.name} requires a projectile prefab.");
 
             _attackDistance = _enemyConfiguration.DamageRange;
-            _cooldown = Mathf.Max(0f, _enemyConfiguration.InitialAttackCooldown);
+            _initialAttackDelayPending = _enemyConfiguration.RandomInitialAttackDelayMax > 0f;
+            _cooldown = _initialAttackDelayPending
+                ? 0f
+                : Mathf.Max(0f, _enemyConfiguration.InitialAttackCooldown);
         }
 
         public async UniTask Execute(CancellationToken cancellationToken)
@@ -112,9 +116,10 @@ namespace Features.Enemies.Scripts
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                _cooldown -= Time.deltaTime * _enemyFacade.RelicTimeScale;
+                UpdateCooldown();
 
-                if (_enemyFacade.IsDead == false &&
+                if (_initialAttackDelayPending == false &&
+                    _enemyFacade.IsDead == false &&
                     _enemyFacade.IsAggro &&
                     _enemyFacade.CanAttack &&
                     _enemyFacade.IsStopped == false &&
@@ -127,6 +132,24 @@ namespace Features.Enemies.Scripts
 
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
             }
+        }
+
+        private void UpdateCooldown()
+        {
+            if (_initialAttackDelayPending)
+            {
+                if (_enemyFacade.IsAggro == false || _enemyFacade.IsStopped ||
+                    _enemyFacade.CanAttack == false)
+                    return;
+
+                _cooldown = UnityEngine.Random.Range(
+                    0f,
+                    Mathf.Max(0f, _enemyConfiguration.RandomInitialAttackDelayMax));
+                _initialAttackDelayPending = false;
+                return;
+            }
+
+            _cooldown -= Time.deltaTime * _enemyFacade.RelicTimeScale;
         }
 
         private bool IsCharacterInsideAttackRange()

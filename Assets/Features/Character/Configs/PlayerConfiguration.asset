@@ -29,6 +29,8 @@ MonoBehaviour:
     _previewZoom: 1
     _startingAbility: 1
     _startingAbilityDetails: {fileID: 11400000, guid: d1f61c5394e93294ab79fe9496bb9e40, type: 2}
+    _excludedUpgradeAbilities:
+    - 19
     _startingRelic: {fileID: 0}
   - _id: duke
     _displayName: DUKE
@@ -46,5 +48,7 @@ MonoBehaviour:
     _previewZoom: 1.19
     _startingAbility: 19
     _startingAbilityDetails: {fileID: 11400000, guid: c4e9a1b2d3f54768a9b0c1d2e3f40516, type: 2}
+    _excludedUpgradeAbilities:
+    - 1
     _startingRelic: {fileID: 0}
   _defaultCharacterIndex: 0

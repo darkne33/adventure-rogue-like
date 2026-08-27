@@ -13,15 +13,17 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
     private readonly ICharacterLevelService _characterLevelService;
     private readonly UpgradeOfferConfiguration _upgradeOfferConfiguration;
     private readonly UpgradeBuildService _upgradeBuildService;
+    private readonly CharacterConfiguration _characterConfiguration;
 
     public UpgradeOfferGenerator(IAbilityChoiceProvider abilityChoiceProvider,
         ICharacterLevelService characterLevelService, UpgradeOfferConfiguration upgradeOfferConfiguration,
-        UpgradeBuildService upgradeBuildService)
+        UpgradeBuildService upgradeBuildService, CharacterConfiguration characterConfiguration)
     {
         _abilityChoiceProvider = abilityChoiceProvider;
         _characterLevelService = characterLevelService;
         _upgradeOfferConfiguration = upgradeOfferConfiguration;
         _upgradeBuildService = upgradeBuildService;
+        _characterConfiguration = characterConfiguration;
     }
 
     public IEnumerable<UpgradeOffer> GenerateOffers()
@@ -30,6 +32,7 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         List<CharacterAbility> offerAbilities = new();
 
         List<CharacterAbility> availableAbilities = _abilityChoiceProvider.GetCharacterAbilities().Values
+            .Where(ability => _characterConfiguration.SelectedCharacter.IsAvailableInUpgrades(ability.Id))
             .Where(IsAvailableForCurrentBuild)
             .ToList();
 

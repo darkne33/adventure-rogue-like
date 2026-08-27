@@ -24,6 +24,10 @@ public class EnemyConfiguration : ScriptableObject
     [field: SerializeField] public float DamageCooldown { get; private set; }
     [field: Min(0f)]
     [field: SerializeField] public float InitialAttackCooldown { get; private set; }
+    [field: Tooltip("Maximum random delay before the first attack after the aggro reaction. " +
+                    "Zero disables the random delay.")]
+    [field: Min(0f)]
+    [field: SerializeField] public float RandomInitialAttackDelayMax { get; private set; }
     [field: Min(0f)]
     [field: SerializeField] public float AttackPreparationDuration { get; private set; } = 0.55f;
     [field: SerializeField] public EnemyDamageType EnemyDamageType { get; private set; }

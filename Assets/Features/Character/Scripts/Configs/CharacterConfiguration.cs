@@ -100,6 +100,7 @@ public sealed class CharacterDefinition
     [SerializeField, Min(0.1f)] private float _previewZoom = 1f;
     [SerializeField] private AbilityName _startingAbility;
     [SerializeField] private AbilityConfiguration _startingAbilityDetails;
+    [SerializeField] private List<AbilityName> _excludedUpgradeAbilities = new();
     [SerializeField] private RelicDefinition _startingRelic;
 
     public string Id => _id;
@@ -115,6 +116,9 @@ public sealed class CharacterDefinition
     public AbilityName StartingAbility => _startingAbility;
     public AbilityConfiguration StartingAbilityDetails => _startingAbilityDetails;
     public RelicDefinition StartingRelic => _startingRelic;
+
+    public bool IsAvailableInUpgrades(AbilityName abilityName) =>
+        _excludedUpgradeAbilities == null || !_excludedUpgradeAbilities.Contains(abilityName);
 
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(_id) &&

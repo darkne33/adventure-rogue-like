@@ -18,6 +18,7 @@ namespace Features.Enemies.Scripts
         private float _cooldown;
         private float _minimumDistanceExecuteDamage;
         private float _distanceExecuteDamage;
+        private bool _initialAttackDelayPending;
 
         public EnemyRangedAttackSystem(CharacterFacade characterFacade, EnemyConfiguration enemyConfiguration,
             EnemyFacade enemyFacade, EnemyRangedAttackView attackView,
@@ -40,7 +41,10 @@ namespace Features.Enemies.Scripts
 
             _minimumDistanceExecuteDamage = _attackView.MinimumAttackDistance;
             _distanceExecuteDamage = _enemyConfiguration.DamageRange;
-            _cooldown = _enemyConfiguration.DamageCooldown;
+            _initialAttackDelayPending = _enemyConfiguration.RandomInitialAttackDelayMax > 0f;
+            _cooldown = _initialAttackDelayPending
+                ? 0f
+                : _enemyConfiguration.DamageCooldown;
         }
 
         public async UniTask Execute(CancellationToken cancellationToken)
@@ -104,9 +108,10 @@ namespace Features.Enemies.Scripts
             while (!cancellationToken.IsCancellationRequested)
             {
                 float distanceToCharacter = GetFlatDistanceToCharacter();
-                _cooldown -= Time.deltaTime * _enemyFacade.RelicTimeScale;
+                UpdateCooldown();
 
-                if (_enemyFacade.IsDead == false &&
+                if (_initialAttackDelayPending == false &&
+                    _enemyFacade.IsDead == false &&
                     _enemyFacade.IsAggro &&
                     _enemyFacade.IsStopped == false &&
                     _cooldown <= 0f &&
@@ -119,6 +124,23 @@ namespace Features.Enemies.Scripts
 
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
             }
+        }
+
+        private void UpdateCooldown()
+        {
+            if (_initialAttackDelayPending)
+            {
+                if (_enemyFacade.IsAggro == false || _enemyFacade.IsStopped)
+                    return;
+
+                _cooldown = UnityEngine.Random.Range(
+                    0f,
+                    Mathf.Max(0f, _enemyConfiguration.RandomInitialAttackDelayMax));
+                _initialAttackDelayPending = false;
+                return;
+            }
+
+            _cooldown -= Time.deltaTime * _enemyFacade.RelicTimeScale;
         }
 
         private float GetFlatDistanceToCharacter()
