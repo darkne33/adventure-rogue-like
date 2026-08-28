@@ -13,7 +13,10 @@ using Object = UnityEngine.Object;
 public sealed class CharacterPreviewRenderer : MonoBehaviour
 {
     private const int PreviewLayer = 31;
+    private const int PreviewLayerMask = 1 << PreviewLayer;
     private const int PreviewRendererIndex = 1;
+    private const string ColorCorrectionShaderName =
+        "UI/LittleRush/CharacterPreviewColorCorrection";
     private const int PortraitResolution = 512;
     private const int MinimumPreviewResolution = 256;
     private const int MaximumPreviewResolution = 1024;
@@ -28,11 +31,25 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
 
     private static readonly Vector3 PreviewWorldPosition = new(10000f, -10000f, 10000f);
     private static readonly int IdleStateHash = Animator.StringToHash("Idle");
+    private static readonly int SaturationPropertyId = Shader.PropertyToID("_Saturation");
+    private static readonly int ContrastPropertyId = Shader.PropertyToID("_Contrast");
+
+    [Header("Lighting")]
+    [SerializeField, Min(0f)] private float _keyLightIntensity = 1.5f;
+    [SerializeField, Min(0f)] private float _fillLightIntensity = 0.3f;
+    [SerializeField] private Color _keyLightColor = Color.white;
+    [SerializeField] private Color _fillLightColor = Color.white;
+
+    [Header("Color Correction")]
+    [SerializeField] private Shader _colorCorrectionShader;
+    [SerializeField, Range(-100f, 100f)] private float _saturation = 30f;
+    [SerializeField, Range(-100f, 100f)] private float _contrast = 15f;
 
     private readonly Dictionary<string, Sprite> _portraitCache =
         new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _portraitRenderGate = new(1, 1);
     private readonly CancellationTokenSource _lifetimeCancellation = new();
+    private readonly HashSet<Light> _excludedExternalLights = new();
 
     private RawImage _viewport;
     private GameObject _previewWorld;
@@ -40,8 +57,14 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
     private Transform _portraitStage;
     private Camera _previewCamera;
     private Camera _portraitCamera;
+    private Light _keyLight;
+    private Light _fillLight;
     private RenderTexture _previewRenderTexture;
     private RenderTexture _portraitRenderTexture;
+    private Material _colorCorrectionMaterial;
+    private Material _originalViewportMaterial;
+    private float _appliedSaturation = float.NaN;
+    private float _appliedContrast = float.NaN;
 
     private GameObject _currentPreview;
     private float _currentPreviewOffsetY;
@@ -57,6 +80,7 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
     public event Action<string, Sprite> PortraitRendered;
 
     public IReadOnlyDictionary<string, Sprite> Portraits => _portraitCache;
+    public Material ColorCorrectionMaterial => _colorCorrectionMaterial;
 
     public void Initialize(RawImage viewport)
     {
@@ -66,17 +90,24 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
         if (_isDestroyed)
             throw new ObjectDisposedException(nameof(CharacterPreviewRenderer));
 
-        if (_viewport != null && _viewport != viewport &&
-            _viewport.texture == _previewRenderTexture)
+        if (_viewport != null && _viewport != viewport)
         {
-            _viewport.texture = null;
+            if (_viewport.texture == _previewRenderTexture)
+                _viewport.texture = null;
+
+            RestoreViewportMaterial();
         }
 
+        if (_viewport != viewport)
+            _originalViewportMaterial = viewport.material;
+
         _viewport = viewport;
+        CreateColorCorrectionMaterialIfNeeded();
         CreatePreviewWorldIfNeeded();
         EnsurePreviewRenderTexture(forceRecreate: false);
 
         _viewport.texture = _previewRenderTexture;
+        _viewport.material = _colorCorrectionMaterial;
         _viewport.color = Color.white;
         _viewport.uvRect = new Rect(0f, 0f, 1f, 1f);
         _previewCamera.enabled = isActiveAndEnabled;
@@ -522,10 +553,14 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
             PortraitResolution, "CharacterPortraitRenderTexture");
         _portraitCamera.targetTexture = _portraitRenderTexture;
 
-        CreateDirectionalLight("CharacterPreviewKeyLight",
-            new Color(1f, 0.91f, 0.8f), 1.35f, new Vector3(32f, -28f, 0f));
-        CreateDirectionalLight("CharacterPreviewFillLight",
-            new Color(0.55f, 0.7f, 1f), 0.75f, new Vector3(18f, 145f, 0f));
+        ExcludePreviewLayerFromExternalLights();
+        _keyLight = CreateDirectionalLight("CharacterPreviewKeyLight",
+            _keyLightColor, _keyLightIntensity,
+            new Vector3(32f, -28f, 0f));
+        _fillLight = CreateDirectionalLight("CharacterPreviewFillLight",
+            _fillLightColor, _fillLightIntensity,
+            new Vector3(18f, 145f, 0f));
+        ApplyLightingSettings();
     }
 
     private Transform CreateStage(string stageName, Vector3 localPosition)
@@ -554,7 +589,7 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
         camera.cameraType = CameraType.Game;
         camera.clearFlags = CameraClearFlags.SolidColor;
         camera.backgroundColor = Color.clear;
-        camera.cullingMask = 1 << PreviewLayer;
+        camera.cullingMask = PreviewLayerMask;
         camera.orthographic = false;
         camera.fieldOfView = PreviewFieldOfView;
         camera.nearClipPlane = 0.01f;
@@ -581,7 +616,7 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
         return camera;
     }
 
-    private void CreateDirectionalLight(string lightName, Color color, float intensity,
+    private Light CreateDirectionalLight(string lightName, Color color, float intensity,
         Vector3 eulerAngles)
     {
         var lightObject = new GameObject(lightName)
@@ -597,8 +632,102 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
         light.color = color;
         light.intensity = intensity;
         light.shadows = LightShadows.None;
-        light.cullingMask = 1 << PreviewLayer;
+        light.cullingMask = PreviewLayerMask;
         light.renderMode = LightRenderMode.ForcePixel;
+        return light;
+    }
+
+    private void ApplyLightingSettings()
+    {
+        if (_keyLight != null)
+        {
+            _keyLight.color = _keyLightColor;
+            _keyLight.intensity = _keyLightIntensity;
+        }
+
+        if (_fillLight != null)
+        {
+            _fillLight.color = _fillLightColor;
+            _fillLight.intensity = _fillLightIntensity;
+        }
+    }
+
+    private void ExcludePreviewLayerFromExternalLights()
+    {
+        Light[] lights = FindObjectsByType<Light>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (Light light in lights)
+        {
+            if (light == null || light.transform.IsChildOf(_previewWorld.transform) ||
+                (light.cullingMask & PreviewLayerMask) == 0)
+            {
+                continue;
+            }
+
+            _excludedExternalLights.Add(light);
+            light.cullingMask &= ~PreviewLayerMask;
+        }
+    }
+
+    private void RestoreExternalLightCullingMasks()
+    {
+        foreach (Light light in _excludedExternalLights)
+        {
+            if (light != null)
+                light.cullingMask |= PreviewLayerMask;
+        }
+
+        _excludedExternalLights.Clear();
+    }
+
+    private void CreateColorCorrectionMaterialIfNeeded()
+    {
+        if (_colorCorrectionMaterial == null)
+        {
+            Shader shader = _colorCorrectionShader != null
+                ? _colorCorrectionShader
+                : Shader.Find(ColorCorrectionShaderName);
+            if (shader == null || shader.isSupported == false)
+            {
+                throw new InvalidOperationException(
+                    $"Character preview requires supported shader " +
+                    $"'{ColorCorrectionShaderName}'.");
+            }
+
+            _colorCorrectionMaterial = new Material(shader)
+            {
+                name = "CharacterPreviewColorCorrectionMaterial",
+                hideFlags = HideFlags.HideAndDontSave
+            };
+        }
+
+        ApplyColorCorrectionSettings();
+    }
+
+    private void ApplyColorCorrectionSettings()
+    {
+        if (_colorCorrectionMaterial == null)
+            return;
+
+        if (Mathf.Approximately(_appliedSaturation, _saturation) &&
+            Mathf.Approximately(_appliedContrast, _contrast))
+        {
+            return;
+        }
+
+        _colorCorrectionMaterial.SetFloat(SaturationPropertyId, _saturation);
+        _colorCorrectionMaterial.SetFloat(ContrastPropertyId, _contrast);
+        _appliedSaturation = _saturation;
+        _appliedContrast = _contrast;
+
+        if (_viewport != null)
+            _viewport.SetMaterialDirty();
+    }
+
+    private void RestoreViewportMaterial()
+    {
+        if (_viewport != null && _viewport.material == _colorCorrectionMaterial)
+            _viewport.material = _originalViewportMaterial;
     }
 
     private void EnsurePreviewRenderTexture(bool forceRecreate)
@@ -667,8 +796,12 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (_isInitialized && _viewport != null)
-            EnsurePreviewRenderTexture(forceRecreate: false);
+        if (_isInitialized == false || _viewport == null)
+            return;
+
+        EnsurePreviewRenderTexture(forceRecreate: false);
+        ApplyLightingSettings();
+        ApplyColorCorrectionSettings();
     }
 
     private void OnEnable()
@@ -789,9 +922,15 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
         _lifetimeCancellation.Cancel();
         CancelSwitchOperation();
         ClearCurrentPreview();
+        RestoreExternalLightCullingMasks();
 
-        if (_viewport != null && _viewport.texture == _previewRenderTexture)
-            _viewport.texture = null;
+        if (_viewport != null)
+        {
+            if (_viewport.texture == _previewRenderTexture)
+                _viewport.texture = null;
+
+            RestoreViewportMaterial();
+        }
 
         foreach (Sprite portrait in _portraitCache.Values)
         {
@@ -807,14 +946,20 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
         PortraitRendered = null;
         DestroyRenderTexture(_previewRenderTexture);
         DestroyRenderTexture(_portraitRenderTexture);
+        DestroyUnityObject(_colorCorrectionMaterial);
         _previewRenderTexture = null;
         _portraitRenderTexture = null;
+        _colorCorrectionMaterial = null;
+        _originalViewportMaterial = null;
 
         if (_previewWorld != null)
         {
             DestroyUnityObject(_previewWorld);
             _previewWorld = null;
         }
+
+        _keyLight = null;
+        _fillLight = null;
 
         _lifetimeCancellation.Dispose();
     }

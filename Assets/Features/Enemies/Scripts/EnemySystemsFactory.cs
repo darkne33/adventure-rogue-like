@@ -80,6 +80,7 @@ namespace Features.Enemies.Scripts
                 EnemyAnimationType.Skeleton => new SkeletonEnemyAnimation(animator),
                 EnemyAnimationType.Ghost => new GhostEnemyAnimation(animator),
                 EnemyAnimationType.Bomb => new BombEnemyAnimation(animator),
+                EnemyAnimationType.Empty => new EmptyEnemyAnimation(),
                 _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyAnimationType),
                     configuration.EnemyAnimationType, "Enemy animation type is not supported.")
             };

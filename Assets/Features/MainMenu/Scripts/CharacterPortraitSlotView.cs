@@ -44,6 +44,7 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
         _relativeDirection = relativeDirection;
         if (_portrait != null)
         {
+            _portrait.material = null;
             _portrait.sprite = character.Portrait != null ? character.Portrait : portraitPlaceholder;
             _portrait.enabled = _portrait.sprite != null;
             _portrait.color = Color.white;
@@ -60,6 +61,7 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
         _relativeDirection = 0;
         if (_portrait != null)
         {
+            _portrait.material = null;
             _portrait.sprite = portraitPlaceholder;
             _portrait.enabled = portraitPlaceholder != null;
             _portrait.color = new Color(0.08f, 0.08f, 0.08f, 0.72f);
@@ -71,11 +73,12 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
         _button.interactable = false;
     }
 
-    public void SetPortrait(Sprite portrait)
+    public void SetPortrait(Sprite portrait, Material colorCorrectionMaterial)
     {
         if (_isLocked || portrait == null || _portrait == null)
             return;
 
+        _portrait.material = colorCorrectionMaterial;
         _portrait.sprite = portrait;
         _portrait.enabled = true;
         _portrait.color = Color.white;

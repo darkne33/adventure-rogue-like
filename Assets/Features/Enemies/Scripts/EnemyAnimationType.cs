@@ -6,4 +6,5 @@
     Skeleton = 3,
     Ghost = 4,
     Bomb = 5,
+    Empty = 6,
 }

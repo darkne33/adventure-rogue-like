@@ -177,7 +177,8 @@ public sealed class CharacterSelectionView : MonoBehaviour
             if (_previewRenderer != null &&
                 _previewRenderer.TryGetPortrait(character.Id, out Sprite renderedPortrait))
             {
-                slot.SetPortrait(renderedPortrait);
+                slot.SetPortrait(renderedPortrait,
+                    _previewRenderer.ColorCorrectionMaterial);
             }
 
             slot.SetSelected(characterIndex == _selectedIndex, animateSelection);
