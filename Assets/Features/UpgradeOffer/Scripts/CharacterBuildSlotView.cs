@@ -34,22 +34,25 @@ public sealed class CharacterBuildSlotView : MonoBehaviour
             return;
         }
 
-        CharacterAbility ability = upgrade.Ability;
+        SetContent(upgrade.Ability.Icon, $"LVL {upgrade.Level}");
+    }
 
+    public void SetContent(Sprite icon, string label)
+    {
         if (_frameImage != null)
             _frameImage.color = FilledFrameColor;
 
         if (_iconImage != null)
         {
-            _iconImage.sprite = ability.Icon;
-            _iconImage.enabled = ability.Icon != null;
+            _iconImage.sprite = icon;
+            _iconImage.enabled = icon != null;
             _iconImage.preserveAspect = true;
         }
 
         if (_levelText != null)
-            _levelText.text = $"LVL {upgrade.Level}";
+            _levelText.text = label;
 
         if (_levelRoot != null)
-            _levelRoot.SetActive(true);
+            _levelRoot.SetActive(string.IsNullOrEmpty(label) == false);
     }
 }

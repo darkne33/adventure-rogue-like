@@ -33,6 +33,7 @@ public class CharacterFacade : MonoBehaviour
     [SerializeField] private Transform _pivotGroundChecker;
 
     [Inject] private ICharacterSystemsFactory _systemsFactory;
+    [Inject] private AllAbilitiesConfiguration _abilitiesConfiguration;
     [InjectOptional] private RelicManager _relicManager;
     [InjectOptional] private RelicEventBus _relicEventBus;
 
@@ -61,6 +62,7 @@ public class CharacterFacade : MonoBehaviour
     private int _wallLayer = -1;
     private int _defaultLayer = -1;
     private Color _defaultOutlineColor;
+    private Color _shieldOutlineColor = Color.blue;
     private bool _isShieldOutlineActive;
     private readonly RaycastHit[] _groundProbeHits = new RaycastHit[GroundProbeHitCapacity];
 
@@ -115,6 +117,7 @@ public class CharacterFacade : MonoBehaviour
 
     public void Initialize()
     {
+        ConfigureShieldOutlineColor();
         _systemsFactory.Create(this);
         _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
 
@@ -310,7 +313,23 @@ public class CharacterFacade : MonoBehaviour
             return;
 
         _isShieldOutlineActive = isShieldOutlineActive;
-        _outline.OutlineColor = isShieldOutlineActive ? Color.blue : _defaultOutlineColor;
+        _outline.OutlineColor = isShieldOutlineActive ? _shieldOutlineColor : _defaultOutlineColor;
+    }
+
+    private void ConfigureShieldOutlineColor()
+    {
+        if (_abilitiesConfiguration?.Abilities == null)
+            return;
+
+        foreach (AbilityConfiguration abilityConfiguration in _abilitiesConfiguration.Abilities)
+        {
+            if (abilityConfiguration is ShieldScrollAbilityConfiguration shieldConfiguration &&
+                shieldConfiguration.AbilityName == AbilityName.ShieldScroll)
+            {
+                _shieldOutlineColor = shieldConfiguration.ShieldColor;
+                return;
+            }
+        }
     }
 
     private void UpdateGroundedState()

@@ -24,6 +24,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
     [SerializeField] private ExpDropperConfiguration _expDropperConfiguration;
     [SerializeField] private HeartDropperConfiguration _heartDropperConfiguration;
     [SerializeField] private GameObject _rewardBagPrefab;
+    [SerializeField] private PausePanel _pausePanelPrefab;
 
     [SerializeField] private SceneNames.SceneNameType _sceneNameType;
 
@@ -167,7 +168,10 @@ public class RogueLikeMonoInstaller : MonoInstaller
     }
 
     private void BindPauseMenu() =>
-        Container.BindInterfacesAndSelfTo<PauseMenuController>().AsSingle().NonLazy();
+        Container.BindInterfacesAndSelfTo<PauseMenuController>()
+            .AsSingle()
+            .WithArguments(_pausePanelPrefab)
+            .NonLazy();
 
     private void BindDebugMode() =>
         Container.BindInterfacesAndSelfTo<GameDebugService>().AsSingle().NonLazy();
