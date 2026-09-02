@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Threading;
 using Core;
 using Core.Services;
-using Core.Sounds;
 using CustomPackages.Package.Extensions.ObjectPool;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -16,8 +15,7 @@ namespace Other.Effects.FlyingEffects
     public class LevelFlyingEffect
     {
         [Inject] private IPanelService _panelService;
-        [Inject] private ISoundsService _soundsService;
-
+        
         private readonly AddressableLoadContainerGameObject _levelPrefabContainer;
         private readonly List<FlyingPoolableEffect> _flyingPrefabs = new();
         private readonly Transform _effectRoot;

@@ -1,5 +1,4 @@
 using Core.Services;
-using Core.Sounds;
 using CustomPackages.Package.StateMachine;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
@@ -10,7 +9,6 @@ namespace Core
     public abstract class GameModeState : State
     {
         [Inject] private IScenesPreloader _scenesPreloader;
-        [Inject] private ISoundsService _soundsService;
 
         protected abstract string SceneName { get; }
         protected abstract StateMachine GameModeStateMachine { get; }

@@ -2,7 +2,6 @@ using System;
 using AYellowpaper.SerializedCollections;
 using Core;
 using Core.Services;
-using Core.Sounds;
 using UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -45,17 +44,6 @@ namespace CustomPackages.Package.Extensions.Other
             foreach (var pair in dictionary)
             {
                 pair.Value.Validate(scriptableObjectName);
-            }
-        }
-        public static void Validate(this SerializedDictionary<AudioClipName, AudioClip> dictionary,
-            string scriptableObjectName)
-        {
-            foreach (var pair in dictionary)
-            {
-                if (pair.Value == null)
-                {
-                    Debug.LogWarning($"Audio clips are null in {scriptableObjectName}");
-                }
             }
         }
         

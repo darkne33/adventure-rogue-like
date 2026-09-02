@@ -1,6 +1,6 @@
 using Core.Services;
-using Core.Sounds;
 using Features.Leaderboard;
+using Features.Sounds;
 using Infrastructure.SaveSystem;
 using UnityEngine;
 using Zenject;
@@ -11,6 +11,7 @@ namespace Core.Installer
     {
         [SerializeField] private EffectsConfig _effectsConfig;
         [SerializeField] private CharacterExpConfig _characterExpConfig;
+        [SerializeField] private SoundsCatalog _soundsCatalog;
         [SerializeField] private GameObject _debugConsolePrefab;
         
         private void Awake()
@@ -30,14 +31,14 @@ namespace Core.Installer
         public override void InstallBindings()
         {
             Container.Install<AddressableInstaller>();
+            Container.Bind<SoundsCatalog>().FromInstance(_soundsCatalog).AsSingle();
+            Container.Install<SoundsInstaller>();
             
             Container.BindInterfacesAndSelfTo<GameStateMachine>().AsSingle();
             
             Container.Bind<IScenesPreloader>().To<ScenesPreloader>().AsSingle();
             Container.Bind<ISceneLoader>().To<SceneLoader>().AsSingle();
-            
-            Container.Bind<ISoundsStorage>().To<SoundsStorage>().AsSingle();
-            Container.Bind<ISoundsService>().To<SoundsService>().AsSingle();
+   
             Container.Bind<IPlayerSaveLoadService>().To<PlayerSaveLoadService>().AsSingle();
             Container.Bind<ILeaderboardService>().To<PlayFabLeaderboardService>().AsSingle();
             
