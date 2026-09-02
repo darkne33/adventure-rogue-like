@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Features.Relics.Scripts;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public sealed class PausePanel : MonoBehaviour
@@ -10,12 +12,15 @@ public sealed class PausePanel : MonoBehaviour
     [SerializeField] private CanvasGroup _canvasGroup;
     [SerializeField] private RectTransform _leftPanel;
     [SerializeField] private RectTransform _menuContent;
+    [SerializeField] private RectTransform _rightPanel;
 
     [Header("Content")]
     [SerializeField] private TMP_Text _descriptionText;
     [SerializeField] private GameObject _mainButtonsRoot;
     [SerializeField] private GameObject _settingsRoot;
-    [SerializeField] private CharacterBuildSlotView[] _inventorySlots;
+    [FormerlySerializedAs("_inventorySlots")]
+    [SerializeField] private CharacterBuildSlotView[] _abilitySlots;
+    [SerializeField] private PauseRelicInventoryView _relicInventoryView;
     [SerializeField] private PauseStatRow[] _statRows;
 
     [Header("Buttons")]
@@ -35,8 +40,10 @@ public sealed class PausePanel : MonoBehaviour
     public RectTransform Root => (RectTransform)transform;
     public RectTransform LeftPanel => _leftPanel;
     public RectTransform MenuContent => _menuContent;
+    public RectTransform RightPanel => _rightPanel;
     public Button ResumeButton => _resumeButton;
     public Button SettingsBackButton => _settingsBackButton;
+    public int AbilitySlotCount => _abilitySlots?.Length ?? 0;
 
     private void Awake()
     {
@@ -79,19 +86,32 @@ public sealed class PausePanel : MonoBehaviour
         _exitButton.interactable = interactable;
     }
 
-    public void SetInventorySlot(int index, Sprite icon, string badge)
+    public void SetAbilitySlot(int index, Sprite icon, string badge)
     {
-        if (index < 0 || index >= _inventorySlots.Length)
+        if (index < 0 || index >= AbilitySlotCount)
             return;
 
-        _inventorySlots[index].SetContent(icon, badge);
+        _abilitySlots[index]?.SetContent(icon, badge);
     }
 
-    public void ClearInventorySlots(int firstIndex = 0)
+    public void ClearAbilitySlots(int firstIndex = 0)
     {
-        for (int index = Mathf.Max(0, firstIndex); index < _inventorySlots.Length; index++)
-            _inventorySlots[index].SetEmpty();
+        for (int index = Mathf.Max(0, firstIndex); index < AbilitySlotCount; index++)
+            _abilitySlots[index]?.SetEmpty();
     }
+
+    public void SetRelics(IReadOnlyList<RelicRuntimeState> relics) =>
+        _relicInventoryView?.Refresh(relics ?? Array.Empty<RelicRuntimeState>());
+
+    public void HideRelicTooltip() =>
+        _relicInventoryView?.HideTooltip();
+
+    // Compatibility wrappers for code that still treats the left-side ability list as inventory.
+    public void SetInventorySlot(int index, Sprite icon, string badge) =>
+        SetAbilitySlot(index, icon, badge);
+
+    public void ClearInventorySlots(int firstIndex = 0) =>
+        ClearAbilitySlots(firstIndex);
 
     public void SetStats(IReadOnlyList<string> values)
     {

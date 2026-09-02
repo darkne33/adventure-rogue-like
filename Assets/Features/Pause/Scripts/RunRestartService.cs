@@ -14,6 +14,8 @@ public sealed class RunRestartService
     private readonly IPanelService _panelService;
     private readonly GameStateMachine _gameStateMachine;
 
+    private bool _openCharacterSelectionOnNextMainMenu;
+
     public bool IsRestarting { get; private set; }
     public Exception LastError { get; private set; }
 
@@ -78,13 +80,28 @@ public sealed class RunRestartService
         }
     }
 
-    public async UniTask<bool> ReturnToMainMenu(string sceneName)
+    public UniTask<bool> ReturnToMainMenu(string sceneName) =>
+        ReturnToMainMenu(sceneName, false);
+
+    public UniTask<bool> ReturnToCharacterSelection(string sceneName) =>
+        ReturnToMainMenu(sceneName, true);
+
+    public bool ConsumeCharacterSelectionEntryRequest()
+    {
+        bool wasRequested = _openCharacterSelectionOnNextMainMenu;
+        _openCharacterSelectionOnNextMainMenu = false;
+        return wasRequested;
+    }
+
+    private async UniTask<bool> ReturnToMainMenu(string sceneName,
+        bool openCharacterSelection)
     {
         if (IsRestarting)
             return false;
 
         IsRestarting = true;
         LastError = null;
+        _openCharacterSelectionOnNextMainMenu = openCharacterSelection;
 
         try
         {
@@ -106,6 +123,7 @@ public sealed class RunRestartService
         }
         catch (Exception exception)
         {
+            _openCharacterSelectionOnNextMainMenu = false;
             LastError = exception;
             Debug.LogException(exception);
             return false;

@@ -12,7 +12,6 @@ using Zenject;
 
 public sealed class PauseMenuController : ITickable, IDisposable
 {
-    private const int InventorySlotCount = 10;
     private const float ShowDuration = 0.18f;
     private const float HideDuration = 0.12f;
 
@@ -117,6 +116,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
             _panel.Root.DOKill();
             _panel.LeftPanel.DOKill();
             _panel.MenuContent.DOKill();
+            _panel.RightPanel.DOKill();
             _panel.CanvasGroup.DOKill();
             UnityEngine.Object.Destroy(_panel.gameObject);
             _panel = null;
@@ -137,7 +137,8 @@ public sealed class PauseMenuController : ITickable, IDisposable
         if (_panel == null)
             CreateView();
 
-        RefreshInventory();
+        RefreshAbilities();
+        RefreshRelics();
         RefreshStats();
 
         _isOpen = true;
@@ -156,13 +157,16 @@ public sealed class PauseMenuController : ITickable, IDisposable
         _panel.CanvasGroup.interactable = true;
         _panel.CanvasGroup.blocksRaycasts = true;
         _panel.LeftPanel.localScale = Vector3.one * 0.97f;
+        _panel.RightPanel.localScale = Vector3.one * 0.97f;
         _panel.MenuContent.localScale = Vector3.one * 0.94f;
 
         _panel.CanvasGroup.DOKill();
         _panel.LeftPanel.DOKill();
+        _panel.RightPanel.DOKill();
         _panel.MenuContent.DOKill();
         _panel.CanvasGroup.DOFade(1f, ShowDuration).SetUpdate(true);
         _panel.LeftPanel.DOScale(1f, ShowDuration).SetEase(Ease.OutBack).SetUpdate(true);
+        _panel.RightPanel.DOScale(1f, ShowDuration).SetEase(Ease.OutBack).SetUpdate(true);
         _panel.MenuContent.DOScale(1f, ShowDuration).SetEase(Ease.OutBack).SetUpdate(true);
 
         Select(_panel.ResumeButton);
@@ -177,6 +181,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
         _settingsOpen = false;
         _panel.CanvasGroup.interactable = false;
         _panel.CanvasGroup.blocksRaycasts = false;
+        _panel.HideRelicTooltip();
 
         ReleaseOwnedPause();
         _cursorService.ShowGameplayCursor();
@@ -271,7 +276,54 @@ public sealed class PauseMenuController : ITickable, IDisposable
         if (_isRestarting || _runRestartService.IsRestarting)
             return;
 
-        Application.Quit();
+        if (_roomTransitionService.IsPlaying)
+        {
+            _panel.SetDescription("WAIT FOR TRANSITION");
+            return;
+        }
+
+        ExitToCharacterSelection().Forget();
+    }
+
+    private async UniTaskVoid ExitToCharacterSelection()
+    {
+        _isRestarting = true;
+        _panel.SetDescription("RETURNING TO CHARACTER SELECT...");
+        _panel.SetMainButtonsInteractable(false);
+        _panel.HideRelicTooltip();
+
+        try
+        {
+            string sceneName = _sceneService.GameSceneComponentsService.gameObject.scene.name;
+
+            bool returned = await _runRestartService.ReturnToCharacterSelection(sceneName);
+            if (!returned)
+                throw _runRestartService.LastError ??
+                      new InvalidOperationException("A scene transition is already in progress.");
+        }
+        catch (Exception exception)
+        {
+            if (exception != _runRestartService.LastError)
+                Debug.LogException(exception);
+
+            if (!_disposed && _panel != null)
+            {
+                if (!_timeScaleService.IsPaused)
+                {
+                    _pauseService.HandlePause();
+                    _ownsPause = true;
+                }
+
+                _isOpen = true;
+                _panel.SetDescription("EXIT FAILED");
+                _panel.SetMainButtonsInteractable(true);
+                _cursorService.ShowUiCursor();
+            }
+        }
+        finally
+        {
+            _isRestarting = false;
+        }
     }
 
     private void ReleaseOwnedPause()
@@ -289,30 +341,24 @@ public sealed class PauseMenuController : ITickable, IDisposable
             EventSystem.current.SetSelectedGameObject(button.gameObject);
     }
 
-    private void RefreshInventory()
+    private void RefreshAbilities()
     {
         int slotIndex = 0;
 
         foreach (UpgradeBuildEntry entry in _upgradeBuildService.SelectedUpgrades)
         {
-            if (slotIndex >= InventorySlotCount)
+            if (slotIndex >= _panel.AbilitySlotCount)
                 break;
 
-            _panel.SetInventorySlot(slotIndex++, entry.Ability?.Icon,
+            _panel.SetAbilitySlot(slotIndex++, entry.Ability?.Icon,
                 entry.Ability == null ? string.Empty : $"LVL {entry.Level}");
         }
 
-        foreach (RelicRuntimeState relic in _relicManager.ActiveRelics)
-        {
-            if (slotIndex >= InventorySlotCount)
-                break;
-
-            _panel.SetInventorySlot(slotIndex++, relic.Definition?.Icon,
-                relic.IsBroken ? "BROKEN" : $"x{relic.StackCount}");
-        }
-
-        _panel.ClearInventorySlots(slotIndex);
+        _panel.ClearAbilitySlots(slotIndex);
     }
+
+    private void RefreshRelics() =>
+        _panel.SetRelics(_relicManager.ActiveRelics);
 
     private void RefreshStats()
     {

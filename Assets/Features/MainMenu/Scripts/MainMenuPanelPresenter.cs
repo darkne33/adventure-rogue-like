@@ -11,6 +11,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
     private const int ShowAnimationMilliseconds = 300;
 
     private readonly ILeaderboardService _leaderboardService;
+    private readonly RunRestartService _runRestartService;
 
     private bool _playRequested;
     private bool _isCharacterSelectionOpen;
@@ -18,8 +19,12 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
     private CharacterSelectionView _characterSelectionView;
     private CharacterConfiguration _characterConfiguration;
 
-    public MainMenuPanelPresenter(ILeaderboardService leaderboardService) =>
+    public MainMenuPanelPresenter(ILeaderboardService leaderboardService,
+        RunRestartService runRestartService)
+    {
         _leaderboardService = leaderboardService;
+        _runRestartService = runRestartService;
+    }
 
     public override UniTask Initialize()
     {
@@ -47,6 +52,9 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         _characterSelectionView.SelectionRequested += SelectCharacter;
         _characterSelectionView.StartRequested += RequestPlay;
         _characterSelectionView.BackRequested += ReturnToMainMenu;
+
+        if (_runRestartService.ConsumeCharacterSelectionEntryRequest())
+            OpenCharacterSelection();
 
         if (_leaderboardService.IsConfigured)
             RefreshLeaderboard(Panel.GetCancellationTokenOnDestroy()).Forget();
@@ -162,6 +170,9 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
             cancellationToken: cancellationToken);
 
         if (Panel == null)
+            return;
+
+        if (_isCharacterSelectionOpen)
             return;
 
         Panel.SetButtonsInteractable(true);
