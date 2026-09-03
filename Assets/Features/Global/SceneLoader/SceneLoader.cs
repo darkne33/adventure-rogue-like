@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
@@ -19,10 +20,29 @@ namespace Core
             _activeScenes.Add(await Addressables.LoadSceneAsync(sceneName, LoadSceneMode.Additive));
         }
 
+        public async UniTask ReloadSceneFromAddressable(string sceneName)
+        {
+            Log.Gameplay.Debug($"Reload {sceneName}");
+            SceneInstance sceneInstance =
+                await Addressables.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+
+            if (!sceneInstance.Scene.IsValid() || !sceneInstance.Scene.isLoaded)
+                throw new InvalidOperationException(
+                    $"Addressable scene '{sceneName}' was not loaded during reload.");
+
+            _activeScenes.Clear();
+            _activeScenes.Add(sceneInstance);
+        }
+
         public async UniTask UnloadScene(string sceneName)
         {
             var sceneInstance = _activeScenes.First(x => x.Scene.name == sceneName);
             await Addressables.UnloadSceneAsync(sceneInstance);
+
+            if (sceneInstance.Scene.isLoaded)
+                throw new InvalidOperationException(
+                    $"Addressable scene '{sceneName}' could not be unloaded.");
+
             _activeScenes.Remove(sceneInstance);
         }
 
@@ -41,8 +61,9 @@ namespace Core
             return null;
         }
 
-        public bool HasActiveScene(string sceneName) => 
-            _activeScenes.Any(x => x.Scene.name == sceneName);
+        public bool HasActiveScene(string sceneName) =>
+            _activeScenes.Any(x => x.Scene.name == sceneName &&
+                                   x.Scene.IsValid() && x.Scene.isLoaded);
 
         public void UnloadBootstrapScene()
         {

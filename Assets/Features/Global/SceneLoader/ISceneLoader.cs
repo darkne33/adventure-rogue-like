@@ -7,6 +7,7 @@ namespace Core
     {
         T GetGameSceneComponentsProvider<T>(string sceneName) where T : MonoBehaviour;
         UniTask LoadSceneFromAddressable(string sceneName);
+        UniTask ReloadSceneFromAddressable(string sceneName);
         UniTask UnloadScene(string sceneName);
         bool HasActiveScene(string sceneName);
         void UnloadBootstrapScene();

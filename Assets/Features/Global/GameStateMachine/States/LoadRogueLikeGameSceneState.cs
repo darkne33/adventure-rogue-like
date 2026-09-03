@@ -22,7 +22,11 @@ namespace Core
         {
             HeightFogRendererFeature.SetRenderingEnabled(false);
 
-            await _sceneLoader.LoadSceneFromAddressable(SceneNames.GameScene);
+            if (_sceneLoader.HasActiveScene(SceneNames.GameScene))
+                await _sceneLoader.ReloadSceneFromAddressable(SceneNames.GameScene);
+            else
+                await _sceneLoader.LoadSceneFromAddressable(SceneNames.GameScene);
+
             _sceneLoader.UnloadBootstrapScene();
 
             var gameModeService = _container.Resolve<IGameModeService>();

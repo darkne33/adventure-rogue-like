@@ -47,12 +47,12 @@ public sealed class RunRestartService
                     $"Addressable game scene '{sceneName}' is not active.");
 
             await _panelService.HidePanelForce(PanelName.RoomTransitionPanel);
-            await _sceneLoader.UnloadScene(sceneName);
+            await _panelService.HidePanelForce(PanelName.CharacterPanel);
 
             _pauseService.CancelPause();
             _gameModeService.Remove<RogueLikeStateMachine>();
             _characterLevelService.Reset();
-            await _sceneLoader.LoadSceneFromAddressable(sceneName);
+            await _sceneLoader.ReloadSceneFromAddressable(sceneName);
 
             RogueLikeSceneProvider sceneProvider =
                 _sceneLoader.GetGameSceneComponentsProvider<RogueLikeSceneProvider>(sceneName);
@@ -112,7 +112,6 @@ public sealed class RunRestartService
 
             await _panelService.HidePanelForce(PanelName.RoomTransitionPanel);
             await _panelService.HidePanelForce(PanelName.CharacterPanel);
-            await _sceneLoader.UnloadScene(sceneName);
 
             _pauseService.CancelPause();
             _gameModeService.Remove<RogueLikeStateMachine>();
