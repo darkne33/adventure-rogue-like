@@ -100,7 +100,9 @@ GameObject:
   m_Component:
   - component: {fileID: 7334159641988842364}
   - component: {fileID: 7333048436379003162}
-  m_Layer: 0
+  - component: {fileID: 2002544296550006448}
+  - component: {fileID: 6109581216174085265}
+  m_Layer: 7
   m_Name: Crate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -144,3 +146,31 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.90116763, y: 0.9011675, z: 0.90116775}
   m_Center: {x: 0.00000035762787, y: -0.000000014901161, z: 0.0000007599592}
+--- !u!114 &2002544296550006448
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7963485619436394950}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e904e2ea6fe9c204c9ee4869c5708ad1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Obstacle
+--- !u!208 &6109581216174085265
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7963485619436394950}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.4505838, y: 0.45058376, z: 0.4505839}
+  m_MoveThreshold: 0.1
+  m_Carve: 0
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0.0000003576279, y: -0.00000001490116, z: 0.0000007599592}
+  m_TimeToStationary: 0.5

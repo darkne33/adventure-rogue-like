@@ -1,7 +1,9 @@
 using System;
 using DG.Tweening;
+using Features.Sounds;
 using UI;
 using UnityEngine;
+using Zenject;
 
 public sealed class CoinGold : MonoBehaviour
 {
@@ -13,6 +15,7 @@ public sealed class CoinGold : MonoBehaviour
     private ICharacterProvider _characterProvider;
     private CharacterStats _characterStats;
     private IPanelService _panelService;
+    private ISoundsService _soundsService;
     private int _amount;
     private Vector3 _startScale;
     private bool _canAttract;
@@ -20,6 +23,10 @@ public sealed class CoinGold : MonoBehaviour
 
     public RoomData RoomData { get; private set; }
     public event Action<CoinGold> Destroyed;
+
+    [Inject]
+    private void Inject(ISoundsService soundsService) =>
+        _soundsService = soundsService;
 
     public void Construct(int amount, GoldDropperConfiguration configuration, CharacterWallet characterWallet,
         ICharacterProvider characterProvider, CharacterStats characterStats, IPanelService panelService,
@@ -129,6 +136,7 @@ public sealed class CoinGold : MonoBehaviour
         Vector3 collectPosition = transform.position;
         transform.DOKill();
         AddGold();
+        _soundsService?.Play(SoundId.PickupCoin);
         SpawnPickupEffect(collectPosition);
         Destroy(gameObject);
     }

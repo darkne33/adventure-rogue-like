@@ -233,6 +233,12 @@ public class CharacterMoveSystem
         _characterAnimationSystem.SetPaused(state);
     }
 
+    public void Dispose()
+    {
+        _inputActions.Player.Disable();
+        _inputActions.Dispose();
+    }
+
     public void SetGrounded(bool isGrounded, Vector3 groundNormal)
     {
         _groundNormal = groundNormal.sqrMagnitude > Mathf.Epsilon

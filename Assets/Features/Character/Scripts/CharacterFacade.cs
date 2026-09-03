@@ -93,8 +93,12 @@ public class CharacterFacade : MonoBehaviour
         _cameraSystem.Move();
     }
 
-    private void OnDestroy() =>
+    private void OnDestroy()
+    {
+        _moveSystem?.Dispose();
+        _cameraSystem?.Dispose();
         _proximityTransparencySystem?.Dispose();
+    }
 
     private void FixedUpdate()
     {

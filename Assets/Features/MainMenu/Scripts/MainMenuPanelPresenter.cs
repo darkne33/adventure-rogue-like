@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Features.Leaderboard;
+using Features.Sounds;
 using UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -12,6 +13,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
 
     private readonly ILeaderboardService _leaderboardService;
     private readonly RunRestartService _runRestartService;
+    private readonly ISoundsService _soundsService;
 
     private bool _playRequested;
     private bool _isCharacterSelectionOpen;
@@ -20,10 +22,11 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
     private CharacterConfiguration _characterConfiguration;
 
     public MainMenuPanelPresenter(ILeaderboardService leaderboardService,
-        RunRestartService runRestartService)
+        RunRestartService runRestartService, ISoundsService soundsService)
     {
         _leaderboardService = leaderboardService;
         _runRestartService = runRestartService;
+        _soundsService = soundsService;
     }
 
     public override UniTask Initialize()
@@ -95,6 +98,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         if (_playRequested || !_characterConfiguration.SelectedCharacter.IsConfigured)
             return;
 
+        _soundsService.Play(SoundId.UiStartClick);
         _playRequested = true;
         Panel.SetButtonsInteractable(false);
         _characterSelectionView.SetInteractable(false);
@@ -117,6 +121,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
     {
         _characterConfiguration.SelectCharacter(index);
         _characterSelectionView.SetSelectedIndex(index, direction);
+        _soundsService.Play(SoundId.UiSelect);
     }
 
     private void ReturnToMainMenu()

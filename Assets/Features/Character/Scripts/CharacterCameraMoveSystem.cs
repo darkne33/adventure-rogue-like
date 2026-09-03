@@ -108,6 +108,12 @@ public class CharacterCameraMoveSystem
         ResetDamageShake();
     }
 
+    public void Dispose()
+    {
+        _inputActions.Player.Disable();
+        _inputActions.Dispose();
+    }
+
     public void Move()
     {
         if (_cameraPivot == null || _pauseEntity.IsPauseEntity)
