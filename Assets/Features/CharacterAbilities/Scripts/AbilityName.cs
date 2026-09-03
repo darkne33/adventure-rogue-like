@@ -19,5 +19,6 @@
     ShieldScroll = 16,
     FireField = 17,
     EarthRock = 18,
-    BulletExplosion = 19
+    BulletExplosion = 19,
+    Punch = 20
 }
