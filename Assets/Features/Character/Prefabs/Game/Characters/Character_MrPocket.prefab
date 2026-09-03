@@ -10252,13 +10252,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abe919bf1efb9e147baf2ca75695df07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterFacade
-  _characterModel: {fileID: 9000000000000000101}
+  _characterModel: {fileID: 7982588104780844696}
   _cameraPivot: {fileID: 4274541664045631459}
   _relicRootTarget: {fileID: 162683716217879674}
   _meshRenderers:
-  - {fileID: 0}
-  - {fileID: 0}
-  _outline: {fileID: 0}
+  - {fileID: 5869063995605481322}
+  - {fileID: 4237025997659614956}
+  _outline: {fileID: 4898701990454329486}
   _shadow: {fileID: 4168038051696753707}
   _shadowLayer:
     serializedVersion: 2
@@ -31044,6 +31044,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7317233643293299746}
   - component: {fileID: 8530525705783084253}
+  - component: {fileID: 6489131074200145703}
   m_Layer: 0
   m_Name: MR_POCKET
   m_TagString: Untagged
@@ -36359,7 +36360,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9000000000000000102}
-  - component: {fileID: 6489131074200145703}
   m_Layer: 9
   m_Name: CharacterFacingPivot
   m_TagString: Untagged
@@ -36389,7 +36389,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9000000000000000101}
+  m_GameObject: {fileID: 7982588104780844696}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cd5818b1fb1542d188d4cd4ec1a6c3eb, type: 3}
