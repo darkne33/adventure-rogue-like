@@ -153,7 +153,8 @@ public enum AbilityUpgradeType
     EarthRockRotationSpeed = 9,
     EarthRockStoneCount = 10,
     Cooldown = 11,
-    PunchRadius = 12
+    PunchRadius = 12,
+    PunchSimultaneousAttacks = 13
 }
 
 public readonly struct AbilityUpgradeEffect

@@ -11,7 +11,7 @@ public sealed class PunchAbilityConfiguration : AbilityConfiguration
 
     [field: Header("Punch Sequence")]
     [field: SerializeField, Min(0f)] public float PunchInterval { get; private set; } = 0.1f;
-    [field: SerializeField, Min(0.01f)] public float StartPunchSpeed { get; private set; } = 1f;
+    [field: SerializeField, Min(1f)] public float StartSimultaneousAttackCount { get; private set; } = 1f;
     [field: SerializeField, Min(0.01f)] public float EffectDuration { get; private set; } = 2.3f;
     [field: SerializeField] public GameObject Prefab { get; private set; }
 
@@ -24,6 +24,6 @@ public sealed class PunchAbilityConfiguration : AbilityConfiguration
     [field: Header("Upgrades")]
     [field: SerializeField, Min(0f)] public float DamageUpgradeIncrease { get; private set; } = 2f;
     [field: SerializeField, Min(0f)] public float RadiusUpgradeIncrease { get; private set; } = 0.5f;
-    [field: SerializeField, Min(0f)] public float SpeedUpgradeIncrease { get; private set; } = 0.25f;
+    [field: SerializeField, Min(0f)] public float SimultaneousAttackUpgradeIncrease { get; private set; } = 0.25f;
     [field: SerializeField, Min(0f)] public float CooldownUpgradeReduction { get; private set; } = 0.05f;
 }

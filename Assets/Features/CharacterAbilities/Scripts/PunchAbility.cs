@@ -7,18 +7,19 @@ using UnityEngine;
 public sealed class PunchAbility : CharacterActiveAbility
 {
     private const int PunchesPerSeries = 3;
+    private const int MaxSequentialPunchSlots = 9;
     private const int PunchOverlapCapacity = 64;
     private const float MinimumCooldown = 0.05f;
-    private const float MinimumPunchSpeed = 0.01f;
     private const float GoldenAngle = 137.5f;
     private const float DirectionEpsilon = 0.001f;
+    private const float SimultaneousEffectSpread = 0.25f;
 
     private static readonly int PunchCollisionMask = LayerMask.GetMask("Default", "Enemy");
     private static readonly float[] TargetLateralOffsets = { -0.3f, 0.3f, 0f };
     private static readonly float[] TargetVerticalOffsets = { 0.15f, -0.1f, 0.25f };
     private const string DamageStatName = "Damage";
     private const string RadiusStatName = "Radius";
-    private const string SpeedStatName = "Series Speed";
+    private const string SimultaneousAttacksStatName = "Attacks at Once";
     private const string CooldownStatName = "Cooldown";
     private const string SeriesCountStatName = "Series";
 
@@ -26,7 +27,7 @@ public sealed class PunchAbility : CharacterActiveAbility
     {
         AbilityUpgradeType.Damage,
         AbilityUpgradeType.PunchRadius,
-        AbilityUpgradeType.ProjectileSpeed,
+        AbilityUpgradeType.PunchSimultaneousAttacks,
         AbilityUpgradeType.Cooldown,
         AbilityUpgradeType.AdditionalProjectiles
     };
@@ -35,7 +36,7 @@ public sealed class PunchAbility : CharacterActiveAbility
     {
         AbilityUpgradeType.Damage,
         AbilityUpgradeType.PunchRadius,
-        AbilityUpgradeType.ProjectileSpeed,
+        AbilityUpgradeType.PunchSimultaneousAttacks,
         AbilityUpgradeType.AdditionalProjectiles
     };
 
@@ -49,7 +50,7 @@ public sealed class PunchAbility : CharacterActiveAbility
     private PunchAbilityConfiguration _configuration;
     private int _damage;
     private float _radius;
-    private float _punchSpeed;
+    private float _simultaneousAttackCount;
     private float _additionalSeriesCount;
     private bool _isAttacking;
     private int _attackSequence;
@@ -83,7 +84,7 @@ public sealed class PunchAbility : CharacterActiveAbility
         CurrentCooldown = 0f;
         _damage = Mathf.Max(0, _configuration.StartDamage);
         _radius = Mathf.Max(0.1f, _configuration.Radius);
-        _punchSpeed = Mathf.Max(MinimumPunchSpeed, _configuration.StartPunchSpeed);
+        _simultaneousAttackCount = Mathf.Max(1f, _configuration.StartSimultaneousAttackCount);
         _additionalSeriesCount = 0f;
 
         StatName_1 = DamageStatName;
@@ -133,9 +134,9 @@ public sealed class PunchAbility : CharacterActiveAbility
 
         return upgrade.Type switch
         {
-            AbilityUpgradeType.ProjectileSpeed =>
-                new AbilityUpgradePreview(SpeedStatName, _punchSpeed,
-                    _punchSpeed + GetSpeedIncrease(upgrade.Value), "x"),
+            AbilityUpgradeType.PunchSimultaneousAttacks =>
+                new AbilityUpgradePreview(SimultaneousAttacksStatName, GetCurrentSimultaneousAttackCount(),
+                    GetCurrentSimultaneousAttackCount() + GetSimultaneousAttackIncrease(upgrade.Value)),
             AbilityUpgradeType.Cooldown =>
                 new AbilityUpgradePreview(CooldownStatName, Cooldown,
                     GetCooldownTo(upgrade.Value), "s"),
@@ -156,23 +157,27 @@ public sealed class PunchAbility : CharacterActiveAbility
     protected override void OnUse(CharacterFacade character)
     {
         int seriesCount = CalculateSeriesCount();
+        int simultaneousAttackCount = CalculateSimultaneousAttackCount();
         int attackSequence = ++_attackSequence;
         _isAttacking = true;
-        LaunchPunchSeries(character, seriesCount, attackSequence).Forget();
+        LaunchPunchSeries(character, seriesCount, simultaneousAttackCount, attackSequence).Forget();
     }
 
-    private async UniTask LaunchPunchSeries(CharacterFacade character, int seriesCount, int attackSequence)
+    private async UniTask LaunchPunchSeries(CharacterFacade character, int seriesCount,
+        int simultaneousAttackCount, int attackSequence)
     {
         try
         {
-            float punchDelay = Mathf.Max(0f, _configuration.PunchInterval) /
-                               Mathf.Max(MinimumPunchSpeed, _punchSpeed);
+            float punchDelay = Mathf.Max(0f, _configuration.PunchInterval);
             int totalPunchCount = Mathf.Max(1, seriesCount) * PunchesPerSeries;
+            int punchSlotCount = Mathf.Min(totalPunchCount, MaxSequentialPunchSlots);
+            int attacksAtOnce = Mathf.Max(1, simultaneousAttackCount);
+            int globalPunchIndex = 0;
             float idleAngleOffset = UnityEngine.Random.Range(0f, 360f);
 
-            for (int index = 0; index < totalPunchCount; index++)
+            for (int slotIndex = 0; slotIndex < punchSlotCount; slotIndex++)
             {
-                if (index > 0 && punchDelay > 0f)
+                if (slotIndex > 0 && punchDelay > 0f)
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(punchDelay),
                         cancellationToken: character.GetCancellationTokenOnDestroy());
@@ -181,9 +186,23 @@ public sealed class PunchAbility : CharacterActiveAbility
                 if (attackSequence != _attackSequence)
                     return;
 
-                int punchIndex = index % PunchesPerSeries;
-                ExecutePunch(character, punchIndex, index, idleAngleOffset,
-                    GetPunchDamage(punchIndex));
+                int punchesInSlot = GetPunchCountInSlot(totalPunchCount, punchSlotCount, slotIndex);
+                int effectsInSlot = punchesInSlot * attacksAtOnce;
+                int effectIndexInSlot = 0;
+
+                for (int punchInSlotIndex = 0; punchInSlotIndex < punchesInSlot; punchInSlotIndex++)
+                {
+                    int punchIndex = globalPunchIndex % PunchesPerSeries;
+                    for (int simultaneousIndex = 0; simultaneousIndex < attacksAtOnce; simultaneousIndex++)
+                    {
+                        int globalEffectIndex = globalPunchIndex * attacksAtOnce + simultaneousIndex;
+                        ExecutePunch(character, punchIndex, globalEffectIndex, idleAngleOffset,
+                            effectIndexInSlot, effectsInSlot, GetPunchDamage(punchIndex));
+                        effectIndexInSlot++;
+                    }
+
+                    globalPunchIndex++;
+                }
             }
         }
         finally
@@ -196,12 +215,23 @@ public sealed class PunchAbility : CharacterActiveAbility
         }
     }
 
+    private static int GetPunchCountInSlot(int totalPunchCount, int slotCount, int slotIndex)
+    {
+        int currentEnd = DivideRoundingUp((slotIndex + 1) * totalPunchCount, slotCount);
+        int previousEnd = DivideRoundingUp(slotIndex * totalPunchCount, slotCount);
+        return currentEnd - previousEnd;
+    }
+
+    private static int DivideRoundingUp(int value, int divisor) =>
+        (value + divisor - 1) / divisor;
+
     private void ExecutePunch(CharacterFacade character, int punchIndex, int globalPunchIndex,
-        float idleAngleOffset, int punchDamage)
+        float idleAngleOffset, int simultaneousIndex, int simultaneousAttackCount, int punchDamage)
     {
         EnemyFacade preferredEnemy = GetClosestEnemy(character);
         GetPunchPose(character, preferredEnemy, punchIndex, globalPunchIndex, idleAngleOffset,
-            out Vector3 punchPosition, out Quaternion punchRotation);
+            simultaneousIndex, simultaneousAttackCount, out Vector3 punchPosition,
+            out Quaternion punchRotation);
         SpawnPunchEffect(punchPosition, punchRotation);
 
         if (TryGetCollisionTarget(punchPosition, preferredEnemy,
@@ -217,11 +247,13 @@ public sealed class PunchAbility : CharacterActiveAbility
             : _enemiesProvider.GetClosestEnemyByCharacter(character.transform, Mathf.Max(0.1f, _radius));
 
     private void GetPunchPose(CharacterFacade character, EnemyFacade preferredEnemy, int punchIndex,
-        int globalPunchIndex, float idleAngleOffset, out Vector3 position, out Quaternion rotation)
+        int globalPunchIndex, float idleAngleOffset, int simultaneousIndex, int simultaneousAttackCount,
+        out Vector3 position, out Quaternion rotation)
     {
         if (preferredEnemy != null)
         {
-            GetTargetPunchPose(character, preferredEnemy, punchIndex, out position, out rotation);
+            GetTargetPunchPose(character, preferredEnemy, punchIndex, simultaneousIndex,
+                simultaneousAttackCount, out position, out rotation);
             return;
         }
 
@@ -229,7 +261,8 @@ public sealed class PunchAbility : CharacterActiveAbility
     }
 
     private void GetTargetPunchPose(CharacterFacade character, EnemyFacade enemy, int punchIndex,
-        out Vector3 position, out Quaternion rotation)
+        int simultaneousIndex, int simultaneousAttackCount, out Vector3 position,
+        out Quaternion rotation)
     {
         Transform targetPoint = enemy.TargetToShootDamage != null
             ? enemy.TargetToShootDamage
@@ -262,6 +295,14 @@ public sealed class PunchAbility : CharacterActiveAbility
         position += tangent * TargetLateralOffsets[offsetIndex];
         position += Vector3.up * TargetVerticalOffsets[offsetIndex];
 
+        if (simultaneousAttackCount > 1)
+        {
+            float spreadAngle = (360f * simultaneousIndex / simultaneousAttackCount + punchIndex * 60f) *
+                                Mathf.Deg2Rad;
+            position += tangent * (Mathf.Cos(spreadAngle) * SimultaneousEffectSpread);
+            position += Vector3.up * (Mathf.Sin(spreadAngle) * SimultaneousEffectSpread);
+        }
+
         Vector3 punchDirection = targetPosition - position;
         rotation = GetSafeRotation(punchDirection, -towardCharacter);
     }
@@ -278,7 +319,7 @@ public sealed class PunchAbility : CharacterActiveAbility
         Vector3 center = character.ProjectileSpawnPosition;
 
         position = center + radialDirection * distance + Vector3.up * heightOffset;
-        rotation = GetSafeRotation(center - position, -radialDirection);
+        rotation = GetSafeRotation(position - center, radialDirection);
     }
 
     private bool TryGetCollisionTarget(Vector3 punchPosition, EnemyFacade preferredEnemy,
@@ -417,6 +458,21 @@ public sealed class PunchAbility : CharacterActiveAbility
     private float GetCurrentSeriesCount() =>
         1f + Mathf.Max(0f, _characterStats.ProjectileCount) + Mathf.Max(0f, _additionalSeriesCount);
 
+    private int CalculateSimultaneousAttackCount()
+    {
+        float attackCount = GetCurrentSimultaneousAttackCount();
+        int simultaneousAttackCount = Mathf.FloorToInt(attackCount);
+        float fractionalAttack = attackCount - simultaneousAttackCount;
+
+        if (UnityEngine.Random.value < fractionalAttack)
+            simultaneousAttackCount++;
+
+        return Mathf.Max(1, simultaneousAttackCount);
+    }
+
+    private float GetCurrentSimultaneousAttackCount() =>
+        Mathf.Max(1f, _simultaneousAttackCount);
+
     private void ApplyUpgradeEffect(AbilityUpgradeEffect upgrade)
     {
         if (upgrade.Type == AbilityUpgradeType.PunchRadius)
@@ -430,8 +486,8 @@ public sealed class PunchAbility : CharacterActiveAbility
             case AbilityUpgradeType.Damage:
                 _damage += GetDamageIncrease(upgrade.Value);
                 break;
-            case AbilityUpgradeType.ProjectileSpeed:
-                _punchSpeed += GetSpeedIncrease(upgrade.Value);
+            case AbilityUpgradeType.PunchSimultaneousAttacks:
+                _simultaneousAttackCount += GetSimultaneousAttackIncrease(upgrade.Value);
                 break;
             case AbilityUpgradeType.Cooldown:
                 Cooldown = GetCooldownTo(upgrade.Value);
@@ -452,8 +508,8 @@ public sealed class PunchAbility : CharacterActiveAbility
     private float GetRadiusIncrease(float upgradeMultiplier) =>
         GetUpgradeValue(_configuration.RadiusUpgradeIncrease, upgradeMultiplier);
 
-    private float GetSpeedIncrease(float upgradeMultiplier) =>
-        GetUpgradeValue(_configuration.SpeedUpgradeIncrease, upgradeMultiplier);
+    private float GetSimultaneousAttackIncrease(float upgradeMultiplier) =>
+        GetUpgradeValue(_configuration.SimultaneousAttackUpgradeIncrease, upgradeMultiplier);
 
     private float GetCooldownTo(float upgradeMultiplier) =>
         Mathf.Max(MinimumCooldown,
