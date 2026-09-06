@@ -22,6 +22,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
     private readonly RelicChestSpawner _relicChestSpawner;
     private readonly RelicEventBus _relicEventBus;
     private readonly RewardBagSpawner _rewardBagSpawner;
+    private readonly EnemySpawner _enemySpawner;
 
     private bool _isTransitioning;
     private bool _isRunCompleted;
@@ -33,7 +34,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         IRoomTransitionService roomTransitionService, EnemyRoomObserver enemyRoomObserver,
         IGameModeService gameModeService, MinimapController minimapController,
         RelicChestSpawner relicChestSpawner, RelicEventBus relicEventBus,
-        RewardBagSpawner rewardBagSpawner)
+        RewardBagSpawner rewardBagSpawner, EnemySpawner enemySpawner)
     {
         _levelsConfiguration = levelsConfiguration;
         _levelFactory = levelFactory;
@@ -48,6 +49,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         _relicChestSpawner = relicChestSpawner;
         _relicEventBus = relicEventBus;
         _rewardBagSpawner = rewardBagSpawner;
+        _enemySpawner = enemySpawner;
 
         _enemyRoomObserver.RoomCompleted += HandleRoomCompleted;
         _rewardBagSpawner.RewardCollected += HandleRewardBagCollected;
@@ -142,7 +144,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         try
         {
             character?.SetTransitionPaused(true);
-            await _roomTransitionService.Play(
+            await _roomTransitionService.PlayLoading(
                 () => ReplaceLevel(nextLevelIndex),
                 () => character?.SetTransitionPaused(false));
         }
@@ -160,7 +162,7 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         }
     }
 
-    private UniTask ReplaceLevel(int nextLevelIndex)
+    private async UniTask ReplaceLevel(int nextLevelIndex)
     {
         RogueLikeSceneProvider sceneProvider = _sceneService.GameSceneComponentsService;
         CharacterFacade character = _characterProvider.CharacterFacade;
@@ -170,6 +172,8 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
 
         if (character == null)
             throw new InvalidOperationException("Character is not available for level transition.");
+
+        await _enemySpawner.LoadEnemyPrefabs(nextLevelIndex, character.GetCancellationTokenOnDestroy());
 
         LevelView nextLevel = _levelFactory.CreateLevelView(nextLevelIndex, sceneProvider.LevelSpawnPoint);
         StartRoomData startRoomData;
@@ -221,8 +225,6 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
 
         _relicEventBus.PublishRoomStarted(new RelicRoomEvent(startRoomData, nextLevel.StartRoom,
             character.transform.position));
-
-        return UniTask.CompletedTask;
     }
 
     private static StartRoomData GetStartRoomData(LevelView levelView)

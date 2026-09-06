@@ -72,6 +72,8 @@ namespace Features.Enemies.Scripts.Level.Scripts
                 {
                     _panel.SetLoadingVisible(true);
                     loadingShownAt = Time.realtimeSinceStartup;
+                    // Render the loading overlay before level creation or NavMesh building blocks the frame.
+                    await UniTask.NextFrame();
                 }
 
                 await hiddenAction();

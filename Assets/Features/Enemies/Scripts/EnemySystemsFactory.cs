@@ -97,7 +97,7 @@ namespace Features.Enemies.Scripts
                 EnemyDamageType.Melee => new EnemyDamageMeleeSystem(
                     facade, character, configuration, attackPreparationDuration),
                 EnemyDamageType.Dash => new EnemyDashAttackSystem(
-                    character, configuration, facade, dashView, attackPreparationDuration),
+                    character, configuration, facade, dashView, attackPreparationDuration, _enemiesProvider),
                 EnemyDamageType.RangeArea => new EnemyDamageAreaSystem(
                     character, configuration, facade,
                     _enemiesProvider,

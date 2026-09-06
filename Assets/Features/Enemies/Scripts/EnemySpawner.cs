@@ -29,6 +29,7 @@ public class EnemySpawner
     private int _pendingEnemySpawnCount;
     private int _spawnGeneration;
     private EnemyRoomScalingConfiguration _roomBalance;
+    private EnemyFactoryConfiguration _loadedEnemyFactoryConfiguration;
     private readonly List<EnemySpawnRule> _roomEnemyRules = new();
     private readonly Dictionary<EnemyType, int> _spawnedByType = new();
     private int _roomProgressIndex;
@@ -63,13 +64,19 @@ public class EnemySpawner
         _enemiesProvider.EnemyRemoved += HandleEnemyRemoved;
     }
 
-    public async UniTask LoadEnemyPrefabs(CancellationToken cts)
+    public UniTask LoadEnemyPrefabs(CancellationToken cts) =>
+        LoadEnemyPrefabs(_rogueLikeRuntimeDataService.CurrentIndexLevel, cts);
+
+    public async UniTask LoadEnemyPrefabs(int levelIndex, CancellationToken cts)
     {
         LevelSettings levelSettings =
-            _levelsConfiguration.GetLevel(_rogueLikeRuntimeDataService.CurrentIndexLevel);
+            _levelsConfiguration.GetLevel(levelIndex);
         if (levelSettings.EnemyFactoryConfiguration == null)
             throw new System.InvalidOperationException(
                 "Enemy factory configuration is missing for the current level.");
+
+        if (ReferenceEquals(_loadedEnemyFactoryConfiguration, levelSettings.EnemyFactoryConfiguration))
+            return;
 
         foreach (var enemyPrefabData in levelSettings.EnemyFactoryConfiguration.EnemyPrefabs)
         {
@@ -78,6 +85,8 @@ public class EnemySpawner
             if (enemyPrefabData.HasElitePrefab)
                 await enemyPrefabData.ElitePrefabContainer.Load(cts);
         }
+
+        _loadedEnemyFactoryConfiguration = levelSettings.EnemyFactoryConfiguration;
     }
 
     public void TrySpawnEnemies(CharacterFacade characterFacade)
@@ -110,8 +119,7 @@ public class EnemySpawner
         int initialEnemyCount = Mathf.Min(_waveEnemyCount, _allEnemiesInCurrentRoom);
         List<EnemyType> enemyTypes = BuildSpawnQueue(initialEnemyCount);
         Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
-        _spawnedEnemiesInCurrentRoom = SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes,
-            characterFacade);
+        SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes, characterFacade, spawnImmediately: true);
 
         if (_pendingEnemySpawnCount == 0 &&
             (_spawnedEnemiesInCurrentRoom >= _allEnemiesInCurrentRoom ||
@@ -123,7 +131,7 @@ public class EnemySpawner
 
     public int TrySpawnAdditionalEnemies(CharacterFacade characterFacade, int enemyCount)
     {
-        if (enemyCount <= 0)
+        if (enemyCount <= 0 || _pendingEnemySpawnCount > 0)
             return 0;
 
         EnemyRoomSettings configuration = GetCurrentConfiguration(characterFacade,
@@ -140,10 +148,8 @@ public class EnemySpawner
             throw new System.InvalidOperationException("Current level view is not available.");
 
         Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
-        int spawnedEnemyCount = SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes,
+        return SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes,
             characterFacade);
-        _spawnedEnemiesInCurrentRoom += spawnedEnemyCount;
-        return spawnedEnemyCount;
     }
 
     private void HandleEnemyRemoved(int activeEnemyCount)
@@ -216,8 +222,28 @@ public class EnemySpawner
     }
 
     private int SpawnEnemyTypes(Room currentRoom, LevelSettings levelSettings,
-        IReadOnlyList<EnemyType> enemyTypes, CharacterFacade characterFacade)
+        IReadOnlyList<EnemyType> enemyTypes, CharacterFacade characterFacade, bool spawnImmediately = false)
     {
+        if (enemyTypes.Count == 0)
+            return 0;
+
+        // Record the whole wave before spawning, including when the opening wave finishes synchronously.
+        _spawnedEnemiesInCurrentRoom += enemyTypes.Count;
+        _pendingEnemySpawnCount += enemyTypes.Count;
+        SpawnEnemyTypesInBatches(currentRoom, levelSettings, enemyTypes, characterFacade,
+            _spawnGeneration, spawnImmediately).Forget();
+        return enemyTypes.Count;
+    }
+
+    private async UniTask SpawnEnemyTypesInBatches(Room currentRoom, LevelSettings levelSettings,
+        IReadOnlyList<EnemyType> enemyTypes, CharacterFacade characterFacade, int spawnGeneration,
+        bool spawnImmediately)
+    {
+        if (spawnImmediately == false)
+            await UniTask.NextFrame();
+        if (IsSpawnRequestActive(currentRoom, characterFacade, spawnGeneration) == false)
+            return;
+
         Physics.SyncTransforms();
 
         List<Collider> groundColliders = GetGroundColliders(currentRoom);
@@ -225,11 +251,17 @@ public class EnemySpawner
             Debug.LogWarning($"Could not find ground colliders in room {currentRoom.name}. " +
                              "Enemy spawning will keep retrying.");
 
-        int scheduledEnemyCount = 0;
+        int batchSize = _roomBalance.SpawnBatchSize;
         var reusableSpawnPositions = new Dictionary<EnemySpawnVolume, Vector3>();
         var pendingEnemySpawns = new List<PendingEnemySpawn>();
         for (int i = 0; i < enemyTypes.Count; i++)
         {
+            if (spawnImmediately == false && i > 0 && i % batchSize == 0)
+                await UniTask.Delay(System.TimeSpan.FromSeconds(_roomBalance.GetRandomSpawnBatchDelay()));
+
+            if (IsSpawnRequestActive(currentRoom, characterFacade, spawnGeneration) == false)
+                return;
+
             var enemyType = enemyTypes[i];
             bool allowElite = _elitesSpawnedInCurrentRoom < _roomBalance.GetEliteLimit(_roomProgressIndex);
             GameObject enemy = levelSettings.EnemyFactoryConfiguration.GetEnemyByType(
@@ -248,28 +280,31 @@ public class EnemySpawner
             if (hasSpawnPosition == false)
             {
                 pendingEnemySpawns.Add(new PendingEnemySpawn(enemy, spawnVolume, enemyType));
-                scheduledEnemyCount++;
                 continue;
             }
 
             reusableSpawnPositions[spawnVolume] = spawnPosition;
             SpawnEnemy(enemy, spawnPosition, enemyType).Forget();
-            scheduledEnemyCount++;
+            _pendingEnemySpawnCount--;
         }
 
         if (pendingEnemySpawns.Count > 0)
         {
-            _pendingEnemySpawnCount += pendingEnemySpawns.Count;
-            RetryPendingEnemySpawns(currentRoom, groundColliders, pendingEnemySpawns,
-                characterFacade, _spawnGeneration).Forget();
+            await RetryPendingEnemySpawns(currentRoom, groundColliders, pendingEnemySpawns,
+                characterFacade, spawnGeneration, spawnImmediately);
         }
 
-        return scheduledEnemyCount;
+        if (IsSpawnRequestActive(currentRoom, characterFacade, spawnGeneration) &&
+            _pendingEnemySpawnCount == 0)
+        {
+            // Deaths between batches may already have reached the reinforcement threshold.
+            HandleEnemyRemoved(_enemiesProvider.Count);
+        }
     }
 
     private async UniTask RetryPendingEnemySpawns(Room room,
         IReadOnlyList<Collider> groundColliders, List<PendingEnemySpawn> pendingEnemySpawns,
-        CharacterFacade characterFacade, int spawnGeneration)
+        CharacterFacade characterFacade, int spawnGeneration, bool spawnImmediately)
     {
         var reusableSpawnPositions = new Dictionary<EnemySpawnVolume, Vector3>();
         IReadOnlyList<Collider> availableGroundColliders = groundColliders;
@@ -278,6 +313,13 @@ public class EnemySpawner
         while (pendingEnemySpawns.Count > 0 &&
                IsSpawnRequestActive(room, characterFacade, spawnGeneration))
         {
+            if (spawnImmediately)
+                await UniTask.NextFrame();
+            else
+                await UniTask.Delay(System.TimeSpan.FromSeconds(_roomBalance.GetRandomSpawnBatchDelay()));
+            if (IsSpawnRequestActive(room, characterFacade, spawnGeneration) == false)
+                return;
+
             if (availableGroundColliders.Count == 0)
                 availableGroundColliders = GetGroundColliders(room);
 
@@ -305,15 +347,6 @@ public class EnemySpawner
                 }
             }
 
-            if (pendingEnemySpawns.Count > 0)
-                await UniTask.Yield();
-        }
-
-        if (IsSpawnRequestActive(room, characterFacade, spawnGeneration) &&
-            _pendingEnemySpawnCount == 0 &&
-            _spawnedEnemiesInCurrentRoom >= _allEnemiesInCurrentRoom)
-        {
-            FinishCurrentRoomSpawning();
         }
     }
 

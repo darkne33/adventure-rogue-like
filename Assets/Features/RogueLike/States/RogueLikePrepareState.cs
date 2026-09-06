@@ -24,6 +24,7 @@ namespace Core
         private readonly RelicEventBus _relicEventBus;
         private readonly RelicManager _relicManager;
         private readonly UpgradeBuildService _upgradeBuildService;
+        private readonly EnemySpawner _enemySpawner;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
             ISceneService<RogueLikeSceneProvider> sceneService, ICharacterProvider characterProvider,
@@ -32,7 +33,7 @@ namespace Core
             ICameraService cameraService, IUpgradeOfferHandler upgradeOfferHandler, CharacterStats characterStats,
             MinimapController minimapController, RelicChestSpawner relicChestSpawner, RelicEventBus relicEventBus,
             RelicManager relicManager, UpgradeBuildService upgradeBuildService,
-            CharacterConfiguration characterConfiguration)
+            CharacterConfiguration characterConfiguration, EnemySpawner enemySpawner)
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
@@ -49,11 +50,14 @@ namespace Core
             _relicEventBus = relicEventBus;
             _relicManager = relicManager;
             _upgradeBuildService = upgradeBuildService;
+            _enemySpawner = enemySpawner;
         }
 
         public override async UniTask Enter(CancellationToken cts)
         {
             _upgradeBuildService.Reset();
+
+            await _enemySpawner.LoadEnemyPrefabs(cts);
 
             var panel =
                 await _panelService.OpenPanelWithPresenter<CharacterPanel, CharacterPanelPresenter>(PanelName

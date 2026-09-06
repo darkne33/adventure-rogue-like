@@ -25,6 +25,7 @@ namespace Features.Enemies.Scripts
         private readonly EnemyConfiguration _enemyConfiguration;
         private readonly EnemyFacade _enemyFacade;
         private readonly EnemyDashView _dashView;
+        private readonly IEnemiesProvider _enemiesProvider;
         private readonly float _attackPreparationDuration;
         private readonly Collider[] _hitBuffer = new Collider[16];
 
@@ -32,6 +33,7 @@ namespace Features.Enemies.Scripts
         private NavMeshAgent _navMeshAgent;
         private SphereCollider _hitCollider;
         private Collider[] _colliders;
+        private EnemyDashSkirmisherMovement _skirmisherMovement;
         private bool[] _wasTrigger;
         private State _state;
         private float _cooldown;
@@ -56,12 +58,14 @@ namespace Features.Enemies.Scripts
             _characterFacade != null;
 
         public EnemyDashAttackSystem(CharacterFacade characterFacade, EnemyConfiguration enemyConfiguration,
-            EnemyFacade enemyFacade, EnemyDashView dashView, float attackPreparationDuration)
+            EnemyFacade enemyFacade, EnemyDashView dashView, float attackPreparationDuration,
+            IEnemiesProvider enemiesProvider)
         {
             _characterFacade = characterFacade;
             _enemyConfiguration = enemyConfiguration;
             _enemyFacade = enemyFacade;
             _dashView = dashView;
+            _enemiesProvider = enemiesProvider;
             _attackPreparationDuration = Mathf.Max(0f, attackPreparationDuration);
         }
 
@@ -87,6 +91,12 @@ namespace Features.Enemies.Scripts
             _navMeshAgent.updateRotation = false;
             _navMeshAgent.autoBraking = true;
             _navMeshAgent.stoppingDistance = _stopDistance;
+            if (_enemyConfiguration.EnemyMovementType == EnemyMovementType.Skirmisher)
+            {
+                _skirmisherMovement = new EnemyDashSkirmisherMovement(_enemyFacade,
+                    _characterFacade, _enemiesProvider, _navMeshAgent, _attackRange);
+                _navMeshAgent.stoppingDistance = 0.25f;
+            }
             _rigidbody.constraints |= RigidbodyConstraints.FreezeRotation;
             _enemyFacade.EnemyCollisionDetector.OnCollisionEnterEvent += ApplyDamage;
         }
@@ -195,6 +205,7 @@ namespace Features.Enemies.Scripts
             if (_state != State.Pursuit || _navMeshAgent == null || _navMeshAgent.isOnNavMesh == false)
                 return;
 
+            _skirmisherMovement?.Reset();
             _navMeshAgent.nextPosition = _rigidbody.position;
             if (_navMeshAgent.hasPath)
                 _navMeshAgent.ResetPath();
@@ -226,7 +237,9 @@ namespace Features.Enemies.Scripts
             }
 
             _navMeshAgent.nextPosition = _rigidbody.position;
-            if (_enemyFacade.IsAggro && toCharacter.sqrMagnitude <= _stopDistance * _stopDistance)
+            bool isSkirmishing = _skirmisherMovement != null && _enemyFacade.IsAggro;
+            if (isSkirmishing == false && _enemyFacade.IsAggro &&
+                toCharacter.sqrMagnitude <= _stopDistance * _stopDistance)
             {
                 if (_navMeshAgent.hasPath)
                     _navMeshAgent.ResetPath();
@@ -236,7 +249,19 @@ namespace Features.Enemies.Scripts
                 return;
             }
 
-            if (NavMesh.SamplePosition(_characterFacade.transform.position, out NavMeshHit hit,
+            Vector3 destination = _characterFacade.transform.position;
+            if (isSkirmishing && _skirmisherMovement.TryGetDestination(
+                    Time.fixedDeltaTime * _enemyFacade.RelicTimeScale, out destination) == false)
+            {
+                if (_navMeshAgent.hasPath)
+                    _navMeshAgent.ResetPath();
+                StopHorizontalMovement();
+                RotateBodyTowards(toCharacter, _enemyConfiguration.RotationSpeed);
+                _enemyFacade.AnimationSystem.IdleAnimation();
+                return;
+            }
+
+            if (NavMesh.SamplePosition(destination, out NavMeshHit hit,
                     NavigationSampleDistance, _navMeshAgent.areaMask) == false ||
                 _navMeshAgent.SetDestination(hit.position) == false)
             {

@@ -11,18 +11,25 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     [Tooltip("Maximum simultaneous enemies for a Small room. Larger groups use Medium rooms.")]
     [SerializeField, Min(1)] private int _maxEnemiesInSmallRoom = 8;
     [SerializeField, Range(0f, 0.5f)] private float _reinforcementRemainingFraction = 0.25f;
+    [Tooltip("Maximum enemies prepared and spawned in one group of a wave.")]
+    [SerializeField, Min(1)] private int _spawnBatchSize = 2;
+    [Tooltip("Minimum delay between spawn groups in seconds of game time.")]
+    [SerializeField, Min(0f)] private float _minSpawnBatchDelay = 2f;
+    [Tooltip("Maximum delay between spawn groups in seconds of game time.")]
+    [SerializeField, Min(0f)] private float _maxSpawnBatchDelay = 5f;
     [SerializeField, Min(1)] private int _firstEliteRoom = 4;
     [SerializeField, Min(1)] private int _eliteRoomInterval = 3;
     [SerializeField] private EnemySpawnRule[] _enemyRules =
     {
-        new(EnemyType.Dummy, 1, 70f, 0),
+        new(EnemyType.Dummy, 1, 50f, 0),
         new(EnemyType.Bun, 2, 14f, 4),
-        new(EnemyType.Bomb, 4, 10f, 3),
-        new(EnemyType.Ghost, 6, 8f, 3),
+        new(EnemyType.Bomb, 4, 20f, 8),
+        new(EnemyType.Ghost, 6, 18f, 8),
         new(EnemyType.Chan, 8, 5f, 2)
     };
 
     public EnemySpawnRule[] EnemyRules => _enemyRules;
+    public int SpawnBatchSize => Mathf.Max(1, _spawnBatchSize);
     public int GetStartEnemyCount(int roomIndex) => GetCount(_startingEnemies, roomIndex, 3);
     public int GetAllEnemyCount(int roomIndex) =>
         Mathf.Max(GetStartEnemyCount(roomIndex), GetCount(_totalEnemies, roomIndex, 3));
@@ -32,7 +39,7 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     public bool IsSpecialistRoom(int roomIndex) => roomIndex >= 3 && roomIndex % 3 == 0;
     public bool IsSwarmRoom(int roomIndex) => roomIndex < 2 || roomIndex % 3 == 1;
     public int GetSpecialTypeLimit(int roomIndex) => roomIndex < 3 ? 1 : roomIndex < 6 ? 2 : 3;
-    public int GetRangedLimit(int roomIndex) => roomIndex < 6 ? 2 : roomIndex < 9 ? 3 : 4;
+    public int GetRangedLimit(int roomIndex) => roomIndex < 6 ? 2 : roomIndex < 9 ? 5 : 8;
     public int GetReinforcementThreshold(int roomIndex) => IsSpecialistRoom(roomIndex)
         ? 0
         : Mathf.FloorToInt(GetStartEnemyCount(roomIndex) * _reinforcementRemainingFraction);
@@ -42,6 +49,13 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
         (roomIndex + 1 - _firstEliteRoom) % Mathf.Max(1, _eliteRoomInterval) == 0
             ? (roomIndex < 9 ? 1 : 2)
             : 0;
+
+    public float GetRandomSpawnBatchDelay()
+    {
+        float minDelay = Mathf.Max(0f, _minSpawnBatchDelay);
+        float maxDelay = Mathf.Max(minDelay, _maxSpawnBatchDelay);
+        return UnityEngine.Random.Range(minDelay, maxDelay);
+    }
 
     public float GetWeight(EnemySpawnRule rule, int roomIndex)
     {
