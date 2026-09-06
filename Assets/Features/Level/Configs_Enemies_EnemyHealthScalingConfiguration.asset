@@ -12,7 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ea849b4dcaa43ca9d089fbfd6310baa, type: 3}
   m_Name: Configs_Enemies_EnemyHealthScalingConfiguration
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealthScalingConfiguration
-  _healthMultiplier: 1
-  _additionalHealthPerLevel: 6
-  _additionalHealthPerRoom: 8
-  _maxHealth: 250
+  _healthByRoom:
+  - 1
+  - 1.05
+  - 1.15
+  - 1.3
+  - 1.5
+  - 1.75
+  - 2
+  - 2.3
+  - 2.65
+  - 3
+  - 3.5
+  - 4
+  _finalSpeedMultiplier: 1.2
+  _finalDamageMultiplier: 1.6
+  _finalAttackCooldownMultiplier: 0.85

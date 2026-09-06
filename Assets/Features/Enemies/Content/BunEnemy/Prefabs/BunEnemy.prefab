@@ -784,9 +784,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 32
-  m_CollisionDetection: 0
+  m_Interpolate: 1
+  m_Constraints: 112
+  m_CollisionDetection: 2
 --- !u!135 &7577784027205373530
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -906,7 +906,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyDashView
   _material: {fileID: 2100000, guid: 5a792f61f6945d44bb1af16ed5ce7468, type: 2}
   _telegraphColor: {r: 1, g: 0.08, b: 0.03, a: 0.85}
+  _telegraphHeight: 0.15
+  _telegraphMinimumWidth: 0.12
+  _telegraphMaximumWidth: 0.32
+  _telegraphPulseCount: 3
+  _telegraphEndWidthMultiplier: 0.35
+  _telegraphInitialAlpha: 0.35
+  _telegraphEndAlpha: 0.08
+  _telegraphCapVertices: 4
   _dashColor: {r: 1, g: 0.45, b: 0.05, a: 0.8}
+  _trailLifetime: 0.28
+  _trailMinimumVertexDistance: 0.08
+  _trailWidth: 1.2
+  _trailEndAlpha: 0
 --- !u!1 &2965618105848705874
 GameObject:
   m_ObjectHideFlags: 0
@@ -1577,6 +1589,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3975453088899766379}
     m_Modifications:
+    - target: {fileID: 646779956176935079, guid: 39aa9fa9354a9dd439fc009e4976082a, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5027680254435074886, guid: 39aa9fa9354a9dd439fc009e4976082a, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0

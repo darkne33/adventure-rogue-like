@@ -9,14 +9,14 @@ namespace Features.Enemies.Scripts
         
         private void OnTriggerEnter(Collider other)
         {
-            var characterFacade = other.GetComponent<CharacterFacade>();
+            var characterFacade = other.GetComponentInParent<CharacterFacade>();
             if (characterFacade != null)
                 OnCollisionEnterEvent?.Invoke();
         }
         
         private void OnCollisionEnter(Collision other)
         {
-            var characterFacade = other.gameObject.GetComponent<CharacterFacade>();
+            var characterFacade = other.gameObject.GetComponentInParent<CharacterFacade>();
             if (characterFacade != null)
                 OnCollisionEnterEvent?.Invoke();
         }

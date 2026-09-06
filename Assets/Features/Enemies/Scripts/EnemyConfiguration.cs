@@ -63,6 +63,33 @@ public class EnemyConfiguration : ScriptableObject
     [field: SerializeField] public EnemyMovementType EnemyMovementType { get; private set; }
     [field: SerializeField] public int Exp { get; private set; }
 
+    [field: Header("Dash Settings")]
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Dash)]
+    [field: Tooltip("Distance travelled during the dash. Duration is distance divided by speed.")]
+    [field: Min(0.01f)]
+    [field: SerializeField] public float DashDistance { get; private set; } = 12f;
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Dash)]
+    [field: Tooltip("Dash speed in world units per second.")]
+    [field: Min(0.01f)]
+    [field: SerializeField] public float DashSpeed { get; private set; } = 28f;
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Dash)]
+    [field: Tooltip("How long the dash follows the target during Attack Preparation Duration. " +
+                    "The direction is locked for the rest of the preparation.")]
+    [field: Min(0f)]
+    [field: SerializeField] public float DashTrackingDuration { get; private set; } = 0.35f;
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Dash)]
+    [field: Tooltip("Turning speed in degrees per second during dash preparation.")]
+    [field: Min(0f)]
+    [field: SerializeField] public float DashRotationSpeed { get; private set; } = 720f;
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Dash)]
+    [field: Tooltip("Sideways impulse perpendicular to the dash, applied once per hit. Zero disables it.")]
+    [field: Min(0f)]
+    [field: SerializeField] public float DashKnockbackForce { get; private set; } = 4f;
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Dash)]
+    [field: Tooltip("Additional upward impulse on a dash hit. Zero keeps the push horizontal.")]
+    [field: Min(0f)]
+    [field: SerializeField] public float DashKnockbackUpwardForce { get; private set; }
+
     [field: Header("Movement Settings")]
     [field: SerializeField] public float Speed { get; private set; }
     [field: SerializeField] public float RotationSpeed { get; private set; }
@@ -101,4 +128,25 @@ public class EnemyConfiguration : ScriptableObject
     private bool UsesDistanceToStop =>
         EnemyMovementType == EnemyMovementType.Chase ||
         EnemyMovementType == EnemyMovementType.AggressiveChase;
+
+    public EnemyConfiguration CreateForRoom(EnemyHealthScalingConfiguration scaling,
+        int roomIndex, bool isSplittingBomb)
+    {
+        EnemyConfiguration instance = Instantiate(this);
+        instance.hideFlags = HideFlags.DontSave;
+        // Splitting bombs share the normal bomb asset, but are elite encounters.
+        if (isSplittingBomb)
+        {
+            instance.EnemyRank = EnemyRank.Elite;
+            instance.MaxHealth = Mathf.CeilToInt(MaxHealth * 2.5f);
+            instance.Speed = Speed * 0.8f;
+            instance.Exp = 4;
+        }
+
+        instance.MaxHealth = scaling.GetMaxHealth(instance.MaxHealth, roomIndex);
+        instance.Damage = scaling.GetDamage(instance.Damage, roomIndex);
+        instance.Speed *= scaling.GetSpeedMultiplier(roomIndex);
+        instance.DamageCooldown *= scaling.GetAttackCooldownMultiplier(roomIndex);
+        return instance;
+    }
 }

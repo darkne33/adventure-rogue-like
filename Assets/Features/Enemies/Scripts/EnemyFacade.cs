@@ -25,12 +25,27 @@ namespace Features.Enemies.Scripts
             ? 0f
             : Mathf.Clamp(_persistentRelicSlow * _temporaryRelicSlow, 0.05f, 1f);
 
-        public EnemyConfiguration Configuration => _enemyConfiguration;
+        public EnemyConfiguration Configuration => _runtimeConfiguration != null
+            ? _runtimeConfiguration : _enemyConfiguration;
+        public EnemyType SpawnType { get; internal set; }
         public Renderer[] MeshRenderers => _meshRenderers;
         public Transform AttackTelegraphTransform => GetAttackTelegraphTransform();
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
         [SerializeField] private Renderer[] _meshRenderers;
+        private EnemyConfiguration _runtimeConfiguration;
+
+        internal void ConfigureForRoom(EnemyHealthScalingConfiguration scaling, int roomIndex)
+        {
+            _runtimeConfiguration = _enemyConfiguration.CreateForRoom(
+                scaling, roomIndex, GetComponent<BombEnemySplitOnDeath>() != null);
+        }
+
+        private void OnDestroy()
+        {
+            if (_runtimeConfiguration != null)
+                Destroy(_runtimeConfiguration);
+        }
 
         private Rigidbody _rigidbody;
         private NavMeshAgent _navMeshAgent;
@@ -225,9 +240,9 @@ namespace Features.Enemies.Scripts
         internal void InitializeNavigation(Vector3 navMeshPosition)
         {
             Vector3 visualPosition = transform.position;
-            _navMeshAgent.speed = _enemyConfiguration.Speed;
-            _navMeshAgent.angularSpeed = _enemyConfiguration.RotationSpeed;
-            _navMeshAgent.acceleration = _enemyConfiguration.Acceleration;
+            _navMeshAgent.speed = Configuration.Speed;
+            _navMeshAgent.angularSpeed = Configuration.RotationSpeed;
+            _navMeshAgent.acceleration = Configuration.Acceleration;
             _navMeshAgent.updatePosition = false;
 
             if (_navMeshAgent.Warp(navMeshPosition) == false)
@@ -268,7 +283,7 @@ namespace Features.Enemies.Scripts
             if (_navMeshAgent == null || _enemyConfiguration == null)
                 return;
 
-            _navMeshAgent.speed = _enemyConfiguration.Speed * RelicTimeScale;
+            _navMeshAgent.speed = Configuration.Speed * RelicTimeScale;
         }
     }
 }

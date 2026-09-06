@@ -12,7 +12,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18664ffeca154f939751be1b50d9820f, type: 3}
   m_Name: Configs_Enemies_EnemyRoomScalingConfiguration
   m_EditorClassIdentifier: Assembly-CSharp::EnemyRoomScalingConfiguration
-  _enemyCountMultiplier: 1
-  _additionalEnemiesPerLevel: 1
-  _additionalEnemiesPerRoom: 1
-  _maxEnemiesPerRoom: 100
+  _startingEnemies: 030000000500000008000000070000000c000000100000000c000000160000001c000000140000002400000028000000
+  _totalEnemies: 03000000050000000a0000000a000000120000001a000000160000002600000032000000280000004400000050000000
+  _reinforcementRemainingFraction: 0.25
+  _maxEnemiesInSmallRoom: 8
+  _firstEliteRoom: 4
+  _eliteRoomInterval: 3
+  _enemyRules:
+  - EnemyType: 2
+    FirstRoom: 1
+    Weight: 70
+    MaxAlive: 0
+  - EnemyType: 1
+    FirstRoom: 2
+    Weight: 14
+    MaxAlive: 4
+  - EnemyType: 5
+    FirstRoom: 4
+    Weight: 10
+    MaxAlive: 3
+  - EnemyType: 4
+    FirstRoom: 6
+    Weight: 8
+    MaxAlive: 3
+  - EnemyType: 6
+    FirstRoom: 8
+    Weight: 5
+    MaxAlive: 2

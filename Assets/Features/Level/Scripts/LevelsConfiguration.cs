@@ -8,6 +8,7 @@ public class LevelsConfiguration : ScriptableObject
     [field: SerializeField] public LayerMask GroundLayer { get; private set; }
     [field: SerializeField] public LayerMask ObstacleLayer { get; private set; }
     [field: SerializeField] public EnemyHealthScalingConfiguration EnemyHealthScalingConfiguration { get; private set; }
+    [field: SerializeField] public EnemyRoomScalingConfiguration EnemyRoomScalingConfiguration { get; private set; }
     [field: SerializeField] public List<LevelSettings> Levels { get; private set; }
 
     public bool HasLevel(int levelIndex) =>
@@ -33,6 +34,17 @@ public class LevelsConfiguration : ScriptableObject
 
         return EnemyHealthScalingConfiguration;
     }
+
+    public int GetCombatProgressIndex(int levelIndex, LevelView level, RoomData roomData) =>
+        GetCombatProgressOffset(levelIndex) + level.GetEnemyRoomIndex(roomData);
+
+    public int GetCombatProgressOffset(int levelIndex)
+    {
+        int index = 0;
+        for (int i = 0; i < levelIndex; i++)
+            index += GetLevel(i).LevelView.GetCombatRoomsToExit();
+        return index;
+    }
 }
 
 [Serializable]
@@ -40,24 +52,4 @@ public class LevelSettings
 {
     [field: SerializeField] public EnemyFactoryConfiguration EnemyFactoryConfiguration { get; private set; }
     [field: SerializeField] public LevelView LevelView { get; private set; }
-
-    [field: SerializeField, Min(1)]
-    [field: Tooltip("Number of enemies spawned when entering the first combat room.")]
-    public int StartEnemies { get; private set; } = 1;
-
-    [field: SerializeField, Min(1)]
-    [field: Tooltip("Total number of enemies spawned in the first combat room.")]
-    public int AllEnemiesInRoom { get; private set; } = 1;
-
-    [field: SerializeField, Min(0)]
-    [field: Tooltip("Amount added to both enemy counts for each next combat room.")]
-    public int CountIncrease { get; private set; } = 2;
-
-    public int GetStartEnemyCount(int roomIndex) =>
-        Mathf.Max(1, StartEnemies) + Mathf.Max(0, roomIndex) * Mathf.Max(0, CountIncrease);
-
-    public int GetAllEnemyCount(int roomIndex) =>
-        Mathf.Max(GetStartEnemyCount(roomIndex),
-            Mathf.Max(1, AllEnemiesInRoom) +
-            Mathf.Max(0, roomIndex) * Mathf.Max(0, CountIncrease));
 }

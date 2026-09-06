@@ -14,17 +14,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyConfiguration
   <EnemyRank>k__BackingField: 0
   <MaxHealth>k__BackingField: 20
-  <Damage>k__BackingField: 1
+  <Damage>k__BackingField: 4
   <DamageRange>k__BackingField: 10
-  <DamageCooldown>k__BackingField: 1
-  <AttackPreparationDuration>k__BackingField: 0.55
+  <DamageCooldown>k__BackingField: 2.2
+  <AttackPreparationDuration>k__BackingField: 0.8
   <EnemyDamageType>k__BackingField: 2
   <MovementPauseAfterAttack>k__BackingField: 1.25
   <EnemyAnimationType>k__BackingField: 1
-  <EnemyMovementType>k__BackingField: 1
+  <EnemyMovementType>k__BackingField: 0
   <Exp>k__BackingField: 1
+  <DashDistance>k__BackingField: 12
+  <DashSpeed>k__BackingField: 28
+  <DashTrackingDuration>k__BackingField: 0.35
+  <DashRotationSpeed>k__BackingField: 720
+  <DashKnockbackForce>k__BackingField: 10
+  <DashKnockbackUpwardForce>k__BackingField: 10
   <DistanceToStop>k__BackingField: 0
-  <Speed>k__BackingField: 10
+  <Speed>k__BackingField: 8.6
   <RotationSpeed>k__BackingField: 360
-  <Acceleration>k__BackingField: 2
-  <AggroRange>k__BackingField: 15
+  <Acceleration>k__BackingField: 12
+  <AggroRange>k__BackingField: 20

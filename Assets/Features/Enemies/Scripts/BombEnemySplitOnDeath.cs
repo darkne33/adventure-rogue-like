@@ -54,6 +54,7 @@ namespace Features.Enemies.Scripts
                 Vector3 spawnPosition = origin + Vector3.up * _spawnHeight;
                 EnemyFacade spawnedBomb = _enemyFactory.Create(
                     _normalBombPrefab, spawnPosition, landingPosition);
+                spawnedBomb.SpawnType = EnemyType.Bomb;
 
                 _enemiesProvider.AddEnemy(spawnedBomb);
                 spawnedBomb.SetStop(true);

@@ -15,6 +15,12 @@ public class LevelView : MonoBehaviour
 
     [SerializeField] private LevelRoomNode[] _rooms;
 
+    [Header("Combat Room Variants")]
+    [Tooltip("Small layouts for low enemy counts. Variants are picked without repetition until the pool is exhausted.")]
+    [SerializeField] private Room[] _smallEnemyRooms = Array.Empty<Room>();
+    [Tooltip("Medium layouts for larger enemy groups. Enemy Room Scaling Configuration controls the size threshold.")]
+    [SerializeField] private Room[] _mediumEnemyRooms = Array.Empty<Room>();
+
     [Header("Key Room Spawning")]
     [Tooltip("Prefab spawned at the point configured in DefaultEnemiesRoomData.")]
     [SerializeField] private GameObject _keyRoomPrefab;
@@ -32,6 +38,7 @@ public class LevelView : MonoBehaviour
     public IReadOnlyList<LevelRoomNode> Rooms => _rooms;
 
     private readonly HashSet<RoomData> _keyRoomVisitedRooms = new();
+    private Dictionary<Vector2Int, int> _combatDepths;
     private DiContainer _container;
     private bool _isInitialized;
     private int _visitedNonStartRooms;
@@ -41,10 +48,12 @@ public class LevelView : MonoBehaviour
     public void Configure(LevelRoomNode[] rooms)
     {
         _rooms = rooms;
+        _combatDepths = null;
         _isInitialized = false;
     }
 
-    public void Initialize(DiContainer container, bool hasNextLevel)
+    public void Initialize(DiContainer container, bool hasNextLevel,
+        EnemyRoomScalingConfiguration roomBalance = null, int combatProgressOffset = 0)
     {
         if (_isInitialized)
             return;
@@ -53,7 +62,7 @@ public class LevelView : MonoBehaviour
             throw new ArgumentNullException(nameof(container));
 
         _container = container;
-        MaterializeRooms(container);
+        MaterializeRooms(container, roomBalance, combatProgressOffset);
         ResolveAuthoredDoors();
         ResetRoomProgress();
 
@@ -64,6 +73,7 @@ public class LevelView : MonoBehaviour
         ValidateConnectivity(roomsByPosition);
         ResetDoors(roomsByPosition.Values);
         ConnectAdjacentRooms(roomsByPosition);
+        _combatDepths = BuildCombatDepths();
         ConfigureLevelExit(hasNextLevel);
         ResetKeyRoomSpawnState();
 
@@ -129,10 +139,15 @@ public class LevelView : MonoBehaviour
         }
     }
 
-    private void MaterializeRooms(DiContainer container)
+    private void MaterializeRooms(DiContainer container,
+        EnemyRoomScalingConfiguration roomBalance, int combatProgressOffset)
     {
         if (_rooms == null || _rooms.Length == 0)
             throw new InvalidOperationException($"{name} does not contain room nodes.");
+
+        if (roomBalance != null)
+            _combatDepths = BuildCombatDepths();
+        var usedVariants = new HashSet<Room>();
 
         foreach (LevelRoomNode roomNode in _rooms)
         {
@@ -141,7 +156,19 @@ public class LevelView : MonoBehaviour
             if (roomNode.RoomPrefab == null)
                 throw new InvalidOperationException($"{name} contains a missing room prefab.");
 
-            Room room = MaterializeRoom(container, roomNode.RoomPrefab,
+            Room source = roomNode.RoomPrefab;
+            if (roomBalance != null && (roomNode.Type is RoomType.Enemy or RoomType.Exit) &&
+                !IsRoomOwnedByLevel(source) && !IsRoomOwnedByLevel(roomNode.Room))
+            {
+                int roomIndex = combatProgressOffset +
+                                Mathf.Max(0, _combatDepths[roomNode.GridPosition] - 1);
+                Room[] variants = roomBalance.UsesSmallRoom(roomIndex)
+                    ? _smallEnemyRooms
+                    : _mediumEnemyRooms;
+                source = SelectRoomVariant(source, variants, usedVariants);
+            }
+
+            Room room = MaterializeRoom(container, source,
                 roomNode.Room, roomNode.GridPosition, "room");
 
             if (roomNode.Type is RoomType.Enemy or RoomType.Exit)
@@ -174,6 +201,44 @@ public class LevelView : MonoBehaviour
 
             roomNode.Bind(room);
         }
+    }
+
+    private static Room SelectRoomVariant(Room authoredRoom, Room[] variants,
+        HashSet<Room> usedVariants)
+    {
+        if (variants == null || variants.Length == 0)
+            return authoredRoom;
+
+        HashSet<RoomDirection> authoredDirections = GetAvailableDirections(authoredRoom);
+        bool requiresKeyRoom = authoredRoom.RoomData is
+            DefaultEnemiesRoomData { CanSpawnKeyRoom: true };
+        var compatible = new List<Room>();
+        foreach (Room variant in variants)
+        {
+            if (variant == null || variant.RoomData is not DefaultEnemiesRoomData data ||
+                (requiresKeyRoom && (!data.CanSpawnKeyRoom || data.KeyRoomSpawnPoint == null)))
+                continue;
+
+            // Layout changes must preserve the authored connections and combat depth.
+            if (authoredDirections.SetEquals(GetAvailableDirections(variant)) &&
+                !compatible.Contains(variant))
+                compatible.Add(variant);
+        }
+
+        if (compatible.Count == 0)
+            return authoredRoom;
+
+        List<Room> available = compatible.Where(room => !usedVariants.Contains(room)).ToList();
+        if (available.Count == 0)
+        {
+            foreach (Room variant in compatible)
+                usedVariants.Remove(variant);
+            available = compatible;
+        }
+
+        Room selected = available[UnityEngine.Random.Range(0, available.Count)];
+        usedVariants.Add(selected);
+        return selected;
     }
 
     private void ResolveAuthoredDoors()
@@ -692,20 +757,63 @@ public class LevelView : MonoBehaviour
         if (roomData == null)
             throw new ArgumentNullException(nameof(roomData));
 
-        int nonStartRoomIndex = 0;
         for (int i = 0; i < _rooms.Length; i++)
         {
             LevelRoomNode roomNode = _rooms[i];
-            if (roomNode == null || roomNode.Type == RoomType.Start)
+            if (roomNode == null || roomNode.Type is not (RoomType.Enemy or RoomType.Exit))
                 continue;
 
             if (ReferenceEquals(roomNode.Room?.RoomData, roomData))
-                return nonStartRoomIndex;
-
-            nonStartRoomIndex++;
+            {
+                _combatDepths ??= BuildCombatDepths();
+                return Mathf.Max(0, _combatDepths[roomNode.GridPosition] - 1);
+            }
         }
 
         throw new InvalidOperationException($"{name} does not contain the provided enemy room data.");
+    }
+
+    public int GetCombatRoomsToExit()
+    {
+        _combatDepths ??= BuildCombatDepths();
+        return Mathf.Max(1, _combatDepths[GetRoomNode(RoomType.Exit).GridPosition]);
+    }
+
+    private Dictionary<Vector2Int, int> BuildCombatDepths()
+    {
+        var nodes = _rooms.ToDictionary(node => node.GridPosition);
+        var depths = new Dictionary<Vector2Int, int> { [StartRoomGridPosition] = 0 };
+        var pending = new Queue<Vector2Int>();
+        pending.Enqueue(StartRoomGridPosition);
+
+        // Count combat rooms along the shortest connected route. Optional rooms
+        // never raise the difficulty of rooms elsewhere on the map.
+        while (pending.Count > 0)
+        {
+            Vector2Int position = pending.Dequeue();
+            LevelRoomNode node = nodes[position];
+            Room room = node.Room != null ? node.Room : node.RoomPrefab;
+            foreach (RoomDoor door in room.RoomData.RoomDoors)
+            {
+                Vector2Int neighbourPosition = position + door.Direction.ToGridOffset();
+                if (!nodes.TryGetValue(neighbourPosition, out LevelRoomNode neighbour))
+                    continue;
+
+                Room neighbourRoom = neighbour.Room != null ? neighbour.Room : neighbour.RoomPrefab;
+                if (!HasDoor(neighbourRoom, door.Direction.Opposite()))
+                    continue;
+
+                int depth = depths[position] +
+                            (neighbour.Type is RoomType.Enemy or RoomType.Exit ? 1 : 0);
+                if (depths.TryGetValue(neighbourPosition, out int previousDepth) && previousDepth <= depth)
+                    continue;
+
+                depths[neighbourPosition] = depth;
+                pending.Enqueue(neighbourPosition);
+            }
+        }
+
+        return depths;
     }
 
     private void ResetRoomProgress()

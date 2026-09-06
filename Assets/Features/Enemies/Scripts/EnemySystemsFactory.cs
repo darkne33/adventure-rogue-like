@@ -33,6 +33,7 @@ namespace Features.Enemies.Scripts
 
         public void Create(EnemyFacade facade)
         {
+            ConfigureRoomStats(facade);
             CharacterFacade character = _characterProvider.CharacterFacade;
             EnemyConfiguration configuration = facade.Configuration;
             Rigidbody rigidbody = facade.GetComponent<Rigidbody>();
@@ -44,12 +45,16 @@ namespace Features.Enemies.Scripts
                 facade.gameObject.AddComponent<EnemyAggroIndicatorView>();
 
             IEnemyAnimationSystem animationSystem = CreateAnimationSystem(configuration, animator);
-            IEnemyMovementSystem movementSystem = CreateMovementSystem(configuration, facade, character,
-                navMeshAgent, animationSystem);
+            IEnemyMovementSystem movementSystem = configuration.EnemyDamageType == EnemyDamageType.Dash
+                ? null
+                : CreateMovementSystem(configuration, facade, character, navMeshAgent, animationSystem);
             float attackPreparationDuration = configuration.AttackPreparationDuration;
             IEnemyDamageSystem damageSystem = CreateDamageSystem(configuration, facade, character,
                 facade.GetComponent<EnemyDashView>(), facade.GetComponent<EnemyRangedAttackView>(),
                 attackPreparationDuration);
+            if (damageSystem is IEnemyMovementSystem attackMovementSystem)
+                movementSystem = attackMovementSystem;
+
             var effectsSystem = new DealDamageEffectSystem(
                 facade.MeshRenderers, facade.AttackTelegraphTransform);
             Action deathEffect = configuration.ExplodesOnDeath &&
@@ -62,8 +67,7 @@ namespace Features.Enemies.Scripts
 
             var deathSystem = new EnemyDeathSystem(_enemiesProvider, facade, configuration, _characterStats,
                 character, effectsSystem, deathEffect, _goldDropper, _expDropper);
-            int maxHealth = GetScaledMaxHealth(configuration.MaxHealth);
-            var healthSystem = new HealthSystem(maxHealth,
+            var healthSystem = new HealthSystem(configuration.MaxHealth,
                 new IHealthView[] { facade.GetComponent<EnemyHealthView>() }, deathSystem,
                 new IDamageView[] { facade.GetComponent<EnemyDamageNumberView>() });
 
@@ -127,18 +131,18 @@ namespace Features.Enemies.Scripts
                     configuration.EnemyMovementType, "Enemy movement type is not supported.")
             };
 
-        private int GetScaledMaxHealth(int baseHealth)
+        private void ConfigureRoomStats(EnemyFacade facade)
         {
             if (_runtimeDataService.CurrentRoomData is not DefaultEnemiesRoomData currentRoomData)
-                return baseHealth;
+                return;
 
             LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
             if (currentLevel == null)
                 throw new InvalidOperationException("Current level view is not available.");
 
-            int roomIndex = currentLevel.GetEnemyRoomIndex(currentRoomData);
-            return _levelsConfiguration.GetEnemyHealthScalingConfiguration()
-                .GetMaxHealth(baseHealth, _runtimeDataService.CurrentIndexLevel, roomIndex);
+            int roomIndex = _levelsConfiguration.GetCombatProgressIndex(
+                _runtimeDataService.CurrentIndexLevel, currentLevel, currentRoomData);
+            facade.ConfigureForRoom(_levelsConfiguration.GetEnemyHealthScalingConfiguration(), roomIndex);
         }
     }
 }

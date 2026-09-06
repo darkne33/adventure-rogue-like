@@ -21,7 +21,9 @@ public class LevelFactory : ILevelFactory
         LevelView levelView = _container.InstantiatePrefabForComponent<LevelView>(levelSettings.LevelView, parent);
         levelView.Initialize(
             _container,
-            _levelsConfiguration.HasLevel(levelNumber + 1));
+            _levelsConfiguration.HasLevel(levelNumber + 1),
+            _levelsConfiguration.EnemyRoomScalingConfiguration,
+            _levelsConfiguration.GetCombatProgressOffset(levelNumber));
         return levelView;
     }
 }

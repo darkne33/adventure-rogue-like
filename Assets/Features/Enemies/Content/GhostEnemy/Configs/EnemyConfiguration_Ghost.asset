@@ -13,27 +13,27 @@ MonoBehaviour:
   m_Name: EnemyConfiguration_Ghost
   m_EditorClassIdentifier: Assembly-CSharp::EnemyConfiguration
   <EnemyRank>k__BackingField: 0
-  <MaxHealth>k__BackingField: 40
+  <MaxHealth>k__BackingField: 32
   <Damage>k__BackingField: 4
-  <DamageRange>k__BackingField: 35
-  <DamageCooldown>k__BackingField: 5
+  <DamageRange>k__BackingField: 26
+  <DamageCooldown>k__BackingField: 3.5
   <InitialAttackCooldown>k__BackingField: 0
   <RandomInitialAttackDelayMax>k__BackingField: 1.5
-  <AttackPreparationDuration>k__BackingField: 0.55
+  <AttackPreparationDuration>k__BackingField: 0.75
   <EnemyDamageType>k__BackingField: 5
-  <MovementPauseAfterAttack>k__BackingField: 1.25
+  <MovementPauseAfterAttack>k__BackingField: 1.1
   <BulletConfiguration>k__BackingField: {fileID: 11400000, guid: e4d3572ff5bfa6e4d970cac04e68b1d9, type: 2}
   <EnemyAnimationType>k__BackingField: 4
   <EnemyMovementType>k__BackingField: 4
-  <Exp>k__BackingField: 1
-  <Speed>k__BackingField: 10
+  <Exp>k__BackingField: 2
+  <Speed>k__BackingField: 5.8
   <RotationSpeed>k__BackingField: 360
-  <Acceleration>k__BackingField: 2
+  <Acceleration>k__BackingField: 10
   <DistanceToStop>k__BackingField: 0
   <CloseFollowDistance>k__BackingField: 6
   <ResumeChaseDistance>k__BackingField: 2
-  <RangeChaseMinimumDistance>k__BackingField: 15
-  <RangeChaseMaximumDistance>k__BackingField: 35
+  <RangeChaseMinimumDistance>k__BackingField: 12
+  <RangeChaseMaximumDistance>k__BackingField: 22
   <RangeChaseRepositionAngle>k__BackingField: 30
-  <AggroRange>k__BackingField: 35
+  <AggroRange>k__BackingField: 28
   <AggroReactionDuration>k__BackingField: 0.65

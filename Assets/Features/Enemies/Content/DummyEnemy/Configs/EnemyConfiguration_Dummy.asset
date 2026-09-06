@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: EnemyConfiguration_Dummy
   m_EditorClassIdentifier: Assembly-CSharp::EnemyConfiguration
   <EnemyRank>k__BackingField: 0
-  <MaxHealth>k__BackingField: 40
-  <Damage>k__BackingField: 4
-  <DamageRange>k__BackingField: 4
-  <DamageCooldown>k__BackingField: 1
+  <MaxHealth>k__BackingField: 24
+  <Damage>k__BackingField: 3
+  <DamageRange>k__BackingField: 3.2
+  <DamageCooldown>k__BackingField: 1.1
   <InitialAttackCooldown>k__BackingField: 0
-  <AttackPreparationDuration>k__BackingField: 0.55
+  <AttackPreparationDuration>k__BackingField: 0.6
   <EnemyDamageType>k__BackingField: 1
   <ExplosionPrefab>k__BackingField: {fileID: 0}
   <ExplosionOffset>k__BackingField: {x: 0, y: 0.5, z: 0}
@@ -26,14 +26,14 @@ MonoBehaviour:
   <DamagesEnemiesOnExplosion>k__BackingField: 0
   <ExplodesOnDeath>k__BackingField: 0
   <ExplosionEffectLifetime>k__BackingField: 3
-  <MovementPauseAfterAttack>k__BackingField: 1.25
+  <MovementPauseAfterAttack>k__BackingField: 0.9
   <BulletConfiguration>k__BackingField: {fileID: 0}
   <EnemyAnimationType>k__BackingField: 2
   <EnemyMovementType>k__BackingField: 0
   <Exp>k__BackingField: 1
-  <Speed>k__BackingField: 8
+  <Speed>k__BackingField: 7.2
   <RotationSpeed>k__BackingField: 360
-  <Acceleration>k__BackingField: 10
+  <Acceleration>k__BackingField: 14
   <DistanceToStop>k__BackingField: 0
   <CloseFollowDistance>k__BackingField: 6
   <ResumeChaseDistance>k__BackingField: 9

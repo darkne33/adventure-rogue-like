@@ -2,25 +2,58 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Features.Enemies.Scripts
 {
-    public class EnemyDashAttackSystem : IEnemyDamageSystem
+    // One FixedUpdate owner for pursuit, aiming, dashing and recovery.
+    public sealed class EnemyDashAttackSystem : IEnemyDamageSystem, IEnemyMovementSystem
     {
-        private const float DashDuration = 0.42f;
-        private const float RecoveryDuration = 0.3f;
-        private const float DashSpeed = 28f;
-        private const float RotationSpeed = 720f;
+        private enum State
+        {
+            Pursuit,
+            Windup,
+            ReadyToDash,
+            Dashing,
+            Recovery,
+            Finished
+        }
+
+        private const float NavigationSampleDistance = 4f;
 
         private readonly CharacterFacade _characterFacade;
         private readonly EnemyConfiguration _enemyConfiguration;
         private readonly EnemyFacade _enemyFacade;
         private readonly EnemyDashView _dashView;
         private readonly float _attackPreparationDuration;
+        private readonly Collider[] _hitBuffer = new Collider[16];
 
+        private Rigidbody _rigidbody;
+        private NavMeshAgent _navMeshAgent;
+        private SphereCollider _hitCollider;
+        private Collider[] _colliders;
+        private bool[] _wasTrigger;
+        private State _state;
         private float _cooldown;
-        private float _distanceExecuteDamage;
+        private float _attackRange;
+        private float _stopDistance;
+        private float _stateTime;
+        private float _remainingDashDistance;
+        private float _lastDashStep;
         private bool _canDamage;
+        private bool _hasPhysicsSnapshot;
+        private bool _useGravity;
+        private Quaternion _attackRotation;
+        private Vector3 _dashDirection;
+        private Vector3 _dashOrigin;
+        private Vector3 _previousDashPosition;
+
+        public bool CanAttack => true;
+
+        private bool CanContinueAttack =>
+            _enemyFacade != null && _enemyFacade.isActiveAndEnabled &&
+            _enemyFacade.IsDead == false && _enemyFacade.CanAttack &&
+            _characterFacade != null;
 
         public EnemyDashAttackSystem(CharacterFacade characterFacade, EnemyConfiguration enemyConfiguration,
             EnemyFacade enemyFacade, EnemyDashView dashView, float attackPreparationDuration)
@@ -34,88 +67,66 @@ namespace Features.Enemies.Scripts
 
         public void Initialize()
         {
-            _distanceExecuteDamage = _enemyConfiguration.DamageRange;
-            _cooldown = _enemyConfiguration.DamageCooldown;
-            _enemyFacade.EnemyCollisionDetector.OnCollisionEnterEvent = ApplyDamage;
-            _canDamage = false;
+            _rigidbody = _enemyFacade.Rigidbody;
+            _navMeshAgent = _enemyFacade.GetComponent<NavMeshAgent>();
+            _hitCollider = _enemyFacade.GetComponent<SphereCollider>();
+            if (_hitCollider == null)
+                throw new InvalidOperationException($"{_enemyFacade.name} requires a SphereCollider for its dash.");
+
+            _colliders = _enemyFacade.GetComponentsInChildren<Collider>();
+            _wasTrigger = new bool[_colliders.Length];
+            _attackRange = Mathf.Min(Mathf.Max(0f, _enemyConfiguration.DamageRange),
+                Mathf.Max(0f, _enemyConfiguration.DashDistance));
+            _stopDistance = Mathf.Clamp(_enemyConfiguration.DistanceToStop > 0f
+                ? _enemyConfiguration.DistanceToStop
+                : _attackRange * 0.8f, 0f, _attackRange);
+            _cooldown = Mathf.Max(0f, _enemyConfiguration.DamageCooldown);
+
+            // The agent supplies steering only. It never writes the visible body's pose.
+            _navMeshAgent.updatePosition = false;
+            _navMeshAgent.updateRotation = false;
+            _navMeshAgent.autoBraking = true;
+            _navMeshAgent.stoppingDistance = _stopDistance;
+            _rigidbody.constraints |= RigidbodyConstraints.FreezeRotation;
+            _enemyFacade.EnemyCollisionDetector.OnCollisionEnterEvent += ApplyDamage;
         }
 
-        public async UniTask Execute(CancellationToken cancellationToken)
+        public void Tick()
         {
-            if (_enemyFacade.IsDead || _enemyFacade.IsAggro == false)
+            if (_rigidbody == null)
                 return;
 
-            Transform enemyTransform = _enemyFacade.transform;
-            Rigidbody rigidbody = _enemyFacade.Rigidbody;
-            Vector3 dashDirection = GetDirectionToCharacter(enemyTransform);
-
-            _enemyFacade.SetStop(true);
-            StopHorizontalMovement(rigidbody);
-            _enemyFacade.EffectsSystem.BeginAttackTelegraph(_attackPreparationDuration);
-
-            try
+            if (_state == State.Pursuit)
             {
-                _enemyFacade.AnimationSystem.IdleAnimation();
-                _enemyFacade.AnimationSystem.AttackAnimation();
-
-                float elapsed = 0f;
-                while (elapsed < _attackPreparationDuration)
-                {
-                    if (_enemyFacade.IsDead)
-                        return;
-
-                    dashDirection = GetDirectionToCharacter(enemyTransform);
-                    RotateTowards(enemyTransform, dashDirection);
-
-                    float progress = Mathf.Clamp01(
-                        elapsed / _attackPreparationDuration);
-                    float distance = Vector3.Distance(enemyTransform.position, _characterFacade.transform.position);
-                    float telegraphLength = Mathf.Max(_distanceExecuteDamage + 3f, distance + 2f);
-                    _dashView?.ShowTelegraph(dashDirection, telegraphLength, progress);
-
-                    elapsed += Time.deltaTime;
-                    await UniTask.Yield(cancellationToken);
-                }
-
-                await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
-
-                if (_enemyFacade.IsDead || _enemyFacade.CanAttack == false)
-                    return;
-
-                RotateTowards(enemyTransform, dashDirection, true);
-                _dashView?.StartDash();
-                _canDamage = true;
-
-                rigidbody.linearVelocity = new Vector3(
-                    dashDirection.x * DashSpeed,
-                    rigidbody.linearVelocity.y,
-                    dashDirection.z * DashSpeed);
-
-                await UniTask.Delay(TimeSpan.FromSeconds(DashDuration), cancellationToken: cancellationToken);
-
-                _canDamage = false;
-                StopHorizontalMovement(rigidbody);
-                _dashView?.StopDash();
-                _enemyFacade.AnimationSystem.IdleAnimation();
-
-                float movementPause = Mathf.Max(
-                    RecoveryDuration,
-                    _enemyConfiguration.MovementPauseAfterAttack);
-                await UniTask.Delay(TimeSpan.FromSeconds(movementPause),
-                    cancellationToken: cancellationToken);
+                TickPursuit();
+                return;
             }
-            finally
+
+            if (CanContinueAttack == false)
             {
                 _canDamage = false;
-                _dashView?.StopDash();
-                _enemyFacade?.EffectsSystem.ClearAttackTelegraph();
+                StopHorizontalMovement();
+                _state = State.Finished;
+                return;
+            }
 
-                if (_enemyFacade != null)
-                {
-                    StopHorizontalMovement(rigidbody);
-                    _enemyFacade.SyncNavigationPosition();
-                    _enemyFacade.SetStop(false);
-                }
+            switch (_state)
+            {
+                case State.Windup:
+                    TickWindup();
+                    break;
+                case State.Dashing:
+                    TickDash();
+                    break;
+                case State.Recovery:
+                    HoldAttackRotation();
+                    _stateTime += Time.fixedDeltaTime;
+                    if (_stateTime >= Mathf.Max(0f, _enemyConfiguration.MovementPauseAfterAttack))
+                        _state = State.Finished;
+                    break;
+                default:
+                    HoldAttackRotation();
+                    break;
             }
         }
 
@@ -123,68 +134,339 @@ namespace Features.Enemies.Scripts
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                float distanceToCharacter =
-                    Vector3.Distance(_characterFacade.transform.position, _enemyFacade.transform.position);
                 _cooldown -= Time.deltaTime * _enemyFacade.RelicTimeScale;
-
-                if (_enemyFacade.IsDead == false &&
-                    _enemyFacade.IsAggro &&
-                    _enemyFacade.CanAttack &&
-                    _enemyFacade.IsStopped == false &&
-                    _cooldown <= 0f &&
-                    distanceToCharacter <= _distanceExecuteDamage)
+                if (_state == State.Pursuit && CanContinueAttack &&
+                    _enemyFacade.IsAggro && _enemyFacade.IsStopped == false &&
+                    _cooldown <= 0f && GetFlatOffsetToCharacter().sqrMagnitude <= _attackRange * _attackRange)
                 {
                     await Execute(cancellationToken);
-                    _cooldown = _enemyConfiguration.DamageCooldown;
+                    _cooldown = Mathf.Max(0f, _enemyConfiguration.DamageCooldown);
                 }
 
-                await UniTask.Yield(cancellationToken);
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+        }
+
+        public async UniTask Execute(CancellationToken cancellationToken)
+        {
+            if (_state != State.Pursuit || CanContinueAttack == false ||
+                _enemyFacade.IsAggro == false || _enemyFacade.IsStopped)
+                return;
+
+            try
+            {
+                CapturePhysics();
+                _state = State.Windup;
+                _stateTime = 0f;
+                _attackRotation = Quaternion.LookRotation(GetFlatDirection(_rigidbody.rotation * Vector3.forward));
+                _dashDirection = _attackRotation * Vector3.forward;
+                if (_enemyConfiguration.DashTrackingDuration <= 0f)
+                {
+                    _dashDirection = GetFlatDirection(GetFlatOffsetToCharacter(), _dashDirection);
+                    _attackRotation = Quaternion.LookRotation(_dashDirection, Vector3.up);
+                }
+
+                _enemyFacade.SetStop(true);
+                StopHorizontalMovement();
+                _enemyFacade.AnimationSystem.IdleAnimation();
+                _enemyFacade.EffectsSystem.BeginAttackTelegraph(_attackPreparationDuration);
+
+                await UniTask.WaitUntil(() => _state != State.Windup || CanContinueAttack == false,
+                    cancellationToken: cancellationToken);
+                if (CanContinueAttack == false || _state != State.ReadyToDash)
+                    return;
+
+                await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
+                if (CanContinueAttack == false)
+                    return;
+
+                BeginDash();
+                await UniTask.WaitUntil(() => _state == State.Finished || CanContinueAttack == false,
+                    cancellationToken: cancellationToken);
+            }
+            finally
+            {
+                FinishAttack();
+            }
+        }
+
+        public void Reset()
+        {
+            if (_state != State.Pursuit || _navMeshAgent == null || _navMeshAgent.isOnNavMesh == false)
+                return;
+
+            _navMeshAgent.nextPosition = _rigidbody.position;
+            if (_navMeshAgent.hasPath)
+                _navMeshAgent.ResetPath();
+        }
+
+        public void OnAttackFinished()
+        {
+        }
+
+        private void TickPursuit()
+        {
+            if (_enemyFacade.IsDead || _characterFacade == null)
+                return;
+
+            if (_enemyFacade.IsStopped || _navMeshAgent.isOnNavMesh == false)
+            {
+                StopHorizontalMovement();
+                _enemyFacade.AnimationSystem.IdleAnimation();
+                return;
+            }
+
+            Vector3 toCharacter = GetFlatOffsetToCharacter();
+            if (_enemyFacade.IsAggro == false &&
+                toCharacter.sqrMagnitude <= Mathf.Pow(Mathf.Max(0.1f, _enemyConfiguration.AggroRange), 2f))
+            {
+                _enemyFacade.ActivateAggro();
+                StopHorizontalMovement();
+                return;
+            }
+
+            _navMeshAgent.nextPosition = _rigidbody.position;
+            if (_enemyFacade.IsAggro && toCharacter.sqrMagnitude <= _stopDistance * _stopDistance)
+            {
+                if (_navMeshAgent.hasPath)
+                    _navMeshAgent.ResetPath();
+                StopHorizontalMovement();
+                RotateBodyTowards(toCharacter, _enemyConfiguration.RotationSpeed);
+                _enemyFacade.AnimationSystem.IdleAnimation();
+                return;
+            }
+
+            if (NavMesh.SamplePosition(_characterFacade.transform.position, out NavMeshHit hit,
+                    NavigationSampleDistance, _navMeshAgent.areaMask) == false ||
+                _navMeshAgent.SetDestination(hit.position) == false)
+            {
+                StopHorizontalMovement();
+                _enemyFacade.AnimationSystem.IdleAnimation();
+                return;
+            }
+
+            Vector3 velocity = _navMeshAgent.desiredVelocity;
+            velocity.y = 0f;
+            velocity = Vector3.ClampMagnitude(velocity, _navMeshAgent.speed);
+            _rigidbody.linearVelocity = new Vector3(velocity.x, _rigidbody.linearVelocity.y, velocity.z);
+            RotateBodyTowards(velocity, _enemyConfiguration.RotationSpeed);
+            if (velocity.sqrMagnitude > 0.001f)
+                _enemyFacade.AnimationSystem.RunAnimation();
+            else
+                _enemyFacade.AnimationSystem.IdleAnimation();
+        }
+
+        private void TickWindup()
+        {
+            float trackingDuration = Mathf.Clamp(_enemyConfiguration.DashTrackingDuration,
+                0f, _attackPreparationDuration);
+            if (_stateTime < trackingDuration)
+            {
+                Vector3 targetDirection = GetFlatDirection(GetFlatOffsetToCharacter(), _dashDirection);
+                _attackRotation = Quaternion.RotateTowards(_attackRotation,
+                    Quaternion.LookRotation(targetDirection, Vector3.up),
+                    Mathf.Max(0f, _enemyConfiguration.DashRotationSpeed) * Time.fixedDeltaTime);
+                _dashDirection = _attackRotation * Vector3.forward;
+            }
+
+            // Once tracking ends, neither the heading nor the attack line follows the player.
+            HoldAttackRotation();
+            _stateTime += Time.fixedDeltaTime;
+            float progress = _attackPreparationDuration > 0f
+                ? Mathf.Clamp01(_stateTime / _attackPreparationDuration) : 1f;
+            _dashView?.ShowTelegraph(_dashDirection,
+                Mathf.Max(0f, _enemyConfiguration.DashDistance), progress);
+            if (_stateTime >= _attackPreparationDuration)
+                _state = State.ReadyToDash;
+        }
+
+        private void BeginDash()
+        {
+            _dashOrigin = _rigidbody.position;
+            _previousDashPosition = _dashOrigin;
+            _remainingDashDistance = Mathf.Max(0f, _enemyConfiguration.DashDistance);
+            _lastDashStep = 0f;
+            _rigidbody.useGravity = false;
+            _rigidbody.linearVelocity = Vector3.zero;
+            for (int i = 0; i < _colliders.Length; i++)
+            {
+                if (_colliders[i] != null && _colliders[i].attachedRigidbody == _rigidbody)
+                    _colliders[i].isTrigger = true;
+            }
+
+            _state = State.Dashing;
+            _canDamage = true;
+            _enemyFacade.AnimationSystem.AttackAnimation();
+            _dashView?.StartDash();
+        }
+
+        private void TickDash()
+        {
+            Vector3 position = _rigidbody.position;
+            CheckDashHit(_previousDashPosition, position);
+            if (CanContinueAttack == false)
+            {
+                _canDamage = false;
+                StopHorizontalMovement();
+                _state = State.Finished;
+                return;
+            }
+
+            _previousDashPosition = position;
+            _remainingDashDistance = Mathf.Max(0f, _remainingDashDistance - _lastDashStep);
+
+            _rigidbody.angularVelocity = Vector3.zero;
+            _rigidbody.MoveRotation(_attackRotation);
+            if (_remainingDashDistance <= 0f)
+            {
+                _canDamage = false;
+                _rigidbody.linearVelocity = Vector3.zero;
+                RestorePhysics();
+                _dashView?.StopDash();
+                _enemyFacade.AnimationSystem.IdleAnimation();
+                _stateTime = 0f;
+                _state = State.Recovery;
+                return;
+            }
+
+            _lastDashStep = Mathf.Min(_remainingDashDistance,
+                Mathf.Max(0.01f, _enemyConfiguration.DashSpeed) * Time.fixedDeltaTime);
+            _rigidbody.linearVelocity = _dashDirection * (_lastDashStep / Time.fixedDeltaTime);
+        }
+
+        private void CheckDashHit(Vector3 from, Vector3 to)
+        {
+            if (_canDamage == false)
+                return;
+
+            Vector3 scale = _hitCollider.transform.lossyScale;
+            float radius = _hitCollider.radius * Mathf.Max(Mathf.Abs(scale.x),
+                Mathf.Max(Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
+            Vector3 centerOffset = _attackRotation * Vector3.Scale(_hitCollider.center, scale);
+            from += centerOffset;
+            to += centerOffset;
+            int count = Physics.OverlapCapsuleNonAlloc(from, to, radius, _hitBuffer,
+                Physics.AllLayers, QueryTriggerInteraction.Collide);
+            Collider[] hits = count == _hitBuffer.Length
+                ? Physics.OverlapCapsule(from, to, radius, Physics.AllLayers, QueryTriggerInteraction.Collide)
+                : _hitBuffer;
+            if (hits != _hitBuffer)
+                count = hits.Length;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (hits[i].GetComponentInParent<CharacterFacade>() != _characterFacade)
+                    continue;
+                ApplyDamage();
+                return;
             }
         }
 
         private void ApplyDamage()
         {
-            if (_canDamage == false || _enemyFacade.IsDead || _enemyFacade.CanAttack == false)
+            if (_state != State.Dashing || _canDamage == false || CanContinueAttack == false)
                 return;
 
             _canDamage = false;
-            bool damageApplied = _characterFacade.ReceiveDamage(_enemyConfiguration.Damage, _enemyFacade);
-
-            if (damageApplied == false)
+            if (_characterFacade.ReceiveDamage(_enemyConfiguration.Damage, _enemyFacade) == false)
                 return;
 
-            _characterFacade.MoveSystem.CanMove(false);
+            Vector3 pushDirection = Vector3.Cross(Vector3.up, _dashDirection).normalized;
+            if (Vector3.Dot(_characterFacade.transform.position - _dashOrigin, pushDirection) < 0f)
+                pushDirection = -pushDirection;
 
-            Vector3 pushDirection = _characterFacade.transform.position - _enemyFacade.transform.position;
-            pushDirection.y = 0.5f;
-            pushDirection.Normalize();
-            _characterFacade.Rigidbody.AddForce(pushDirection * 20f, ForceMode.Impulse);
+            Vector3 knockback = pushDirection * Mathf.Max(0f, _enemyConfiguration.DashKnockbackForce) +
+                                Vector3.up * Mathf.Max(0f, _enemyConfiguration.DashKnockbackUpwardForce);
+            _characterFacade.Rigidbody.AddForce(knockback, ForceMode.Impulse);
         }
 
-        private Vector3 GetDirectionToCharacter(Transform enemyTransform)
+        private void CapturePhysics()
         {
-            Vector3 direction = _characterFacade.transform.position - enemyTransform.position;
+            _useGravity = _rigidbody.useGravity;
+            for (int i = 0; i < _colliders.Length; i++)
+                _wasTrigger[i] = _colliders[i] != null && _colliders[i].isTrigger;
+            _hasPhysicsSnapshot = true;
+        }
+
+        private void RestorePhysics()
+        {
+            if (_hasPhysicsSnapshot == false)
+                return;
+
+            if (_rigidbody != null)
+                _rigidbody.useGravity = _useGravity;
+            for (int i = 0; i < _colliders.Length; i++)
+            {
+                if (_colliders[i] != null && _colliders[i].attachedRigidbody == _rigidbody)
+                    _colliders[i].isTrigger = _wasTrigger[i];
+            }
+
+            _hasPhysicsSnapshot = false;
+        }
+
+        private void FinishAttack()
+        {
+            _canDamage = false;
+            RestorePhysics();
+            if (_dashView != null)
+                _dashView.StopDash();
+            if (_enemyFacade == null)
+                return;
+
+            _enemyFacade.EffectsSystem.ClearAttackTelegraph();
+            StopHorizontalMovement();
+            _enemyFacade.AnimationSystem.IdleAnimation();
+            if (_enemyFacade.IsDead == false)
+            {
+                // Synchronize once, after recovery, while pursuit is still suspended.
+                _enemyFacade.SyncNavigationPosition();
+                _rigidbody.rotation = _attackRotation;
+            }
+
+            _state = State.Pursuit;
+            _enemyFacade.SetStop(false);
+        }
+
+        private void HoldAttackRotation()
+        {
+            StopHorizontalMovement();
+            _rigidbody.MoveRotation(_attackRotation);
+        }
+
+        private void StopHorizontalMovement()
+        {
+            if (_rigidbody == null)
+                return;
+            Vector3 velocity = _rigidbody.linearVelocity;
+            _rigidbody.linearVelocity = new Vector3(0f, velocity.y, 0f);
+            _rigidbody.angularVelocity = Vector3.zero;
+        }
+
+        private void RotateBodyTowards(Vector3 direction, float rotationSpeed)
+        {
             direction.y = 0f;
-
-            return direction.sqrMagnitude > 0.001f
-                ? direction.normalized
-                : enemyTransform.forward;
+            if (direction.sqrMagnitude <= 0.001f)
+                return;
+            _rigidbody.angularVelocity = Vector3.zero;
+            _rigidbody.MoveRotation(Quaternion.RotateTowards(_rigidbody.rotation,
+                Quaternion.LookRotation(direction.normalized, Vector3.up),
+                Mathf.Max(0f, rotationSpeed) * Time.fixedDeltaTime));
         }
 
-        private static void StopHorizontalMovement(Rigidbody rigidbody)
+        private Vector3 GetFlatOffsetToCharacter()
         {
-            Vector3 velocity = rigidbody.linearVelocity;
-            velocity.x = 0f;
-            velocity.z = 0f;
-            rigidbody.linearVelocity = velocity;
+            Vector3 direction = _characterFacade.transform.position - _rigidbody.position;
+            direction.y = 0f;
+            return direction;
         }
 
-        private static void RotateTowards(Transform enemyTransform, Vector3 direction, bool immediately = false)
+        private static Vector3 GetFlatDirection(Vector3 direction, Vector3 fallback = default)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            enemyTransform.rotation = immediately
-                ? targetRotation
-                : Quaternion.RotateTowards(enemyTransform.rotation, targetRotation, RotationSpeed * Time.deltaTime);
+            direction.y = 0f;
+            if (direction.sqrMagnitude > 0.001f)
+                return direction.normalized;
+            fallback.y = 0f;
+            return fallback.sqrMagnitude > 0.001f ? fallback.normalized : Vector3.forward;
         }
     }
 }

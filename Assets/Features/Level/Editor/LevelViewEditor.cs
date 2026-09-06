@@ -33,7 +33,9 @@ public sealed class LevelViewEditor : Editor
             "the doors assigned in RoomData and required by the grid topology. Each room prefab must already contain " +
             "its directional RoomDoor objects; no doors are instantiated or replaced. " +
             "Each RoomDoor selects EnemyDoor or RewardDoor from the destination room type. " +
-            "Enemy and Exit rooms keep their enemy types and spawn settings directly on their room node.",
+            "Enemy and Exit rooms keep their enemy types directly on their room node. " +
+            "At runtime, combat depth determines the enemy count and selects a Small or Medium layout " +
+            "from Combat Room Variants. Empty pools keep the authored prefab.",
             MessageType.Info);
 
         DrawDefaultInspector();

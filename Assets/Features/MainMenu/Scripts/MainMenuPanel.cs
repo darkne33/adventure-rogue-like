@@ -14,12 +14,16 @@ public sealed class MainMenuPanel : PanelBase
     [field: SerializeField] public LeaderboardView Leaderboard { get; private set; }
 
     [SerializeField] private CharacterConfiguration _characterConfiguration;
+    [SerializeField] private GameObject _titleLogo;
 
     public CharacterConfiguration CharacterConfiguration => _characterConfiguration;
 
     public void SetHomeVisible(bool visible)
     {
         PlayButton.transform.parent.gameObject.SetActive(visible);
+
+        if (_titleLogo != null)
+            _titleLogo.SetActive(visible);
 
         if (Leaderboard != null)
             Leaderboard.gameObject.SetActive(visible);
