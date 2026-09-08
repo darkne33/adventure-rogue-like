@@ -257,7 +257,7 @@ public class EnemySpawner
         for (int i = 0; i < enemyTypes.Count; i++)
         {
             if (spawnImmediately == false && i > 0 && i % batchSize == 0)
-                await UniTask.Delay(System.TimeSpan.FromSeconds(_roomBalance.GetRandomSpawnBatchDelay()));
+                await UniTask.Delay(System.TimeSpan.FromSeconds(_roomBalance.SpawnBatchDelay));
 
             if (IsSpawnRequestActive(currentRoom, characterFacade, spawnGeneration) == false)
                 return;
@@ -316,7 +316,7 @@ public class EnemySpawner
             if (spawnImmediately)
                 await UniTask.NextFrame();
             else
-                await UniTask.Delay(System.TimeSpan.FromSeconds(_roomBalance.GetRandomSpawnBatchDelay()));
+                await UniTask.Delay(System.TimeSpan.FromSeconds(_roomBalance.SpawnBatchDelay));
             if (IsSpawnRequestActive(room, characterFacade, spawnGeneration) == false)
                 return;
 

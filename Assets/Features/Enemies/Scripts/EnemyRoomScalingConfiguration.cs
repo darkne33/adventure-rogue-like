@@ -12,11 +12,9 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     [SerializeField, Min(1)] private int _maxEnemiesInSmallRoom = 8;
     [SerializeField, Range(0f, 0.5f)] private float _reinforcementRemainingFraction = 0.25f;
     [Tooltip("Maximum enemies prepared and spawned in one group of a wave.")]
-    [SerializeField, Min(1)] private int _spawnBatchSize = 2;
-    [Tooltip("Minimum delay between spawn groups in seconds of game time.")]
-    [SerializeField, Min(0f)] private float _minSpawnBatchDelay = 2f;
-    [Tooltip("Maximum delay between spawn groups in seconds of game time.")]
-    [SerializeField, Min(0f)] private float _maxSpawnBatchDelay = 5f;
+    [SerializeField, Min(1)] private int _spawnBatchSize = 10;
+    [Tooltip("Delay between spawn groups in seconds of game time.")]
+    [SerializeField, Min(0f)] private float _spawnBatchDelay = 1f;
     [SerializeField, Min(1)] private int _firstEliteRoom = 4;
     [SerializeField, Min(1)] private int _eliteRoomInterval = 3;
     [SerializeField] private EnemySpawnRule[] _enemyRules =
@@ -30,6 +28,7 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
 
     public EnemySpawnRule[] EnemyRules => _enemyRules;
     public int SpawnBatchSize => Mathf.Max(1, _spawnBatchSize);
+    public float SpawnBatchDelay => Mathf.Max(0f, _spawnBatchDelay);
     public int GetStartEnemyCount(int roomIndex) => GetCount(_startingEnemies, roomIndex, 3);
     public int GetAllEnemyCount(int roomIndex) =>
         Mathf.Max(GetStartEnemyCount(roomIndex), GetCount(_totalEnemies, roomIndex, 3));
@@ -49,13 +48,6 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
         (roomIndex + 1 - _firstEliteRoom) % Mathf.Max(1, _eliteRoomInterval) == 0
             ? (roomIndex < 9 ? 1 : 2)
             : 0;
-
-    public float GetRandomSpawnBatchDelay()
-    {
-        float minDelay = Mathf.Max(0f, _minSpawnBatchDelay);
-        float maxDelay = Mathf.Max(minDelay, _maxSpawnBatchDelay);
-        return UnityEngine.Random.Range(minDelay, maxDelay);
-    }
 
     public float GetWeight(EnemySpawnRule rule, int roomIndex)
     {

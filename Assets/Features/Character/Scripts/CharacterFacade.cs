@@ -20,14 +20,14 @@ public class CharacterFacade : MonoBehaviour
 
     public GameObject CharacterModel => _characterModel;
     public  Renderer[] MeshRenderers => _meshRenderers;
-    public  Outline Outline => _outline;
+    public  Outline[] Outlines => _outlines;
     public  bool IsTransitionPaused => _isTransitionPaused;
 
     [SerializeField] private GameObject _characterModel;
     [SerializeField] private GameObject _cameraPivot;
     [SerializeField] private Transform _relicRootTarget;
     [SerializeField] private Renderer[] _meshRenderers;
-    [SerializeField] private Outline _outline;
+    [SerializeField] private Outline[] _outlines = System.Array.Empty<Outline>();
     [SerializeField] private Transform _shadow;
     [SerializeField] private LayerMask _shadowLayer;
     [SerializeField] private Transform _pivotGroundChecker;
@@ -61,7 +61,7 @@ public class CharacterFacade : MonoBehaviour
     private int _obstacleLayer = -1;
     private int _wallLayer = -1;
     private int _defaultLayer = -1;
-    private Color _defaultOutlineColor;
+    private Color[] _defaultOutlineColors;
     private Color _shieldOutlineColor = Color.blue;
     private bool _isShieldOutlineActive;
     private readonly RaycastHit[] _groundProbeHits = new RaycastHit[GroundProbeHitCapacity];
@@ -75,8 +75,15 @@ public class CharacterFacade : MonoBehaviour
         _wallLayer = LayerMask.NameToLayer("Wall");
         _defaultLayer = LayerMask.NameToLayer("Default");
 
-        if (_outline != null)
-            _defaultOutlineColor = _outline.OutlineColor;
+        if (_outlines == null)
+            _outlines = System.Array.Empty<Outline>();
+
+        _defaultOutlineColors = new Color[_outlines.Length];
+        for (int i = 0; i < _outlines.Length; i++)
+        {
+            if (_outlines[i] != null)
+                _defaultOutlineColors[i] = _outlines[i].OutlineColor;
+        }
     }
 
     private void Update()
@@ -309,7 +316,7 @@ public class CharacterFacade : MonoBehaviour
 
     private void UpdateShieldOutline()
     {
-        if (_outline == null)
+        if (_outlines.Length == 0)
             return;
 
         bool isShieldOutlineActive = _shieldSystem.CurrentShield > 0f;
@@ -317,7 +324,13 @@ public class CharacterFacade : MonoBehaviour
             return;
 
         _isShieldOutlineActive = isShieldOutlineActive;
-        _outline.OutlineColor = isShieldOutlineActive ? _shieldOutlineColor : _defaultOutlineColor;
+        for (int i = 0; i < _outlines.Length; i++)
+        {
+            if (_outlines[i] != null)
+                _outlines[i].OutlineColor = isShieldOutlineActive
+                    ? _shieldOutlineColor
+                    : _defaultOutlineColors[i];
+        }
     }
 
     private void ConfigureShieldOutlineColor()
