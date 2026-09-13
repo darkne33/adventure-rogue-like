@@ -8,7 +8,6 @@ namespace Features.Bosses.UI
     public sealed class BossHealthCanvas : MonoBehaviour
     {
         [SerializeField] private CanvasGroup _canvasGroup;
-        [SerializeField] private TMP_Text _bossName;
         [SerializeField] private TMP_Text _healthText;
         [SerializeField] private UnityEngine.UI.Image _healthFill;
         [SerializeField] private UnityEngine.UI.Image _damageFill;
@@ -20,9 +19,8 @@ namespace Features.Bosses.UI
         private float _damageFraction;
         private float _trailStartsAt;
 
-        public void Show(string bossName, float currentHealth, float maxHealth)
+        public void Show(float currentHealth, float maxHealth)
         {
-            _bossName.text = bossName;
             UpdateHealthText(currentHealth, maxHealth);
             _healthFraction = GetFraction(currentHealth, maxHealth);
             _damageFraction = _healthFraction;

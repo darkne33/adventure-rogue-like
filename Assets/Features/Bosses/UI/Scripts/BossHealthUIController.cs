@@ -45,10 +45,7 @@ namespace Features.Bosses.UI
             _view = _container.InstantiatePrefabForComponent<BossHealthCanvas>(
                 boss.Config.HealthCanvasPrefab, root);
             _view.name = "BossHealthCanvas";
-            string displayName = string.IsNullOrWhiteSpace(boss.Config.DisplayName)
-                ? boss.name.Replace("(Clone)", "").Trim()
-                : boss.Config.DisplayName;
-            _view.Show(displayName, boss.HealthSystem.CurrentHealth, boss.HealthSystem.MaxHealth);
+            _view.Show(boss.HealthSystem.CurrentHealth, boss.HealthSystem.MaxHealth);
         }
 
         public void Tick()

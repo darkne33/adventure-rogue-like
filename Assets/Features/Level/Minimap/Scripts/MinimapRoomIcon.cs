@@ -9,6 +9,7 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     [SerializeField] private Image _startMarker;
     [SerializeField] private Image _exitMarker;
     [SerializeField] private Image _shopMarker;
+    [SerializeField] private UnityEngine.UI.Image _bossMarker;
     [SerializeField] private Image _chestMarker;
     [SerializeField] private Image _combatRoomMarker;
     [SerializeField] private RectTransform _playerMarker;
@@ -103,6 +104,7 @@ public sealed class MinimapRoomIcon : MonoBehaviour
         SetMarkerRotation(_startMarker, zRotation);
         SetMarkerRotation(_exitMarker, zRotation);
         SetMarkerRotation(_shopMarker, zRotation);
+        SetMarkerRotation(_bossMarker, zRotation);
         SetMarkerRotation(_chestMarker, zRotation);
         SetMarkerRotation(_combatRoomMarker, zRotation);
     }
@@ -240,6 +242,10 @@ public sealed class MinimapRoomIcon : MonoBehaviour
         if (_shopMarker != null)
             _shopMarker.gameObject.SetActive(
                 _isRoomKindMarkerVisible && _kind == MinimapRoomKind.Shop);
+
+        if (_bossMarker != null)
+            _bossMarker.gameObject.SetActive(
+                _isRoomKindMarkerVisible && _kind == MinimapRoomKind.Boss);
     }
 
     private static Vector2 GetDirection(RoomDirection direction) =>
