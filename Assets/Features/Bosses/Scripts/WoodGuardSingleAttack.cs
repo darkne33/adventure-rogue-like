@@ -41,6 +41,8 @@ namespace Features.Bosses.Scripts
 
             // Capture once: moving away during the warning lets the character dodge the hit.
             Vector3 targetPosition = _character.transform.position;
+            // Use the boss's attack ground level so jumping cannot lift the roots or their warning.
+            targetPosition.y = _boss.AttackOrigin.position.y;
             Quaternion rotation = _boss.AttackRotation;
             Vector3 center = _configuration.GetSphereCenter(targetPosition, geometry.Radius);
             Vector3 surfacePosition = center - rotation * geometry.CenterOffset;

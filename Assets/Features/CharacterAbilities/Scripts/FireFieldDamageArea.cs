@@ -28,10 +28,12 @@ public sealed class FireFieldDamageArea : MonoBehaviour
         float damageTickInterval, float duration, Action<CombatTarget> damageEnemy)
     {
         float safeRadius = Mathf.Max(0.1f, radius);
+        Vector3 fieldScale = transform.lossyScale;
+        float damageRadius = safeRadius * Mathf.Max(Mathf.Abs(fieldScale.x), Mathf.Abs(fieldScale.z));
         _enemiesProvider = enemiesProvider;
         _damageEnemy = damageEnemy;
-        _radiusSqr = safeRadius * safeRadius;
-        _height = Mathf.Max(0.1f, height);
+        _radiusSqr = damageRadius * damageRadius;
+        _height = Mathf.Max(0.1f, height) * Mathf.Abs(fieldScale.y);
         _damageTickInterval = Mathf.Max(0.05f, damageTickInterval);
         _damageTickTimer = 0f;
         _remainingDuration = Mathf.Max(0.1f, duration);

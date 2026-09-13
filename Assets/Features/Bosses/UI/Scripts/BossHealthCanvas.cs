@@ -9,6 +9,7 @@ namespace Features.Bosses.UI
     {
         [SerializeField] private CanvasGroup _canvasGroup;
         [SerializeField] private TMP_Text _bossName;
+        [SerializeField] private TMP_Text _healthText;
         [SerializeField] private UnityEngine.UI.Image _healthFill;
         [SerializeField] private UnityEngine.UI.Image _damageFill;
         [SerializeField, Min(0f)] private float _damageTrailDelay = 0.3f;
@@ -16,14 +17,17 @@ namespace Features.Bosses.UI
         [SerializeField, Min(0f)] private float _fadeDuration = 0.25f;
 
         private float _healthFraction;
+        private float _damageFraction;
         private float _trailStartsAt;
 
         public void Show(string bossName, float currentHealth, float maxHealth)
         {
             _bossName.text = bossName;
+            UpdateHealthText(currentHealth, maxHealth);
             _healthFraction = GetFraction(currentHealth, maxHealth);
-            _healthFill.fillAmount = _healthFraction;
-            _damageFill.fillAmount = _healthFraction;
+            _damageFraction = _healthFraction;
+            SetFill(_healthFill, _healthFraction);
+            SetFill(_damageFill, _damageFraction);
             _canvasGroup.interactable = false;
             _canvasGroup.blocksRaycasts = false;
             _canvasGroup.DOKill();
@@ -33,6 +37,7 @@ namespace Features.Bosses.UI
 
         public void SetHealth(float currentHealth, float maxHealth)
         {
+            UpdateHealthText(currentHealth, maxHealth);
             float fraction = GetFraction(currentHealth, maxHealth);
             if (Mathf.Approximately(fraction, _healthFraction))
                 return;
@@ -40,10 +45,13 @@ namespace Features.Bosses.UI
             if (fraction < _healthFraction)
                 _trailStartsAt = Time.unscaledTime + _damageTrailDelay;
             else
-                _damageFill.fillAmount = fraction;
+            {
+                _damageFraction = fraction;
+                SetFill(_damageFill, _damageFraction);
+            }
 
             _healthFraction = fraction;
-            _healthFill.fillAmount = fraction;
+            SetFill(_healthFill, fraction);
         }
 
         public void HideAndDestroy()
@@ -56,11 +64,27 @@ namespace Features.Bosses.UI
 
         private void LateUpdate()
         {
-            if (Time.unscaledTime < _trailStartsAt || _damageFill.fillAmount <= _healthFraction)
+            if (Time.unscaledTime < _trailStartsAt || _damageFraction <= _healthFraction)
                 return;
 
-            _damageFill.fillAmount = Mathf.MoveTowards(_damageFill.fillAmount,
+            _damageFraction = Mathf.MoveTowards(_damageFraction,
                 _healthFraction, _damageTrailSpeed * Time.unscaledDeltaTime);
+            SetFill(_damageFill, _damageFraction);
+        }
+
+        private void UpdateHealthText(float currentHealth, float maxHealth)
+        {
+            if (_healthText != null)
+                _healthText.text = $"{Mathf.CeilToInt(currentHealth)}/{Mathf.CeilToInt(maxHealth)}";
+        }
+
+        private static void SetFill(UnityEngine.UI.Image image, float fraction)
+        {
+            // Resize sliced sprites like the character's Slider, preserving their rounded ends.
+            Vector2 anchorMax = image.rectTransform.anchorMax;
+            anchorMax.x = fraction;
+            image.rectTransform.anchorMax = anchorMax;
+            image.enabled = fraction > 0f;
         }
 
         private void OnDestroy() => _canvasGroup.DOKill();
