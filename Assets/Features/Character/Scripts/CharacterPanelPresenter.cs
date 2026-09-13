@@ -22,7 +22,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     private UpgradeBuildViewService _upgradeBuildViewService;
     private CharacterWallet _characterWallet;
     private RelicEventBus _relicEventBus;
-    private readonly HashSet<EnemyFacade> _countedKilledEnemies = new();
+    private readonly HashSet<CombatTarget> _countedKilledEnemies = new();
     private CancellationTokenSource _gameTimerCancellation;
     private int _killedEnemies;
     private int _shownRoomCount = -1;

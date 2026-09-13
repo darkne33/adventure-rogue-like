@@ -551,6 +551,7 @@ public static class PrebuiltLevelsGenerator
             {
                 RoomType.Start => node.Room?.RoomData is StartRoomData,
                 RoomType.Shop => node.Room?.RoomData is ShopRoomData,
+                RoomType.Boss => node.Room?.RoomData is BossRoomData,
                 RoomType.Reward or RoomType.Enemy or RoomType.Exit =>
                     node.Room?.RoomData != null,
                 _ => false
@@ -590,7 +591,7 @@ public static class PrebuiltLevelsGenerator
             if (node.Type == RoomType.Start)
                 starts++;
 
-            if (node.Type == RoomType.Exit)
+            if (node.Type is RoomType.Exit or RoomType.Boss)
             {
                 exits++;
 
@@ -609,7 +610,7 @@ public static class PrebuiltLevelsGenerator
 
         if (exits != 1)
             throw new InvalidOperationException(
-                $"Level {levelNumber} must contain exactly one exit room.");
+                $"Level {levelNumber} must contain exactly one final room (Exit or Boss).");
 
         ValidateDoorConnections(levelView, roomsByPosition, levelNumber, hasNextLevel);
         ValidateConnectivity(roomsByPosition, levelView.StartRoomGridPosition, levelNumber);
@@ -627,7 +628,7 @@ public static class PrebuiltLevelsGenerator
         bool hasNextLevel)
     {
         var levelExits = levelView.Rooms
-            .Where(node => node.Type == RoomType.Exit)
+            .Where(node => node.Type is RoomType.Exit or RoomType.Boss)
             .ToDictionary(node => node.GridPosition, node => node.LevelExitDirection);
 
         foreach (KeyValuePair<Vector2Int, Room> roomEntry in roomsByPosition)

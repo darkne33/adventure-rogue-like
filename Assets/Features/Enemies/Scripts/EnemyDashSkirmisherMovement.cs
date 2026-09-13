@@ -160,7 +160,7 @@ namespace Features.Enemies.Scripts
             var enemies = _enemiesProvider.ActiveEnemies;
             for (int i = 0; i < enemies.Count; i++)
             {
-                EnemyFacade other = enemies[i];
+                CombatTarget other = enemies[i];
                 if (other == null || other == _enemy || other.IsDead || other.isActiveAndEnabled == false)
                     continue;
 

@@ -401,7 +401,7 @@ public class EnemySpawner
     {
         var aliveByType = new Dictionary<EnemyType, int>();
         int rangedAlive = 0;
-        foreach (EnemyFacade enemy in _enemiesProvider.ActiveEnemies)
+        foreach (CombatTarget enemy in _enemiesProvider.ActiveEnemies)
         {
             if (enemy == null || enemy.IsDead)
                 continue;
@@ -461,6 +461,10 @@ public class EnemySpawner
         var offsetDown = 2f;
         Vector3 underGroundPosition = spawnPosition + Vector3.down * offsetDown;
         EnemyFacade enemyFacade = _enemyFactory.Create(enemy, underGroundPosition, spawnPosition);
+        Rigidbody rigidbody = enemyFacade.Rigidbody;
+        bool wasKinematic = rigidbody != null && rigidbody.isKinematic;
+        bool hadCollisions = rigidbody != null && rigidbody.detectCollisions;
+        bool spawnCompleted = false;
         enemyFacade.SpawnType = enemyType;
         _enemiesProvider.AddEnemy(enemyFacade);
 
@@ -474,17 +478,52 @@ public class EnemySpawner
         {
             enemyFacade.SetStop(true);
 
+            // The rise starts below the floor. Physics must not resolve that
+            // overlap or accumulate falling velocity while the tween owns the position.
+            if (rigidbody != null)
+            {
+                if (wasKinematic == false)
+                {
+                    rigidbody.linearVelocity = Vector3.zero;
+                    rigidbody.angularVelocity = Vector3.zero;
+                }
+
+                rigidbody.detectCollisions = false;
+                rigidbody.isKinematic = true;
+            }
+
             await enemyFacade.transform.DOMoveY(spawnPosition.y, EnemySpawnRiseDuration)
                 .ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, lifetimeToken);
 
             if (enemyFacade != null)
-                enemyFacade.SetStop(false);
+            {
+                enemyFacade.transform.position = spawnPosition;
+                if (rigidbody != null)
+                    rigidbody.position = spawnPosition;
+
+                spawnCompleted = true;
+            }
         }
         catch (System.OperationCanceledException)
         {
         }
         finally
         {
+            if (rigidbody != null)
+            {
+                rigidbody.isKinematic = wasKinematic;
+                if (wasKinematic == false)
+                {
+                    rigidbody.linearVelocity = Vector3.zero;
+                    rigidbody.angularVelocity = Vector3.zero;
+                }
+
+                rigidbody.detectCollisions = hadCollisions;
+            }
+
+            if (spawnCompleted && enemyFacade != null)
+                enemyFacade.SetStop(false);
+
             await portalLifetime;
         }
     }

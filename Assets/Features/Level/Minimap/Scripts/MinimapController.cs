@@ -122,9 +122,10 @@ public sealed class MinimapController : IDisposable, ITickable
                     RoomType.Start => MinimapRoomKind.Start,
                     RoomType.Exit => MinimapRoomKind.Exit,
                     RoomType.Shop => MinimapRoomKind.Shop,
+                    RoomType.Boss => MinimapRoomKind.Boss,
                     _ => MinimapRoomKind.Normal
                 },
-                node.Type == RoomType.Exit ? node.LevelExitDirection : null))
+                node.Type is RoomType.Exit or RoomType.Boss ? node.LevelExitDirection : null))
             .ToList();
 
         Vector2 center = CalculateCenter(rooms);
@@ -226,11 +227,11 @@ public sealed class MinimapController : IDisposable, ITickable
     private void UpdateEnemyMarkers(MinimapRoomIcon currentIcon, Room currentRoomView)
     {
         _enemyPositions.Clear();
-        IReadOnlyList<EnemyFacade> enemies = _enemiesProvider.ActiveEnemies;
+        IReadOnlyList<CombatTarget> enemies = _enemiesProvider.ActiveEnemies;
 
         for (int index = 0; index < enemies.Count; index++)
         {
-            EnemyFacade enemy = enemies[index];
+            CombatTarget enemy = enemies[index];
             if (enemy == null || enemy.gameObject.activeInHierarchy == false)
                 continue;
 

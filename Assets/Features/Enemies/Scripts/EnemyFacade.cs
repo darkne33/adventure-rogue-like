@@ -6,29 +6,27 @@ using Zenject;
 
 namespace Features.Enemies.Scripts
 {
-    public class EnemyFacade : MonoBehaviour
+    public class EnemyFacade : CombatTarget
     {
         private const float NavMeshSampleDistance = 4f;
 
-        [field: SerializeField] public Transform TargetToShootDamage { get; private set; }
-
-        public HealthSystem HealthSystem => _healthSystem;
-        public DealDamageEffectSystem EffectsSystem => _effectsSystem;
-        public Rigidbody Rigidbody => _rigidbody;
+        public override HealthSystem HealthSystem => _healthSystem;
+        public override DealDamageEffectSystem EffectsSystem => _effectsSystem;
+        public override Rigidbody Rigidbody => _rigidbody;
         public EnemyCollisionDetector EnemyCollisionDetector => _collisionDetector;
         public IEnemyAnimationSystem AnimationSystem => _animationSystem;
-        public bool IsStopped => _navMeshAgent.isStopped;
-        public bool IsDead => _healthSystem?.IsDead == true;
+        public bool IsStopped => _navMeshAgent != null && _navMeshAgent.isActiveAndEnabled &&
+                                 _navMeshAgent.isOnNavMesh ? _navMeshAgent.isStopped : _isStopped;
         public bool IsAggro { get; private set; }
         public bool CanAttack => _movementSystem?.CanAttack != false && _isRelicStunned == false;
-        public float RelicTimeScale => _isRelicStunned
+        public override float RelicTimeScale => _isRelicStunned
             ? 0f
             : Mathf.Clamp(_persistentRelicSlow * _temporaryRelicSlow, 0.05f, 1f);
 
         public EnemyConfiguration Configuration => _runtimeConfiguration != null
             ? _runtimeConfiguration : _enemyConfiguration;
-        public EnemyType SpawnType { get; internal set; }
-        public Renderer[] MeshRenderers => _meshRenderers;
+        public override EnemyRank Rank => Configuration != null ? Configuration.EnemyRank : EnemyRank.Normal;
+        public override Renderer[] MeshRenderers => _meshRenderers;
         public Transform AttackTelegraphTransform => GetAttackTelegraphTransform();
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
@@ -63,6 +61,7 @@ namespace Features.Enemies.Scripts
         private bool _isRelicStunned;
         private bool _wasStoppedBeforeRelicStun;
         private bool _releaseStopAfterRelicStun;
+        private bool _isStopped;
 
         [Inject]
         private void CreateSystems(IEnemySystemsFactory systemsFactory)
@@ -102,7 +101,7 @@ namespace Features.Enemies.Scripts
 
         public async UniTask StartDelayMovementTimer(float delay)
         {
-            if (_navMeshAgent.isStopped)
+            if (IsStopped)
                 return;
 
             SetStop(true);
@@ -122,9 +121,13 @@ namespace Features.Enemies.Scripts
                 return;
             }
 
-            _navMeshAgent.isStopped = state;
+            _isStopped = state;
+            bool hasNavigation = _navMeshAgent != null && _navMeshAgent.isActiveAndEnabled &&
+                                 _navMeshAgent.isOnNavMesh;
+            if (hasNavigation)
+                _navMeshAgent.isStopped = state;
 
-            if (state && _navMeshAgent.isOnNavMesh)
+            if (state && hasNavigation)
             {
                 if (_navMeshAgent.hasPath)
                     _navMeshAgent.ResetPath();
@@ -136,7 +139,7 @@ namespace Features.Enemies.Scripts
                 _movementSystem.Reset();
         }
 
-        public void SetPersistentRelicSlow(float multiplier)
+        public override void SetPersistentRelicSlow(float multiplier)
         {
             multiplier = Mathf.Clamp(multiplier, 0.05f, 1f);
             if (Mathf.Approximately(_persistentRelicSlow, multiplier))
@@ -146,7 +149,7 @@ namespace Features.Enemies.Scripts
             UpdateRelicNavigationSpeed();
         }
 
-        public void ApplyRelicSlow(float multiplier, float duration)
+        public override void ApplyRelicSlow(float multiplier, float duration)
         {
             _temporaryRelicSlow = Mathf.Min(_temporaryRelicSlow, Mathf.Clamp(multiplier, 0.05f, 1f));
             _temporaryRelicSlowUntil = Mathf.Max(_temporaryRelicSlowUntil,
@@ -154,7 +157,7 @@ namespace Features.Enemies.Scripts
             UpdateRelicNavigationSpeed();
         }
 
-        public void ApplyRelicStun(float duration)
+        public override void ApplyRelicStun(float duration)
         {
             if (_isRelicStunned == false)
             {
@@ -179,6 +182,8 @@ namespace Features.Enemies.Scripts
 
         public void SyncNavigationPosition()
         {
+            if (_navMeshAgent == null || !_navMeshAgent.isActiveAndEnabled)
+                return;
             if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, NavMeshSampleDistance,
                     NavMesh.AllAreas))
                 _navMeshAgent.Warp(hit.position);
@@ -239,6 +244,9 @@ namespace Features.Enemies.Scripts
 
         internal void InitializeNavigation(Vector3 navMeshPosition)
         {
+            // Stationary bosses are placed exactly at their room marker and do not need a NavMesh.
+            if (_navMeshAgent == null)
+                return;
             Vector3 visualPosition = transform.position;
             _navMeshAgent.speed = Configuration.Speed;
             _navMeshAgent.angularSpeed = Configuration.RotationSpeed;

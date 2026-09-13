@@ -19,7 +19,7 @@ namespace Features.Enemies.Scripts
             _runtimeDataService = runtimeDataService;
         }
 
-        public void Observe(List<EnemyFacade> enemies)
+        public void Observe(List<CombatTarget> enemies)
         {
             if (enemies == null)
                 throw new ArgumentNullException(nameof(enemies));

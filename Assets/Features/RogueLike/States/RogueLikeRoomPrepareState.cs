@@ -2,6 +2,7 @@
 using System.Threading;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
+using Features.Bosses.Scripts;
 using Features.Enemies.Scripts;
 
 namespace Core
@@ -11,15 +12,17 @@ namespace Core
         private readonly IRogueLikeRuntimeDataService _rogueLikeRuntimeDataService;
         private readonly EnemyRoomObserver _enemyRoomObserver;
         private readonly EnemySpawner _enemySpawner;
+        private readonly BossSpawner _bossSpawner;
         private readonly ICharacterProvider _characterProvider;
 
         public RogueLikeRoomPrepareState(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService,
             EnemyRoomObserver enemyRoomObserver, EnemySpawner enemySpawner,
-            ICharacterProvider characterProvider)
+            ICharacterProvider characterProvider, BossSpawner bossSpawner)
         {
             _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
             _enemyRoomObserver = enemyRoomObserver;
             _enemySpawner = enemySpawner;
+            _bossSpawner = bossSpawner;
             _characterProvider = characterProvider;
         }
 
@@ -36,7 +39,8 @@ namespace Core
                 return;
 
             _enemyRoomObserver.StartRoom(waitForEnemySpawning: true);
-            await _enemySpawner.LoadEnemyPrefabs(cts);
+            if (currentRoomData is not BossRoomData)
+                await _enemySpawner.LoadEnemyPrefabs(cts);
 
             foreach (RoomDoor roomDoor in currentRoomData.RoomDoors)
             {
@@ -44,7 +48,10 @@ namespace Core
                     roomDoor.Close();
             }
 
-            _enemySpawner.TrySpawnEnemies(_characterProvider.CharacterFacade);
+            if (currentRoomData is BossRoomData)
+                _bossSpawner.SpawnBoss();
+            else
+                _enemySpawner.TrySpawnEnemies(_characterProvider.CharacterFacade);
         }
     }
 }

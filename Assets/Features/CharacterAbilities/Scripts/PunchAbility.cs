@@ -228,25 +228,25 @@ public sealed class PunchAbility : CharacterActiveAbility
     private void ExecutePunch(CharacterFacade character, int punchIndex, int globalPunchIndex,
         float idleAngleOffset, int simultaneousIndex, int simultaneousAttackCount, int punchDamage)
     {
-        EnemyFacade preferredEnemy = GetClosestEnemy(character);
+        CombatTarget preferredEnemy = GetClosestEnemy(character);
         GetPunchPose(character, preferredEnemy, punchIndex, globalPunchIndex, idleAngleOffset,
             simultaneousIndex, simultaneousAttackCount, out Vector3 punchPosition,
             out Quaternion punchRotation);
         SpawnPunchEffect(punchPosition, punchRotation);
 
         if (TryGetCollisionTarget(punchPosition, preferredEnemy,
-                out EnemyFacade hitEnemy, out Vector3 hitPosition) == false)
+                out CombatTarget hitEnemy, out Vector3 hitPosition) == false)
             return;
 
         ApplyDamage(character, hitEnemy, punchDamage, hitPosition);
     }
 
-    private EnemyFacade GetClosestEnemy(CharacterFacade character) =>
+    private CombatTarget GetClosestEnemy(CharacterFacade character) =>
         character == null
             ? null
             : _enemiesProvider.GetClosestEnemyByCharacter(character.transform, Mathf.Max(0.1f, _radius));
 
-    private void GetPunchPose(CharacterFacade character, EnemyFacade preferredEnemy, int punchIndex,
+    private void GetPunchPose(CharacterFacade character, CombatTarget preferredEnemy, int punchIndex,
         int globalPunchIndex, float idleAngleOffset, int simultaneousIndex, int simultaneousAttackCount,
         out Vector3 position, out Quaternion rotation)
     {
@@ -260,7 +260,7 @@ public sealed class PunchAbility : CharacterActiveAbility
         GetIdlePunchPose(character, globalPunchIndex, idleAngleOffset, out position, out rotation);
     }
 
-    private void GetTargetPunchPose(CharacterFacade character, EnemyFacade enemy, int punchIndex,
+    private void GetTargetPunchPose(CharacterFacade character, CombatTarget enemy, int punchIndex,
         int simultaneousIndex, int simultaneousAttackCount, out Vector3 position,
         out Quaternion rotation)
     {
@@ -322,8 +322,8 @@ public sealed class PunchAbility : CharacterActiveAbility
         rotation = GetSafeRotation(position - center, radialDirection);
     }
 
-    private bool TryGetCollisionTarget(Vector3 punchPosition, EnemyFacade preferredEnemy,
-        out EnemyFacade hitEnemy, out Vector3 hitPosition)
+    private bool TryGetCollisionTarget(Vector3 punchPosition, CombatTarget preferredEnemy,
+        out CombatTarget hitEnemy, out Vector3 hitPosition)
     {
         hitEnemy = null;
         hitPosition = punchPosition;
@@ -340,7 +340,7 @@ public sealed class PunchAbility : CharacterActiveAbility
             if (hitCollider == null)
                 continue;
 
-            EnemyFacade enemy = hitCollider.GetComponentInParent<EnemyFacade>();
+            CombatTarget enemy = hitCollider.GetComponentInParent<CombatTarget>();
             if (enemy == null || enemy.IsDead || enemy.gameObject.activeInHierarchy == false)
                 continue;
 
@@ -368,7 +368,7 @@ public sealed class PunchAbility : CharacterActiveAbility
         return hitEnemy != null;
     }
 
-    private static Collider GetEnemyCollider(EnemyFacade enemy)
+    private static Collider GetEnemyCollider(CombatTarget enemy)
     {
         if (enemy == null)
             return null;
@@ -401,7 +401,7 @@ public sealed class PunchAbility : CharacterActiveAbility
         UnityEngine.Object.Destroy(effect, duration);
     }
 
-    private void ApplyDamage(CharacterFacade character, EnemyFacade enemy, int baseDamage, Vector3 hitPosition)
+    private void ApplyDamage(CharacterFacade character, CombatTarget enemy, int baseDamage, Vector3 hitPosition)
     {
         if (character == null || enemy == null || enemy.IsDead || baseDamage <= 0)
             return;

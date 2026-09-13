@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System;
 using UnityEngine;
@@ -8,11 +8,11 @@ namespace Features.Enemies.Scripts
     public class EnemiesProvider : IEnemiesProvider
     {
         public int Count => _enemies.Count;
-        public IReadOnlyList<EnemyFacade> ActiveEnemies => _enemies;
+        public IReadOnlyList<CombatTarget> ActiveEnemies => _enemies;
         public event Action<int> EnemyRemoved;
 
         private readonly EnemyRoomObserver _enemyRoomObserver;
-        private readonly List<EnemyFacade> _enemies = new();
+        private readonly List<CombatTarget> _enemies = new();
         private bool _isBatchChange;
 
         public EnemiesProvider(EnemyRoomObserver enemyRoomObserver)
@@ -20,10 +20,10 @@ namespace Features.Enemies.Scripts
             _enemyRoomObserver = enemyRoomObserver;
         }
 
-        public void AddEnemy(EnemyFacade enemyFacade) =>
+        public void AddEnemy(CombatTarget enemyFacade) =>
             _enemies.Add(enemyFacade);
 
-        public void RemoveEnemy(EnemyFacade enemyFacade)
+        public void RemoveEnemy(CombatTarget enemyFacade)
         {
             if (_enemies.Remove(enemyFacade) == false)
                 return;
@@ -37,12 +37,12 @@ namespace Features.Enemies.Scripts
 
         public int DefeatAllEnemies()
         {
-            EnemyFacade[] enemies = _enemies.Where(enemy => enemy != null).ToArray();
+            CombatTarget[] enemies = _enemies.Where(enemy => enemy != null).ToArray();
             _isBatchChange = true;
 
             try
             {
-                foreach (EnemyFacade enemy in enemies)
+                foreach (CombatTarget enemy in enemies)
                     enemy.HealthSystem.GetDamage(int.MaxValue);
             }
             finally
@@ -55,16 +55,16 @@ namespace Features.Enemies.Scripts
 
         public int ClearEnemies()
         {
-            EnemyFacade[] enemies = _enemies.Where(enemy => enemy != null).ToArray();
+            CombatTarget[] enemies = _enemies.Where(enemy => enemy != null).ToArray();
             _enemies.Clear();
 
-            foreach (EnemyFacade enemy in enemies)
+            foreach (CombatTarget enemy in enemies)
                 UnityEngine.Object.Destroy(enemy.gameObject);
 
             return enemies.Length;
         }
 
-        public EnemyFacade GetClosestEnemyByCharacter(Transform character, float distance)
+        public CombatTarget GetClosestEnemyByCharacter(Transform character, float distance)
         {
             if (character == null || distance <= 0f)
                 return null;
@@ -72,9 +72,9 @@ namespace Features.Enemies.Scripts
             Vector3 characterPosition = character.position;
             float maxSqrDistance = distance * distance;
             float closestSqrDistance = maxSqrDistance;
-            EnemyFacade closestEnemy = null;
+            CombatTarget closestEnemy = null;
 
-            foreach (EnemyFacade enemy in _enemies)
+            foreach (CombatTarget enemy in _enemies)
             {
                 if (enemy == null || enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
                     continue;

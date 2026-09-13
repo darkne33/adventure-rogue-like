@@ -10,5 +10,6 @@ namespace UI
         PopUp = 2,
         Technical = 3,
         Effects = 4,
+        OverlayUI = 5,
     }
 }

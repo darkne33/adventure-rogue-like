@@ -13,7 +13,7 @@ namespace Features.Enemies.Scripts
         private readonly IEnemiesProvider _enemiesProvider;
         private readonly EnemyAreaDamageIndicatorView _indicatorView;
         private readonly float _attackPreparationDuration;
-        private readonly List<EnemyFacade> _enemiesInDamageRadius = new();
+        private readonly List<CombatTarget> _enemiesInDamageRadius = new();
 
         private float _cooldown;
         private bool _attackStarted;
@@ -209,12 +209,12 @@ namespace Features.Enemies.Scripts
 
             float radius = Mathf.Max(0f, _enemyConfiguration.AreaDamageRadius);
             float radiusSqr = radius * radius;
-            IReadOnlyList<EnemyFacade> activeEnemies = _enemiesProvider.ActiveEnemies;
+            IReadOnlyList<CombatTarget> activeEnemies = _enemiesProvider.ActiveEnemies;
             _enemiesInDamageRadius.Clear();
 
             for (int index = 0; index < activeEnemies.Count; index++)
             {
-                EnemyFacade enemy = activeEnemies[index];
+                CombatTarget enemy = activeEnemies[index];
                 if (enemy == null || enemy == _enemyFacade ||
                     enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
                     continue;
@@ -226,7 +226,7 @@ namespace Features.Enemies.Scripts
                     _enemiesInDamageRadius.Add(enemy);
             }
 
-            foreach (EnemyFacade enemy in _enemiesInDamageRadius)
+            foreach (CombatTarget enemy in _enemiesInDamageRadius)
             {
                 if (enemy == null || enemy.IsDead)
                     continue;

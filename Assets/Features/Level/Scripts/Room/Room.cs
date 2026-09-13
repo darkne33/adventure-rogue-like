@@ -49,6 +49,11 @@ public class DefaultEnemiesRoomData : RoomData
 }
 
 [Serializable]
+public class BossRoomData : DefaultEnemiesRoomData
+{
+}
+
+[Serializable]
 public class RewardRoomData : RoomData
 {
     [field: SerializeField, Min(1)] public int MinChests { get; private set; } = 1;

@@ -6,5 +6,6 @@
     Skeleton = 3,
     Ghost = 4,
     Bomb = 5,
-    Chan = 6
+    Chan = 6,
+    WoodGuardBoss = 7
 }

@@ -15,11 +15,13 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
     private readonly CharacterConfiguration _characterConfiguration;
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
     private readonly RunRestartService _runRestartService;
+    private readonly IRogueLikeRuntimeDataService _runtimeDataService;
 
     public CharacterSystemsFactory(CharacterCameraSettingsConfiguration cameraSettings, ICameraService cameraService,
         IPanelService panelService, CharacterStats characterStats, PauseEntityDistributor pauseEntityDistributor,
         CharacterConfiguration characterConfiguration,
-        ISceneService<RogueLikeSceneProvider> sceneService, RunRestartService runRestartService)
+        ISceneService<RogueLikeSceneProvider> sceneService, RunRestartService runRestartService,
+        IRogueLikeRuntimeDataService runtimeDataService)
     {
         _cameraSettings = cameraSettings;
         _cameraService = cameraService;
@@ -29,6 +31,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         _characterConfiguration = characterConfiguration;
         _sceneService = sceneService;
         _runRestartService = runRestartService;
+        _runtimeDataService = runtimeDataService;
     }
 
     public void Create(CharacterFacade facade)
@@ -42,7 +45,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
 
         var animationSystem = new CharacterAnimationSystem(animator);
         var cameraSystem = new CharacterCameraMoveSystem(
-            facade.CameraPivot, _cameraSettings, _cameraService, pauseEntity);
+            facade.CameraPivot, _cameraSettings, _cameraService, pauseEntity, _runtimeDataService);
         var moveSystem = new CharacterMoveSystem(rigidbody, _cameraService, _characterStats, fxSystem,
             facade.CharacterModel, animationSystem, cameraSystem, pauseEntity);
         var proximityTransparencySystem =

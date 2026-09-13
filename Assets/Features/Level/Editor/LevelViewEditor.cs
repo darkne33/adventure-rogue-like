@@ -35,7 +35,9 @@ public sealed class LevelViewEditor : Editor
             "Each RoomDoor selects EnemyDoor or RewardDoor from the destination room type. " +
             "Enemy and Exit rooms keep their enemy types directly on their room node. " +
             "At runtime, combat depth determines the enemy count and selects a Small or Medium layout " +
-            "from Combat Room Variants. Empty pools keep the authored prefab.",
+            "from Combat Room Variants. Empty pools keep the authored prefab. " +
+            "Each level must contain exactly one final room: Exit or Boss. Both use Level Exit Direction. " +
+            "Boss rooms use their authored prefab and BossSpawnPoint with its separate Boss Config.",
             MessageType.Info);
 
         DrawDefaultInspector();
@@ -103,10 +105,10 @@ public sealed class LevelViewEditor : Editor
         List<SchemeConnection> connections =
             BuildConnections(roomsByPosition, issues);
 
-        SchemeRoom startRoom = GetSingleRoomOfType(
-            rooms, RoomType.Start, "Start", issues);
-        SchemeRoom exitRoom = GetSingleRoomOfType(
-            rooms, RoomType.Exit, "Exit", issues);
+        SchemeRoom startRoom = GetSingleRoomOfTypes(
+            rooms, "Start", issues, RoomType.Start);
+        SchemeRoom exitRoom = GetSingleRoomOfTypes(
+            rooms, "Exit or Boss", issues, RoomType.Exit, RoomType.Boss);
         bool hasValidLevelExit = ValidateLevelExit(
             exitRoom, roomsByPosition, issues);
 
@@ -137,13 +139,13 @@ public sealed class LevelViewEditor : Editor
             string route = string.Join("  →  ", shortestPath.Select(room =>
                 $"#{room.Index} {GetRoomTypeLabel(room.Node.Type)}"));
             EditorGUILayout.HelpBox(
-                $"The route reaches the Exit room, but the level-exit connection is invalid:\n{route}",
+                $"The route reaches the final room, but the level-exit connection is invalid:\n{route}",
                 MessageType.Warning);
         }
         else
         {
             EditorGUILayout.HelpBox(
-                "There is no valid connected route from Start to Exit.",
+                "There is no valid connected route from Start to the final Exit or Boss room.",
                 MessageType.Warning);
         }
 
@@ -257,12 +259,12 @@ public sealed class LevelViewEditor : Editor
         return result;
     }
 
-    private static SchemeRoom GetSingleRoomOfType(
-        IReadOnlyCollection<SchemeRoom> rooms, RoomType type,
-        string displayName, ICollection<string> issues)
+    private static SchemeRoom GetSingleRoomOfTypes(
+        IReadOnlyCollection<SchemeRoom> rooms, string displayName,
+        ICollection<string> issues, params RoomType[] types)
     {
         SchemeRoom[] matches = rooms
-            .Where(room => room.Node.Type == type)
+            .Where(room => types.Contains(room.Node.Type))
             .ToArray();
         if (matches.Length == 1)
             return matches[0];
@@ -722,6 +724,7 @@ public sealed class LevelViewEditor : Editor
             RoomType.Enemy => "Enemy",
             RoomType.Reward => "Reward",
             RoomType.Shop => "Shop",
+            RoomType.Boss => "Boss",
             _ => "Unknown"
         };
 
@@ -745,6 +748,7 @@ public sealed class LevelViewEditor : Editor
                 RoomType.Exit => new Color(0.13f, 0.45f, 0.22f, 1f),
                 RoomType.Reward => new Color(0.5f, 0.38f, 0.07f, 1f),
                 RoomType.Shop => new Color(0.42f, 0.18f, 0.48f, 1f),
+                RoomType.Boss => new Color(0.5f, 0.13f, 0.13f, 1f),
                 _ => new Color(0.25f, 0.27f, 0.3f, 1f)
             };
         }
@@ -755,6 +759,7 @@ public sealed class LevelViewEditor : Editor
             RoomType.Exit => new Color(0.58f, 0.84f, 0.62f, 1f),
             RoomType.Reward => new Color(0.94f, 0.82f, 0.47f, 1f),
             RoomType.Shop => new Color(0.82f, 0.63f, 0.87f, 1f),
+            RoomType.Boss => new Color(0.9f, 0.55f, 0.55f, 1f),
             _ => new Color(0.78f, 0.8f, 0.83f, 1f)
         };
     }

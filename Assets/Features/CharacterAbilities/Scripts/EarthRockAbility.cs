@@ -227,7 +227,7 @@ public sealed class EarthRockAbility : CharacterActiveAbility
     }
 
     private void HandleStoneHit(CharacterFacade character, OrbitSlot slot, GameObject stone,
-        PlayerCollisionDetector collisionDetector, EnemyFacade enemy)
+        PlayerCollisionDetector collisionDetector, CombatTarget enemy)
     {
         if (slot.Stone != stone)
             return;
@@ -253,7 +253,7 @@ public sealed class EarthRockAbility : CharacterActiveAbility
         Object.Instantiate(_configuration.EarthPoofPrefab, position, Quaternion.identity);
     }
 
-    private void ApplyDamage(CharacterFacade character, EnemyFacade enemy)
+    private void ApplyDamage(CharacterFacade character, CombatTarget enemy)
     {
         if (character == null || enemy == null || enemy.IsDead)
             return;

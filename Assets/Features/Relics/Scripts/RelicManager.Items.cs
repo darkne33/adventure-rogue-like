@@ -59,7 +59,7 @@ namespace Features.Relics.Scripts
         private const float DefaultTeslaDamage = 12f;
 
         private readonly Dictionary<string, RelicRuntimeState> _temporaryModifierOwners = new();
-        private readonly Dictionary<EnemyFacade, int> _activeVenomBladePoisons = new();
+        private readonly Dictionary<CombatTarget, int> _activeVenomBladePoisons = new();
         private int _temporaryModifierSequence;
         private float _lastDamageTakenTime;
         private float _lastStopWatchMultiplier = 1f;
@@ -283,15 +283,15 @@ namespace Features.Relics.Scripts
 
         private static void ApplyStopWatchSlow(float multiplier)
         {
-            EnemyFacade[] enemies = UnityEngine.Object.FindObjectsByType<EnemyFacade>(FindObjectsSortMode.None);
-            foreach (EnemyFacade enemy in enemies)
+            CombatTarget[] enemies = UnityEngine.Object.FindObjectsByType<CombatTarget>(FindObjectsSortMode.None);
+            foreach (CombatTarget enemy in enemies)
             {
                 if (enemy != null && enemy.IsDead == false)
                     enemy.SetPersistentRelicSlow(multiplier);
             }
         }
 
-        private int ModifySpecialOutgoingDamage(int damage, EnemyFacade target)
+        private int ModifySpecialOutgoingDamage(int damage, CombatTarget target)
         {
             if (damage <= 0 || target == null)
                 return damage;
@@ -517,7 +517,7 @@ namespace Features.Relics.Scripts
         private async UniTaskVoid ApplyVenomBladePoison(RelicRuntimeState state,
             RelicEffectDefinition effect, RelicHitEvent hitEvent)
         {
-            EnemyFacade target = hitEvent.Target;
+            CombatTarget target = hitEvent.Target;
             if (target == null || target.IsDead)
                 return;
 
@@ -586,7 +586,7 @@ namespace Features.Relics.Scripts
         private async UniTaskVoid ApplyFireMindBurn(RelicRuntimeState state,
             RelicEffectDefinition effect, RelicHitEvent hitEvent)
         {
-            EnemyFacade target = hitEvent.Target;
+            CombatTarget target = hitEvent.Target;
             if (target == null || target.IsDead)
                 return;
 
@@ -641,17 +641,17 @@ namespace Features.Relics.Scripts
         }
 
         private void DealNearestDamage(Vector3 center, float radius, int damage, int targetCount,
-            string sourceId, EnemyFacade excludedTarget)
+            string sourceId, CombatTarget excludedTarget)
         {
             float radiusSquared = radius * radius;
-            EnemyFacade[] targets = UnityEngine.Object.FindObjectsByType<EnemyFacade>(FindObjectsSortMode.None)
+            CombatTarget[] targets = UnityEngine.Object.FindObjectsByType<CombatTarget>(FindObjectsSortMode.None)
                 .Where(enemy => enemy != null && enemy != excludedTarget && enemy.IsDead == false &&
                                 (enemy.transform.position - center).sqrMagnitude <= radiusSquared)
                 .OrderBy(enemy => (enemy.transform.position - center).sqrMagnitude)
                 .Take(Mathf.Max(1, targetCount))
                 .ToArray();
 
-            foreach (EnemyFacade target in targets)
+            foreach (CombatTarget target in targets)
             {
                 int appliedDamage = target.HealthSystem.GetDamage(damage);
                 if (appliedDamage <= 0)

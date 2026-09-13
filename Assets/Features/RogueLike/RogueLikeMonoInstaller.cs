@@ -1,5 +1,7 @@
 ﻿using Core;
 using Core.Services;
+using Features.Bosses.Scripts;
+using Features.Bosses.UI;
 using Features.Enemies.Scripts;
 using Features.Enemies.Scripts.Level.Scripts;
 using Features.Leaderboard;
@@ -54,6 +56,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<ICharacterSystemsFactory>().To<CharacterSystemsFactory>().AsSingle();
         Container.Bind<ILevelFactory>().To<LevelFactory>().AsSingle();
         Container.Bind<IEnemyFactory>().To<EnemyFactory>().AsSingle();
+        Container.Bind<BossFactory>().AsSingle();
         Container.Bind<IEnemySystemsFactory>().To<EnemySystemsFactory>().AsSingle();
         Container.Bind<IUpgradeOfferItemFactory>().To<UpgradeOfferItemFactory>().AsSingle();
         Container.Bind<MinimapElementFactory>().AsSingle();
@@ -87,10 +90,14 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<RelicChestRollService>().AsSingle();
         Container.BindInterfacesAndSelfTo<LevelProgressionService>().AsSingle();
         Container.BindInterfacesAndSelfTo<MinimapController>().AsSingle();
+        Container.BindInterfacesAndSelfTo<BossHealthUIController>().AsSingle();
     }
 
-    private void BindSpawners() => 
+    private void BindSpawners()
+    {
         Container.Bind<EnemySpawner>().AsSingle();
+        Container.Bind<BossSpawner>().AsSingle();
+    }
 
     private void BindObservers()
     {

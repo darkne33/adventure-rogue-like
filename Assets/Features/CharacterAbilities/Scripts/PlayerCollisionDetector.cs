@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerCollisionDetector : MonoBehaviour
 {
-    public Action<EnemyFacade> OnHit;
+    public Action<CombatTarget> OnHit;
 
     private Transform _ignoredRoot;
     private bool _isHit;
@@ -31,7 +31,7 @@ public class PlayerCollisionDetector : MonoBehaviour
             return;
 
         _isHit = true;
-        OnHit?.Invoke(other.GetComponentInParent<EnemyFacade>());
+        OnHit?.Invoke(other.GetComponentInParent<CombatTarget>());
     }
 
     private bool IsOtherPlayerProjectile(Collider other)

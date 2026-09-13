@@ -229,7 +229,7 @@ public sealed class FireFieldAbility : CharacterActiveAbility
         return false;
     }
 
-    private void ApplyDamage(CharacterFacade character, EnemyFacade enemy)
+    private void ApplyDamage(CharacterFacade character, CombatTarget enemy)
     {
         if (character == null || enemy == null || enemy.IsDead)
             return;

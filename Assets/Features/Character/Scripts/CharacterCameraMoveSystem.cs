@@ -10,6 +10,7 @@ public class CharacterCameraMoveSystem
     private readonly ICameraService _cameraService;
     private readonly InputSystem_Actions _inputActions;
     private readonly PauseEntity _pauseEntity;
+    private readonly IRogueLikeRuntimeDataService _runtimeDataService;
     private readonly Vector3 _baseCameraPivotLocalPosition;
 
     private float _yaw;
@@ -41,12 +42,13 @@ public class CharacterCameraMoveSystem
     public CharacterCameraMoveSystem(
         Transform cameraPivot,
         CharacterCameraSettingsConfiguration settings,
-        ICameraService cameraService, PauseEntity pauseEntity)
+        ICameraService cameraService, PauseEntity pauseEntity, IRogueLikeRuntimeDataService runtimeDataService)
     {
         _cameraPivot = cameraPivot;
         _settings = settings;
         _cameraService = cameraService;
         _pauseEntity = pauseEntity;
+        _runtimeDataService = runtimeDataService;
 
         _inputActions = new InputSystem_Actions();
         _inputActions.Enable();
@@ -56,6 +58,7 @@ public class CharacterCameraMoveSystem
         _baseCameraPivotLocalPosition = _cameraPivot.localPosition;
         ApplyCinemachineFollowSettings();
         ResetLandingShakeBump();
+        _runtimeDataService.RoomChanged += OnRoomChanged;
     }
 
     public void PlayLandingShake()
@@ -110,6 +113,7 @@ public class CharacterCameraMoveSystem
 
     public void Dispose()
     {
+        _runtimeDataService.RoomChanged -= OnRoomChanged;
         _inputActions.Player.Disable();
         _inputActions.Dispose();
     }
@@ -262,7 +266,21 @@ public class CharacterCameraMoveSystem
         follow.Damping = _settings.FollowDamping;
         follow.ShoulderOffset = _settings.FollowShoulderOffset;
         follow.VerticalArmLength = Mathf.Max(0f, _settings.FollowVerticalArmLength);
-        follow.CameraDistance = Mathf.Max(0f, _settings.FollowCameraDistance);
+        ApplyCinemachineCameraDistance(follow);
+    }
+
+    private void OnRoomChanged(RoomData previousRoom, RoomData currentRoom) =>
+        ApplyCinemachineCameraDistance(ResolveThirdPersonFollow());
+
+    private void ApplyCinemachineCameraDistance(CinemachineThirdPersonFollow follow)
+    {
+        if (follow == null)
+            return;
+
+        float multiplier = _runtimeDataService.CurrentRoomData is BossRoomData
+            ? Mathf.Max(0.01f, _settings.BossRoomCameraDistanceMultiplier)
+            : 1f;
+        follow.CameraDistance = Mathf.Max(0f, _settings.FollowCameraDistance) * multiplier;
     }
 
     private CinemachineThirdPersonFollow ResolveThirdPersonFollow()

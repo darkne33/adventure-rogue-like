@@ -120,7 +120,7 @@ public class LevelView : MonoBehaviour
 
             if (roomNode.Type == RoomType.Start)
                 startCount++;
-            if (roomNode.Type == RoomType.Exit)
+            if (roomNode.Type is RoomType.Exit or RoomType.Boss)
                 exitCount++;
         }
 
@@ -129,7 +129,7 @@ public class LevelView : MonoBehaviour
         ValidateAuthoringDoors(sourcesByPosition);
         ValidateConnectivity(sourcesByPosition);
 
-        LevelRoomNode exitNode = GetRoomNode(RoomType.Exit);
+        LevelRoomNode exitNode = GetExitRoomNode();
         if (!GetAvailableDirections(exitNode.RoomPrefab)
                 .Contains(exitNode.LevelExitDirection))
         {
@@ -158,6 +158,7 @@ public class LevelView : MonoBehaviour
 
             Room source = roomNode.RoomPrefab;
             if (roomBalance != null && (roomNode.Type is RoomType.Enemy or RoomType.Exit) &&
+                source.RoomData is not BossRoomData &&
                 !IsRoomOwnedByLevel(source) && !IsRoomOwnedByLevel(roomNode.Room))
             {
                 int roomIndex = combatProgressOffset +
@@ -215,7 +216,8 @@ public class LevelView : MonoBehaviour
         var compatible = new List<Room>();
         foreach (Room variant in variants)
         {
-            if (variant == null || variant.RoomData is not DefaultEnemiesRoomData data ||
+            if (variant == null || variant.RoomData is BossRoomData ||
+                variant.RoomData is not DefaultEnemiesRoomData data ||
                 (requiresKeyRoom && (!data.CanSpawnKeyRoom || data.KeyRoomSpawnPoint == null)))
                 continue;
 
@@ -338,7 +340,7 @@ public class LevelView : MonoBehaviour
 
             if (roomNode.Type == RoomType.Start)
                 startCount++;
-            if (roomNode.Type == RoomType.Exit)
+            if (roomNode.Type is RoomType.Exit or RoomType.Boss)
                 exitCount++;
         }
 
@@ -354,9 +356,9 @@ public class LevelView : MonoBehaviour
                 $"{name} must contain exactly one start room.");
         if (exitCount != 1)
             throw new InvalidOperationException(
-                $"{name} must contain exactly one exit room.");
+                $"{name} must contain exactly one final room (Exit or Boss).");
 
-        LevelRoomNode exitNode = GetRoomNode(RoomType.Exit);
+        LevelRoomNode exitNode = GetExitRoomNode();
         Vector2Int destination =
             exitNode.GridPosition + exitNode.LevelExitDirection.ToGridOffset();
         if (roomsByPosition.ContainsKey(destination))
@@ -381,6 +383,12 @@ public class LevelView : MonoBehaviour
                 return;
             case RoomType.Shop:
                 return;
+            case RoomType.Boss:
+                if (roomData is not BossRoomData bossRoomData)
+                    throw new InvalidOperationException(
+                        $"{roomNode.RoomPrefab.name} must contain BossRoomData.");
+                ValidateBossRoom(roomNode.RoomPrefab, bossRoomData);
+                return;
             case RoomType.Enemy:
             case RoomType.Exit:
                 if (roomData == null)
@@ -388,8 +396,8 @@ public class LevelView : MonoBehaviour
                         $"{roomNode.RoomPrefab.name} does not contain room data.");
                 if (roomData is DefaultEnemiesRoomData enemiesRoomData)
                     ValidateKeyRoomSpawnPoint(roomNode.RoomPrefab.name, enemiesRoomData);
-                ValidateEnemySettings(roomNode.RoomPrefab.name,
-                    roomNode.EnemySettings);
+                if (roomNode.RoomPrefab.GetComponentInChildren<Features.Bosses.Scripts.BossSpawnPoint>(true) == null)
+                    ValidateEnemySettings(roomNode.RoomPrefab.name, roomNode.EnemySettings);
                 return;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -406,18 +414,31 @@ public class LevelView : MonoBehaviour
                         $"{roomNode.Room.name} does not have a start point.");
                 return;
             case (RoomType.Enemy or RoomType.Exit, DefaultEnemiesRoomData enemiesRoomData):
-                ValidateEnemySettings(roomNode.Room.name,
-                    enemiesRoomData.EnemySettings);
+                if (roomNode.Room.GetComponentInChildren<Features.Bosses.Scripts.BossSpawnPoint>(true) == null)
+                    ValidateEnemySettings(roomNode.Room.name, enemiesRoomData.EnemySettings);
                 ValidateKeyRoomSpawnPoint(roomNode.Room.name, enemiesRoomData);
                 return;
             case (RoomType.Reward, RewardRoomData):
                 return;
             case (RoomType.Shop, ShopRoomData):
                 return;
+            case (RoomType.Boss, BossRoomData bossRoomData):
+                ValidateBossRoom(roomNode.Room, bossRoomData);
+                return;
             default:
                 throw new InvalidOperationException(
                     $"{roomNode.Room.name} data does not match its {roomNode.Type} room type.");
         }
+    }
+
+    private static void ValidateBossRoom(Room room, BossRoomData roomData)
+    {
+        var spawnPoint = room.GetComponentInChildren<Features.Bosses.Scripts.BossSpawnPoint>(true);
+        if (spawnPoint == null || spawnPoint.BossPrefab == null)
+            throw new InvalidOperationException(
+                $"{room.name} must contain a BossSpawnPoint with a boss prefab.");
+
+        ValidateKeyRoomSpawnPoint(room.name, roomData);
     }
 
     private static void ValidateEnemySettings(string roomName,
@@ -495,7 +516,7 @@ public class LevelView : MonoBehaviour
         if (!hasNextLevel)
             return;
 
-        LevelRoomNode exitNode = GetRoomNode(RoomType.Exit);
+        LevelRoomNode exitNode = GetExitRoomNode();
         Room exitRoom = roomsByPosition[exitNode.GridPosition];
         if (!HasDoor(exitRoom, exitNode.LevelExitDirection))
             throw new InvalidOperationException(
@@ -565,7 +586,7 @@ public class LevelView : MonoBehaviour
         if (!hasNextLevel)
             return;
 
-        LevelRoomNode roomNode = GetRoomNode(RoomType.Exit);
+        LevelRoomNode roomNode = GetExitRoomNode();
         RoomDoor exitDoor = GetRequiredDoor(roomNode.Room, roomNode.LevelExitDirection);
         if (exitDoor.HasRoomDestination)
             throw new InvalidOperationException(
@@ -749,7 +770,7 @@ public class LevelView : MonoBehaviour
 
     public bool IsExitRoom(RoomData roomData) =>
         roomData != null && _rooms.Any(roomNode =>
-            roomNode.Type == RoomType.Exit && roomNode.Room != null &&
+            (roomNode.Type is RoomType.Exit or RoomType.Boss) && roomNode.Room != null &&
             ReferenceEquals(roomNode.Room.RoomData, roomData));
 
     public int GetEnemyRoomIndex(RoomData roomData)
@@ -760,7 +781,7 @@ public class LevelView : MonoBehaviour
         for (int i = 0; i < _rooms.Length; i++)
         {
             LevelRoomNode roomNode = _rooms[i];
-            if (roomNode == null || roomNode.Type is not (RoomType.Enemy or RoomType.Exit))
+            if (roomNode == null || roomNode.Type is not (RoomType.Enemy or RoomType.Exit or RoomType.Boss))
                 continue;
 
             if (ReferenceEquals(roomNode.Room?.RoomData, roomData))
@@ -776,7 +797,7 @@ public class LevelView : MonoBehaviour
     public int GetCombatRoomsToExit()
     {
         _combatDepths ??= BuildCombatDepths();
-        return Mathf.Max(1, _combatDepths[GetRoomNode(RoomType.Exit).GridPosition]);
+        return Mathf.Max(1, _combatDepths[GetExitRoomNode().GridPosition]);
     }
 
     private Dictionary<Vector2Int, int> BuildCombatDepths()
@@ -804,7 +825,7 @@ public class LevelView : MonoBehaviour
                     continue;
 
                 int depth = depths[position] +
-                            (neighbour.Type is RoomType.Enemy or RoomType.Exit ? 1 : 0);
+                            (neighbour.Type is RoomType.Enemy or RoomType.Exit or RoomType.Boss ? 1 : 0);
                 if (depths.TryGetValue(neighbourPosition, out int previousDepth) && previousDepth <= depth)
                     continue;
 
@@ -920,6 +941,7 @@ public class LevelView : MonoBehaviour
                     RoomType.Exit => Color.green,
                     RoomType.Reward => Color.yellow,
                     RoomType.Shop => Color.magenta,
+                    RoomType.Boss => new Color(0.85f, 0.2f, 0.2f, 1f),
                     _ => Color.white
                 };
                 DrawRoomGizmo(roomNode.GridPosition, color);
@@ -939,6 +961,22 @@ public class LevelView : MonoBehaviour
 
     private static Vector3 ToWorldPosition(Vector2Int gridPosition) =>
         new(gridPosition.x * RoomWorldSize, 0f, gridPosition.y * RoomWorldSize);
+
+    private LevelRoomNode GetExitRoomNode()
+    {
+        if (_rooms == null)
+            throw new InvalidOperationException($"{name} does not contain room nodes.");
+
+        LevelRoomNode[] matches = _rooms
+            .Where(roomNode => roomNode != null &&
+                (roomNode.Type is RoomType.Exit or RoomType.Boss))
+            .ToArray();
+        if (matches.Length != 1)
+            throw new InvalidOperationException(
+                $"{name} must contain exactly one final room (Exit or Boss).");
+
+        return matches[0];
+    }
 
     private LevelRoomNode GetRoomNode(RoomType roomType)
     {
@@ -963,7 +1001,8 @@ public enum RoomType
     Exit,
     Enemy,
     Reward,
-    Shop
+    Shop,
+    Boss = 5
 }
 
 [Serializable]
@@ -981,7 +1020,7 @@ public sealed class LevelRoomNode
     [field: Tooltip("Used by combat rooms (Enemy and Exit).")]
     public EnemyRoomSettings EnemySettings { get; private set; } = new();
     [field: SerializeField]
-    [field: Tooltip("Used only when Type is Exit.")]
+    [field: Tooltip("Used when Type is Exit or Boss. Opens after the room is cleared.")]
     public RoomDirection LevelExitDirection { get; private set; }
 
     public LevelRoomNode(Room roomPrefab, Vector2Int gridPosition, RoomType type,

@@ -27,6 +27,11 @@ public class CharacterCameraSettingsConfiguration : ScriptableObject
     [field: SerializeField] public float FollowVerticalArmLength { get; private set; } = 0f;
     [field: SerializeField] public float FollowCameraDistance { get; private set; } = 14f;
 
+    [Header("Boss Room Camera")]
+    [field: SerializeField, Min(0.01f)]
+    [field: Tooltip("Multiplies Cinemachine Follow Camera Distance while in a boss room. Shared by all characters.")]
+    public float BossRoomCameraDistanceMultiplier { get; private set; } = 2f;
+
     [Header("Landing Pivot Movement")]
     [field: SerializeField] public float LandingShakeDuration { get; private set; } = 0.26f;
     [field: SerializeField] public float LandingShakeStrength { get; private set; } = 0.32f;

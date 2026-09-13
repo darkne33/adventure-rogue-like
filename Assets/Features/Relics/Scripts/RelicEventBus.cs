@@ -59,13 +59,13 @@ namespace Features.Relics.Scripts
     public readonly struct RelicHitEvent
     {
         public CharacterFacade Attacker { get; }
-        public EnemyFacade Target { get; }
+        public CombatTarget Target { get; }
         public int Damage { get; }
         public bool IsCritical { get; }
         public string WeaponId { get; }
         public Vector3 HitPosition { get; }
 
-        public RelicHitEvent(CharacterFacade attacker, EnemyFacade target, int damage,
+        public RelicHitEvent(CharacterFacade attacker, CombatTarget target, int damage,
             bool isCritical, string weaponId, Vector3 hitPosition)
         {
             Attacker = attacker;
@@ -80,11 +80,11 @@ namespace Features.Relics.Scripts
     public readonly struct RelicKillEvent
     {
         public CharacterFacade Killer { get; }
-        public EnemyFacade Target { get; }
+        public CombatTarget Target { get; }
         public Vector3 Position { get; }
         public string SourceId { get; }
 
-        public RelicKillEvent(CharacterFacade killer, EnemyFacade target, Vector3 position,
+        public RelicKillEvent(CharacterFacade killer, CombatTarget target, Vector3 position,
             string sourceId = null)
         {
             Killer = killer;
@@ -97,11 +97,11 @@ namespace Features.Relics.Scripts
     public readonly struct RelicDamageTakenEvent
     {
         public CharacterFacade Victim { get; }
-        public EnemyFacade Attacker { get; }
+        public CombatTarget Attacker { get; }
         public int Amount { get; }
         public string DamageType { get; }
 
-        public RelicDamageTakenEvent(CharacterFacade victim, EnemyFacade attacker, int amount,
+        public RelicDamageTakenEvent(CharacterFacade victim, CombatTarget attacker, int amount,
             string damageType)
         {
             Victim = victim;
@@ -153,10 +153,10 @@ namespace Features.Relics.Scripts
 
     public readonly struct RelicBossSpawnEvent
     {
-        public EnemyFacade Boss { get; }
+        public CombatTarget Boss { get; }
         public Vector3 Position { get; }
 
-        public RelicBossSpawnEvent(EnemyFacade boss, Vector3 position)
+        public RelicBossSpawnEvent(CombatTarget boss, Vector3 position)
         {
             Boss = boss;
             Position = position;

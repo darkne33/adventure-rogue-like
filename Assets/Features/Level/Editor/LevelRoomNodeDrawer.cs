@@ -25,7 +25,7 @@ public sealed class LevelRoomNodeDrawer : PropertyDrawer
         if (IsCombatRoom(typeProperty))
             height += GetFieldHeight(property, EnemySettingsPropertyName);
 
-        if ((RoomType)typeProperty.intValue == RoomType.Exit)
+        if (IsLevelExitRoom(typeProperty))
             height += GetFieldHeight(property, ExitDirectionPropertyName);
 
         return height;
@@ -57,7 +57,7 @@ public sealed class LevelRoomNodeDrawer : PropertyDrawer
                     property.FindPropertyRelative(EnemySettingsPropertyName));
             }
 
-            if ((RoomType)typeProperty.intValue == RoomType.Exit)
+            if (IsLevelExitRoom(typeProperty))
             {
                 DrawField(ref line,
                     property.FindPropertyRelative(ExitDirectionPropertyName));
@@ -71,6 +71,9 @@ public sealed class LevelRoomNodeDrawer : PropertyDrawer
 
     private static bool IsCombatRoom(SerializedProperty typeProperty) =>
         (RoomType)typeProperty.intValue is RoomType.Enemy or RoomType.Exit;
+
+    private static bool IsLevelExitRoom(SerializedProperty typeProperty) =>
+        (RoomType)typeProperty.intValue is RoomType.Exit or RoomType.Boss;
 
     private static float GetFieldHeight(SerializedProperty owner, string propertyName)
     {

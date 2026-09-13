@@ -107,7 +107,7 @@ public sealed class BulletExplosionAbility : SingleShootAbility
     }
 
     protected override void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
-        PlayerCollisionDetector collisionDetector, EnemyFacade targetEnemy, Vector3 spawnPosition,
+        PlayerCollisionDetector collisionDetector, CombatTarget targetEnemy, Vector3 spawnPosition,
         Vector3 shootDirection, int projectileDamage)
     {
         Vector3 endPosition = spawnPosition + shootDirection * _travelDistance;
@@ -132,7 +132,7 @@ public sealed class BulletExplosionAbility : SingleShootAbility
         }
     }
 
-    private void DamageDeal(CharacterFacade character, GameObject shootObj, EnemyFacade enemyFacade,
+    private void DamageDeal(CharacterFacade character, GameObject shootObj, CombatTarget enemyFacade,
         int projectileDamage)
     {
         if (enemyFacade == null || enemyFacade.HealthSystem.IsDead)

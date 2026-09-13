@@ -194,7 +194,7 @@ namespace Features.Relics.Scripts
             return false;
         }
 
-        public int ModifyOutgoingDamage(int damage, EnemyFacade target)
+        public int ModifyOutgoingDamage(int damage, CombatTarget target)
         {
             if (damage <= 0 || target == null)
                 return damage;
@@ -393,7 +393,7 @@ namespace Features.Relics.Scripts
 
         private async UniTaskVoid ApplyHexDamage(RelicEffectDefinition effect, RelicHitEvent hitEvent)
         {
-            EnemyFacade target = hitEvent.Target;
+            CombatTarget target = hitEvent.Target;
             if (target == null)
                 return;
 
@@ -523,8 +523,8 @@ namespace Features.Relics.Scripts
 
         private void DealAreaDamage(Vector3 center, float radius, int damage, string sourceId)
         {
-            EnemyFacade[] enemies = UnityEngine.Object.FindObjectsByType<EnemyFacade>(FindObjectsSortMode.None);
-            foreach (EnemyFacade enemy in enemies)
+            CombatTarget[] enemies = UnityEngine.Object.FindObjectsByType<CombatTarget>(FindObjectsSortMode.None);
+            foreach (CombatTarget enemy in enemies)
             {
                 if (enemy == null || enemy.HealthSystem.IsDead)
                     continue;
@@ -541,7 +541,7 @@ namespace Features.Relics.Scripts
             }
         }
 
-        private void PublishRelicKillIfDead(EnemyFacade enemy, string sourceId, int appliedDamage)
+        private void PublishRelicKillIfDead(CombatTarget enemy, string sourceId, int appliedDamage)
         {
             if (enemy == null || appliedDamage <= 0 || enemy.HealthSystem.IsDead == false)
                 return;
@@ -658,12 +658,12 @@ namespace Features.Relics.Scripts
             }
         }
 
-        private static bool IsEliteOrBoss(EnemyFacade target)
+        private static bool IsEliteOrBoss(CombatTarget target)
         {
-            if (target.Configuration == null)
+            if (target == null)
                 return false;
 
-            return target.Configuration.EnemyRank is EnemyRank.Elite or EnemyRank.Boss;
+            return target.Rank is EnemyRank.Elite or EnemyRank.Boss;
         }
     }
 }

@@ -350,7 +350,7 @@ public sealed class CharacterProximityTransparencySystem
 
         if (renderer.GetComponentInParent<TMP_Text>(true) != null ||
             renderer.GetComponentInParent<CharacterFacade>(true) != null ||
-            renderer.GetComponentInParent<EnemyFacade>(true) != null ||
+            renderer.GetComponentInParent<CombatTarget>(true) != null ||
             renderer.GetComponentInParent<RelicChest>(true) != null ||
             renderer.GetComponentInParent<Ground>(true) != null ||
             renderer.GetComponentInParent<Wall>(true) != null ||

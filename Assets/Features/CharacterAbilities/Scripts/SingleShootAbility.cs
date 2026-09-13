@@ -102,16 +102,16 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     }
 
     protected abstract void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
-        PlayerCollisionDetector collisionDetector, EnemyFacade targetEnemy, Vector3 spawnPosition,
+        PlayerCollisionDetector collisionDetector, CombatTarget targetEnemy, Vector3 spawnPosition,
         Vector3 shootDirection, int projectileDamage);
 
     protected virtual int GetProjectileDamage(int projectileIndex, int projectileCount) =>
         Damage;
 
-    protected void ApplyDamage(CharacterFacade character, EnemyFacade enemyFacade) =>
+    protected void ApplyDamage(CharacterFacade character, CombatTarget enemyFacade) =>
         ApplyDamage(character, enemyFacade, Damage);
 
-    protected void ApplyDamage(CharacterFacade character, EnemyFacade enemyFacade, int baseDamage)
+    protected void ApplyDamage(CharacterFacade character, CombatTarget enemyFacade, int baseDamage)
     {
         if (baseDamage <= 0)
             return;
@@ -167,7 +167,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         SpawnEffect(AbilityConfig.MuzzlePrefab, effectPosition);
     }
 
-    protected static Vector3 GetEnemyTargetPosition(EnemyFacade enemy) =>
+    protected static Vector3 GetEnemyTargetPosition(CombatTarget enemy) =>
         enemy.TargetToShootDamage != null ? enemy.TargetToShootDamage.position : enemy.transform.position;
 
     private int GetRolledDamage(int baseDamage)
@@ -212,7 +212,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     private void ShootProjectile(CharacterFacade character, int projectileIndex, int projectileCount)
     {
-        EnemyFacade targetEnemy = _enemiesProvider.GetClosestEnemyByCharacter(character.transform,
+        CombatTarget targetEnemy = _enemiesProvider.GetClosestEnemyByCharacter(character.transform,
             AutoTargetingDistance);
 
         if (targetEnemy == null)

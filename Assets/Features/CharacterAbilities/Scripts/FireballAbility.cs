@@ -118,7 +118,7 @@ public class FireballAbility : SingleShootAbility
         Mathf.Max(MinimumCooldown, Cooldown - GetCooldownReduction(upgradeMultiplier));
 
     protected override void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
-        PlayerCollisionDetector collisionDetector, EnemyFacade targetEnemy, Vector3 spawnPosition,
+        PlayerCollisionDetector collisionDetector, CombatTarget targetEnemy, Vector3 spawnPosition,
         Vector3 shootDirection, int projectileDamage)
     {
         Vector3 endPosition = spawnPosition + shootDirection * _travelDistance;
@@ -126,7 +126,7 @@ public class FireballAbility : SingleShootAbility
         collisionDetector.OnHit = enemyFacade => DamageDeal(character, shootObj, enemyFacade, projectileDamage);
     }
 
-    private void DamageDeal(CharacterFacade character, GameObject shootObj, EnemyFacade enemyFacade,
+    private void DamageDeal(CharacterFacade character, GameObject shootObj, CombatTarget enemyFacade,
         int projectileDamage)
     {
         if (enemyFacade == null || enemyFacade.HealthSystem.IsDead)

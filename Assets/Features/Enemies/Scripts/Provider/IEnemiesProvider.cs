@@ -7,12 +7,12 @@ namespace Features.Enemies.Scripts
     public interface IEnemiesProvider
     {
         public int Count { get; }
-        public IReadOnlyList<EnemyFacade> ActiveEnemies { get; }
+        public IReadOnlyList<CombatTarget> ActiveEnemies { get; }
         public event Action<int> EnemyRemoved;
-        public void AddEnemy(EnemyFacade enemyFacade);
-        public void RemoveEnemy(EnemyFacade enemyFacade);
+        public void AddEnemy(CombatTarget enemyFacade);
+        public void RemoveEnemy(CombatTarget enemyFacade);
         public int DefeatAllEnemies();
         public int ClearEnemies();
-        public EnemyFacade GetClosestEnemyByCharacter(Transform character, float distance);
+        public CombatTarget GetClosestEnemyByCharacter(Transform character, float distance);
     }
 }

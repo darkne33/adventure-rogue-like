@@ -11,11 +11,11 @@ public sealed class FireFieldDamageArea : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float _puddleSpawnScale = 0.15f;
     [SerializeField, Min(0f)] private float _puddleSpreadDuration = 0.35f;
 
-    private readonly List<EnemyFacade> _enemiesInRange = new();
+    private readonly List<CombatTarget> _enemiesInRange = new();
     private readonly List<ParticleSystem> _particleSystems = new();
 
     private IEnemiesProvider _enemiesProvider;
-    private Action<EnemyFacade> _damageEnemy;
+    private Action<CombatTarget> _damageEnemy;
     private float _radiusSqr;
     private float _height;
     private float _damageTickInterval;
@@ -25,7 +25,7 @@ public sealed class FireFieldDamageArea : MonoBehaviour
     private Tween _puddleSpreadTween;
 
     public void Initialize(IEnemiesProvider enemiesProvider, float radius, float height,
-        float damageTickInterval, float duration, Action<EnemyFacade> damageEnemy)
+        float damageTickInterval, float duration, Action<CombatTarget> damageEnemy)
     {
         float safeRadius = Mathf.Max(0.1f, radius);
         _enemiesProvider = enemiesProvider;
@@ -66,12 +66,12 @@ public sealed class FireFieldDamageArea : MonoBehaviour
             return;
 
         _enemiesInRange.Clear();
-        IReadOnlyList<EnemyFacade> activeEnemies = _enemiesProvider.ActiveEnemies;
+        IReadOnlyList<CombatTarget> activeEnemies = _enemiesProvider.ActiveEnemies;
         Vector3 fieldPosition = transform.position;
 
         for (int index = 0; index < activeEnemies.Count; index++)
         {
-            EnemyFacade enemy = activeEnemies[index];
+            CombatTarget enemy = activeEnemies[index];
             if (enemy == null || enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
                 continue;
 
@@ -84,7 +84,7 @@ public sealed class FireFieldDamageArea : MonoBehaviour
                 _enemiesInRange.Add(enemy);
         }
 
-        foreach (EnemyFacade enemy in _enemiesInRange)
+        foreach (CombatTarget enemy in _enemiesInRange)
         {
             if (enemy != null && enemy.IsDead == false)
                 _damageEnemy(enemy);

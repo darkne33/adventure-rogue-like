@@ -157,7 +157,7 @@ public class CharacterFacade : MonoBehaviour
         _damageView = damageView;
     }
 
-    public bool ReceiveDamage(int rawDamage, EnemyFacade source)
+    public bool ReceiveDamage(int rawDamage, CombatTarget source)
     {
         if (Time.unscaledTime < _invulnerableUntilTime)
             return false;

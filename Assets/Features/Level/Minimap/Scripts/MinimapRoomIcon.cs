@@ -22,6 +22,8 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     [SerializeField] private Color _visitedOutlineColor =
         new(1f, 1f, 1f, 0.68f);
     [SerializeField] private Color _currentOutlineColor = Color.white;
+    [SerializeField] private Color _bossOutlineColor =
+        new(0.9f, 0.25f, 0.2f, 1f);
     [SerializeField] private Color _availableFillColor =
         new(0.02f, 0.02f, 0.02f, 0.04f);
     [SerializeField] private Color _visitedFillColor =
@@ -131,6 +133,13 @@ public sealed class MinimapRoomIcon : MonoBehaviour
             MinimapRoomState.Current => _currentOutlineColor,
             _ => Color.clear
         };
+
+        if (_kind == MinimapRoomKind.Boss && !isHidden)
+        {
+            Color bossColor = _bossOutlineColor;
+            bossColor.a *= _outline.color.a;
+            _outline.color = bossColor;
+        }
 
         _fill.color = state switch
         {
