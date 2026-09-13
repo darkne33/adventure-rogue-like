@@ -18,17 +18,29 @@ namespace Features.Bosses.Scripts
             _character = character;
         }
 
-        public async UniTask Execute(CancellationToken cancellationToken)
+        public async UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!CanContinue())
+                return;
+
+            // Capture once: moving away during the warning lets the character dodge the hit.
+            await ExecuteAt(_character.transform.position, animateBoss, true, cancellationToken);
+        }
+
+        internal async UniTask ExecuteAt(Vector3 targetPosition, bool animateBoss, bool showWarning,
+            CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (!CanContinue())
                 return;
 
             WoodGuardSingleAttackPiece prefab = _configuration.PiecePrefab;
-            if (prefab == null || !prefab.HasHitCollider || _configuration.IndicatorPrefab == null)
+            if (prefab == null || !prefab.HasHitCollider ||
+                (showWarning && _configuration.IndicatorPrefab == null))
             {
                 Debug.LogError("Single wood attack needs a piece prefab with an assigned Sphere Collider " +
-                               "and a sphere indicator prefab.", _boss);
+                               "and a sphere indicator prefab when the warning is enabled.", _boss);
                 return;
             }
 
@@ -39,8 +51,6 @@ namespace Features.Bosses.Scripts
                 return;
             }
 
-            // Capture once: moving away during the warning lets the character dodge the hit.
-            Vector3 targetPosition = _character.transform.position;
             // Use the boss's attack ground level so jumping cannot lift the roots or their warning.
             targetPosition.y = _boss.AttackOrigin.position.y;
             Quaternion rotation = _boss.AttackRotation;
@@ -58,12 +68,16 @@ namespace Features.Bosses.Scripts
 
             try
             {
-                indicator = Object.Instantiate(_configuration.IndicatorPrefab, indicatorPosition, Quaternion.identity);
-                foreach (Collider indicatorCollider in indicator.GetComponentsInChildren<Collider>(true))
-                    indicatorCollider.enabled = false;
-                UpdateWarning(indicator.transform, geometry.Radius, 0f);
-                indicator.SetActive(true);
-                _boss.AnimationSystem.BeginAttack(warningDuration);
+                if (showWarning)
+                {
+                    indicator = Object.Instantiate(_configuration.IndicatorPrefab, indicatorPosition, Quaternion.identity);
+                    foreach (Collider indicatorCollider in indicator.GetComponentsInChildren<Collider>(true))
+                        indicatorCollider.enabled = false;
+                    UpdateWarning(indicator.transform, geometry.Radius, 0f);
+                    indicator.SetActive(true);
+                }
+                if (animateBoss)
+                    _boss.AnimationSystem.BeginAttack(warningDuration);
 
                 while (true)
                 {
@@ -72,13 +86,15 @@ namespace Features.Bosses.Scripts
                         return;
 
                     float timeScale = _boss.RelicTimeScale;
-                    _boss.AnimationSystem.SetTimeScale(timeScale);
+                    if (animateBoss)
+                        _boss.AnimationSystem.SetTimeScale(timeScale);
                     if (timeScale > 0f && _boss.CanAttack)
                     {
                         if (elapsed < warningDuration)
                         {
-                            UpdateWarning(indicator.transform, geometry.Radius,
-                                elapsed / warningDuration);
+                            if (indicator != null)
+                                UpdateWarning(indicator.transform, geometry.Radius,
+                                    elapsed / warningDuration);
                         }
                         else
                         {
@@ -93,7 +109,8 @@ namespace Features.Bosses.Scripts
                                 ApplyHit(center, geometry.Radius, rotation * Vector3.forward);
                                 if (!CanContinue() || cancellationToken.IsCancellationRequested)
                                     return;
-                                _boss.AnimationSystem.IdleAnimation();
+                                if (animateBoss)
+                                    _boss.AnimationSystem.IdleAnimation();
                             }
 
                             if (roots != null)

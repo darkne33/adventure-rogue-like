@@ -41,6 +41,7 @@ namespace Features.Enemies.Scripts
 
         private void OnDestroy()
         {
+            _effectsSystem?.Dispose();
             if (_runtimeConfiguration != null)
                 Destroy(_runtimeConfiguration);
         }

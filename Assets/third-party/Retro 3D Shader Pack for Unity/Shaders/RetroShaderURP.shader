@@ -22,6 +22,7 @@
 
         _HitColor("Hit Color", Color) = (1,0,0,1)
         _HitPower("Hit Power", Range(0,1)) = 0
+        _HitShading("Hit Shading", Range(0,1)) = 0
         [HDR]_AttackTelegraphColor("Attack Telegraph Color", Color) = (2,2,2,1)
         _AttackTelegraphPower("Attack Telegraph Power", Range(0,1)) = 0
 
@@ -76,6 +77,7 @@
 
         float4 _HitColor;
         float _HitPower;
+        float _HitShading;
         float4 _AttackTelegraphColor;
         float _AttackTelegraphPower;
 
@@ -301,7 +303,7 @@
                 tex.rgb =
                     lerp(tex.rgb,
                          _HitColor.rgb,
-                         _HitPower);
+                         _HitPower * (1.0h - saturate(_HitShading)));
 
                 #if defined(_EMISSION_ON)
                     half3 emission =
@@ -318,6 +320,12 @@
                     lerp(tex.rgb,
                          _AttackTelegraphColor.rgb,
                          saturate(_AttackTelegraphPower));
+
+                // Neutral lighting keeps the model's volume visible during a white hit.
+                // Apply after emission and telegraph so they cannot tint the flash.
+                half3 shadedHitColor = _HitColor.rgb * lerp(0.65h, 1.0h, NdotL);
+                tex.rgb = lerp(tex.rgb, shadedHitColor,
+                    saturate(_HitPower) * saturate(_HitShading));
 
                 #if defined(_FADE_ON)
                     tex = ApplyFade(tex, finalUV);

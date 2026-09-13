@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Features.Bosses.UI;
 using UnityEngine;
 
@@ -22,7 +23,65 @@ namespace Features.Bosses.Scripts
         [field: Tooltip("Pause after the entire attack, including roots sinking underground.")]
         public float AttackInterval { get; private set; } = 4f;
         [field: SerializeField]
-        [field: Tooltip("Enabled attacks run in order. Each attack asset contains its own damage and timing.")]
+        [field: Tooltip("Fallback pool when no health phase matches. Enabled attacks run in order.")]
+        public BossAttackConfiguration[] Attacks { get; private set; } = Array.Empty<BossAttackConfiguration>();
+
+        [field: Header("Health phases")]
+        [field: SerializeField]
+        [field: Tooltip("The matching phase with the lowest health threshold supplies the attack pool. " +
+                        "Use thresholds 100, 70 and 40 for three phases. Array order does not matter.")]
+        public BossAttackPhase[] AttackPhases { get; private set; } = Array.Empty<BossAttackPhase>();
+
+        public BossAttackConfiguration[] GetAttacksForHealth(float healthPercentage)
+        {
+            healthPercentage = Mathf.Clamp(healthPercentage, 0f, 100f);
+            BossAttackPhase selectedPhase = null;
+            float selectedThreshold = float.PositiveInfinity;
+            if (AttackPhases != null)
+            {
+                foreach (BossAttackPhase phase in AttackPhases)
+                {
+                    if (phase == null)
+                        continue;
+                    float threshold = Mathf.Clamp(phase.MaxHealthPercentage, 0f, 100f);
+                    if (healthPercentage <= threshold && threshold < selectedThreshold)
+                    {
+                        selectedPhase = phase;
+                        selectedThreshold = threshold;
+                    }
+                }
+            }
+
+            return selectedPhase != null ? selectedPhase.Attacks : Attacks;
+        }
+
+        public IEnumerable<BossAttackConfiguration> GetAllAttacks()
+        {
+            if (Attacks != null)
+                foreach (BossAttackConfiguration attack in Attacks)
+                    yield return attack;
+            if (AttackPhases == null)
+                yield break;
+            foreach (BossAttackPhase phase in AttackPhases)
+            {
+                if (phase?.Attacks == null)
+                    continue;
+                foreach (BossAttackConfiguration attack in phase.Attacks)
+                    yield return attack;
+            }
+        }
+    }
+
+    [Serializable]
+    public sealed class BossAttackPhase
+    {
+        [field: SerializeField, Range(0f, 100f)]
+        [field: Tooltip("Active at or below this health percentage until a lower threshold is reached.")]
+        public float MaxHealthPercentage { get; private set; } = 100f;
+
+        [field: SerializeField]
+        [field: Tooltip("The complete pool for this phase. Enabled attacks run in order, starting from the first " +
+                        "attack on phase entry. An empty pool pauses attacks.")]
         public BossAttackConfiguration[] Attacks { get; private set; } = Array.Empty<BossAttackConfiguration>();
     }
 }

@@ -6,6 +6,7 @@ namespace Features.Bosses.Scripts
     {
         private static readonly int IdleState = Animator.StringToHash("Base Layer.Idle");
         private static readonly int AttackState = Animator.StringToHash("Base Layer.Attack");
+        private static readonly int AttackTrigger = Animator.StringToHash("Attack");
         private readonly Animator _animator;
         private readonly AnimationClip _attackClip;
         private int _currentState;
@@ -24,6 +25,7 @@ namespace Features.Bosses.Scripts
             _currentState = IdleState;
             _playbackSpeed = 1f;
             _animator.speed = 1f;
+            _animator.ResetTrigger(AttackTrigger);
             _animator.Play(IdleState, 0, 0f);
         }
 
@@ -35,7 +37,7 @@ namespace Features.Bosses.Scripts
             _playbackSpeed = _attackClip != null
                 ? _attackClip.length / Mathf.Max(0.01f, warningDuration) : 1f;
             _animator.speed = _playbackSpeed;
-            _animator.Play(AttackState, 0, 0f);
+            _animator.SetTrigger(AttackTrigger);
         }
 
         public void SetTimeScale(float timeScale)

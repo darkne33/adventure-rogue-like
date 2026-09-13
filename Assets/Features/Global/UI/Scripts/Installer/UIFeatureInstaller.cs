@@ -6,11 +6,14 @@ namespace UI
     public class UIFeatureInstaller : MonoInstaller
     {
         [SerializeField] private PanelsConfig _panelsConfig;
+        [SerializeField] private LoadingPanel _loadingPanelPrefab;
         
         public override void InstallBindings()
         {
             //feature
             Container.Bind<IPanelService>().To<PanelService>().FromNew().AsSingle();
+            Container.Bind<ILoadingScreenService>().To<LoadingScreenService>().AsSingle()
+                .WithArguments(_loadingPanelPrefab);
             Container.Bind<IPanelsFactory>().To<PanelsFactory>().AsSingle();
             Container.Bind<IPanelPresentersFactory>().To<PanelPresentersFactory>().AsSingle();
             Container.Bind<IPanelPresentersService>().To<PanelPresentersService>().AsSingle();

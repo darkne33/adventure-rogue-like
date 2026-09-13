@@ -4,9 +4,9 @@ namespace Features.Bosses.Scripts
 {
     [CreateAssetMenu(menuName = "Configs/Bosses/Single Wood Attack",
         fileName = "WoodGuardSingleAttackConfiguration")]
-    public sealed class WoodGuardSingleAttackConfiguration : BossAttackConfiguration
+    public class WoodGuardSingleAttackConfiguration : BossAttackConfiguration
     {
-        [field: Header("Warning at the character's captured position")]
+        [field: Header("Warning at the captured target position")]
         [field: SerializeField, Min(0.01f)] public float WarningDuration { get; private set; } = 1.2f;
         [field: SerializeField, Range(0.01f, 1f)]
         public float InitialWarningScale { get; private set; } = 0.1f;

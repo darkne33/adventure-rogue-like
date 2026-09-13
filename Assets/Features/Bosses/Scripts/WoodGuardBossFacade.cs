@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Features.Bosses.Scripts
@@ -5,16 +6,15 @@ namespace Features.Bosses.Scripts
     [DisallowMultipleComponent]
     public sealed class WoodGuardBossFacade : BossFacade
     {
+        public override Transform AttackOrigin => _attackOrigin != null ? _attackOrigin : transform;
+        public Animator Animator => _animator;
+        public AnimationClip AttackClip => _attackClip;
+        protected override EnemyType SpawnIdentity => EnemyType.WoodGuardBoss;
+
         [SerializeField] private Transform _attackOrigin;
         [SerializeField] private Animator _animator;
         [SerializeField] private AnimationClip _attackClip;
         [SerializeField] private bool _showAttackPreview = true;
-
-        public override Transform AttackOrigin => _attackOrigin != null ? _attackOrigin : transform;
-        protected override EnemyType SpawnIdentity => EnemyType.WoodGuardBoss;
-
-        protected override IBossAnimationSystem CreateAnimationSystem() =>
-            new WoodGuardBossAnimation(_animator, _attackClip);
 
         private void OnDrawGizmos()
         {
@@ -24,11 +24,12 @@ namespace Features.Bosses.Scripts
 
         public void DrawAttackPreview(Vector3 origin, Quaternion rotation)
         {
-            if (Config == null || Config.Attacks == null)
+            if (Config == null)
                 return;
-            foreach (BossAttackConfiguration attack in Config.Attacks)
+            var drawnAttacks = new HashSet<BossAttackConfiguration>();
+            foreach (BossAttackConfiguration attack in Config.GetAllAttacks())
             {
-                if (attack != null && attack.IsEnabled)
+                if (attack != null && attack.IsEnabled && drawnAttacks.Add(attack))
                     attack.DrawPreview(origin, rotation);
             }
         }

@@ -7,88 +7,49 @@ using Zenject;
 
 namespace Features.Bosses.Scripts
 {
-    public enum BossState
-    {
-        Dormant,
-        Waiting,
-        Attacking,
-        Dead
-    }
-
     [RequireComponent(typeof(Rigidbody))]
     public abstract class BossFacade : CombatTarget
     {
+        public override HealthSystem HealthSystem => _healthSystem;
+        public override DealDamageEffectSystem EffectsSystem => _effectsSystem;
+        public override Rigidbody Rigidbody => _rigidbody;
+        public override Renderer[] MeshRenderers => _meshRenderers;
+        public override EnemyRank Rank => EnemyRank.Boss;
+        public IBossAnimationSystem AnimationSystem => _animationSystem;
+        public BossAttackSystem AttackSystem => _attackSystem;
+        public BossCombatSystem CombatSystem => _combatSystem;
+        public BossConfig Config => _bossConfig;
+        public BossState State => _combatSystem?.State ?? BossState.Dormant;
+        public abstract Transform AttackOrigin { get; }
+        public Quaternion AttackRotation => GetFlatRotation(AttackOrigin.forward);
+        public bool CanAttack => _initialized && isActiveAndEnabled && !IsDead && RelicTimeScale > 0f;
+        public override float RelicTimeScale => Time.time < _stunnedUntil ? 0f :
+            Mathf.Clamp(_persistentSlow * (Time.time < _temporarySlowUntil ? _temporarySlow : 1f), 0.05f, 1f);
+
+        protected virtual EnemyType SpawnIdentity => EnemyType.None;
+
         [SerializeField] private BossConfig _bossConfig;
         [SerializeField] private Renderer[] _meshRenderers;
+        [Tooltip("Projectile aim points, selected in order. Empty entries are skipped. " +
+                 "Uses Target To Shoot Damage when no points are assigned.")]
+        [SerializeField] private Transform[] _targetsToShootDamage = Array.Empty<Transform>();
 
+        [Inject] private IBossSystemsFactory _systemsFactory;
+        [Inject] private ICharacterProvider _characterProvider;
+
+        private Rigidbody _rigidbody;
         private HealthSystem _healthSystem;
         private DealDamageEffectSystem _effectsSystem;
-        private Rigidbody _rigidbody;
+        private IBossAnimationSystem _animationSystem;
         private BossAttackSystem _attackSystem;
-        private CancellationTokenSource _combatCancellation;
+        private BossCombatSystem _combatSystem;
         private bool _initialized;
         private bool _hasStarted;
         private float _persistentSlow = 1f;
         private float _temporarySlow = 1f;
         private float _temporarySlowUntil;
         private float _stunnedUntil;
-
-        [Inject] private ICharacterProvider _characterProvider;
-        [Inject] private IEnemiesProvider _targetsProvider;
-        [Inject] private CharacterStats _characterStats;
-        [Inject] private GoldDropper _goldDropper;
-        [Inject] private ExpDropper _expDropper;
-
-        public BossConfig Config => _bossConfig;
-        public BossState State { get; private set; } = BossState.Dormant;
-        public IBossAnimationSystem AnimationSystem { get; private set; }
-        public abstract Transform AttackOrigin { get; }
-        public Quaternion AttackRotation => GetFlatRotation(AttackOrigin.forward);
-        public override HealthSystem HealthSystem => _healthSystem;
-        public override DealDamageEffectSystem EffectsSystem => _effectsSystem;
-        public override Rigidbody Rigidbody => _rigidbody;
-        public override Renderer[] MeshRenderers => _meshRenderers;
-        public override EnemyRank Rank => EnemyRank.Boss;
-        public bool CanAttack => _initialized && isActiveAndEnabled && !IsDead && RelicTimeScale > 0f;
-        protected virtual EnemyType SpawnIdentity => EnemyType.None;
-
-        public override float RelicTimeScale => Time.time < _stunnedUntil ? 0f :
-            Mathf.Clamp(_persistentSlow * (Time.time < _temporarySlowUntil ? _temporarySlow : 1f), 0.05f, 1f);
-
-        public void InitializeBoss()
-        {
-            if (_initialized)
-                return;
-            if (_bossConfig == null)
-                throw new InvalidOperationException($"BossConfig is missing on {name}.");
-            if (_characterProvider?.CharacterFacade == null)
-                throw new InvalidOperationException($"The character is not available for boss {name}.");
-
-            _rigidbody = GetComponent<Rigidbody>();
-            _rigidbody.useGravity = false;
-            _rigidbody.constraints = RigidbodyConstraints.FreezeAll;
-            if (!_rigidbody.isKinematic)
-            {
-                _rigidbody.linearVelocity = Vector3.zero;
-                _rigidbody.angularVelocity = Vector3.zero;
-            }
-            if (_meshRenderers == null || _meshRenderers.Length == 0)
-                _meshRenderers = GetComponentsInChildren<Renderer>(true);
-
-            SpawnType = SpawnIdentity;
-            AnimationSystem = CreateAnimationSystem();
-            _effectsSystem = new DealDamageEffectSystem(_meshRenderers);
-            var deathSystem = new BossDeathSystem(this, _targetsProvider, _characterProvider.CharacterFacade,
-                _characterStats, _goldDropper, _expDropper);
-            _healthSystem = new HealthSystem(Mathf.Max(1, _bossConfig.MaxHealth),
-                GetComponents<IHealthView>(), deathSystem, GetComponents<IDamageView>());
-            _healthSystem.Initialize();
-            _attackSystem = new BossAttackSystem(this, _characterProvider.CharacterFacade);
-            _initialized = true;
-            AnimationSystem.IdleAnimation();
-        }
-
-        protected abstract IBossAnimationSystem CreateAnimationSystem();
+        private int _nextProjectileTargetIndex;
 
         protected virtual void Start()
         {
@@ -96,69 +57,71 @@ namespace Features.Bosses.Scripts
             InitializeAndStartCombat(this.GetCancellationTokenOnDestroy()).Forget();
         }
 
-        private async UniTask InitializeAndStartCombat(CancellationToken cancellationToken)
-        {
-            // Scene bosses can start while the character prefab is still loading.
-            if (!_initialized && _characterProvider != null)
-            {
-                bool wasCancelled = await UniTask.WaitUntil(
-                        () => _characterProvider.CharacterFacade != null &&
-                              _characterProvider.CharacterFacade.HealthSystem != null,
-                        cancellationToken: cancellationToken)
-                    .SuppressCancellationThrow();
-
-                if (wasCancelled)
-                    return;
-            }
-
-            InitializeBoss();
-            StartCombat();
-        }
-
         protected virtual void OnEnable()
         {
-            if (_hasStarted)
-                StartCombat();
+            if (_hasStarted && _initialized)
+                _combatSystem.Start();
         }
 
         protected virtual void OnDisable() => StopCombat();
 
-        private void StartCombat()
+        protected virtual void OnDestroy()
         {
-            if (!_initialized || !isActiveAndEnabled || IsDead || _combatCancellation != null)
+            _combatSystem?.Dispose();
+            _effectsSystem?.Dispose();
+        }
+
+        public void Initialize()
+        {
+            if (_initialized)
                 return;
-            _attackSystem.Initialize();
-            State = BossState.Waiting;
-            _combatCancellation = CancellationTokenSource.CreateLinkedTokenSource(
-                this.GetCancellationTokenOnDestroy());
-            RunCombat(_combatCancellation.Token).Forget();
-        }
 
-        private async UniTask RunCombat(CancellationToken cancellationToken)
-        {
-            try
+            _systemsFactory.Create(this);
+            _rigidbody.useGravity = false;
+            _rigidbody.constraints = RigidbodyConstraints.FreezeAll;
+            if (!_rigidbody.isKinematic)
             {
-                await _attackSystem.Tick(cancellationToken);
+                _rigidbody.linearVelocity = Vector3.zero;
+                _rigidbody.angularVelocity = Vector3.zero;
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            SpawnType = SpawnIdentity;
+            _healthSystem.Initialize();
+            _initialized = true;
+            _animationSystem.IdleAnimation();
+        }
+
+        public void Construct(Rigidbody rigidbody, Renderer[] meshRenderers, HealthSystem healthSystem,
+            IBossAnimationSystem animationSystem, BossAttackSystem attackSystem,
+            BossCombatSystem combatSystem, DealDamageEffectSystem effectsSystem)
+        {
+            _rigidbody = rigidbody;
+            _meshRenderers = meshRenderers;
+            _healthSystem = healthSystem;
+            _animationSystem = animationSystem;
+            _attackSystem = attackSystem;
+            _combatSystem = combatSystem;
+            _effectsSystem = effectsSystem;
+        }
+
+        public void StopCombat() => _combatSystem?.Stop();
+
+        public override Transform GetNextProjectileTarget()
+        {
+            if (_targetsToShootDamage != null && _targetsToShootDamage.Length > 0)
             {
+                for (int offset = 0; offset < _targetsToShootDamage.Length; offset++)
+                {
+                    int index = (_nextProjectileTargetIndex + offset) % _targetsToShootDamage.Length;
+                    Transform target = _targetsToShootDamage[index];
+                    if (target == null)
+                        continue;
+
+                    _nextProjectileTargetIndex = (index + 1) % _targetsToShootDamage.Length;
+                    return target;
+                }
             }
-        }
 
-        public void StopCombat()
-        {
-            State = IsDead ? BossState.Dead : BossState.Dormant;
-            CancellationTokenSource cancellation = _combatCancellation;
-            _combatCancellation = null;
-            cancellation?.Cancel();
-            cancellation?.Dispose();
-            AnimationSystem?.IdleAnimation();
-        }
-
-        internal void SetAttacking(bool attacking)
-        {
-            if (!IsDead && isActiveAndEnabled && State != BossState.Dormant)
-                State = attacking ? BossState.Attacking : BossState.Waiting;
+            return base.GetNextProjectileTarget();
         }
 
         public override void SetPersistentRelicSlow(float multiplier) =>
@@ -180,6 +143,25 @@ namespace Features.Bosses.Scripts
             forward.y = 0f;
             return Quaternion.LookRotation(forward.sqrMagnitude > 0.001f ? forward.normalized :
                 Vector3.forward, Vector3.up);
+        }
+
+        private async UniTask InitializeAndStartCombat(CancellationToken cancellationToken)
+        {
+            // Scene bosses can start while the character prefab is still loading.
+            if (!_initialized && _characterProvider != null)
+            {
+                bool wasCancelled = await UniTask.WaitUntil(
+                        () => _characterProvider.CharacterFacade != null &&
+                              _characterProvider.CharacterFacade.HealthSystem != null,
+                        cancellationToken: cancellationToken)
+                    .SuppressCancellationThrow();
+
+                if (wasCancelled)
+                    return;
+            }
+
+            Initialize();
+            _combatSystem.Start();
         }
     }
 }

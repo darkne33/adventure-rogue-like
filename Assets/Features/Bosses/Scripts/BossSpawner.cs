@@ -12,14 +12,14 @@ namespace Features.Bosses.Scripts
     {
         private readonly IRogueLikeRuntimeDataService _runtimeDataService;
         private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
-        private readonly BossFactory _bossFactory;
+        private readonly IBossFactory _bossFactory;
         private readonly IEnemiesProvider _enemiesProvider;
         private readonly RelicEventBus _relicEventBus;
         private readonly EnemyRoomObserver _roomObserver;
         private readonly BossHealthUIController _healthUI;
 
         public BossSpawner(IRogueLikeRuntimeDataService runtimeDataService,
-            ISceneService<RogueLikeSceneProvider> sceneService, BossFactory bossFactory,
+            ISceneService<RogueLikeSceneProvider> sceneService, IBossFactory bossFactory,
             IEnemiesProvider enemiesProvider, RelicEventBus relicEventBus,
             EnemyRoomObserver roomObserver, BossHealthUIController healthUI)
         {
@@ -54,6 +54,7 @@ namespace Features.Bosses.Scripts
                 ? Quaternion.LookRotation(forward.normalized, Vector3.up)
                 : Quaternion.identity;
             BossFacade boss = _bossFactory.Create(point.BossPrefab, position, rotation);
+            boss.Initialize();
             _enemiesProvider.AddEnemy(boss);
             _relicEventBus.PublishBossSpawned(new RelicBossSpawnEvent(boss, position));
             _healthUI.Show(boss, roomData);

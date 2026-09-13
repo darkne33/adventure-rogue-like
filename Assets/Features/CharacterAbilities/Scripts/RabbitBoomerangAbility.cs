@@ -128,12 +128,13 @@ public class RabbitBoomerangAbility : SingleShootAbility
 
     protected override void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
         PlayerCollisionDetector collisionDetector, CombatTarget targetEnemy, Vector3 spawnPosition,
-        Vector3 shootDirection, int projectileDamage)
+        Vector3 targetPosition, Vector3 shootDirection, int projectileDamage)
     {
         HashSet<CombatTarget> hitEnemies = new();
         collisionDetector.OnHit = enemyFacade =>
             DamageDeal(character, shootObj, enemyFacade, collisionDetector, hitEnemies, projectileDamage);
-        MoveBoomerangToEnemy(character, shootObj, collisionDetector, hitEnemies, targetEnemy, projectileDamage);
+        MoveBoomerangToEnemy(character, shootObj, collisionDetector, hitEnemies, targetEnemy, projectileDamage,
+            targetPosition);
     }
 
     private void DamageDeal(CharacterFacade character, GameObject shootObj, CombatTarget enemyFacade,
@@ -188,7 +189,8 @@ public class RabbitBoomerangAbility : SingleShootAbility
             return;
         }
 
-        MoveBoomerangToEnemy(character, shootObj, collisionDetector, hitEnemies, nextEnemy, projectileDamage);
+        MoveBoomerangToEnemy(character, shootObj, collisionDetector, hitEnemies, nextEnemy, projectileDamage,
+            nextEnemy.GetNextProjectileTarget().position);
     }
 
     private CombatTarget FindNextBoomerangTarget(Vector3 projectilePosition, HashSet<CombatTarget> hitEnemies)
@@ -215,13 +217,12 @@ public class RabbitBoomerangAbility : SingleShootAbility
 
     private void MoveBoomerangToEnemy(CharacterFacade character, GameObject shootObj,
         PlayerCollisionDetector collisionDetector, HashSet<CombatTarget> hitEnemies, CombatTarget nextEnemy,
-        int projectileDamage)
+        int projectileDamage, Vector3 targetPosition)
     {
         if (shootObj == null || nextEnemy == null)
             return;
 
         Vector3 startPosition = shootObj.transform.position;
-        Vector3 targetPosition = GetEnemyTargetPosition(nextEnemy);
         Vector3 direction = targetPosition - startPosition;
 
         if (direction.sqrMagnitude <= 0.001f)

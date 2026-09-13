@@ -9,8 +9,6 @@ using UnityEngine.EventSystems;
 
 public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
 {
-    private const int ShowAnimationMilliseconds = 300;
-
     private readonly ILeaderboardService _leaderboardService;
     private readonly RunRestartService _runRestartService;
     private readonly ISoundsService _soundsService;
@@ -29,7 +27,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         _soundsService = soundsService;
     }
 
-    public override UniTask Initialize()
+    public override async UniTask Initialize()
     {
         _playRequested = false;
         _isCharacterSelectionOpen = false;
@@ -51,6 +49,13 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         Panel.SetHomeVisible(true);
         _characterSelectionView.Hide();
         Panel.SetButtonsInteractable(false);
+
+        // Prepare every roster portrait while the menu is still hidden, before selection can open.
+        CancellationToken cancellationToken = Panel.GetCancellationTokenOnDestroy();
+        await _characterSelectionView.PrewarmPortraitsAsync(
+            _characterConfiguration.Characters, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+
         Panel.PlayButton.onClick.AddListener(OpenCharacterSelection);
         _characterSelectionView.SelectionRequested += SelectCharacter;
         _characterSelectionView.StartRequested += RequestPlay;
@@ -60,13 +65,11 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
             OpenCharacterSelection();
 
         if (_leaderboardService.IsConfigured)
-            RefreshLeaderboard(Panel.GetCancellationTokenOnDestroy()).Forget();
+            RefreshLeaderboard(cancellationToken).Forget();
         else
             _leaderboardView.ShowError("SET PLAYFAB TITLE ID");
 
-        EnableInputAfterShow(Panel.GetCancellationTokenOnDestroy()).Forget();
-
-        return UniTask.CompletedTask;
+        EnableInput();
     }
 
     public UniTask WaitForPlay(CancellationToken cancellationToken) =>
@@ -169,11 +172,8 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         }
     }
 
-    private async UniTask EnableInputAfterShow(CancellationToken cancellationToken)
+    private void EnableInput()
     {
-        await UniTask.Delay(ShowAnimationMilliseconds, ignoreTimeScale: true,
-            cancellationToken: cancellationToken);
-
         if (Panel == null)
             return;
 

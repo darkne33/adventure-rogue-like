@@ -1,7 +1,6 @@
 ﻿using System.Threading;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
-using Features.Enemies.Scripts.Level.Scripts;
 using Infrastructure.SceneProvider;
 using LittleRush.Rendering;
 using UI;
@@ -15,10 +14,13 @@ namespace Core
         [Inject] private ISceneLoader _sceneLoader;
         [Inject] private IGameModeService _gameModeService;
         [Inject] private IPanelService _panelService;
+        [Inject] private ILoadingScreenService _loadingScreenService;
         [Inject] private ICursorService _cursorService;
         [Inject] private DiContainer _container;
 
-        public override async UniTask Enter(CancellationToken cts)
+        public override UniTask Enter(CancellationToken cts) => ShowMainMenu(cts);
+
+        private async UniTask<RogueLikeStateMachine> LoadGameScene(CancellationToken cancellationToken)
         {
             HeightFogRendererFeature.SetRenderingEnabled(false);
 
@@ -37,31 +39,38 @@ namespace Core
                 .GetSceneContext();
             gameModeService.Add<RogueLikeStateMachine>(sceneContext.Container);
             var rogueLikeStateMachine = gameModeService.Get<RogueLikeStateMachine>();
-            var transitionService = sceneContext.Container.Resolve<IRoomTransitionService>();
 
             await UniTask.WaitUntil(() => _sceneLoader.HasActiveScene(SceneNames.GameScene),
-                cancellationToken: cts);
+                cancellationToken: cancellationToken);
 
             gameSceneComponentsProvider.EnableScene();
             Log.Gameplay.Info("Done Load Game Scene State");
 
-            await ShowMainMenu(transitionService, rogueLikeStateMachine, cts);
+            return rogueLikeStateMachine;
         }
 
-        private async UniTask ShowMainMenu(IRoomTransitionService transitionService,
-            RogueLikeStateMachine rogueLikeStateMachine, CancellationToken cancellationToken)
+        private async UniTask ShowMainMenu(CancellationToken cancellationToken)
         {
             _cursorService.ShowUiCursor();
             bool isPanelOpen = false;
 
             try
             {
-                var presenter = await _panelService
-                    .OpenPanelWithPresenter<MainMenuPanel, MainMenuPanelPresenter>(PanelName.MainMenuPanel);
-                isPanelOpen = true;
+                MainMenuPanelPresenter presenter = null;
+                RogueLikeStateMachine rogueLikeStateMachine = null;
+                await _loadingScreenService.Play(
+                    async () =>
+                    {
+                        rogueLikeStateMachine = await LoadGameScene(cancellationToken);
+                        presenter = await _panelService
+                            .OpenPanelWithPresenterHidden<MainMenuPanelPresenter>(PanelName.MainMenuPanel);
+                        isPanelOpen = true;
+                        cancellationToken.ThrowIfCancellationRequested();
+                    },
+                    () => presenter.ForceShow(), cancellationToken);
 
                 await presenter.WaitForPlay(cancellationToken);
-                await transitionService.PlayLoading(
+                await _loadingScreenService.Play(
                     async () =>
                     {
                         await _panelService.HidePanelForce(PanelName.MainMenuPanel);
@@ -70,7 +79,7 @@ namespace Core
                         HeightFogRendererFeature.SetRenderingEnabled(true);
                         await rogueLikeStateMachine.EnterState<RogueLikePrepareStatsState>();
                     },
-                    _cursorService.ShowGameplayCursor);
+                    _cursorService.ShowGameplayCursor, cancellationToken);
             }
             finally
             {

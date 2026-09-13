@@ -19,7 +19,7 @@ namespace Features.Bosses.Scripts
             _character = character;
         }
 
-        public async UniTask Execute(CancellationToken cancellationToken)
+        public async UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true)
         {
             WoodGuardHorizontalAttackPiece prefab = _configuration.PiecePrefab;
             if (prefab == null || !prefab.HasHitCollider || _configuration.IndicatorMaterial == null)
@@ -42,7 +42,8 @@ namespace Features.Bosses.Scripts
             float elapsed = 0f;
             float warningEnd = _configuration.TelegraphDuration;
             float attackEnd = warningEnd + _configuration.RootLifetime;
-            _boss.AnimationSystem.BeginAttack(warningEnd);
+            if (animateBoss)
+                _boss.AnimationSystem.BeginAttack(warningEnd);
 
             try
             {
@@ -54,7 +55,8 @@ namespace Features.Bosses.Scripts
                         return;
 
                     float timeScale = _boss.RelicTimeScale;
-                    _boss.AnimationSystem.SetTimeScale(timeScale);
+                    if (animateBoss)
+                        _boss.AnimationSystem.SetTimeScale(timeScale);
                     if (timeScale > 0f && _boss.CanAttack)
                     {
                         for (int i = 0; i < lines.Length; i++)
@@ -81,7 +83,7 @@ namespace Features.Bosses.Scripts
                             }
                         }
 
-                        if (elapsed >= warningEnd)
+                        if (animateBoss && elapsed >= warningEnd)
                             _boss.AnimationSystem.IdleAnimation();
                         if (elapsed >= attackEnd)
                             break;

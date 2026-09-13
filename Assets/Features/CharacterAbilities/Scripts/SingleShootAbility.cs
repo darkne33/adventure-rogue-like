@@ -103,7 +103,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     protected abstract void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
         PlayerCollisionDetector collisionDetector, CombatTarget targetEnemy, Vector3 spawnPosition,
-        Vector3 shootDirection, int projectileDamage);
+        Vector3 targetPosition, Vector3 shootDirection, int projectileDamage);
 
     protected virtual int GetProjectileDamage(int projectileIndex, int projectileCount) =>
         Damage;
@@ -218,7 +218,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         if (targetEnemy == null)
             return;
 
-        Vector3 targetPosition = GetEnemyTargetPosition(targetEnemy);
+        Vector3 targetPosition = targetEnemy.GetNextProjectileTarget().position;
         Vector3 spawnPosition = character.ProjectileSpawnPosition +
                                 GetProjectileSpawnOffset(character.transform, projectileIndex, projectileCount);
         Vector3 shootDirection = targetPosition - spawnPosition;
@@ -238,8 +238,8 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
         playerCollisionDetector.Initialize(character.transform);
         int projectileDamage = GetProjectileDamage(projectileIndex, projectileCount);
-        OnProjectileCreated(character, shootObj, playerCollisionDetector, targetEnemy, spawnPosition, shootDirection,
-            projectileDamage);
+        OnProjectileCreated(character, shootObj, playerCollisionDetector, targetEnemy, spawnPosition,
+            targetPosition, shootDirection, projectileDamage);
     }
 
     private int CalculateProjectileCount()
