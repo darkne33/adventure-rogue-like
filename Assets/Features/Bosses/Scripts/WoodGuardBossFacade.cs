@@ -16,6 +16,8 @@ namespace Features.Bosses.Scripts
         [SerializeField] private AnimationClip _attackClip;
         [SerializeField] private bool _showAttackPreview = true;
 
+        private void LateUpdate() => AnimationSystem?.SetTimeScale(RelicTimeScale);
+
         private void OnDrawGizmos()
         {
             if (_showAttackPreview && Application.isPlaying == false)

@@ -23,7 +23,7 @@ namespace Features.Bosses.Scripts
         public float InitialDelay { get; private set; } = 1f;
 
         [field: SerializeField, Min(0f)]
-        [field: Tooltip("Time between warning starts. Earlier pieces can remain active while later pieces appear.")]
+        [field: Tooltip("Minimum time between warning starts. When animating the boss, the next warning waits for the previous windup and recovery. Earlier roots can remain active.")]
         public float SpawnInterval { get; private set; } = 0.6f;
 
         [field: SerializeField]
@@ -33,6 +33,11 @@ namespace Features.Bosses.Scripts
         [field: SerializeField]
         [field: Tooltip("Show a warning marker for each piece. Warning Duration still delays emergence when markers are hidden.")]
         public bool ShowWarning { get; private set; } = true;
+
+        [field: Header("Tree attack animation")]
+        [field: SerializeField, Min(0.01f)]
+        [field: Tooltip("Time in seconds inside the attack clip at which the strike occurs. This pose coincides with the end of the warning and root emergence.")]
+        public float AnimationImpactTime { get; private set; } = 1f;
 
         [field: Header("Spawn positions on the ground")]
         [field: SerializeField]
