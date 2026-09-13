@@ -315,6 +315,7 @@ public sealed class MinimapController : IDisposable, ITickable
             entry.Value.SetCombatRoomMarkerVisible(
                 isRoomVisible &&
                 state == MinimapRoomState.Available &&
+                entry.Key is not BossRoomData &&
                 entry.Key is DefaultEnemiesRoomData { IsCompleted: false });
         }
 

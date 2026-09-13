@@ -55,7 +55,7 @@ namespace Features.Bosses.Scripts
             facade switch
             {
                 WoodGuardBossFacade woodGuard => new WoodGuardBossAnimation(
-                    woodGuard.Animator, woodGuard.AttackClip),
+                    woodGuard.Animator, woodGuard.AttackClip, woodGuard.Config.AnimationSpeedBlendDuration),
                 _ => throw new ArgumentOutOfRangeException(nameof(facade), facade.GetType(),
                     "Boss animation type is not supported.")
             };

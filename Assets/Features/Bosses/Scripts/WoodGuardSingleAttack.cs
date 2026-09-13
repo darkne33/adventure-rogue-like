@@ -1,6 +1,8 @@
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Features.Bosses.Scripts
 {
@@ -29,7 +31,7 @@ namespace Features.Bosses.Scripts
         }
 
         internal async UniTask ExecuteAt(Vector3 targetPosition, bool animateBoss, bool showWarning,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken, Action<float> onWarningProgress = null)
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (!CanContinue())
@@ -90,6 +92,9 @@ namespace Features.Bosses.Scripts
                         _boss.AnimationSystem.SetTimeScale(timeScale);
                     if (timeScale > 0f && _boss.CanAttack)
                     {
+                        if (!hasEmerged)
+                            onWarningProgress?.Invoke(Mathf.Clamp01(elapsed / warningDuration));
+
                         if (elapsed < warningDuration)
                         {
                             if (indicator != null)
