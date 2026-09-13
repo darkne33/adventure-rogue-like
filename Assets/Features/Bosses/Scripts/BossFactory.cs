@@ -4,7 +4,7 @@ using Zenject;
 
 namespace Features.Bosses.Scripts
 {
-    public sealed class BossFactory
+    public sealed class BossFactory : IBossFactory
     {
         private readonly DiContainer _container;
 
@@ -18,10 +18,8 @@ namespace Features.Bosses.Scripts
             if (prefab == null)
                 throw new ArgumentNullException(nameof(prefab));
 
-            BossFacade boss = _container.InstantiatePrefabForComponent<BossFacade>(
+            return _container.InstantiatePrefabForComponent<BossFacade>(
                 prefab.gameObject, position, rotation, null);
-            boss.InitializeBoss();
-            return boss;
         }
     }
 }

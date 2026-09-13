@@ -56,7 +56,8 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<ICharacterSystemsFactory>().To<CharacterSystemsFactory>().AsSingle();
         Container.Bind<ILevelFactory>().To<LevelFactory>().AsSingle();
         Container.Bind<IEnemyFactory>().To<EnemyFactory>().AsSingle();
-        Container.Bind<BossFactory>().AsSingle();
+        Container.Bind<IBossFactory>().To<BossFactory>().AsSingle();
+        Container.Bind<IBossSystemsFactory>().To<BossSystemsFactory>().AsSingle();
         Container.Bind<IEnemySystemsFactory>().To<EnemySystemsFactory>().AsSingle();
         Container.Bind<IUpgradeOfferItemFactory>().To<UpgradeOfferItemFactory>().AsSingle();
         Container.Bind<MinimapElementFactory>().AsSingle();

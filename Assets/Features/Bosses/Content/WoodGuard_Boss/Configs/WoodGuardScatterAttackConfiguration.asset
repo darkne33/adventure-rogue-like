@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da18c9bc639c4b56bab1341b38ff2e91, type: 3}
+  m_Name: WoodGuardScatterAttackConfiguration
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Bosses.Scripts.WoodGuardScatterAttackConfiguration
+  <IsEnabled>k__BackingField: 1
+  <WarningDuration>k__BackingField: 1.2
+  <InitialWarningScale>k__BackingField: 0.1
+  <GroundOffset>k__BackingField: 0.04
+  <IndicatorPrefab>k__BackingField: {fileID: 6769835410302440454, guid: e6c782a94b3d49aa9b2f506810ac3e75, type: 3}
+  <RootsPrefab>k__BackingField: {fileID: 1685107924930966370, guid: 8d4a970583564b4a832e90bc9de458cf, type: 3}
+  <RootsRotationOffset>k__BackingField: {x: 0, y: 0, z: 0}
+  <UndergroundDepth>k__BackingField: 4
+  <RiseDuration>k__BackingField: 0.2
+  <HoldDuration>k__BackingField: 1.2
+  <SinkDuration>k__BackingField: 0.35
+  <Damage>k__BackingField: 10
+  <KnockbackForce>k__BackingField: 10
+  <KnockbackUpwardForce>k__BackingField: 10
+  <SpawnCount>k__BackingField: 6
+  <MinRadius>k__BackingField: 2
+  <MaxRadius>k__BackingField: 6
+  <InitialDelay>k__BackingField: 1
+  <SpawnInterval>k__BackingField: 0.6
+  <FollowCharacter>k__BackingField: 1
+  <ShowWarning>k__BackingField: 1
+  <PositionMode>k__BackingField: 0
+  <StartingAngle>k__BackingField: 0
+  <AngularStep>k__BackingField: 90
+  <MinimumPositionDistance>k__BackingField: 1.5

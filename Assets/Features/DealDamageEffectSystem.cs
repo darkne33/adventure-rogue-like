@@ -6,40 +6,83 @@ using UnityEngine;
 
 namespace Features.Enemies.Scripts
 {
-    public class DealDamageEffectSystem
+    public class DealDamageEffectSystem : System.IDisposable
     {
         private const float AttackShakeStrength = 0.12f;
         private const int AttackShakeVibrato = 18;
         private const float AttackTelegraphMaxPower = 0.6f;
 
         private static readonly int HitBlend = Shader.PropertyToID("_HitPower");
+        private static readonly int HitColor = Shader.PropertyToID("_HitColor");
+        private static readonly int HitShading = Shader.PropertyToID("_HitShading");
         private static readonly int AttackTelegraphBlend =
             Shader.PropertyToID("_AttackTelegraphPower");
         private static readonly int FadeAmount = Shader.PropertyToID("_FadeAmount");
         
         private readonly Renderer[] _meshRenderers;
         private readonly Material[] _materials;
+        private readonly Material[] _regularHitMaterials;
+        private readonly Material[] _whiteHitMaterials;
         private readonly Transform _attackTelegraphTransform;
         private readonly MaterialPropertyBlock _propertyBlock = new();
         private Tweener _hitTweener;
+        private Tweener _whiteHitTweener;
         private Tweener _deathFadeTweener;
         private Sequence _attackTelegraphSequence;
         private Vector3 _attackTelegraphStartLocalPosition;
         private bool _hasAttackTelegraphStartPosition;
         private float _hitPower;
+        private float _whiteHitPower;
         private float _attackTelegraphPower;
+        private bool _isDying;
+        private bool _isDisposed;
 
         public DealDamageEffectSystem(Renderer[] meshRenderers,
-            Transform attackTelegraphTransform = null)
+            Transform attackTelegraphTransform = null, bool useWhiteHitFlash = false,
+            Color? hitColorOverride = null)
         {
-            _meshRenderers = meshRenderers;
+            _meshRenderers = meshRenderers?.Where(renderer => renderer != null).ToArray()
+                ?? System.Array.Empty<Renderer>();
             _attackTelegraphTransform = attackTelegraphTransform;
-            _materials = new Material[meshRenderers.Length];
-            _materials = meshRenderers.Select(x  => x.material).ToArray();
+            _materials = _meshRenderers
+                .SelectMany(renderer => useWhiteHitFlash
+                    ? renderer.materials : new[] { renderer.material })
+                .Where(material => material != null)
+                .Distinct()
+                .ToArray();
+
+            if (useWhiteHitFlash && hitColorOverride.HasValue)
+            {
+                foreach (Material material in _materials)
+                {
+                    if (material.HasProperty(HitBlend) && material.HasProperty(HitColor))
+                        material.SetColor(HitColor, hitColorOverride.Value);
+                }
+            }
+
+            _whiteHitMaterials = useWhiteHitFlash
+                ? _materials.Where(HasWhiteHitColor).ToArray()
+                : System.Array.Empty<Material>();
+            _regularHitMaterials = _materials.Except(_whiteHitMaterials)
+                .Where(material => material.HasProperty(HitBlend)).ToArray();
+
+            foreach (Material material in _whiteHitMaterials)
+            {
+                material.SetColor(HitColor, Color.white);
+                if (material.HasProperty(HitShading))
+                    material.SetFloat(HitShading, 1f);
+            }
         }
 
         public void DealDamage(float duration = 0.08f)
         {
+            if (_isDying || _isDisposed)
+                return;
+
+            PlayWhiteHitFlash(duration);
+            if (_regularHitMaterials.Length == 0)
+                return;
+
             _hitTweener?.Kill();
 
             _hitPower = 0f;
@@ -61,6 +104,49 @@ namespace Features.Enemies.Scripts
                     _hitPower = 0f;
                     ApplyHitBlend();
                 });
+        }
+
+        private static bool HasWhiteHitColor(Material material)
+        {
+            if (!material.HasProperty(HitBlend) || !material.HasProperty(HitColor))
+                return false;
+
+            Color color = material.GetColor(HitColor);
+            return color.r >= 0.85f && Mathf.Abs(color.r - color.g) <= 0.025f &&
+                   Mathf.Abs(color.r - color.b) <= 0.025f;
+        }
+
+        private void PlayWhiteHitFlash(float duration)
+        {
+            if (_whiteHitMaterials.Length == 0)
+                return;
+
+            _whiteHitTweener?.Kill();
+            // Reach white on the impact frame, including during rapid repeated hits.
+            SetWhiteHitPower(1f);
+            _whiteHitTweener = DOTween.To(
+                    () => _whiteHitPower,
+                    SetWhiteHitPower,
+                    0f,
+                    Mathf.Max(0.06f, duration))
+                .SetDelay(Mathf.Clamp(duration * 0.5f, 0.03f, 0.05f))
+                .SetEase(Ease.OutQuad)
+                .SetLink(_meshRenderers[0].gameObject)
+                .OnKill(() =>
+                {
+                    _whiteHitTweener = null;
+                    SetWhiteHitPower(0f);
+                });
+        }
+
+        private void SetWhiteHitPower(float power)
+        {
+            _whiteHitPower = power;
+            foreach (Material material in _whiteHitMaterials)
+            {
+                if (material != null)
+                    material.SetFloat(HitBlend, power);
+            }
         }
 
         public void BeginAttackTelegraph(float duration)
@@ -131,9 +217,13 @@ namespace Features.Enemies.Scripts
 
         public Tween PlayDeathFade(float duration)
         {
+            _isDying = true;
             _hitTweener?.Kill();
+            _whiteHitTweener?.Kill();
             _deathFadeTweener?.Kill();
             _hitPower = 0f;
+            ApplyHitBlend();
+            SetWhiteHitPower(0f);
             ClearAttackTelegraph();
 
             bool hasFadeMaterial = false;
@@ -171,10 +261,28 @@ namespace Features.Enemies.Scripts
 
         private void ApplyHitBlend()
         {
-            foreach (Material material in _materials)
+            foreach (Material material in _regularHitMaterials)
             {
                 if (material != null && material.HasProperty(HitBlend))
                     material.SetFloat(HitBlend, _hitPower);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_isDisposed)
+                return;
+
+            _isDisposed = true;
+            _hitTweener?.Kill();
+            _whiteHitTweener?.Kill();
+            _deathFadeTweener?.Kill();
+            ClearAttackTelegraph();
+
+            foreach (Material material in _materials)
+            {
+                if (material != null)
+                    Object.Destroy(material);
             }
         }
 

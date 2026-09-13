@@ -17,6 +17,7 @@ namespace UI
                 case PanelName.MainMenuPanel: return typeof(MainMenuPanelPresenter);
                 case PanelName.CharacterPanel: return typeof(CharacterPanelPresenter);
                 case PanelName.RoomTransitionPanel: return typeof(RoomTransitionPanelPresenter);
+                case PanelName.LoadingPanel: return typeof(LoadingPanelPresenter);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(panelName), panelName, null);
             }

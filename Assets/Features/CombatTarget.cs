@@ -14,6 +14,9 @@ public abstract class CombatTarget : MonoBehaviour
     public bool IsDead => HealthSystem?.IsDead == true;
     public virtual EnemyType SpawnType { get; internal set; }
 
+    public virtual Transform GetNextProjectileTarget() =>
+        TargetToShootDamage != null ? TargetToShootDamage : transform;
+
     public abstract void SetPersistentRelicSlow(float multiplier);
     public abstract void ApplyRelicSlow(float multiplier, float duration);
     public abstract void ApplyRelicStun(float duration);

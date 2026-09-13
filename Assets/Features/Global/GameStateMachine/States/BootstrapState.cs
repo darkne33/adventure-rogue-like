@@ -15,19 +15,31 @@ namespace Core
         [Inject] private IPanelStorage _panelStorage;
         [Inject] private IUIFactory _uiFactory;
         [Inject] private IEffectsService _effectsService;
+        [Inject] private ILoadingScreenService _loadingScreenService;
         
         public override async UniTask Enter(CancellationToken cts)
         {
             Log.Gameplay.Info("Enter Bootstrap State");
 
-            await _gameAddressableService.InitializeAddressables();
-            await _cameraService.Initialize(cts);
-            await _panelStorage.WarmUp(cts);
-            await _uiFactory.Initialize(cts);
-            await _effectsService.WarmUp(cts);
+            try
+            {
+                await _loadingScreenService.Show(cts);
 
-            Log.Gameplay.Info("Done Bootstrap State Initialization");
-            await StateMachine.EnterState<LoadRogueLikeGameSceneState>();
+                await _gameAddressableService.InitializeAddressables();
+                await _cameraService.Initialize(cts);
+                await _panelStorage.WarmUp(cts);
+                await _uiFactory.Initialize(cts);
+                await _effectsService.WarmUp(cts);
+
+                Log.Gameplay.Info("Done Bootstrap State Initialization");
+                // The next state keeps this screen visible until the main menu is ready.
+                await StateMachine.EnterState<LoadRogueLikeGameSceneState>();
+            }
+            catch
+            {
+                await _loadingScreenService.Hide();
+                throw;
+            }
         }
     }
 }

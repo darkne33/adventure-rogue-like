@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using Features.Relics.Scripts;
 using TMPro;
@@ -45,13 +46,19 @@ public sealed class CharacterSelectionView : MonoBehaviour
     private IReadOnlyList<CharacterDefinition> _characters;
     private int _selectedIndex;
     private bool _isInteractable;
+    private bool _isPreviewInitialized;
 
     public event Action<int, int> SelectionRequested;
     public event Action StartRequested;
     public event Action BackRequested;
 
-    private void Awake()
+    private void Awake() => InitializePreview();
+
+    private void InitializePreview()
     {
+        if (_isPreviewInitialized)
+            return;
+
         if (_previewRenderer == null || _previewViewport == null)
         {
             throw new InvalidOperationException(
@@ -60,6 +67,14 @@ public sealed class CharacterSelectionView : MonoBehaviour
 
         _previewRenderer.Initialize(_previewViewport);
         _previewRenderer.PortraitRendered += HandlePortraitRendered;
+        _isPreviewInitialized = true;
+    }
+
+    public UniTask PrewarmPortraitsAsync(IReadOnlyList<CharacterDefinition> characters,
+        CancellationToken cancellationToken)
+    {
+        InitializePreview();
+        return _previewRenderer.PrewarmPortraitsAsync(characters, cancellationToken);
     }
 
     public void Show(IReadOnlyList<CharacterDefinition> characters, int selectedIndex)
@@ -70,11 +85,11 @@ public sealed class CharacterSelectionView : MonoBehaviour
         if (_portraitSlots == null || _portraitSlots.Length == 0)
             throw new InvalidOperationException("Character selection prefab requires portrait slots.");
 
+        InitializePreview();
         _characters = characters;
         gameObject.SetActive(true);
         SetSelectedIndex(selectedIndex);
         SetInteractable(true);
-        _previewRenderer?.PrewarmPortraitsAsync(characters, destroyCancellationToken).Forget();
         FocusStart();
     }
 

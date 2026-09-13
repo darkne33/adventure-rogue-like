@@ -6,5 +6,6 @@ namespace UI
         MainMenuPanel = 590686160,
         CharacterPanel = 1880749662,
         RoomTransitionPanel = -1562392312,
+        LoadingPanel = -427348192,
     }
 }

@@ -10,6 +10,7 @@ namespace Features.Bosses.Scripts
         private readonly BossFacade _boss;
         private readonly CharacterFacade _character;
         private readonly List<(BossAttackConfiguration Config, IBossAttack Attack)> _attacks = new();
+        private BossAttackConfiguration[] _activeAttackPool;
         private float _cooldown;
         private int _nextAttack;
 
@@ -22,12 +23,27 @@ namespace Features.Bosses.Scripts
         public void Initialize()
         {
             _attacks.Clear();
+            _activeAttackPool = null;
             _nextAttack = 0;
             _cooldown = Mathf.Max(0f, _boss.Config.InitialAttackDelay);
             _boss.AnimationSystem.IdleAnimation();
-            if (_boss.Config.Attacks == null)
+            UpdateAttackPool();
+        }
+
+        private void UpdateAttackPool()
+        {
+            HealthSystem health = _boss.HealthSystem;
+            float healthPercentage = health.CurrentHealth / Mathf.Max(1f, health.MaxHealth) * 100f;
+            BossAttackConfiguration[] attackPool = _boss.Config.GetAttacksForHealth(healthPercentage);
+            if (ReferenceEquals(_activeAttackPool, attackPool))
                 return;
-            foreach (BossAttackConfiguration config in _boss.Config.Attacks)
+
+            _activeAttackPool = attackPool;
+            _attacks.Clear();
+            _nextAttack = 0;
+            if (attackPool == null)
+                return;
+            foreach (BossAttackConfiguration config in attackPool)
             {
                 if (config != null)
                     _attacks.Add((config, config.CreateAttack(_boss, _character)));
@@ -58,6 +74,7 @@ namespace Features.Bosses.Scripts
         {
             if (!_boss.CanAttack)
                 return;
+            UpdateAttackPool();
             for (int i = 0; i < _attacks.Count; i++)
             {
                 var entry = _attacks[_nextAttack];
@@ -65,7 +82,7 @@ namespace Features.Bosses.Scripts
                 if (!entry.Config.IsEnabled)
                     continue;
 
-                _boss.SetAttacking(true);
+                _boss.CombatSystem.SetAttacking(true);
                 try
                 {
                     await entry.Attack.Execute(cancellationToken);
@@ -75,7 +92,7 @@ namespace Features.Bosses.Scripts
                     if (_boss != null)
                     {
                         _boss.AnimationSystem.IdleAnimation();
-                        _boss.SetAttacking(false);
+                        _boss.CombatSystem.SetAttacking(false);
                     }
                 }
                 return;

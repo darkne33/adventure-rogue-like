@@ -108,7 +108,7 @@ public sealed class BulletExplosionAbility : SingleShootAbility
 
     protected override void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
         PlayerCollisionDetector collisionDetector, CombatTarget targetEnemy, Vector3 spawnPosition,
-        Vector3 shootDirection, int projectileDamage)
+        Vector3 targetPosition, Vector3 shootDirection, int projectileDamage)
     {
         Vector3 endPosition = spawnPosition + shootDirection * _travelDistance;
         MoveProjectile(shootObj, endPosition).OnComplete(() => DestroyShoot(shootObj));

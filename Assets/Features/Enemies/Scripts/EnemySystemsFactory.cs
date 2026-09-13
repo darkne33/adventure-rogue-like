@@ -56,7 +56,7 @@ namespace Features.Enemies.Scripts
                 movementSystem = attackMovementSystem;
 
             var effectsSystem = new DealDamageEffectSystem(
-                facade.MeshRenderers, facade.AttackTelegraphTransform);
+                facade.MeshRenderers, facade.AttackTelegraphTransform, useWhiteHitFlash: true);
             Action deathEffect = configuration.ExplodesOnDeath &&
                                  damageSystem is EnemyDamageAreaSystem areaDamageSystem
                 ? areaDamageSystem.DetonateOnDeath

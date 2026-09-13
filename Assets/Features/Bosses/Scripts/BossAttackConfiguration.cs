@@ -17,6 +17,6 @@ namespace Features.Bosses.Scripts
 
     public interface IBossAttack
     {
-        UniTask Execute(CancellationToken cancellationToken);
+        UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true);
     }
 }
