@@ -1,5 +1,6 @@
 using System;
 using Cysharp.Threading.Tasks;
+using Features.Bosses.Scripts;
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
 using UnityEngine;
@@ -234,6 +235,12 @@ public sealed class PunchAbility : CharacterActiveAbility
             out Quaternion punchRotation);
         SpawnPunchEffect(punchPosition, punchRotation);
 
+        if (preferredEnemy is BossFacade)
+        {
+            ApplyDamage(character, preferredEnemy, punchDamage, punchPosition);
+            return;
+        }
+
         if (TryGetCollisionTarget(punchPosition, preferredEnemy,
                 out CombatTarget hitEnemy, out Vector3 hitPosition) == false)
             return;
@@ -241,10 +248,34 @@ public sealed class PunchAbility : CharacterActiveAbility
         ApplyDamage(character, hitEnemy, punchDamage, hitPosition);
     }
 
-    private CombatTarget GetClosestEnemy(CharacterFacade character) =>
-        character == null
-            ? null
-            : _enemiesProvider.GetClosestEnemyByCharacter(character.transform, Mathf.Max(0.1f, _radius));
+    private CombatTarget GetClosestEnemy(CharacterFacade character)
+    {
+        if (character == null)
+            return null;
+
+        Vector3 characterPosition = character.transform.position;
+        float radius = Mathf.Max(0.1f, _radius);
+        float closestSqrDistance = radius * radius;
+        CombatTarget closestEnemy = null;
+
+        foreach (CombatTarget enemy in _enemiesProvider.ActiveEnemies)
+        {
+            if (enemy == null || enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
+                continue;
+
+            Vector3 targetPosition = enemy is BossFacade boss
+                ? boss.GetClosestProjectileTarget(characterPosition).position
+                : enemy.transform.position;
+            float sqrDistance = (targetPosition - characterPosition).sqrMagnitude;
+            if (sqrDistance >= closestSqrDistance)
+                continue;
+
+            closestSqrDistance = sqrDistance;
+            closestEnemy = enemy;
+        }
+
+        return closestEnemy;
+    }
 
     private void GetPunchPose(CharacterFacade character, CombatTarget preferredEnemy, int punchIndex,
         int globalPunchIndex, float idleAngleOffset, int simultaneousIndex, int simultaneousAttackCount,
@@ -264,6 +295,14 @@ public sealed class PunchAbility : CharacterActiveAbility
         int simultaneousIndex, int simultaneousAttackCount, out Vector3 position,
         out Quaternion rotation)
     {
+        if (enemy is BossFacade)
+        {
+            position = enemy.GetNextProjectileTarget().position;
+            rotation = GetSafeRotation(position - character.ProjectileSpawnPosition,
+                character.transform.forward);
+            return;
+        }
+
         Transform targetPoint = enemy.TargetToShootDamage != null
             ? enemy.TargetToShootDamage
             : enemy.transform;
@@ -397,6 +436,7 @@ public sealed class PunchAbility : CharacterActiveAbility
 
         GameObject effect = UnityEngine.Object.Instantiate(_configuration.Prefab,
             position, rotation);
+        effect.transform.localScale *= 1.44f;
         float duration = Mathf.Max(0.01f, _configuration.EffectDuration * AbilityDurationMultiplier);
         UnityEngine.Object.Destroy(effect, duration);
     }

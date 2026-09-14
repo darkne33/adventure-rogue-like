@@ -18,6 +18,26 @@ namespace Features.Bosses.Scripts
 
         private void LateUpdate() => AnimationSystem?.SetTimeScale(RelicTimeScale);
 
+        protected override void BakeSpawnCollider()
+        {
+            if (Collider is MeshCollider && _animator != null && _animator.isActiveAndEnabled &&
+                _animator.runtimeAnimatorController != null)
+            {
+                // Apply the initial Idle pose before taking the one-time collision snapshot.
+                AnimatorCullingMode cullingMode = _animator.cullingMode;
+                try
+                {
+                    _animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                    _animator.Update(0f);
+                }
+                finally
+                {
+                    _animator.cullingMode = cullingMode;
+                }
+            }
+            base.BakeSpawnCollider();
+        }
+
         private void OnDrawGizmos()
         {
             if (_showAttackPreview && Application.isPlaying == false)

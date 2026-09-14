@@ -13,6 +13,7 @@ namespace Features.Bosses.Scripts
         public override HealthSystem HealthSystem => _healthSystem;
         public override DealDamageEffectSystem EffectsSystem => _effectsSystem;
         public override Rigidbody Rigidbody => _rigidbody;
+        public Collider Collider => _collider;
         public override Renderer[] MeshRenderers => _meshRenderers;
         public override EnemyRank Rank => EnemyRank.Boss;
         public IBossAnimationSystem AnimationSystem => _animationSystem;
@@ -29,6 +30,7 @@ namespace Features.Bosses.Scripts
         protected virtual EnemyType SpawnIdentity => EnemyType.None;
 
         [SerializeField] private BossConfig _bossConfig;
+        [SerializeField] private Collider _collider;
         [SerializeField] private Renderer[] _meshRenderers;
         [Tooltip("Projectile aim points, selected in order. Empty entries are skipped. " +
                  "Uses Target To Shoot Damage when no points are assigned.")]
@@ -38,6 +40,7 @@ namespace Features.Bosses.Scripts
         [Inject] private ICharacterProvider _characterProvider;
 
         private Rigidbody _rigidbody;
+        private Mesh _spawnColliderMesh;
         private HealthSystem _healthSystem;
         private DealDamageEffectSystem _effectsSystem;
         private IBossAnimationSystem _animationSystem;
@@ -69,6 +72,8 @@ namespace Features.Bosses.Scripts
         {
             _combatSystem?.Dispose();
             _effectsSystem?.Dispose();
+            if (_spawnColliderMesh != null)
+                Destroy(_spawnColliderMesh);
         }
 
         public void Initialize()
@@ -88,6 +93,73 @@ namespace Features.Bosses.Scripts
             _healthSystem.Initialize();
             _initialized = true;
             _animationSystem.IdleAnimation();
+            BakeSpawnCollider();
+        }
+
+        protected virtual void BakeSpawnCollider()
+        {
+            if (_collider is not MeshCollider meshCollider)
+                return;
+
+            SkinnedMeshRenderer source = null;
+            foreach (SkinnedMeshRenderer renderer in GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                if (renderer.sharedMesh == null)
+                    continue;
+
+                source ??= renderer;
+                if (renderer.sharedMesh == meshCollider.sharedMesh)
+                {
+                    source = renderer;
+                    break;
+                }
+            }
+            if (source == null)
+                return;
+
+            Mesh originalMesh = meshCollider.sharedMesh;
+            var bakedMesh = new Mesh { name = $"{name}_SpawnCollider" };
+            try
+            {
+                // Compensate renderer scale; it is applied by the collider transform below.
+                source.BakeMesh(bakedMesh, true);
+                if (bakedMesh.vertexCount < 3 || bakedMesh.triangles.Length < 3)
+                    throw new InvalidOperationException("The baked mesh contains no collision geometry.");
+
+                // The renderer and collider may be on different transforms.
+                Matrix4x4 rendererToCollider = meshCollider.transform.worldToLocalMatrix *
+                                              source.transform.localToWorldMatrix;
+                Vector3[] vertices = bakedMesh.vertices;
+                for (int i = 0; i < vertices.Length; i++)
+                {
+                    vertices[i] = rendererToCollider.MultiplyPoint3x4(vertices[i]);
+                    float magnitude = vertices[i].sqrMagnitude;
+                    if (float.IsNaN(magnitude) || float.IsInfinity(magnitude))
+                        throw new InvalidOperationException("The baked mesh contains invalid vertices.");
+                }
+                bakedMesh.vertices = vertices;
+                bakedMesh.RecalculateBounds();
+                if (bakedMesh.bounds.size.sqrMagnitude <= Mathf.Epsilon)
+                    throw new InvalidOperationException("The baked mesh has zero size.");
+
+                meshCollider.sharedMesh = bakedMesh;
+                if (meshCollider.enabled && meshCollider.gameObject.activeInHierarchy &&
+                    meshCollider.bounds.size.sqrMagnitude <= Mathf.Epsilon)
+                    throw new InvalidOperationException("Physics could not create the baked collider.");
+
+                _spawnColliderMesh = bakedMesh;
+            }
+            catch (Exception exception)
+            {
+                meshCollider.sharedMesh = originalMesh;
+                Debug.LogWarning($"Could not bake the spawn collider for '{name}'. " +
+                                 $"The original mesh was kept. {exception.Message}", this);
+            }
+            finally
+            {
+                if (_spawnColliderMesh != bakedMesh)
+                    Destroy(bakedMesh);
+            }
         }
 
         public void Construct(Rigidbody rigidbody, Renderer[] meshRenderers, HealthSystem healthSystem,
@@ -104,6 +176,30 @@ namespace Features.Bosses.Scripts
         }
 
         public void StopCombat() => _combatSystem?.Stop();
+
+        public Transform GetClosestProjectileTarget(Vector3 position)
+        {
+            Transform closestTarget = null;
+            float closestSqrDistance = float.PositiveInfinity;
+
+            if (_targetsToShootDamage != null)
+            {
+                foreach (Transform target in _targetsToShootDamage)
+                {
+                    if (target == null)
+                        continue;
+
+                    float sqrDistance = (target.position - position).sqrMagnitude;
+                    if (sqrDistance >= closestSqrDistance)
+                        continue;
+
+                    closestSqrDistance = sqrDistance;
+                    closestTarget = target;
+                }
+            }
+
+            return closestTarget != null ? closestTarget : base.GetNextProjectileTarget();
+        }
 
         public override Transform GetNextProjectileTarget()
         {

@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -17,6 +18,7 @@ namespace Features.Bosses.Scripts
 
     public interface IBossAttack
     {
-        UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true);
+        UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true,
+            Func<bool> ownsAnimation = null);
     }
 }

@@ -25,8 +25,11 @@ namespace Features.Bosses.Scripts
             _singleAttack = new WoodGuardSingleAttack(configuration, boss, character);
         }
 
-        public async UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true)
+        public async UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true,
+            Func<bool> ownsAnimation = null)
         {
+            bool CanAnimateBoss() => animateBoss && (ownsAnimation?.Invoke() ?? true);
+
             cancellationToken.ThrowIfCancellationRequested();
             if (!CanContinue())
                 return;
@@ -67,8 +70,11 @@ namespace Features.Bosses.Scripts
             bool windupInProgress = false;
             Action<float> onWarningProgress = animateBoss ? progress =>
             {
-                animationStarted = true;
-                _boss.AnimationSystem.SetAttackWindupProgress(progress, warningDuration, impactTime);
+                if (CanAnimateBoss())
+                {
+                    animationStarted = true;
+                    _boss.AnimationSystem.SetAttackWindupProgress(progress, warningDuration, impactTime);
+                }
                 if (progress >= 1f)
                 {
                     windupInProgress = false;
@@ -85,7 +91,7 @@ namespace Features.Bosses.Scripts
                         return;
 
                     float timeScale = _boss.RelicTimeScale;
-                    if (animateBoss)
+                    if (CanAnimateBoss())
                         _boss.AnimationSystem.SetTimeScale(timeScale);
                     if (timeScale > 0f && _boss.CanAttack)
                     {
@@ -135,7 +141,7 @@ namespace Features.Bosses.Scripts
                     }
                 }
 
-                if (animateBoss && animationStarted && _boss != null && !_boss.IsDead && _boss.isActiveAndEnabled)
+                if (CanAnimateBoss() && animationStarted && _boss != null && !_boss.IsDead && _boss.isActiveAndEnabled)
                     _boss.AnimationSystem.IdleAnimation();
                 cancellationToken.ThrowIfCancellationRequested();
                 if (firstFailure != null)

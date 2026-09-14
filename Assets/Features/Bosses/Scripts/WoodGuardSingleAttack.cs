@@ -20,19 +20,24 @@ namespace Features.Bosses.Scripts
             _character = character;
         }
 
-        public async UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true)
+        public async UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true,
+            Func<bool> ownsAnimation = null)
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (!CanContinue())
                 return;
 
             // Capture once: moving away during the warning lets the character dodge the hit.
-            await ExecuteAt(_character.transform.position, animateBoss, true, cancellationToken);
+            await ExecuteAt(_character.transform.position, animateBoss, true, cancellationToken,
+                ownsAnimation: ownsAnimation);
         }
 
         internal async UniTask ExecuteAt(Vector3 targetPosition, bool animateBoss, bool showWarning,
-            CancellationToken cancellationToken, Action<float> onWarningProgress = null)
+            CancellationToken cancellationToken, Action<float> onWarningProgress = null,
+            Func<bool> ownsAnimation = null)
         {
+            bool CanAnimateBoss() => animateBoss && (ownsAnimation?.Invoke() ?? true);
+
             cancellationToken.ThrowIfCancellationRequested();
             if (!CanContinue())
                 return;
@@ -78,7 +83,7 @@ namespace Features.Bosses.Scripts
                     UpdateWarning(indicator.transform, geometry.Radius, 0f);
                     indicator.SetActive(true);
                 }
-                if (animateBoss)
+                if (CanAnimateBoss())
                     _boss.AnimationSystem.BeginAttack(warningDuration);
 
                 while (true)
@@ -88,7 +93,7 @@ namespace Features.Bosses.Scripts
                         return;
 
                     float timeScale = _boss.RelicTimeScale;
-                    if (animateBoss)
+                    if (CanAnimateBoss())
                         _boss.AnimationSystem.SetTimeScale(timeScale);
                     if (timeScale > 0f && _boss.CanAttack)
                     {
@@ -114,7 +119,7 @@ namespace Features.Bosses.Scripts
                                 ApplyHit(center, geometry.Radius, rotation * Vector3.forward);
                                 if (!CanContinue() || cancellationToken.IsCancellationRequested)
                                     return;
-                                if (animateBoss)
+                                if (CanAnimateBoss())
                                     _boss.AnimationSystem.IdleAnimation();
                             }
 

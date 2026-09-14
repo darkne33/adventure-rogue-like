@@ -21,8 +21,11 @@ namespace Features.Bosses.Scripts
             _character = character;
         }
 
-        public async UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true)
+        public async UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true,
+            Func<bool> ownsAnimation = null)
         {
+            bool CanAnimateBoss() => animateBoss && (ownsAnimation?.Invoke() ?? true);
+
             cancellationToken.ThrowIfCancellationRequested();
             if (!CanContinue())
                 return;
@@ -50,7 +53,7 @@ namespace Features.Bosses.Scripts
                         return;
 
                     float timeScale = _boss.RelicTimeScale;
-                    if (animateBoss)
+                    if (CanAnimateBoss())
                         _boss.AnimationSystem.SetTimeScale(timeScale);
                     if (timeScale > 0f && _boss.CanAttack)
                     {
@@ -61,7 +64,17 @@ namespace Features.Bosses.Scripts
 
                             // Each entry gets its own runtime instance, even when a config is reused.
                             IBossAttack instance = attack.Configuration.CreateAttack(_boss, _character);
-                            attack.Task = instance.Execute(mixtureToken, animateBoss && attack == animationOwner);
+                            bool isHorizontal = attack.Configuration is WoodGuardHorizontalAttackConfiguration;
+                            bool animateAttack = animateBoss && (attack == animationOwner || isHorizontal);
+                            if (animateBoss && isHorizontal)
+                            {
+                                // A new horizontal windup takes over from earlier parallel attacks.
+                                if (CanAnimateBoss())
+                                    _boss.AnimationSystem.IdleAnimation();
+                                animationOwner = attack;
+                            }
+                            attack.Task = instance.Execute(mixtureToken, animateAttack,
+                                () => CanAnimateBoss() && attack == animationOwner);
                             attack.Started = true;
                             if (!CanContinue() || HasFailedAttack(schedule))
                                 return;
@@ -95,7 +108,7 @@ namespace Features.Bosses.Scripts
                     }
                 }
 
-                if (animateBoss && _boss != null && !_boss.IsDead && _boss.isActiveAndEnabled)
+                if (CanAnimateBoss() && _boss != null && !_boss.IsDead && _boss.isActiveAndEnabled)
                     _boss.AnimationSystem.IdleAnimation();
                 cancellationToken.ThrowIfCancellationRequested();
                 if (firstFailure != null)

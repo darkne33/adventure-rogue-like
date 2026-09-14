@@ -1,7 +1,9 @@
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Object = UnityEngine.Object;
 
 namespace Features.Bosses.Scripts
 {
@@ -19,8 +21,11 @@ namespace Features.Bosses.Scripts
             _character = character;
         }
 
-        public async UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true)
+        public async UniTask Execute(CancellationToken cancellationToken, bool animateBoss = true,
+            Func<bool> ownsAnimation = null)
         {
+            bool CanAnimateBoss() => animateBoss && (ownsAnimation?.Invoke() ?? true);
+
             WoodGuardHorizontalAttackPiece prefab = _configuration.PiecePrefab;
             if (prefab == null || !prefab.HasHitCollider || _configuration.IndicatorMaterial == null)
             {
@@ -42,7 +47,7 @@ namespace Features.Bosses.Scripts
             float elapsed = 0f;
             float warningEnd = _configuration.TelegraphDuration;
             float attackEnd = warningEnd + _configuration.RootLifetime;
-            if (animateBoss)
+            if (CanAnimateBoss())
                 _boss.AnimationSystem.BeginAttack(warningEnd);
 
             try
@@ -55,7 +60,7 @@ namespace Features.Bosses.Scripts
                         return;
 
                     float timeScale = _boss.RelicTimeScale;
-                    if (animateBoss)
+                    if (CanAnimateBoss())
                         _boss.AnimationSystem.SetTimeScale(timeScale);
                     if (timeScale > 0f && _boss.CanAttack)
                     {
@@ -83,7 +88,7 @@ namespace Features.Bosses.Scripts
                             }
                         }
 
-                        if (animateBoss && elapsed >= warningEnd)
+                        if (CanAnimateBoss() && elapsed >= warningEnd)
                             _boss.AnimationSystem.IdleAnimation();
                         if (elapsed >= attackEnd)
                             break;
