@@ -3580,7 +3580,7 @@ Transform:
   m_GameObject: {fileID: 7401000000000000010}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -28.6700001, y: 2.53999996, z: 5.67999983}
+  m_LocalPosition: {x: -28.67, y: 2.54, z: 5.68}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3611,7 +3611,7 @@ Transform:
   m_GameObject: {fileID: 7401000000000000020}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -28.6700001, y: 2.53999996, z: 28.4799995}
+  m_LocalPosition: {x: -28.67, y: 2.54, z: 28.48}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4143,7 +4143,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: Key_Room_1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 910824250000000003, guid: 7de62fab3ebbd1149add6be51be95a73, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -5724,7 +5725,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: Key_Room
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 910824250000000003, guid: 7de62fab3ebbd1149add6be51be95a73, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
