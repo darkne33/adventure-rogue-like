@@ -54,6 +54,7 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
     private RawImage _viewport;
     private GameObject _previewWorld;
     private Transform _mainStage;
+    private Transform _worldStage;
     private Transform _portraitStage;
     private Camera _previewCamera;
     private Camera _portraitCamera;
@@ -74,6 +75,7 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
     private Sequence _appearanceSequence;
     private CancellationTokenSource _switchCancellation;
     private int _switchVersion;
+    private bool _usesWorldStage;
     private bool _isInitialized;
     private bool _isDestroyed;
 
@@ -110,8 +112,23 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
         _viewport.material = _colorCorrectionMaterial;
         _viewport.color = Color.white;
         _viewport.uvRect = new Rect(0f, 0f, 1f, 1f);
-        _previewCamera.enabled = isActiveAndEnabled;
+        _viewport.enabled = _usesWorldStage == false;
+        _previewCamera.enabled = isActiveAndEnabled && _usesWorldStage == false;
         _isInitialized = true;
+    }
+
+    public void SetWorldStage(Transform stage)
+    {
+        EnsureInitialized();
+        ClearPreview();
+
+        _worldStage = stage;
+        _usesWorldStage = stage != null;
+        _viewport.enabled = _usesWorldStage == false;
+        _previewCamera.enabled = isActiveAndEnabled && _usesWorldStage == false;
+
+        if (_usesWorldStage == false)
+            EnsurePreviewRenderTexture(forceRecreate: false);
     }
 
     public async UniTask ShowCharacterAsync(CharacterDefinition character,
@@ -138,16 +155,20 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
                 character.CharacterContainer.AssetReference.RuntimeKey);
             ownsLoadHandle = true;
 
-            await UniTask.Delay(TimeSpan.FromMilliseconds(EmptyPreviewMilliseconds),
-                ignoreTimeScale: true, cancellationToken: operationToken);
+            if (_usesWorldStage == false)
+            {
+                await UniTask.Delay(TimeSpan.FromMilliseconds(EmptyPreviewMilliseconds),
+                    ignoreTimeScale: true, cancellationToken: operationToken);
+            }
 
             GameObject characterPrefab = await loadHandle.ToUniTask(
                 cancellationToken: operationToken);
 
             ThrowIfSwitchIsStale(switchVersion, operationToken);
 
-            GameObject preview = CreateVisualInstance(characterPrefab, _mainStage,
-                $"CharacterPreview_{character.Id}");
+            GameObject preview = CreateVisualInstance(characterPrefab,
+                _usesWorldStage ? _worldStage : _mainStage,
+                $"CharacterPreview_{character.Id}", alignToWorldStage: _usesWorldStage);
 
             try
             {
@@ -159,9 +180,12 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
                 _currentPreviewOffsetY = character.PreviewOffsetY;
                 _currentPreviewZoom = character.PreviewZoom;
 
-                FrameCamera(_previewCamera, _currentPreview, MainStagePadding,
-                    _currentPreviewOffsetY, _currentPreviewZoom);
-                PlayAppearanceAccent(_currentPreview.transform);
+                if (_usesWorldStage == false)
+                {
+                    FrameCamera(_previewCamera, _currentPreview, MainStagePadding,
+                        _currentPreviewOffsetY, _currentPreviewZoom);
+                    PlayAppearanceAccent(_currentPreview.transform);
+                }
 
                 await RenderAndCachePortraitAsync(character, characterPrefab,
                     operationToken);
@@ -326,8 +350,11 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
     }
 
     private GameObject CreateVisualInstance(GameObject characterPrefab, Transform stage,
-        string instanceName)
+        string instanceName, bool alignToWorldStage = false)
     {
+        if (stage == null)
+            throw new InvalidOperationException("Character preview stage is no longer available.");
+
         CharacterFacade facade = characterPrefab != null
             ? characterPrefab.GetComponent<CharacterFacade>()
             : null;
@@ -345,16 +372,26 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
         instance.hideFlags = HideFlags.HideAndDontSave;
         instance.SetActive(true);
 
-        PrepareVisualHierarchy(instance);
+        PrepareVisualHierarchy(instance, stage.gameObject.layer);
+
+        if (alignToWorldStage)
+        {
+            instance.transform.localPosition = Vector3.zero;
+
+            Bounds bounds = CalculateVisualBounds(instance);
+            instance.transform.position += stage.position -
+                new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+        }
+
         return instance;
     }
 
-    private static void PrepareVisualHierarchy(GameObject visualRoot)
+    private static void PrepareVisualHierarchy(GameObject visualRoot, int layer)
     {
         Transform[] transforms = visualRoot.GetComponentsInChildren<Transform>(includeInactive: true);
         foreach (Transform child in transforms)
         {
-            child.gameObject.layer = PreviewLayer;
+            child.gameObject.layer = layer;
             child.gameObject.hideFlags = HideFlags.HideAndDontSave;
         }
 
@@ -732,6 +769,9 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
 
     private void EnsurePreviewRenderTexture(bool forceRecreate)
     {
+        if (_usesWorldStage)
+            return;
+
         GetPreviewResolution(out int width, out int height);
         if (forceRecreate == false && _previewRenderTexture != null &&
             _previewRenderTexture.width == width && _previewRenderTexture.height == height)
@@ -807,7 +847,7 @@ public sealed class CharacterPreviewRenderer : MonoBehaviour
     private void OnEnable()
     {
         if (_previewCamera != null)
-            _previewCamera.enabled = true;
+            _previewCamera.enabled = _usesWorldStage == false;
     }
 
     private void OnDisable()

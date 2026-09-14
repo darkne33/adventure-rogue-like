@@ -45,15 +45,21 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
             throw new InvalidOperationException("PlayerConfiguration does not contain any characters.");
 
         _characterConfiguration.ValidateRosterEntries();
+        _characterConfiguration.ResetSelectionToDefault();
 
         Panel.SetHomeVisible(true);
         _characterSelectionView.Hide();
         Panel.SetButtonsInteractable(false);
+        Panel.CreateRoom();
+        _characterSelectionView.SetWorldStage(Panel.Room.CharacterSpawnPoint);
 
         // Prepare every roster portrait while the menu is still hidden, before selection can open.
         CancellationToken cancellationToken = Panel.GetCancellationTokenOnDestroy();
         await _characterSelectionView.PrewarmPortraitsAsync(
             _characterConfiguration.Characters, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        await _characterSelectionView.PreparePreviewAsync(
+            _characterConfiguration.SelectedCharacter, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
         Panel.PlayButton.onClick.AddListener(OpenCharacterSelection);
@@ -86,7 +92,10 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
                 _characterSelectionView.SelectionRequested -= SelectCharacter;
                 _characterSelectionView.StartRequested -= RequestPlay;
                 _characterSelectionView.BackRequested -= ReturnToMainMenu;
+                _characterSelectionView.Hide();
             }
+
+            Panel.CloseRoom();
         }
 
         _leaderboardView = null;
@@ -103,6 +112,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
 
         _soundsService.Play(SoundId.UiStartClick);
         _playRequested = true;
+        Panel.Room.CancelCameraTransition();
         Panel.SetButtonsInteractable(false);
         _characterSelectionView.SetInteractable(false);
     }
@@ -115,9 +125,21 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         _isCharacterSelectionOpen = true;
         Panel.SetButtonsInteractable(false);
         Panel.SetHomeVisible(false);
-        _characterConfiguration.ResetSelectionToDefault();
         _characterSelectionView.Show(_characterConfiguration.Characters,
-            _characterConfiguration.SelectedCharacterIndex);
+            _characterConfiguration.SelectedCharacterIndex, previewAlreadyShown: true);
+        MoveToCharacterSelectionAsync().Forget();
+    }
+
+    private async UniTask MoveToCharacterSelectionAsync()
+    {
+        try
+        {
+            CancellationToken cancellationToken = Panel.GetCancellationTokenOnDestroy();
+            await Panel.Room.MoveToCharacterAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+        }
     }
 
     private void SelectCharacter(int index, int direction)
@@ -133,12 +155,21 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
             return;
 
         _isCharacterSelectionOpen = false;
-        _characterSelectionView.Hide();
+        _characterSelectionView.Hide(keepPreview: true);
         Panel.SetHomeVisible(true);
-        Panel.SetButtonsInteractable(true);
+        EnableInput();
+        MoveToMainMenuAsync().Forget();
+    }
 
-        if (EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(Panel.PlayButton.gameObject);
+    private async UniTask MoveToMainMenuAsync()
+    {
+        try
+        {
+            await Panel.Room.MoveToMenuAsync(Panel.GetCancellationTokenOnDestroy());
+        }
+        catch (OperationCanceledException)
+        {
+        }
     }
 
     private async UniTask RefreshLeaderboard(CancellationToken cancellationToken)

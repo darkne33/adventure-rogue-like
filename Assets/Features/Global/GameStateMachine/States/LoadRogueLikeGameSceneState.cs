@@ -44,6 +44,7 @@ namespace Core
                 cancellationToken: cancellationToken);
 
             gameSceneComponentsProvider.EnableScene();
+            HeightFogRendererFeature.SetRenderingEnabled(true);
             Log.Gameplay.Info("Done Load Game Scene State");
 
             return rogueLikeStateMachine;

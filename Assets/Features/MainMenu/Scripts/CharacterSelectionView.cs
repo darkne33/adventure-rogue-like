@@ -47,6 +47,8 @@ public sealed class CharacterSelectionView : MonoBehaviour
     private int _selectedIndex;
     private bool _isInteractable;
     private bool _isPreviewInitialized;
+    private bool _isPreviewVisible;
+    private bool _keepPreviewWhenHidden;
 
     public event Action<int, int> SelectionRequested;
     public event Action StartRequested;
@@ -77,7 +79,21 @@ public sealed class CharacterSelectionView : MonoBehaviour
         return _previewRenderer.PrewarmPortraitsAsync(characters, cancellationToken);
     }
 
-    public void Show(IReadOnlyList<CharacterDefinition> characters, int selectedIndex)
+    public void SetWorldStage(Transform stage)
+    {
+        InitializePreview();
+        _previewRenderer.SetWorldStage(stage);
+    }
+
+    public UniTask PreparePreviewAsync(CharacterDefinition character,
+        CancellationToken cancellationToken)
+    {
+        InitializePreview();
+        return _previewRenderer.ShowCharacterAsync(character, cancellationToken);
+    }
+
+    public void Show(IReadOnlyList<CharacterDefinition> characters, int selectedIndex,
+        bool showPreview = true, bool previewAlreadyShown = false)
     {
         if (characters == null || characters.Count == 0)
             throw new InvalidOperationException("Character selection requires at least one configured character.");
@@ -87,16 +103,31 @@ public sealed class CharacterSelectionView : MonoBehaviour
 
         InitializePreview();
         _characters = characters;
+        _keepPreviewWhenHidden = false;
+        _isPreviewVisible = showPreview && !previewAlreadyShown;
         gameObject.SetActive(true);
         SetSelectedIndex(selectedIndex);
+        _isPreviewVisible = showPreview;
         SetInteractable(true);
         FocusStart();
     }
 
-    public void Hide()
+    public void Hide(bool keepPreview = false)
     {
-        _previewRenderer?.ClearPreview();
+        _keepPreviewWhenHidden = keepPreview;
+        _isPreviewVisible = false;
+        if (!keepPreview)
+            _previewRenderer?.ClearPreview();
         gameObject.SetActive(false);
+    }
+
+    public void ShowSelectedPreview()
+    {
+        if (!gameObject.activeInHierarchy || _characters == null)
+            return;
+
+        _isPreviewVisible = true;
+        _previewRenderer.ShowCharacterAsync(_characters[_selectedIndex], destroyCancellationToken).Forget();
     }
 
     public void SetSelectedIndex(int index, int direction = 0)
@@ -214,7 +245,8 @@ public sealed class CharacterSelectionView : MonoBehaviour
     private void RefreshCharacterDetails()
     {
         CharacterDefinition character = _characters[_selectedIndex];
-        _previewRenderer?.ShowCharacterAsync(character, destroyCancellationToken).Forget();
+        if (_isPreviewVisible)
+            _previewRenderer?.ShowCharacterAsync(character, destroyCancellationToken).Forget();
 
         _characterName.text = character.DisplayName.ToUpperInvariant();
         _description.text = !character.IsConfigured
@@ -363,8 +395,11 @@ public sealed class CharacterSelectionView : MonoBehaviour
         return $"{prefix}{FormatNumber(value)}%";
     }
 
-    private void OnDisable() =>
-        _previewRenderer?.ClearPreview();
+    private void OnDisable()
+    {
+        if (!_keepPreviewWhenHidden)
+            _previewRenderer?.ClearPreview();
+    }
 
     private void OnDestroy()
     {
