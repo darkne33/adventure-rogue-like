@@ -7,7 +7,6 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
     private const int TotalOfferCount = 3;
     private const int LevelsPerGuaranteedPassiveAbility = 5;
     private const int MaxGuaranteedPassiveAbilityCount = 2;
-    private const int MaxLevelWithGuaranteedActiveAbilityOffer = 5;
 
     private readonly IAbilityChoiceProvider _abilityChoiceProvider;
     private readonly ICharacterLevelService _characterLevelService;
@@ -36,17 +35,6 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
             .Where(IsAvailableForCurrentBuild)
             .ToList();
 
-        if (NeedsGuaranteedPassiveAbility())
-        {
-            List<CharacterPassiveAbility> newPassiveAbilities = availableAbilities
-                .OfType<CharacterPassiveAbility>()
-                .Where(ability => _upgradeBuildService.Contains(ability) == false)
-                .ToList();
-
-            AddRandomOffers(newPassiveAbilities, TotalOfferCount, offerAbilities, offers);
-            return offers;
-        }
-
         List<CharacterPassiveAbility> passiveAbilities = availableAbilities
             .OfType<CharacterPassiveAbility>().ToList();
 
@@ -60,36 +48,44 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
             .Where(ability => _upgradeBuildService.Contains(ability) == false)
             .ToList();
 
-        bool canOfferNewActiveAbilities = _upgradeBuildService.IsFull == false &&
-                                          _upgradeBuildService.ActiveAbilityCount <
-                                          _upgradeBuildService.MaxActiveAbilities;
-        int requestedNewActiveAbilityCount = canOfferNewActiveAbilities ? 1 : 0;
-        int newActiveAbilityCount =
-            Mathf.Min(requestedNewActiveAbilityCount, newActiveAbilities.Count);
-        int selectedActiveAbilityCount =
-            newActiveAbilityCount < TotalOfferCount &&
-            selectedActiveAbilities.Count > 0 &&
-            ShouldOfferSelectedActiveAbility()
-                ? 1
-                : 0;
-        int passiveAbilityCount =
-            TotalOfferCount - newActiveAbilityCount - selectedActiveAbilityCount;
+        AddRandomOffers(newActiveAbilities, 1, offerAbilities, offers);
+        AddRandomOffers(selectedActiveAbilities, 1, offerAbilities, offers);
+        AddPassiveOffer(passiveAbilities, offerAbilities, offers);
 
-        AddRandomOffers(passiveAbilities, passiveAbilityCount, offerAbilities, offers);
-        AddRandomOffers(newActiveAbilities, newActiveAbilityCount, offerAbilities, offers);
-        AddRandomOffers(selectedActiveAbilities, selectedActiveAbilityCount, offerAbilities, offers);
+        if (newActiveAbilities.Count == 0 && offers.Count < TotalOfferCount)
+        {
+            if (RollChance(_upgradeOfferConfiguration.ActiveAbilityOfferChance))
+                AddRandomOffers(selectedActiveAbilities, 1, offerAbilities, offers);
+            else
+                AddRandomOffers(passiveAbilities, 1, offerAbilities, offers);
+        }
 
-        List<CharacterAbility> fallbackAbilities = availableAbilities
-            .Where(ability => ability is not CharacterActiveAbility ||
-                              _upgradeBuildService.Contains(ability))
-            .ToList();
-        AddRandomOffers(fallbackAbilities, TotalOfferCount - offers.Count, offerAbilities, offers);
+        AddRandomOffers(availableAbilities, TotalOfferCount - offers.Count, offerAbilities, offers);
 
         return offers;
     }
 
     private bool IsAvailableForCurrentBuild(CharacterAbility ability) =>
         _upgradeBuildService.CanSelect(ability);
+
+    private void AddPassiveOffer(List<CharacterPassiveAbility> passiveAbilities,
+        List<CharacterAbility> offerAbilities, List<UpgradeOffer> offers)
+    {
+        if (NeedsGuaranteedPassiveAbility())
+        {
+            List<CharacterPassiveAbility> newPassiveAbilities = passiveAbilities
+                .Where(ability => _upgradeBuildService.Contains(ability) == false)
+                .ToList();
+
+            if (newPassiveAbilities.Count > 0)
+            {
+                AddRandomOffers(newPassiveAbilities, 1, offerAbilities, offers);
+                return;
+            }
+        }
+
+        AddRandomOffers(passiveAbilities, 1, offerAbilities, offers);
+    }
 
     private bool NeedsGuaranteedPassiveAbility()
     {
@@ -100,10 +96,6 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         return _upgradeBuildService.IsFull == false &&
                _upgradeBuildService.PassiveAbilityCount < requiredPassiveAbilityCount;
     }
-
-    private bool ShouldOfferSelectedActiveAbility() =>
-        _characterLevelService.GetLevel <= MaxLevelWithGuaranteedActiveAbilityOffer ||
-        RollChance(_upgradeOfferConfiguration.ActiveAbilityOfferChance);
 
     private static bool RollChance(float chance)
     {
