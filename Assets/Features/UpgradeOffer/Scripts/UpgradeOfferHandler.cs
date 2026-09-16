@@ -64,7 +64,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
 
         RecordRejectedCurrentOffers();
         DestroyViews();
-        GenerateUpgrades(UpgradesRoot);
+        GenerateUpgrades(UpgradesRoot, false);
         PlayItemsAppearance();
     }
 
@@ -143,9 +143,9 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         _upgradeItems.Clear();
     }
 
-    private void GenerateUpgrades(Transform upgradesRoot)
+    private void GenerateUpgrades(Transform upgradesRoot, bool isNewUpgrade = true)
     {
-        List<UpgradeOffer> upgradeOffers = _upgradeOfferGenerator.GenerateOffers().ToList();
+        List<UpgradeOffer> upgradeOffers = _upgradeOfferGenerator.GenerateOffers(isNewUpgrade).ToList();
         _currentOffers.Clear();
         _currentOffers.AddRange(upgradeOffers);
 

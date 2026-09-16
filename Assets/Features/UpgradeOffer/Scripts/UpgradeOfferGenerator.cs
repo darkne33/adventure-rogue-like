@@ -25,8 +25,11 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         _characterConfiguration = characterConfiguration;
     }
 
-    public IEnumerable<UpgradeOffer> GenerateOffers()
+    public IEnumerable<UpgradeOffer> GenerateOffers(bool isNewUpgrade = true)
     {
+        if (isNewUpgrade)
+            _upgradeBuildService.BeginUpgradeRound();
+
         List<UpgradeOffer> offers = new();
         List<CharacterAbility> offerAbilities = new();
 
@@ -66,7 +69,7 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
     }
 
     private bool IsAvailableForCurrentBuild(CharacterAbility ability) =>
-        _upgradeBuildService.CanSelect(ability);
+        _upgradeBuildService.CanOffer(ability);
 
     private void AddPassiveOffer(List<CharacterPassiveAbility> passiveAbilities,
         List<CharacterAbility> offerAbilities, List<UpgradeOffer> offers)
@@ -209,5 +212,5 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
 
 public interface IUpgradeOfferGenerator
 {
-    public IEnumerable<UpgradeOffer> GenerateOffers();
+    public IEnumerable<UpgradeOffer> GenerateOffers(bool isNewUpgrade = true);
 }

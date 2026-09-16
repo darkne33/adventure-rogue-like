@@ -3,11 +3,16 @@ using System.Collections.Generic;
 
 public sealed class UpgradeBuildService
 {
+    private const int MinSkippedUpgradeRounds = 1;
+    private const int MaxSkippedUpgradeRounds = 3;
+
     private readonly List<UpgradeBuildEntry> _selectedUpgrades = new();
     private readonly Dictionary<UpgradeOfferKey, int> _rejectedOfferCounts = new();
+    private readonly Dictionary<AbilityName, int> _nextOfferRounds = new();
     private readonly int _maxSlots;
     private readonly int _maxActiveAbilities;
     private readonly int _maxPassiveAbilities;
+    private int _upgradeRound;
 
     public UpgradeBuildService(UpgradeOfferConfiguration configuration)
     {
@@ -56,6 +61,14 @@ public sealed class UpgradeBuildService
     public bool Contains(CharacterAbility ability) =>
         FindEntry(ability) != null;
 
+    public void BeginUpgradeRound() =>
+        _upgradeRound++;
+
+    public bool CanOffer(CharacterAbility ability) =>
+        CanSelect(ability) &&
+        (_nextOfferRounds.TryGetValue(ability.Id, out int nextRound) == false ||
+         _upgradeRound >= nextRound);
+
     public bool CanSelect(CharacterAbility ability)
     {
         if (ability == null)
@@ -83,6 +96,9 @@ public sealed class UpgradeBuildService
             _selectedUpgrades.Add(new UpgradeBuildEntry(ability));
         else
             entry.IncreaseLevel();
+
+        int skippedRounds = UnityEngine.Random.Range(MinSkippedUpgradeRounds, MaxSkippedUpgradeRounds + 1);
+        _nextOfferRounds[ability.Id] = _upgradeRound + skippedRounds + 1;
 
         Changed?.Invoke();
         return true;
@@ -124,6 +140,8 @@ public sealed class UpgradeBuildService
     public void Reset()
     {
         _rejectedOfferCounts.Clear();
+        _nextOfferRounds.Clear();
+        _upgradeRound = 0;
 
         if (_selectedUpgrades.Count == 0)
             return;
