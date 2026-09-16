@@ -39,7 +39,6 @@ public sealed class CharacterProximityTransparencySystem
     private static Shader _proximityFadeLitShader;
 
     private readonly Transform _characterRoot;
-    private readonly Collider _characterCollider;
     private readonly List<Renderer> _candidates = new();
     private readonly HashSet<Renderer> _nearbyRenderers = new();
     private readonly Dictionary<Renderer, RendererTransparencyState> _rendererStates = new();
@@ -55,11 +54,9 @@ public sealed class CharacterProximityTransparencySystem
     private float _proximityCheckTimer;
     private bool _isDisposed;
 
-    public CharacterProximityTransparencySystem(Transform characterRoot,
-        Collider characterCollider)
+    public CharacterProximityTransparencySystem(Transform characterRoot)
     {
         _characterRoot = characterRoot;
-        _characterCollider = characterCollider;
     }
 
     public void Tick(float deltaTime)
@@ -125,25 +122,27 @@ public sealed class CharacterProximityTransparencySystem
     {
         _nearbyRenderers.Clear();
 
-        Vector3 characterPosition = _characterCollider != null
-            ? _characterCollider.bounds.center
-            : _characterRoot.position;
-
-        foreach (Renderer renderer in _candidates)
+        Camera camera = Camera.main;
+        if (camera != null)
         {
-            if (renderer == null || renderer.enabled == false ||
-                renderer.gameObject.activeInHierarchy == false ||
-                IsNearby(renderer.bounds, characterPosition) == false)
+            Vector3 cameraPosition = camera.transform.position;
+
+            foreach (Renderer renderer in _candidates)
             {
-                continue;
+                if (renderer == null || renderer.enabled == false ||
+                    renderer.gameObject.activeInHierarchy == false ||
+                    IsNearby(renderer.bounds, cameraPosition) == false)
+                {
+                    continue;
+                }
+
+                RendererTransparencyState state = GetOrCreateState(renderer);
+                if (state == null)
+                    continue;
+
+                state.SetFaded(true);
+                _nearbyRenderers.Add(renderer);
             }
-
-            RendererTransparencyState state = GetOrCreateState(renderer);
-            if (state == null)
-                continue;
-
-            state.SetFaded(true);
-            _nearbyRenderers.Add(renderer);
         }
 
         foreach (KeyValuePair<Renderer, RendererTransparencyState> pair in _rendererStates)
@@ -392,17 +391,17 @@ public sealed class CharacterProximityTransparencySystem
         return false;
     }
 
-    private static bool IsNearby(Bounds bounds, Vector3 characterPosition)
+    private static bool IsNearby(Bounds bounds, Vector3 cameraPosition)
     {
-        float distanceX = characterPosition.x < bounds.min.x
-            ? bounds.min.x - characterPosition.x
-            : characterPosition.x > bounds.max.x
-                ? characterPosition.x - bounds.max.x
+        float distanceX = cameraPosition.x < bounds.min.x
+            ? bounds.min.x - cameraPosition.x
+            : cameraPosition.x > bounds.max.x
+                ? cameraPosition.x - bounds.max.x
                 : 0f;
-        float distanceZ = characterPosition.z < bounds.min.z
-            ? bounds.min.z - characterPosition.z
-            : characterPosition.z > bounds.max.z
-                ? characterPosition.z - bounds.max.z
+        float distanceZ = cameraPosition.z < bounds.min.z
+            ? bounds.min.z - cameraPosition.z
+            : cameraPosition.z > bounds.max.z
+                ? cameraPosition.z - bounds.max.z
                 : 0f;
 
         return distanceX * distanceX + distanceZ * distanceZ <=

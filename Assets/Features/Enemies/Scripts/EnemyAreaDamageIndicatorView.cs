@@ -7,6 +7,10 @@ namespace Features.Enemies.Scripts
     public sealed class EnemyAreaDamageIndicatorView : MonoBehaviour
     {
         private const float ScaleEpsilon = 0.0001f;
+        private static readonly int GradientModeId = Shader.PropertyToID("_GradientMode");
+        private static readonly int GradientAxisId = Shader.PropertyToID("_GradientAxis");
+        private static readonly int GradientOriginId = Shader.PropertyToID("_GradientOrigin");
+        private static readonly int GradientLengthId = Shader.PropertyToID("_GradientLength");
 
         [SerializeField] private Transform _indicator;
         [SerializeField, Min(0f)] private float _minimumRadius = 0.05f;
@@ -14,8 +18,11 @@ namespace Features.Enemies.Scripts
         private Tween _scaleTween;
         private Vector2 _targetHorizontalScale;
 
-        public void Initialize() =>
+        public void Initialize()
+        {
+            ConfigureHeightGradient();
             Hide();
+        }
 
         public void Show(Vector3 worldCenter, float worldRadius, float duration)
         {
@@ -71,6 +78,29 @@ namespace Features.Enemies.Scripts
 
             SetHorizontalScale(GetHorizontalScale(_minimumRadius));
             _indicator.gameObject.SetActive(false);
+        }
+
+        private void ConfigureHeightGradient()
+        {
+            if (_indicator == null)
+                return;
+
+            MeshFilter meshFilter = _indicator.GetComponent<MeshFilter>();
+            Renderer indicatorRenderer = _indicator.GetComponent<Renderer>();
+            if (meshFilter == null || meshFilter.sharedMesh == null || indicatorRenderer == null)
+                return;
+
+            Bounds bounds = meshFilter.sharedMesh.bounds;
+            Vector3 gradientOrigin = bounds.center;
+            gradientOrigin.y = bounds.min.y;
+
+            var properties = new MaterialPropertyBlock();
+            indicatorRenderer.GetPropertyBlock(properties);
+            properties.SetFloat(GradientModeId, 1f);
+            properties.SetVector(GradientAxisId, Vector3.up);
+            properties.SetVector(GradientOriginId, gradientOrigin);
+            properties.SetFloat(GradientLengthId, Mathf.Max(ScaleEpsilon, bounds.size.y));
+            indicatorRenderer.SetPropertyBlock(properties);
         }
 
         private Vector2 GetHorizontalScale(float worldRadius)

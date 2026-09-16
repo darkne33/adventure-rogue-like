@@ -569,12 +569,45 @@ public class LevelView : MonoBehaviour
     private static bool IsConnectionAllowed(LevelRoomNode roomNode,
         RoomDirection direction, IReadOnlyDictionary<Vector2Int, LevelRoomNode> nodesByPosition)
     {
-        if ((roomNode.BlockedConnections & direction.ToConnectionMask()) != RoomConnectionMask.None)
+        if (IsConnectionBlocked(roomNode, direction, nodesByPosition))
+            return false;
+
+        if (roomNode.Type == RoomType.Reward &&
+            direction != GetRewardEntranceDirection(roomNode, nodesByPosition))
             return false;
 
         return !nodesByPosition.TryGetValue(roomNode.GridPosition + direction.ToGridOffset(),
                    out LevelRoomNode neighbour) ||
-               (neighbour.BlockedConnections & direction.Opposite().ToConnectionMask()) ==
+               neighbour.Type != RoomType.Reward ||
+               direction.Opposite() == GetRewardEntranceDirection(neighbour, nodesByPosition);
+    }
+
+    private static RoomDirection GetRewardEntranceDirection(LevelRoomNode roomNode,
+        IReadOnlyDictionary<Vector2Int, LevelRoomNode> nodesByPosition)
+    {
+        // Reward rooms are leaves of the level graph, even when several grid cells
+        // touch them. The same choice is used by both sides of every connection.
+        foreach (RoomDirection direction in CardinalDirections)
+        {
+            if (nodesByPosition.TryGetValue(roomNode.GridPosition + direction.ToGridOffset(),
+                    out LevelRoomNode neighbour) &&
+                neighbour.Type != RoomType.Reward &&
+                !IsConnectionBlocked(roomNode, direction, nodesByPosition))
+                return direction;
+        }
+
+        throw new InvalidOperationException(
+            $"Reward room at {roomNode.GridPosition} must have an unblocked connection " +
+            "to a non-reward room. Reward rooms cannot be used as passages.");
+    }
+
+    private static bool IsConnectionBlocked(LevelRoomNode roomNode,
+        RoomDirection direction, IReadOnlyDictionary<Vector2Int, LevelRoomNode> nodesByPosition)
+    {
+        return (roomNode.BlockedConnections & direction.ToConnectionMask()) != RoomConnectionMask.None ||
+               nodesByPosition.TryGetValue(roomNode.GridPosition + direction.ToGridOffset(),
+                   out LevelRoomNode neighbour) &&
+               (neighbour.BlockedConnections & direction.Opposite().ToConnectionMask()) !=
                RoomConnectionMask.None;
     }
 

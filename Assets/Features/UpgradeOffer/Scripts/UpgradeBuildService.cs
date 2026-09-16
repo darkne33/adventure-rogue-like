@@ -66,7 +66,7 @@ public sealed class UpgradeBuildService
 
     public bool CanOffer(CharacterAbility ability) =>
         CanSelect(ability) &&
-        (_nextOfferRounds.TryGetValue(ability.Id, out int nextRound) == false ||
+        (IsFull || _nextOfferRounds.TryGetValue(ability.Id, out int nextRound) == false ||
          _upgradeRound >= nextRound);
 
     public bool CanSelect(CharacterAbility ability)
@@ -97,8 +97,15 @@ public sealed class UpgradeBuildService
         else
             entry.IncreaseLevel();
 
-        int skippedRounds = UnityEngine.Random.Range(MinSkippedUpgradeRounds, MaxSkippedUpgradeRounds + 1);
-        _nextOfferRounds[ability.Id] = _upgradeRound + skippedRounds + 1;
+        if (IsFull)
+        {
+            _nextOfferRounds.Clear();
+        }
+        else
+        {
+            int skippedRounds = UnityEngine.Random.Range(MinSkippedUpgradeRounds, MaxSkippedUpgradeRounds + 1);
+            _nextOfferRounds[ability.Id] = _upgradeRound + skippedRounds + 1;
+        }
 
         Changed?.Invoke();
         return true;

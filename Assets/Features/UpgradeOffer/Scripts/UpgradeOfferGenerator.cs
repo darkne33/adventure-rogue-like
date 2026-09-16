@@ -38,6 +38,12 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
             .Where(IsAvailableForCurrentBuild)
             .ToList();
 
+        if (_upgradeBuildService.IsFull)
+        {
+            AddRandomOffers(availableAbilities, TotalOfferCount, offerAbilities, offers);
+            return offers;
+        }
+
         List<CharacterPassiveAbility> passiveAbilities = availableAbilities
             .OfType<CharacterPassiveAbility>().ToList();
 

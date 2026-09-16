@@ -33,6 +33,9 @@ public sealed class LevelViewEditor : Editor
             "the doors assigned in RoomData and required by the grid topology. Each room prefab must already contain " +
             "its directional RoomDoor objects; no doors are instantiated or replaced. " +
             "Each RoomDoor selects EnemyDoor or RewardDoor from the destination room type. " +
+            "Reward rooms keep a single passage and rotate to face their neighbor. " +
+            "If several neighbors are available, the entrance is chosen in Up, Down, Left, Right order. " +
+            "Use Blocked Connections to select a different neighbor. " +
             "Enemy and Exit rooms keep their enemy types directly on their room node. " +
             "At runtime, combat depth determines the enemy count and selects a Small or Medium layout " +
             "from Combat Room Variants. Empty pools keep the authored prefab. " +
