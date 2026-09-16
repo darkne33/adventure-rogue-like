@@ -9,6 +9,11 @@ namespace Features.Bosses.Scripts
 {
     public sealed class WoodGuardHorizontalAttack : IBossAttack
     {
+        private static readonly int GradientModeId = Shader.PropertyToID("_GradientMode");
+        private static readonly int GradientOriginId = Shader.PropertyToID("_GradientOrigin");
+        private static readonly int GradientAxisId = Shader.PropertyToID("_GradientAxis");
+        private static readonly int GradientLengthId = Shader.PropertyToID("_GradientLength");
+
         private readonly WoodGuardHorizontalAttackConfiguration _configuration;
         private readonly BossFacade _boss;
         private readonly CharacterFacade _character;
@@ -137,7 +142,28 @@ namespace Features.Bosses.Scripts
             };
             indicator.transform.rotation = piece.BoxRotation;
             UpdateWarning(piece, 0f, geometry);
+            ConfigureWarningGradient(renderer, center, rotation, piece.BoxRotation, geometry.Size);
             return piece;
+        }
+
+        private void ConfigureWarningGradient(MeshRenderer renderer, Vector3 center, Quaternion rotation,
+            Quaternion boxRotation, Vector3 size)
+        {
+            Vector3 direction = center - _boss.AttackOrigin.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude < 0.0001f)
+                direction = rotation * Vector3.forward;
+            direction.Normalize();
+
+            Vector3 axis = Vector3.Scale(Quaternion.Inverse(boxRotation) * direction, size).normalized;
+            float halfExtent = 0.5f * (Mathf.Abs(axis.x) + Mathf.Abs(axis.y) + Mathf.Abs(axis.z));
+            var properties = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(properties);
+            properties.SetFloat(GradientModeId, 1f);
+            properties.SetVector(GradientOriginId, -axis * halfExtent);
+            properties.SetVector(GradientAxisId, axis);
+            properties.SetFloat(GradientLengthId, halfExtent * 2f);
+            renderer.SetPropertyBlock(properties);
         }
 
         private void UpdateWarning(Piece piece, float progress, WoodGuardHorizontalAttackPiece.Geometry geometry)

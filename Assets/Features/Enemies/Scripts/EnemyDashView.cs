@@ -5,9 +5,14 @@ namespace Features.Enemies.Scripts
 {
     public sealed class EnemyDashView : MonoBehaviour
     {
+        private static readonly int GradientModeId = Shader.PropertyToID("_GradientMode");
+        private static readonly int StartColorId = Shader.PropertyToID("_StartColor");
+        private static readonly int EndColorId = Shader.PropertyToID("_EndColor");
+
         [SerializeField] private Material _material;
 
         [Header("Telegraph")]
+        [SerializeField] private Material _telegraphMaterial;
         [SerializeField] private Color _telegraphColor = new(1f, 0.08f, 0.03f, 0.85f);
         [SerializeField] private float _telegraphHeight = 0.15f;
         [SerializeField, Min(0f)] private float _telegraphMinimumWidth = 0.12f;
@@ -27,18 +32,26 @@ namespace Features.Enemies.Scripts
 
         private LineRenderer _lineRenderer;
         private TrailRenderer _trailRenderer;
+        private MaterialPropertyBlock _telegraphProperties;
 
         private void Awake()
         {
             _lineRenderer = gameObject.AddComponent<LineRenderer>();
-            _lineRenderer.material = _material;
+            _lineRenderer.sharedMaterial = _telegraphMaterial != null ? _telegraphMaterial : _material;
             _lineRenderer.useWorldSpace = true;
+            _lineRenderer.textureMode = LineTextureMode.Stretch;
             _lineRenderer.positionCount = 2;
             _lineRenderer.numCapVertices = _telegraphCapVertices;
             _lineRenderer.alignment = LineAlignment.View;
             _lineRenderer.shadowCastingMode = ShadowCastingMode.Off;
             _lineRenderer.receiveShadows = false;
             _lineRenderer.enabled = false;
+
+            if (_telegraphMaterial != null)
+            {
+                _telegraphProperties = new MaterialPropertyBlock();
+                _telegraphProperties.SetFloat(GradientModeId, 2f);
+            }
 
             _trailRenderer = gameObject.AddComponent<TrailRenderer>();
             _trailRenderer.material = _material;
@@ -65,6 +78,17 @@ namespace Features.Enemies.Scripts
             _lineRenderer.endWidth = width * _telegraphEndWidthMultiplier;
             _lineRenderer.startColor = color;
             _lineRenderer.endColor = new Color(color.r, color.g, color.b, _telegraphEndAlpha);
+            if (_telegraphProperties != null)
+            {
+                Color tint = new(color.r, color.g, color.b, 1f);
+                Color startColor = _telegraphMaterial.GetColor(StartColorId) * tint;
+                Color endColor = _telegraphMaterial.GetColor(EndColorId) * tint;
+                startColor.a = color.a;
+                endColor.a = _telegraphEndAlpha;
+                _telegraphProperties.SetColor(StartColorId, startColor);
+                _telegraphProperties.SetColor(EndColorId, endColor);
+                _lineRenderer.SetPropertyBlock(_telegraphProperties);
+            }
             _lineRenderer.SetPosition(0, start);
             _lineRenderer.SetPosition(1, start + direction * length);
             _lineRenderer.enabled = true;
