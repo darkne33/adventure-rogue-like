@@ -90,7 +90,7 @@ public sealed class LevelViewEditor : Editor
         }
 
         var issues = new List<string>();
-        List<SchemeRoom> rooms = BuildSchemeRooms(levelRooms, issues);
+        List<SchemeRoom> rooms = BuildSchemeRooms(level, levelRooms, issues);
         if (rooms.Count == 0)
         {
             EditorGUILayout.HelpBox(
@@ -153,7 +153,8 @@ public sealed class LevelViewEditor : Editor
     }
 
     private static List<SchemeRoom> BuildSchemeRooms(
-        IReadOnlyList<LevelRoomNode> source, ICollection<string> issues)
+        LevelView level, IReadOnlyList<LevelRoomNode> source,
+        ICollection<string> issues)
     {
         var result = new List<SchemeRoom>(source.Count);
         for (int index = 0; index < source.Count; index++)
@@ -182,26 +183,13 @@ public sealed class LevelViewEditor : Editor
                 continue;
             }
 
-            RoomDoor[] doors = roomData.RoomDoors;
-            if (doors == null || doors.Length == 0)
+            try
             {
-                issues.Add($"Rooms[{index}] ({roomPrefab.name}) does not have active doors.");
-                continue;
+                room.Doors.UnionWith(level.GetRoomDirections(node));
             }
-
-            foreach (RoomDoor door in doors)
+            catch (InvalidOperationException exception)
             {
-                if (door == null)
-                {
-                    issues.Add($"Rooms[{index}] ({roomPrefab.name}) contains a missing door.");
-                    continue;
-                }
-
-                if (!room.Doors.Add(door.Direction))
-                {
-                    issues.Add(
-                        $"Rooms[{index}] ({roomPrefab.name}) contains duplicate {door.Direction} doors.");
-                }
+                issues.Add($"Rooms[{index}] ({roomPrefab.name}): {exception.Message}");
             }
         }
 

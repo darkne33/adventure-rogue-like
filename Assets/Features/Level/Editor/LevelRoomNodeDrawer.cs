@@ -6,6 +6,7 @@ public sealed class LevelRoomNodeDrawer : PropertyDrawer
 {
     private const string RoomPrefabPropertyName = "_roomPrefab";
     private const string GridPositionPropertyName = "<GridPosition>k__BackingField";
+    private const string BlockedConnectionsPropertyName = "<BlockedConnections>k__BackingField";
     private const string TypePropertyName = "<Type>k__BackingField";
     private const string EnemySettingsPropertyName =
         "<EnemySettings>k__BackingField";
@@ -19,6 +20,7 @@ public sealed class LevelRoomNodeDrawer : PropertyDrawer
         float height = EditorGUIUtility.singleLineHeight;
         height += GetFieldHeight(property, RoomPrefabPropertyName);
         height += GetFieldHeight(property, GridPositionPropertyName);
+        height += GetFieldHeight(property, BlockedConnectionsPropertyName);
         height += GetFieldHeight(property, TypePropertyName);
 
         SerializedProperty typeProperty = property.FindPropertyRelative(TypePropertyName);
@@ -47,6 +49,7 @@ public sealed class LevelRoomNodeDrawer : PropertyDrawer
 
             DrawField(ref line, property.FindPropertyRelative(RoomPrefabPropertyName));
             DrawField(ref line, property.FindPropertyRelative(GridPositionPropertyName));
+            DrawField(ref line, property.FindPropertyRelative(BlockedConnectionsPropertyName));
 
             SerializedProperty typeProperty = property.FindPropertyRelative(TypePropertyName);
             DrawField(ref line, typeProperty);

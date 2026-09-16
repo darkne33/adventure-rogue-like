@@ -10,6 +10,7 @@ public sealed class RoomDoor : MonoBehaviour
     private DoorType _doorType;
     private RoomDoor _nextRoomEntryDoor;
     private bool _isLevelExit;
+    private int _roomRotationQuarterTurns;
 
     [SerializeField] private DoorAnimator _doorAnimator;
     [SerializeField] private RoomDirection _direction;
@@ -18,7 +19,8 @@ public sealed class RoomDoor : MonoBehaviour
     [Inject] private ITransitToRoomService _transitToRoomService;
     [Inject] private ILevelProgressionService _levelProgressionService;
 
-    public RoomDirection Direction => _direction;
+    public RoomDirection AuthoredDirection => _direction;
+    public RoomDirection Direction => _direction.RotateClockwise(_roomRotationQuarterTurns);
     public Room NextRoom => _nextRoom;
     public bool IsRewardGate => _doorType == DoorType.Reward;
     public bool HasConfiguredVisuals => _doorAnimator != null && _doorAnimator.IsConfigured;
@@ -42,8 +44,14 @@ public sealed class RoomDoor : MonoBehaviour
         Close();
     }
 
-    public void SetDirection(RoomDirection direction) =>
+    public void SetDirection(RoomDirection direction)
+    {
         _direction = direction;
+        _roomRotationQuarterTurns = 0;
+    }
+
+    public void SetRoomRotation(int quarterTurns) =>
+        _roomRotationQuarterTurns = ((quarterTurns % 4) + 4) % 4;
 
     public void ConfigureLevelExit()
     {

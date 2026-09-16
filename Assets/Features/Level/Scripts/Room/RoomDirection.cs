@@ -9,8 +9,50 @@ public enum RoomDirection
     Right
 }
 
+[Flags]
+public enum RoomConnectionMask
+{
+    None = 0,
+    Up = 1,
+    Down = 2,
+    Left = 4,
+    Right = 8,
+    All = 15
+}
+
 public static class RoomDirectionExtensions
 {
+    public static RoomConnectionMask ToConnectionMask(this RoomDirection direction) =>
+        direction switch
+        {
+            RoomDirection.Up => RoomConnectionMask.Up,
+            RoomDirection.Down => RoomConnectionMask.Down,
+            RoomDirection.Left => RoomConnectionMask.Left,
+            RoomDirection.Right => RoomConnectionMask.Right,
+            _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, null)
+        };
+
+    public static RoomDirection RotateClockwise(this RoomDirection direction, int quarterTurns)
+    {
+        int directionIndex = direction switch
+        {
+            RoomDirection.Up => 0,
+            RoomDirection.Right => 1,
+            RoomDirection.Down => 2,
+            RoomDirection.Left => 3,
+            _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, null)
+        };
+        int normalizedQuarterTurns = ((quarterTurns % 4) + 4) % 4;
+
+        return ((directionIndex + normalizedQuarterTurns) % 4) switch
+        {
+            0 => RoomDirection.Up,
+            1 => RoomDirection.Right,
+            2 => RoomDirection.Down,
+            _ => RoomDirection.Left
+        };
+    }
+
     public static Vector2Int ToGridOffset(this RoomDirection direction) =>
         direction switch
         {

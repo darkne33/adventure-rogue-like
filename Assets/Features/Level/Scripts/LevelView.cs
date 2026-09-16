@@ -12,6 +12,10 @@ public class LevelView : MonoBehaviour
     public const float RoomWorldSize = 320f;
     private const string WallLayerName = "Wall";
     private const string NotWalkableAreaName = "Not Walkable";
+    private static readonly RoomDirection[] CardinalDirections =
+    {
+        RoomDirection.Up, RoomDirection.Down, RoomDirection.Left, RoomDirection.Right
+    };
 
     [SerializeField] private LevelRoomNode[] _rooms;
 
@@ -93,7 +97,7 @@ public class LevelView : MonoBehaviour
                 throw new InvalidOperationException($"{name} contains a missing room prefab.");
 
             roomNode.Bind(roomNode.RoomPrefab);
-            PositionEmbeddedRoom(roomNode.Room, roomNode.GridPosition);
+            PositionEmbeddedRoom(roomNode);
         }
     }
 
@@ -126,17 +130,8 @@ public class LevelView : MonoBehaviour
 
         ValidateKeyRoomConfiguration(useRuntimeRooms: false);
         ValidateTopology(sourcesByPosition, startCount, exitCount);
-        ValidateAuthoringDoors(sourcesByPosition);
-        ValidateConnectivity(sourcesByPosition);
-
-        LevelRoomNode exitNode = GetExitRoomNode();
-        if (!GetAvailableDirections(exitNode.RoomPrefab)
-                .Contains(exitNode.LevelExitDirection))
-        {
-            throw new InvalidOperationException(
-                $"{exitNode.RoomPrefab.name} does not contain the " +
-                $"{exitNode.LevelExitDirection} level-exit door.");
-        }
+        ValidateConnectivity(_rooms.ToDictionary(
+            node => node.GridPosition, GetRoomDirections));
     }
 
     private void MaterializeRooms(DiContainer container,
@@ -148,6 +143,8 @@ public class LevelView : MonoBehaviour
         if (roomBalance != null)
             _combatDepths = BuildCombatDepths();
         var usedVariants = new HashSet<Room>();
+        var nodesByPosition = _rooms.Where(node => node != null)
+            .ToDictionary(node => node.GridPosition);
 
         foreach (LevelRoomNode roomNode in _rooms)
         {
@@ -157,6 +154,8 @@ public class LevelView : MonoBehaviour
                 throw new InvalidOperationException($"{name} contains a missing room prefab.");
 
             Room source = roomNode.RoomPrefab;
+            HashSet<RoomDirection> requiredDirections =
+                GetRequiredDirections(roomNode, nodesByPosition);
             if (roomBalance != null && (roomNode.Type is RoomType.Enemy or RoomType.Exit) &&
                 source.RoomData is not BossRoomData &&
                 !IsRoomOwnedByLevel(source) && !IsRoomOwnedByLevel(roomNode.Room))
@@ -166,11 +165,13 @@ public class LevelView : MonoBehaviour
                 Room[] variants = roomBalance.UsesSmallRoom(roomIndex)
                     ? _smallEnemyRooms
                     : _mediumEnemyRooms;
-                source = SelectRoomVariant(source, variants, usedVariants);
+                source = SelectRoomVariant(source, variants, usedVariants,
+                    requiredDirections);
             }
 
             Room room = MaterializeRoom(container, source,
                 roomNode.Room, roomNode.GridPosition, "room");
+            ApplyRoomRotation(room, GetMatchingRotation(room, requiredDirections));
 
             if (roomNode.Type is RoomType.Enemy or RoomType.Exit)
             {
@@ -205,12 +206,11 @@ public class LevelView : MonoBehaviour
     }
 
     private static Room SelectRoomVariant(Room authoredRoom, Room[] variants,
-        HashSet<Room> usedVariants)
+        HashSet<Room> usedVariants, IReadOnlyCollection<RoomDirection> requiredDirections)
     {
         if (variants == null || variants.Length == 0)
             return authoredRoom;
 
-        HashSet<RoomDirection> authoredDirections = GetAvailableDirections(authoredRoom);
         bool requiresKeyRoom = authoredRoom.RoomData is
             DefaultEnemiesRoomData { CanSpawnKeyRoom: true };
         var compatible = new List<Room>();
@@ -221,8 +221,9 @@ public class LevelView : MonoBehaviour
                 (requiresKeyRoom && (!data.CanSpawnKeyRoom || data.KeyRoomSpawnPoint == null)))
                 continue;
 
-            // Layout changes must preserve the authored connections and combat depth.
-            if (authoredDirections.SetEquals(GetAvailableDirections(variant)) &&
+            // A variant may have a different door layout if a quarter-turn rotation
+            // fits every connection required by this grid cell.
+            if (TryMatchRotation(variant, requiredDirections, out _) &&
                 !compatible.Contains(variant))
                 compatible.Add(variant);
         }
@@ -251,7 +252,7 @@ public class LevelView : MonoBehaviour
                 throw new InvalidOperationException($"{room?.name ?? name} does not have room data.");
 
             RoomDoor[] authoredDoors = room.GetComponentsInChildren<RoomDoor>(true)
-                .OrderBy(door => door.Direction)
+                .OrderBy(door => door.AuthoredDirection)
                 .ToArray();
             if (authoredDoors.Length == 0)
                 throw new InvalidOperationException(
@@ -270,16 +271,16 @@ public class LevelView : MonoBehaviour
                 if (configuredDoor == null)
                     throw new InvalidOperationException(
                         $"{room.name} contains a missing active door in RoomData.");
-                if (!configuredDirections.Add(configuredDoor.Direction))
+                if (!configuredDirections.Add(configuredDoor.AuthoredDirection))
                     throw new InvalidOperationException(
-                        $"{room.name} contains duplicate {configuredDoor.Direction} active doors.");
+                        $"{room.name} contains duplicate {configuredDoor.AuthoredDirection} active doors.");
 
                 RoomDoor[] matches = authoredDoors
-                    .Where(door => door.Direction == configuredDoor.Direction)
+                    .Where(door => door.AuthoredDirection == configuredDoor.AuthoredDirection)
                     .ToArray();
                 if (matches.Length != 1)
                     throw new InvalidOperationException(
-                        $"{room.name} must contain exactly one authored {configuredDoor.Direction} door.");
+                        $"{room.name} must contain exactly one authored {configuredDoor.AuthoredDirection} door.");
 
                 resolvedDoors[i] = matches[0];
             }
@@ -527,14 +528,104 @@ public class LevelView : MonoBehaviour
     private static bool HasDoor(Room room, RoomDirection direction) =>
         FindDoor(room, direction) != null;
 
-    private void ValidateAuthoringDoors(
-        IReadOnlyDictionary<Vector2Int, Room> sourcesByPosition)
+    public IReadOnlyCollection<RoomDirection> GetRoomDirections(LevelRoomNode roomNode)
     {
-        foreach (Room room in sourcesByPosition.Values)
-            GetAvailableDirections(room);
+        if (roomNode == null || roomNode.RoomPrefab == null)
+            throw new InvalidOperationException($"{name} contains a missing room prefab.");
+        if (_rooms == null)
+            throw new InvalidOperationException($"{name} does not contain room nodes.");
+
+        var nodesByPosition = _rooms.Where(node => node != null)
+            .ToDictionary(node => node.GridPosition);
+        int rotation = GetMatchingRotation(roomNode.RoomPrefab,
+            GetRequiredDirections(roomNode, nodesByPosition));
+        return GetAvailableDirections(roomNode.RoomPrefab, authored: true)
+            .Select(direction => direction.RotateClockwise(rotation))
+            .Where(direction => IsConnectionAllowed(roomNode, direction, nodesByPosition))
+            .ToArray();
     }
 
-    private static HashSet<RoomDirection> GetAvailableDirections(Room room)
+    private static HashSet<RoomDirection> GetRequiredDirections(
+        LevelRoomNode roomNode, IReadOnlyDictionary<Vector2Int, LevelRoomNode> nodesByPosition)
+    {
+        var required = new HashSet<RoomDirection>();
+        foreach (RoomDirection direction in CardinalDirections)
+        {
+            if (nodesByPosition.ContainsKey(roomNode.GridPosition + direction.ToGridOffset()) &&
+                IsConnectionAllowed(roomNode, direction, nodesByPosition))
+                required.Add(direction);
+        }
+
+        if (roomNode.Type is RoomType.Exit or RoomType.Boss)
+        {
+            if (!IsConnectionAllowed(roomNode, roomNode.LevelExitDirection, nodesByPosition))
+                throw new InvalidOperationException("The level-exit direction cannot be blocked.");
+            required.Add(roomNode.LevelExitDirection);
+        }
+        return required;
+    }
+
+    private static bool IsConnectionAllowed(LevelRoomNode roomNode,
+        RoomDirection direction, IReadOnlyDictionary<Vector2Int, LevelRoomNode> nodesByPosition)
+    {
+        if ((roomNode.BlockedConnections & direction.ToConnectionMask()) != RoomConnectionMask.None)
+            return false;
+
+        return !nodesByPosition.TryGetValue(roomNode.GridPosition + direction.ToGridOffset(),
+                   out LevelRoomNode neighbour) ||
+               (neighbour.BlockedConnections & direction.Opposite().ToConnectionMask()) ==
+               RoomConnectionMask.None;
+    }
+
+    private static int GetMatchingRotation(Room room,
+        IReadOnlyCollection<RoomDirection> requiredDirections)
+    {
+        if (TryMatchRotation(room, requiredDirections, out int rotation))
+            return rotation;
+
+        throw new InvalidOperationException(
+            $"{room.name} cannot fit the required doors " +
+            $"({string.Join(", ", requiredDirections)}) at any 90-degree rotation. " +
+            "Use a prefab with matching entrances or move the room to a compatible grid cell.");
+    }
+
+    private static bool TryMatchRotation(Room room,
+        IReadOnlyCollection<RoomDirection> requiredDirections, out int rotation)
+    {
+        HashSet<RoomDirection> authoredDirections =
+            GetAvailableDirections(room, authored: true);
+        for (int candidate = 0; candidate < 4; candidate++)
+        {
+            bool matches = true;
+            foreach (RoomDirection required in requiredDirections)
+            {
+                if (authoredDirections.Contains(required.RotateClockwise(-candidate)))
+                    continue;
+
+                matches = false;
+                break;
+            }
+
+            if (matches)
+            {
+                rotation = candidate;
+                return true;
+            }
+        }
+
+        rotation = 0;
+        return false;
+    }
+
+    private static void ApplyRoomRotation(Room room, int rotation)
+    {
+        room.transform.localRotation = Quaternion.Euler(0f, rotation * 90f, 0f);
+        foreach (RoomDoor door in room.GetComponentsInChildren<RoomDoor>(true))
+            door.SetRoomRotation(rotation);
+    }
+
+    private static HashSet<RoomDirection> GetAvailableDirections(Room room,
+        bool authored = false)
     {
         RoomDoor[] configuredDoors = room.RoomData?.RoomDoors;
         if (configuredDoors == null || configuredDoors.Length == 0)
@@ -550,9 +641,10 @@ public class LevelView : MonoBehaviour
             if (!door.HasConfiguredVisuals)
                 throw new InvalidOperationException(
                     $"{door.name} must contain assigned EnemyDoor and RewardDoor roots and two door leaves for each variant.");
-            if (!result.Add(door.Direction))
+            RoomDirection direction = authored ? door.AuthoredDirection : door.Direction;
+            if (!result.Add(direction))
                 throw new InvalidOperationException(
-                    $"{room.name} contains duplicate {door.Direction} doors.");
+                    $"{room.name} contains duplicate {direction} doors.");
         }
 
         return result;
@@ -560,6 +652,7 @@ public class LevelView : MonoBehaviour
 
     private void ConnectAdjacentRooms(IReadOnlyDictionary<Vector2Int, Room> roomsByPosition)
     {
+        var nodesByPosition = _rooms.ToDictionary(node => node.GridPosition);
         foreach (KeyValuePair<Vector2Int, Room> roomEntry in roomsByPosition)
         {
             Room currentRoom = roomEntry.Value;
@@ -569,6 +662,9 @@ public class LevelView : MonoBehaviour
                     roomEntry.Key + currentDoor.Direction.ToGridOffset();
 
                 if (!roomsByPosition.TryGetValue(neighbourPosition, out Room neighbourRoom))
+                    continue;
+                if (!IsConnectionAllowed(nodesByPosition[roomEntry.Key],
+                        currentDoor.Direction, nodesByPosition))
                     continue;
 
                 RoomDoor neighbourDoor = FindDoor(neighbourRoom,
@@ -807,21 +903,18 @@ public class LevelView : MonoBehaviour
         var pending = new Queue<Vector2Int>();
         pending.Enqueue(StartRoomGridPosition);
 
-        // Count combat rooms along the shortest connected route. Optional rooms
-        // never raise the difficulty of rooms elsewhere on the map.
+        // Rotations and prefab variants must fit every allowed grid connection.
+        // Count the intended routes before instantiation, without depending on
+        // the unrotated prefab doors. Optional rooms do not raise other branches' difficulty.
         while (pending.Count > 0)
         {
             Vector2Int position = pending.Dequeue();
-            LevelRoomNode node = nodes[position];
-            Room room = node.Room != null ? node.Room : node.RoomPrefab;
-            foreach (RoomDoor door in room.RoomData.RoomDoors)
+            foreach (RoomDirection direction in CardinalDirections)
             {
-                Vector2Int neighbourPosition = position + door.Direction.ToGridOffset();
+                Vector2Int neighbourPosition = position + direction.ToGridOffset();
                 if (!nodes.TryGetValue(neighbourPosition, out LevelRoomNode neighbour))
                     continue;
-
-                Room neighbourRoom = neighbour.Room != null ? neighbour.Room : neighbour.RoomPrefab;
-                if (!HasDoor(neighbourRoom, door.Direction.Opposite()))
+                if (!IsConnectionAllowed(nodes[position], direction, nodes))
                     continue;
 
                 int depth = depths[position] +
@@ -865,6 +958,17 @@ public class LevelView : MonoBehaviour
     private void ValidateConnectivity(
         IReadOnlyDictionary<Vector2Int, Room> roomsByPosition)
     {
+        var nodesByPosition = _rooms.ToDictionary(node => node.GridPosition);
+        ValidateConnectivity(roomsByPosition.ToDictionary(
+            entry => entry.Key,
+            entry => (IReadOnlyCollection<RoomDirection>)GetAvailableDirections(entry.Value)
+                .Where(direction => IsConnectionAllowed(nodesByPosition[entry.Key],
+                    direction, nodesByPosition)).ToArray()));
+    }
+
+    private void ValidateConnectivity(
+        IReadOnlyDictionary<Vector2Int, IReadOnlyCollection<RoomDirection>> directionsByPosition)
+    {
         var visited = new HashSet<Vector2Int>();
         var pending = new Queue<Vector2Int>();
         pending.Enqueue(StartRoomGridPosition);
@@ -875,14 +979,13 @@ public class LevelView : MonoBehaviour
             if (!visited.Add(position))
                 continue;
 
-            Room room = roomsByPosition[position];
-            foreach (RoomDoor roomDoor in room.RoomData.RoomDoors)
+            foreach (RoomDirection direction in directionsByPosition[position])
             {
                 Vector2Int neighbourPosition =
-                    position + roomDoor.Direction.ToGridOffset();
-                if (!roomsByPosition.TryGetValue(neighbourPosition,
-                        out Room neighbourRoom) ||
-                    !HasDoor(neighbourRoom, roomDoor.Direction.Opposite()) ||
+                    position + direction.ToGridOffset();
+                if (!directionsByPosition.TryGetValue(neighbourPosition,
+                        out IReadOnlyCollection<RoomDirection> neighbourDirections) ||
+                    !neighbourDirections.Contains(direction.Opposite()) ||
                     visited.Contains(neighbourPosition))
                     continue;
 
@@ -890,7 +993,7 @@ public class LevelView : MonoBehaviour
             }
         }
 
-        if (visited.Count != roomsByPosition.Count)
+        if (visited.Count != directionsByPosition.Count)
             throw new InvalidOperationException(
                 $"{name} contains rooms that cannot be reached from the start room.");
     }
@@ -911,15 +1014,20 @@ public class LevelView : MonoBehaviour
     private bool IsRoomOwnedByLevel(Room room) =>
         room != null && room.transform.IsChildOf(transform);
 
-    private void PositionEmbeddedRoom(Room room, Vector2Int gridPosition)
+    private void PositionEmbeddedRoom(LevelRoomNode roomNode)
     {
+        Room room = roomNode.Room;
         if (!IsRoomOwnedByLevel(room))
             return;
 
         if (room.transform.parent != transform)
             room.transform.SetParent(transform, false);
         room.transform.SetLocalPositionAndRotation(
-            ToWorldPosition(gridPosition), Quaternion.identity);
+            ToWorldPosition(roomNode.GridPosition), Quaternion.identity);
+        var nodesByPosition = _rooms.Where(node => node != null)
+            .ToDictionary(node => node.GridPosition);
+        ApplyRoomRotation(room,
+            GetMatchingRotation(room, GetRequiredDirections(roomNode, nodesByPosition)));
     }
 
     private void OnDrawGizmos()
@@ -1015,6 +1123,9 @@ public sealed class LevelRoomNode
     public Room RoomPrefab => _roomPrefab;
     public Room Room => _room;
     [field: SerializeField] public Vector2Int GridPosition { get; private set; }
+    [field: SerializeField]
+    [field: Tooltip("Grid directions without a passage, even when another room is adjacent. Not affected by room rotation.")]
+    public RoomConnectionMask BlockedConnections { get; private set; }
     [field: SerializeField] public RoomType Type { get; private set; } = RoomType.Enemy;
     [field: SerializeField]
     [field: Tooltip("Used by combat rooms (Enemy and Exit).")]
