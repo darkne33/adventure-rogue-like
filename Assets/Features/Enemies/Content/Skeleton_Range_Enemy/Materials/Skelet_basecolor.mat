@@ -11,7 +11,9 @@ Material:
   m_Shader: {fileID: 4800000, guid: 66e2a6cb7def4a7c8c700b23317379b5, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _FADE_BURN_ON
+  - _FADE_ON
   m_InvalidKeywords:
   - _ALBEDOVERTEXCOLORMODE_REPLACE
   - _ALPHA_CUTOFF_ON
@@ -252,12 +254,12 @@ Material:
     - _EnvironmentReflections: 1
     - _FaceDownCutoff: 0.25
     - _FadeAmount: 0
-    - _FadeBurnOn: 0
-    - _FadeBurnWidth: 0.01
+    - _FadeBurnOn: 1
+    - _FadeBurnWidth: 0.2
     - _FadeByCamDistanceOn: 0
-    - _FadeOn: 0
-    - _FadePower: 1
-    - _FadeTransition: 0.2
+    - _FadeOn: 1
+    - _FadePower: 0.46
+    - _FadeTransition: 0.02
     - _FogOn: 0
     - _GeneralAlpha: 1
     - _Glitch: 0
@@ -427,7 +429,7 @@ Material:
     - _CustomAmbientColor: {r: 0.65, g: 0.65, b: 0.65, a: 1}
     - _DepthGlowColor: {r: 1, g: 0.9869999, b: 0.6, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _FadeBurnColor: {r: 1, g: 1, b: 0, a: 1}
+    - _FadeBurnColor: {r: 1, g: 1, b: 1, a: 1}
     - _GlitchOffset: {r: -0.5, g: 0, b: 0, a: 0}
     - _GradientHeightColor01: {r: 0.2, g: 0.2, b: 0.2, a: 1}
     - _GradientHeightColor02: {r: 1, g: 1, b: 1, a: 1}
