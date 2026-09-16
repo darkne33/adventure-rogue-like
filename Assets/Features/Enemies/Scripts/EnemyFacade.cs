@@ -9,6 +9,8 @@ namespace Features.Enemies.Scripts
     public class EnemyFacade : CombatTarget
     {
         private const float NavMeshSampleDistance = 4f;
+        private const float FallRecoveryDepth = 10f;
+        private const float FallRecoveryHeight = 5f;
 
         public override HealthSystem HealthSystem => _healthSystem;
         public override DealDamageEffectSystem EffectsSystem => _effectsSystem;
@@ -63,6 +65,7 @@ namespace Features.Enemies.Scripts
         private bool _wasStoppedBeforeRelicStun;
         private bool _releaseStopAfterRelicStun;
         private bool _isStopped;
+        private Vector3 _spawnNavigationPosition;
 
         [Inject]
         private void CreateSystems(IEnemySystemsFactory systemsFactory)
@@ -80,7 +83,49 @@ namespace Features.Enemies.Scripts
         private void FixedUpdate()
         {
             RefreshRelicStatuses();
+            if (TryRecoverFromFall())
+                return;
+
             _movementSystem.Tick();
+        }
+
+        private bool TryRecoverFromFall()
+        {
+            if (IsDead || transform.position.y >= _spawnNavigationPosition.y - FallRecoveryDepth)
+                return false;
+
+            Vector3 groundPosition = _spawnNavigationPosition;
+            if (_navMeshAgent != null && _navMeshAgent.isActiveAndEnabled)
+            {
+                // Sample at floor height: the fallen body is too far below the NavMesh.
+                Vector3 samplePosition = transform.position;
+                samplePosition.y = _spawnNavigationPosition.y;
+                if (NavMesh.SamplePosition(samplePosition, out NavMeshHit hit,
+                        NavMeshSampleDistance, _navMeshAgent.areaMask))
+                    groundPosition = hit.position;
+
+                bool wasStopped = IsStopped;
+                if (_navMeshAgent.Warp(groundPosition))
+                {
+                    _navMeshAgent.ResetPath();
+                    _navMeshAgent.velocity = Vector3.zero;
+                    _navMeshAgent.isStopped = wasStopped;
+                }
+            }
+
+            Vector3 recoveryPosition = groundPosition + Vector3.up * FallRecoveryHeight;
+            transform.position = recoveryPosition;
+            if (_rigidbody != null)
+            {
+                _rigidbody.position = recoveryPosition;
+                if (_rigidbody.isKinematic == false)
+                {
+                    _rigidbody.linearVelocity = Vector3.zero;
+                    _rigidbody.angularVelocity = Vector3.zero;
+                }
+            }
+
+            return true;
         }
 
         public void Construct(Rigidbody rigidbody, NavMeshAgent navMeshAgent,
@@ -89,6 +134,7 @@ namespace Features.Enemies.Scripts
             HealthSystem healthSystem, DealDamageEffectSystem effectsSystem,
             EnemyAggroIndicatorView aggroIndicatorView)
         {
+            _spawnNavigationPosition = transform.position;
             _rigidbody = rigidbody;
             _navMeshAgent = navMeshAgent;
             _collisionDetector = collisionDetector;
@@ -245,6 +291,8 @@ namespace Features.Enemies.Scripts
 
         internal void InitializeNavigation(Vector3 navMeshPosition)
         {
+            _spawnNavigationPosition = navMeshPosition;
+
             // Stationary bosses are placed exactly at their room marker and do not need a NavMesh.
             if (_navMeshAgent == null)
                 return;
