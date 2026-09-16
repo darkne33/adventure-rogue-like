@@ -77,6 +77,7 @@ public class LevelView : MonoBehaviour
         ValidateConnectivity(roomsByPosition);
         ResetDoors(roomsByPosition.Values);
         ConnectAdjacentRooms(roomsByPosition);
+        ConfigureStartPointRotation();
         _combatDepths = BuildCombatDepths();
         ConfigureLevelExit(hasNextLevel);
         ResetKeyRoomSpawnState();
@@ -674,6 +675,28 @@ public class LevelView : MonoBehaviour
 
                 currentDoor.Configure(neighbourRoom, neighbourDoor);
             }
+        }
+    }
+
+    private void ConfigureStartPointRotation()
+    {
+        if (StartRoom.RoomData is not StartRoomData startRoomData ||
+            startRoomData.StartPoint == null || startRoomData.RoomDoors == null)
+            return;
+
+        Transform startPoint = startRoomData.StartPoint;
+        foreach (RoomDoor door in startRoomData.RoomDoors)
+        {
+            if (door == null || !door.HasRoomDestination)
+                continue;
+
+            Vector3 direction = door.transform.position - startPoint.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude < 0.001f)
+                continue;
+
+            startPoint.rotation = Quaternion.LookRotation(direction, Vector3.up);
+            return;
         }
     }
 
