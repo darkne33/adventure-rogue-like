@@ -27,6 +27,8 @@ namespace Features.Bosses.Scripts
             BossConfig configuration = facade.Config;
             if (configuration == null)
                 throw new InvalidOperationException($"BossConfig is missing on {facade.name}.");
+            if (facade is MushroomBossFacade mushroomBoss && mushroomBoss.MovementConfiguration == null)
+                throw new InvalidOperationException($"MushroomBossConfiguration is missing on {facade.name}.");
 
             CharacterFacade character = _characterProvider.CharacterFacade;
             if (character == null)
@@ -44,7 +46,9 @@ namespace Features.Bosses.Scripts
                 _characterStats, _goldDropper, _expDropper);
             var healthSystem = new HealthSystem(Mathf.Max(1, configuration.MaxHealth),
                 facade.GetComponents<IHealthView>(), deathSystem, facade.GetComponents<IDamageView>());
-            var attackSystem = new BossAttackSystem(facade, character);
+            BossAttackSystem attackSystem = facade is MushroomBossFacade mushroom
+                ? new MushroomBossAttackSystem(mushroom, character)
+                : new BossAttackSystem(facade, character);
             var combatSystem = new BossCombatSystem(facade, attackSystem, animationSystem);
 
             facade.Construct(rigidbody, meshRenderers, healthSystem, animationSystem,
@@ -56,6 +60,8 @@ namespace Features.Bosses.Scripts
             {
                 WoodGuardBossFacade woodGuard => new WoodGuardBossAnimation(
                     woodGuard.Animator, woodGuard.AttackClip, woodGuard.Config.AnimationSpeedBlendDuration),
+                MushroomBossFacade mushroom => new MushroomBossAnimation(
+                    mushroom.Animator, mushroom.JumpClip, mushroom.HeadClip),
                 _ => throw new ArgumentOutOfRangeException(nameof(facade), facade.GetType(),
                     "Boss animation type is not supported.")
             };

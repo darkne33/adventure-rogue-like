@@ -1,0 +1,360 @@
+using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using UnityEngine;
+using Object = UnityEngine.Object;
+
+namespace Features.Bosses.Scripts
+{
+    public sealed class MushroomBossAttackSystem : BossAttackSystem
+    {
+        private readonly MushroomBossFacade _boss;
+        private readonly CharacterFacade _character;
+        private MushroomBossConfiguration _configuration;
+        private MushroomBossAnimation _animation;
+        private float _headCooldown;
+        private float _wait;
+        private int _lastClockFrame = -1;
+        private bool _executing;
+
+        public MushroomBossAttackSystem(MushroomBossFacade boss, CharacterFacade character)
+            : base(boss, character)
+        {
+            _boss = boss;
+            _character = character;
+        }
+
+        public override void Initialize()
+        {
+            _configuration = _boss.MovementConfiguration;
+            _animation = _boss.AnimationSystem as MushroomBossAnimation;
+            _headCooldown = 0f;
+            _wait = Mathf.Max(0f, _boss.Config.InitialAttackDelay);
+            _lastClockFrame = -1;
+            _executing = false;
+            _boss.AnimationSystem.IdleAnimation();
+        }
+
+        public override async UniTask Tick(CancellationToken cancellationToken)
+        {
+            while (_boss != null && !_boss.IsDead)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                float delta = AdvanceClock();
+                if (CanContinue() && _boss.CanAttack && delta > 0f)
+                {
+                    _wait = Mathf.Max(0f, _wait - delta);
+                    if (_wait <= 0f)
+                        await Execute(cancellationToken);
+                }
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+        }
+
+        public override UniTask Execute(CancellationToken cancellationToken) =>
+            ExecuteAttack(null, cancellationToken);
+
+        internal async UniTask ExecuteAttack(MushroomAttackConfiguration requestedAttack,
+            CancellationToken cancellationToken, bool animateBoss = true, Func<bool> ownsAnimation = null)
+        {
+            bool CanAnimate() => animateBoss && (ownsAnimation?.Invoke() ?? true);
+
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_executing || _configuration == null || _animation == null ||
+                !CanContinue() || !_boss.CanAttack || Time.deltaTime <= 0f)
+                return;
+
+            MushroomJumpAttackConfiguration jump = requestedAttack == null
+                ? FindAttack<MushroomJumpAttackConfiguration>()
+                : requestedAttack as MushroomJumpAttackConfiguration;
+            MushroomHeadAttackConfiguration head = requestedAttack == null
+                ? FindAttack<MushroomHeadAttackConfiguration>()
+                : requestedAttack as MushroomHeadAttackConfiguration;
+            if (jump != null && !jump.IsEnabled) jump = null;
+            if (head != null && !head.IsEnabled) head = null;
+            if (jump == null && head == null)
+                return;
+
+            Vector3 direction = _character.transform.position - _boss.transform.position;
+            direction.y = 0f;
+            float distance = direction.magnitude;
+            direction = distance > 0.001f ? direction / distance : _boss.AttackRotation * Vector3.forward;
+            Face(direction);
+
+            Vector3 start = _boss.transform.position;
+            Vector3 destination = start;
+            Vector3 impactPoint = default;
+            bool headAttack = head != null && _headCooldown <= 0f && distance <= Mathf.Max(0f, head.Range) &&
+                              TryGetGround(_boss.HeadImpactOrigin.position, out impactPoint);
+            if (!headAttack && (jump == null ||
+                !TryPlanJump(direction, distance, jump.Distance, out destination, out impactPoint)))
+                return;
+
+            MushroomAttackConfiguration attack = headAttack ? (MushroomAttackConfiguration)head : jump;
+            float duration = Mathf.Max(0.01f, attack.Duration);
+            float impact = Mathf.Clamp(attack.ImpactNormalized, 0.01f, 1f);
+            float takeoff = headAttack ? 0f : Mathf.Clamp(jump.TakeoffNormalized, 0f, impact - 0.001f);
+            float radius = Mathf.Max(0.01f, attack.Radius);
+            GameObject indicator = null;
+            Vector3 indicatorScale = Vector3.one;
+            bool hasHit = false;
+            float elapsed = 0f;
+            _executing = true;
+            _boss.CombatSystem.SetAttacking(true);
+            if (headAttack)
+                _headCooldown = Mathf.Max(0f, head.Cooldown);
+
+            try
+            {
+                GameObject indicatorPrefab = attack.IndicatorPrefab;
+                if (indicatorPrefab != null)
+                {
+                    // No parent: the warning stays at the captured point as the mushroom moves.
+                    indicator = Object.Instantiate(indicatorPrefab,
+                        impactPoint + Vector3.up * attack.IndicatorGroundOffset, Quaternion.identity);
+                    foreach (Collider collider in indicator.GetComponentsInChildren<Collider>(true))
+                        collider.enabled = false;
+                    indicatorScale = indicator.transform.localScale;
+                    UpdateWarning(indicator.transform, indicatorScale, attack, 0f);
+                    indicator.SetActive(true);
+                }
+
+                if (CanAnimate())
+                {
+                    if (headAttack)
+                        _animation.BeginHead();
+                    else
+                        _animation.BeginJump();
+                    _animation.SampleAttack(0f);
+                }
+
+                while (elapsed < duration)
+                {
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (!CanContinue())
+                        return;
+
+                    float delta = AdvanceClock();
+                    if (delta <= 0f)
+                        continue;
+                    elapsed = Mathf.Min(duration, elapsed + delta);
+                    float progress = elapsed / duration;
+                    if (!headAttack)
+                    {
+                        float flight = Mathf.InverseLerp(takeoff, impact, progress);
+                        Vector3 position = Vector3.Lerp(start, destination, flight);
+                        // The clip supplies the vertical jump. Move the root only over the floor.
+                        position.y = flight >= 1f ? destination.y : start.y;
+                        SetPosition(position);
+                    }
+                    if (CanAnimate())
+                        _animation.SampleAttack(progress);
+
+                    if (!hasHit && indicator != null)
+                        UpdateWarning(indicator.transform, indicatorScale, attack, progress / impact);
+                    if (!hasHit && progress >= impact)
+                    {
+                        hasHit = true;
+                        DestroyIndicator(indicator);
+                        indicator = null;
+                        Vector3 effectPoint = impactPoint;
+                        if (!headAttack && TryGetGround(_boss.LandingEffectOrigin.position,
+                                out Vector3 landingEffectPoint))
+                            effectPoint = landingEffectPoint;
+                        SpawnEffect(attack.EffectPrefab, effectPoint, attack.EffectLifetime);
+                        ApplyHit(impactPoint, radius, attack, direction);
+                        if (!CanContinue() || cancellationToken.IsCancellationRequested)
+                            return;
+                    }
+                }
+            }
+            finally
+            {
+                DestroyIndicator(indicator);
+                _executing = false;
+                _wait = Mathf.Max(0f, attack.RecoveryDuration);
+                if (_boss != null)
+                {
+                    StopVelocity();
+                    if (!_boss.IsDead && _boss.isActiveAndEnabled && CanAnimate())
+                        _boss.AnimationSystem.IdleAnimation();
+                    _boss.CombatSystem.SetAttacking(false);
+                }
+            }
+        }
+
+        private T FindAttack<T>() where T : MushroomAttackConfiguration
+        {
+            HealthSystem health = _boss.HealthSystem;
+            float healthPercentage = health.CurrentHealth / Mathf.Max(1f, health.MaxHealth) * 100f;
+            BossAttackConfiguration[] attacks = _boss.Config.GetAttacksForHealth(healthPercentage);
+            if (attacks == null)
+                return null;
+            foreach (BossAttackConfiguration candidate in attacks)
+            {
+                if (candidate is T attack && attack.IsEnabled)
+                    return attack;
+            }
+            return null;
+        }
+
+        private bool CanContinue() => _boss != null && !_boss.IsDead && _boss.isActiveAndEnabled &&
+            _character != null && _character.HealthSystem != null && !_character.HealthSystem.IsDead &&
+            !_character.IsTransitionPaused;
+
+        private float AdvanceClock()
+        {
+            float timeScale = CanContinue() ? _boss.RelicTimeScale : 0f;
+            _animation?.SetTimeScale(timeScale);
+            if (_lastClockFrame == Time.frameCount)
+                return 0f;
+            _lastClockFrame = Time.frameCount;
+            float delta = Time.deltaTime * timeScale;
+            _headCooldown = Mathf.Max(0f, _headCooldown - delta);
+            return delta;
+        }
+
+        private bool TryPlanJump(Vector3 direction, float targetDistance, float jumpDistance,
+            out Vector3 destination, out Vector3 groundPoint)
+        {
+            destination = _boss.transform.position;
+            if (!TryGetGround(_boss.AttackOrigin.position, out groundPoint))
+                return false;
+
+            Vector3 startGround = groundPoint;
+            float distance = Mathf.Min(Mathf.Max(0f, jumpDistance), targetDistance);
+            float bodyRadius = Mathf.Max(0.05f, _configuration.BodyRadius);
+            if (distance > 0f)
+            {
+                Vector3 castOrigin = startGround + Vector3.up * (bodyRadius + 0.05f);
+                foreach (RaycastHit hit in Physics.SphereCastAll(castOrigin, bodyRadius, direction,
+                             distance, _configuration.MovementObstacleMask, QueryTriggerInteraction.Ignore))
+                {
+                    if (hit.collider == null || hit.collider.transform.IsChildOf(_boss.transform))
+                        continue;
+                    distance = Mathf.Min(distance, Mathf.Max(0f, hit.distance - 0.05f));
+                }
+            }
+
+            // Stop at the last supported floor point, including when the room has a pit or edge.
+            int steps = Mathf.Max(1, Mathf.CeilToInt(distance / Mathf.Max(0.25f, bodyRadius * 0.5f)));
+            for (int step = 1; step <= steps; step++)
+            {
+                Vector3 candidate = startGround + direction * (distance * step / steps);
+                if (!TryGetGround(candidate, out Vector3 floor) ||
+                    Mathf.Abs(floor.y - groundPoint.y) > bodyRadius || !HasFooting(floor, bodyRadius))
+                    break;
+                groundPoint = floor;
+            }
+            destination += groundPoint - startGround;
+            return true;
+        }
+
+        private bool HasFooting(Vector3 center, float radius)
+        {
+            float margin = radius * 0.7f;
+            return HasFloorAt(center + Vector3.right * margin, center.y, radius) &&
+                   HasFloorAt(center + Vector3.left * margin, center.y, radius) &&
+                   HasFloorAt(center + Vector3.forward * margin, center.y, radius) &&
+                   HasFloorAt(center + Vector3.back * margin, center.y, radius);
+        }
+
+        private bool HasFloorAt(Vector3 position, float height, float tolerance) =>
+            TryGetGround(position, out Vector3 ground) && Mathf.Abs(ground.y - height) <= tolerance;
+
+        private bool TryGetGround(Vector3 position, out Vector3 ground)
+        {
+            float height = Mathf.Max(0.01f, _configuration.GroundProbeHeight);
+            if (Physics.Raycast(position + Vector3.up * height, Vector3.down, out RaycastHit hit,
+                    height + Mathf.Max(0.01f, _configuration.GroundProbeDistance), _configuration.GroundMask,
+                    QueryTriggerInteraction.Ignore) && hit.normal.y >= 0.5f &&
+                !hit.collider.transform.IsChildOf(_boss.transform))
+            {
+                ground = hit.point;
+                return true;
+            }
+            ground = position;
+            return false;
+        }
+
+        private void Face(Vector3 direction)
+        {
+            Quaternion rotation = BossFacade.GetFlatRotation(direction);
+            if (_boss.Rigidbody != null)
+                _boss.Rigidbody.rotation = rotation;
+            _boss.transform.rotation = rotation;
+            StopVelocity();
+        }
+
+        private void SetPosition(Vector3 position)
+        {
+            if (_boss.Rigidbody != null)
+                _boss.Rigidbody.position = position;
+            _boss.transform.position = position;
+            StopVelocity();
+        }
+
+        private void StopVelocity()
+        {
+            Rigidbody body = _boss.Rigidbody;
+            if (body == null || body.isKinematic)
+                return;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+        }
+
+        private static void UpdateWarning(Transform indicator, Vector3 originalScale,
+            MushroomAttackConfiguration attack, float progress)
+        {
+            float growth = Mathf.Lerp(Mathf.Clamp(attack.InitialIndicatorScale, 0.01f, 1f),
+                1f, Mathf.Clamp01(progress));
+            float radius = Mathf.Max(0.01f, attack.Radius);
+            indicator.localScale = new Vector3(originalScale.x * radius * 2f * growth,
+                originalScale.y, originalScale.z * radius * 2f * growth);
+        }
+
+        private static void SpawnEffect(GameObject prefab, Vector3 position, float lifetime)
+        {
+            if (prefab == null)
+                return;
+            GameObject effect = Object.Instantiate(prefab, position, Quaternion.identity);
+            Object.Destroy(effect, Mathf.Max(0.1f, lifetime));
+        }
+
+        private void ApplyHit(Vector3 ground, float radius, MushroomAttackConfiguration attack,
+            Vector3 fallbackDirection)
+        {
+            if (attack is MushroomJumpAttackConfiguration && _character.MoveSystem?.IsGrounded == false)
+                return;
+
+            // A short vertical column has the same circular footprint as the ground warning.
+            Collider[] hits = Physics.OverlapCapsule(ground, ground + Vector3.up * radius, radius,
+                Physics.AllLayers, QueryTriggerInteraction.Collide);
+            foreach (Collider hit in hits)
+            {
+                if (hit.GetComponentInParent<CharacterFacade>() != _character)
+                    continue;
+                if (_character.ReceiveDamage(attack.Damage, _boss) && _character.Rigidbody != null &&
+                    !_character.Rigidbody.isKinematic)
+                {
+                    Vector3 direction = _character.transform.position - ground;
+                    direction.y = 0f;
+                    direction = direction.sqrMagnitude > 0.001f ? direction.normalized : fallbackDirection;
+                    _character.Rigidbody.AddForce(direction * Mathf.Max(0f, attack.KnockbackForce) +
+                        Vector3.up * Mathf.Max(0f, attack.KnockbackUpwardForce), ForceMode.Impulse);
+                }
+                // Multiple character colliders must not multiply one impact's damage.
+                return;
+            }
+        }
+
+        private static void DestroyIndicator(GameObject indicator)
+        {
+            if (indicator == null)
+                return;
+            indicator.SetActive(false);
+            Object.Destroy(indicator);
+        }
+    }
+}

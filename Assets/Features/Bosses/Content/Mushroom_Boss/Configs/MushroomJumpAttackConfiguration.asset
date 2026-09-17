@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e2747f1bcd544e2936ecff77c0c5935, type: 3}
+  m_Name: MushroomJumpAttackConfiguration
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Bosses.Scripts.MushroomJumpAttackConfiguration
+  <IsEnabled>k__BackingField: 1
+  <Duration>k__BackingField: 1.875
+  <ImpactNormalized>k__BackingField: 0.6666667
+  <Radius>k__BackingField: 10
+  <Damage>k__BackingField: 10
+  <RecoveryDuration>k__BackingField: 0.2
+  <IndicatorPrefab>k__BackingField: {fileID: 100000, guid: 77c6f7d4fa5944e4bf6b664771fd32ba, type: 3}
+  <InitialIndicatorScale>k__BackingField: 0.05
+  <IndicatorGroundOffset>k__BackingField: 0.035
+  <EffectPrefab>k__BackingField: {fileID: 7916812593445680669, guid: 1feb8bdfa2ff3104b9773c131cffd8eb, type: 3}
+  <EffectLifetime>k__BackingField: 3
+  <KnockbackForce>k__BackingField: 3
+  <KnockbackUpwardForce>k__BackingField: 0.5
+  <Distance>k__BackingField: 12
+  <TakeoffNormalized>k__BackingField: 0.2666667

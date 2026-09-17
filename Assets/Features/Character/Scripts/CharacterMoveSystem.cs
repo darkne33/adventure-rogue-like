@@ -47,6 +47,8 @@ public class CharacterMoveSystem
     private Vector3 _landingSlideDirection;
     private Vector3 _jumpInertiaVelocity;
 
+    public bool IsGrounded => _isGrounded;
+
     public CharacterMoveSystem(Rigidbody rigidbody,
         ICameraService cameraService, CharacterStats characterStats,
         CharacterFxSystem characterFxSystem, GameObject characterModel,

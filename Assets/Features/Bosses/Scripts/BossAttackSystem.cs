@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Features.Bosses.Scripts
 {
-    public sealed class BossAttackSystem
+    public class BossAttackSystem
     {
         private readonly BossFacade _boss;
         private readonly CharacterFacade _character;
@@ -20,7 +20,7 @@ namespace Features.Bosses.Scripts
             _character = character;
         }
 
-        public void Initialize()
+        public virtual void Initialize()
         {
             _attacks.Clear();
             _activeAttackPool = null;
@@ -50,7 +50,7 @@ namespace Features.Bosses.Scripts
             }
         }
 
-        public async UniTask Tick(CancellationToken cancellationToken)
+        public virtual async UniTask Tick(CancellationToken cancellationToken)
         {
             while (_boss != null && !_boss.IsDead)
             {
@@ -70,7 +70,7 @@ namespace Features.Bosses.Scripts
             }
         }
 
-        public async UniTask Execute(CancellationToken cancellationToken)
+        public virtual async UniTask Execute(CancellationToken cancellationToken)
         {
             if (!_boss.CanAttack)
                 return;
