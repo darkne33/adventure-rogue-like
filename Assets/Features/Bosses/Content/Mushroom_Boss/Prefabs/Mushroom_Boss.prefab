@@ -537,9 +537,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4bc9dfa298603c740851ae432cbe90d6, type: 3}
       insertIndex: -1
       addedObject: {fileID: 950000}
-    - targetCorrespondingSourceObject: {fileID: -5066368973109066051, guid: 4bc9dfa298603c740851ae432cbe90d6, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 8469898401979198634}
   m_SourcePrefab: {fileID: 100100000, guid: 4bc9dfa298603c740851ae432cbe90d6, type: 3}
 --- !u!4 &543450653642063946 stripped
 Transform:
@@ -573,29 +570,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!1 &4157003063819854108 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -5066368973109066051, guid: 4bc9dfa298603c740851ae432cbe90d6, type: 3}
-  m_PrefabInstance: {fileID: 100100001}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &8469898401979198634
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4157003063819854108}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Outline
-  outlineMode: 0
-  outlineColor: {r: 0, g: 0, b: 0, a: 1}
-  outlineWidth: 2
-  precomputeOutline: 0
-  bakeKeys: []
-  bakeValues: []
 --- !u!137 &6514924436605187204 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: -2708447600294866139, guid: 4bc9dfa298603c740851ae432cbe90d6, type: 3}
