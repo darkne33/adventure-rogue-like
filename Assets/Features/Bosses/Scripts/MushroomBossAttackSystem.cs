@@ -83,9 +83,11 @@ namespace Features.Bosses.Scripts
 
             Vector3 start = _boss.transform.position;
             Vector3 destination = start;
+            // Capture a fixed point ahead, keeping the floor probe at the boss's base height.
+            Vector3 headGroundProbe = start + direction * (head != null ? Mathf.Max(0f, head.ImpactDistance) : 0f);
             Vector3 impactPoint = default;
             bool headAttack = head != null && _headCooldown <= 0f && distance <= Mathf.Max(0f, head.Range) &&
-                              TryGetGround(_boss.HeadImpactOrigin.position, out impactPoint);
+                              TryGetGround(headGroundProbe, out impactPoint);
             if (!headAttack && (jump == null ||
                 !TryPlanJump(direction, distance, jump.Distance, out destination, out impactPoint)))
                 return;
@@ -101,8 +103,13 @@ namespace Features.Bosses.Scripts
             float elapsed = 0f;
             _executing = true;
             _boss.CombatSystem.SetAttacking(true);
+            Vector3 headEffectPoint = impactPoint;
             if (headAttack)
+            {
                 _headCooldown = Mathf.Max(0f, head.Cooldown);
+                _boss.SetHeadImpactPoint(impactPoint);
+                headEffectPoint.y = _boss.HeadImpactOrigin.position.y;
+            }
 
             try
             {
@@ -158,10 +165,9 @@ namespace Features.Bosses.Scripts
                         hasHit = true;
                         DestroyIndicator(indicator);
                         indicator = null;
-                        Vector3 effectPoint = impactPoint;
-                        if (!headAttack && TryGetGround(_boss.LandingEffectOrigin.position,
-                                out Vector3 landingEffectPoint))
-                            effectPoint = landingEffectPoint;
+                        Vector3 effectPoint = headAttack
+                            ? headEffectPoint
+                            : _boss.LandingEffectOrigin.position;
                         SpawnEffect(attack.EffectPrefab, effectPoint, attack.EffectLifetime);
                         ApplyHit(impactPoint, radius, attack, direction);
                         if (!CanContinue() || cancellationToken.IsCancellationRequested)

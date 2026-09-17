@@ -10,6 +10,10 @@ namespace Features.Bosses.Scripts
         [field: SerializeField, Min(0f)] public float Range { get; private set; } = 3.2f;
         [field: SerializeField, Min(0f)] public float Cooldown { get; private set; } = 4f;
 
+        [field: Header("Head impact point")]
+        [field: Tooltip("Расстояние по земле от центра босса вперёд до зафиксированной точки удара. Дистанция выбора атаки задаётся параметром Range.")]
+        [field: SerializeField, Min(0f)] public float ImpactDistance { get; private set; } = 1.8f;
+
         public MushroomHeadAttackConfiguration()
         {
             ImpactNormalized = 0.4222222f;

@@ -13,17 +13,18 @@ MonoBehaviour:
   m_Name: MushroomHeadAttackConfiguration
   m_EditorClassIdentifier: Assembly-CSharp::Features.Bosses.Scripts.MushroomHeadAttackConfiguration
   <IsEnabled>k__BackingField: 1
-  <Duration>k__BackingField: 1.875
+  <Duration>k__BackingField: 3
   <ImpactNormalized>k__BackingField: 0.4222222
-  <Radius>k__BackingField: 10
+  <Radius>k__BackingField: 5
   <Damage>k__BackingField: 10
   <RecoveryDuration>k__BackingField: 0.35
   <IndicatorPrefab>k__BackingField: {fileID: 100000, guid: a713927e76054362b93124a2ed3898ec, type: 3}
   <InitialIndicatorScale>k__BackingField: 0.05
-  <IndicatorGroundOffset>k__BackingField: 0.035
+  <IndicatorGroundOffset>k__BackingField: 0.05
   <EffectPrefab>k__BackingField: {fileID: 8836799133796033606, guid: 6e59b652d72be0d458bcd71bf4fcfc52, type: 3}
   <EffectLifetime>k__BackingField: 3
-  <KnockbackForce>k__BackingField: 3
-  <KnockbackUpwardForce>k__BackingField: 0.5
-  <Range>k__BackingField: 100
+  <KnockbackForce>k__BackingField: 10
+  <KnockbackUpwardForce>k__BackingField: 10
+  <Range>k__BackingField: 15
   <Cooldown>k__BackingField: 4
+  <ImpactDistance>k__BackingField: 15

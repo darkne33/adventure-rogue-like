@@ -24,8 +24,8 @@ namespace Features.Bosses.Scripts
         [field: Header("Impact effect and knockback")]
         [field: SerializeField] public GameObject EffectPrefab { get; protected set; }
         [field: SerializeField, Min(0.01f)] public float EffectLifetime { get; protected set; } = 3f;
-        [field: SerializeField, Min(0f)] public float KnockbackForce { get; protected set; } = 3f;
-        [field: SerializeField, Min(0f)] public float KnockbackUpwardForce { get; protected set; } = 0.5f;
+        [field: SerializeField, Min(0f)] public float KnockbackForce { get; protected set; } = 10f;
+        [field: SerializeField, Min(0f)] public float KnockbackUpwardForce { get; protected set; } = 10f;
 
         public override IBossAttack CreateAttack(BossFacade boss, CharacterFacade character)
         {

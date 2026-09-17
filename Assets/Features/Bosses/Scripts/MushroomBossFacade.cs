@@ -19,10 +19,19 @@ namespace Features.Bosses.Scripts
         [SerializeField] private AnimationClip _headClip;
         [SerializeField] private MushroomBossConfiguration _movementConfiguration;
         [SerializeField] private Transform _attackOrigin;
-        [Tooltip("Ground-level spawn point for SparkleNovaRed at landing.")]
+        [Tooltip("Exact world-space spawn position for SparkleNovaRed at landing, including height.")]
         [SerializeField] private Transform _landingEffectOrigin;
-        [Tooltip("Ground-level head impact point, captured when the head attack starts. Keep it outside the animated skeleton.")]
+        [Tooltip("The captured head impact point uses ImpactDistance for XZ and preserves this marker's authored height for NovaRed. Keep it outside the animated skeleton.")]
         [SerializeField] private Transform _headImpactOrigin;
+
+        public void SetHeadImpactPoint(Vector3 position)
+        {
+            if (_headImpactOrigin != null)
+            {
+                position.y = _headImpactOrigin.position.y;
+                _headImpactOrigin.position = position;
+            }
+        }
 
         private void LateUpdate() => AnimationSystem?.SetTimeScale(RelicTimeScale);
     }

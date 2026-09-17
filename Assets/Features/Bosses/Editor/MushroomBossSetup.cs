@@ -18,7 +18,6 @@ namespace Features.Bosses.Editor
         private const string BombPath = "Assets/Features/Enemies/Content/BombEnemy/Prefabs/BombEnemy_Normal.prefab";
         private const string IndicatorMaterialPath =
             "Assets/Features/Enemies/Content/BombEnemy/Prefabs/ExplosionIndicator.mat";
-        private const string NovaFolder = "Assets/third-party/Retro Arsenal/Prefabs/Combat/Nova";
 
         // Explicit setup only: importing scripts never changes prefabs, scenes or settings.
         [MenuItem("Tools/Little Rush/Bosses/Set Up Mushroom")]
@@ -36,8 +35,8 @@ namespace Features.Bosses.Editor
                 "Assets/Features/Bosses/Content/WoodGuard_Boss/Materials/WoodyMat.mat");
             Material indicatorTemplate = Require<Material>(IndicatorMaterialPath);
             GameObject bomb = Require<GameObject>(BombPath);
-            GameObject landingEffect = Require<GameObject>(NovaFolder + "/Sparkle/SparkleNovaRed.prefab");
-            GameObject headEffect = Require<GameObject>(NovaFolder + "/Basic/NovaRed.prefab");
+            GameObject landingEffect = Require<GameObject>(Root + "/Prefabs/SparkleNovaRed.prefab");
+            GameObject headEffect = Require<GameObject>(Root + "/Prefabs/NovaRed.prefab");
             BossHealthCanvas healthCanvas = Require<GameObject>(
                 "Assets/Features/Bosses/UI/Prefabs/BossHealthCanvas.prefab").GetComponent<BossHealthCanvas>();
 
