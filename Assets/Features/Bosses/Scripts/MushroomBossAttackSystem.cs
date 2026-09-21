@@ -221,6 +221,10 @@ namespace Features.Bosses.Scripts
             return delta;
         }
 
+        internal Vector3 GetSplitPosition(Vector3 direction, float distance) =>
+            _configuration != null && TryPlanJump(direction, distance, distance,
+                out Vector3 destination, out _) ? destination : _boss.transform.position;
+
         private bool TryPlanJump(Vector3 direction, float targetDistance, float jumpDistance,
             out Vector3 destination, out Vector3 groundPoint)
         {
@@ -230,7 +234,7 @@ namespace Features.Bosses.Scripts
 
             Vector3 startGround = groundPoint;
             float distance = Mathf.Min(Mathf.Max(0f, jumpDistance), targetDistance);
-            float bodyRadius = Mathf.Max(0.05f, _configuration.BodyRadius);
+            float bodyRadius = Mathf.Max(0.05f, _configuration.BodyRadius * _boss.SizeMultiplier);
             if (distance > 0f)
             {
                 Vector3 castOrigin = startGround + Vector3.up * (bodyRadius + 0.05f);

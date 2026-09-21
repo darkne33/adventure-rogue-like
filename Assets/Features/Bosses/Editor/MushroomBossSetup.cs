@@ -106,6 +106,12 @@ namespace Features.Bosses.Editor
             }
 
             CreateBossPrefab(model, material, controller, idle, jump, head, config, movement);
+            if (movement.SplitPrefab == null)
+            {
+                var serialized = new SerializedObject(movement);
+                SetAsset(serialized, "SplitPrefab", Require<GameObject>(PrefabPath).GetComponent<MushroomBossFacade>());
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
             if (newMovement)
             {
                 CapsuleCollider body = Require<GameObject>(PrefabPath).GetComponent<CapsuleCollider>();

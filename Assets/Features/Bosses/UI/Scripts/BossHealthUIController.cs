@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Features.Bosses.Scripts;
 using global::UI;
 using UnityEngine;
@@ -12,7 +13,8 @@ namespace Features.Bosses.UI
         private readonly IPanelsProvider _panelsProvider;
         private readonly DiContainer _container;
 
-        private BossFacade _boss;
+        private readonly List<BossFacade> _bosses = new List<BossFacade>(2);
+        private float _maxHealth;
         private BossRoomData _room;
         private BossHealthCanvas _view;
         private bool _isHiding;
@@ -39,13 +41,27 @@ namespace Features.Bosses.UI
                 return;
             }
 
-            _boss = boss;
+            _bosses.Add(boss);
+            _maxHealth = boss.HealthSystem.MaxHealth;
             _room = room;
             Transform root = _panelsProvider.GetRootFor(PanelLocation.OverlayUI);
             _view = _container.InstantiatePrefabForComponent<BossHealthCanvas>(
                 boss.Config.HealthCanvasPrefab, root);
             _view.name = "BossHealthCanvas";
-            _view.Show(boss.HealthSystem.CurrentHealth, boss.HealthSystem.MaxHealth);
+            _view.Show(boss.HealthSystem.CurrentHealth, _maxHealth);
+        }
+
+        public void ReplaceBoss(BossFacade original, BossFacade first, BossFacade second)
+        {
+            if (_view == null || _isHiding || original == null || first == null || second == null)
+                return;
+
+            int index = _bosses.IndexOf(original);
+            if (index < 0)
+                return;
+
+            _bosses[index] = first;
+            _bosses.Add(second);
         }
 
         public void Tick()
@@ -59,14 +75,24 @@ namespace Features.Bosses.UI
                 return;
             }
 
-            if (_boss != null)
-                _view.SetHealth(_boss.HealthSystem.CurrentHealth, _boss.HealthSystem.MaxHealth);
+            float currentHealth = 0f;
+            bool hasLivingBoss = false;
+            foreach (BossFacade boss in _bosses)
+            {
+                if (boss == null || boss.IsDead || !boss.isActiveAndEnabled || boss.HealthSystem == null)
+                    continue;
 
-            if (_boss == null || _boss.IsDead || !_boss.isActiveAndEnabled || _room.IsCompleted)
+                hasLivingBoss = true;
+                currentHealth += boss.HealthSystem.CurrentHealth;
+            }
+
+            _view.SetHealth(currentHealth, _maxHealth);
+
+            if (!hasLivingBoss || _room.IsCompleted)
             {
                 _isHiding = true;
                 _view.HideAndDestroy();
-                _boss = null;
+                _bosses.Clear();
             }
         }
 
@@ -87,7 +113,8 @@ namespace Features.Bosses.UI
             if (_view != null)
                 UnityEngine.Object.Destroy(_view.gameObject);
             _view = null;
-            _boss = null;
+            _bosses.Clear();
+            _maxHealth = 0f;
             _room = null;
             _isHiding = false;
         }
