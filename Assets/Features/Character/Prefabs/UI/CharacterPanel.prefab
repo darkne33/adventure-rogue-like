@@ -252,7 +252,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 276.0987, y: 143.5}
+  m_SizeDelta: {x: 276.0987, y: 110.1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &930000000000000002
 MonoBehaviour:
@@ -1411,7 +1411,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 276.0987, y: 143.5}
+  m_SizeDelta: {x: 276.0987, y: 110.1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &6577314265734025910
 MonoBehaviour:
@@ -8055,8 +8055,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 229, y: -78.1793}
-  m_SizeDelta: {x: 304.01, y: 458.3586}
+  m_AnchoredPosition: {x: 229, y: -13.2701}
+  m_SizeDelta: {x: 304.01, y: 328.5403}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &3918350116713855002
 MonoBehaviour:
@@ -8443,7 +8443,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 276.0987, y: 143.5}
+  m_SizeDelta: {x: 276.0987, y: 110.1}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &4100390577497179140
 MonoBehaviour:
@@ -15314,6 +15314,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: RelicInventoryView
       objectReference: {fileID: 0}
+    - target: {fileID: 200000, guid: 9fe42d1e3b8840f2924822fce760d918, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 200001, guid: 9fe42d1e3b8840f2924822fce760d918, type: 3}
       propertyPath: m_SizeDelta.x
       value: 2462.22
@@ -15375,20 +15379,16 @@ PrefabInstance:
       value: 128
       objectReference: {fileID: 0}
     - target: {fileID: 210002, guid: 9fe42d1e3b8840f2924822fce760d918, type: 3}
+      propertyPath: m_StartCorner
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 210002, guid: 9fe42d1e3b8840f2924822fce760d918, type: 3}
       propertyPath: m_ChildAlignment
       value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 210002, guid: 9fe42d1e3b8840f2924822fce760d918, type: 3}
       propertyPath: m_ConstraintCount
       value: 15
-      objectReference: {fileID: 0}
-    - target: {fileID: 200000, guid: 9fe42d1e3b8840f2924822fce760d918, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 210002, guid: 9fe42d1e3b8840f2924822fce760d918, type: 3}
-      propertyPath: m_StartCorner
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 210002, guid: 9fe42d1e3b8840f2924822fce760d918, type: 3}
       propertyPath: m_Padding.m_Right
