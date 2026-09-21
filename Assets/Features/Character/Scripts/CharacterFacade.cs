@@ -9,6 +9,7 @@ public class CharacterFacade : MonoBehaviour
     public HealthSystem HealthSystem => _healthSystem;
     public ShieldSystem ShieldSystem => _shieldSystem;
     public Rigidbody Rigidbody => _rigidbody;
+    public Collider Collider => _collider;
     public CharacterAbilitySystem CharacterAbilitySystem => _abilitySystem;
     public CharacterMoveSystem MoveSystem => _moveSystem;
     public DealDamageEffectSystem DamageEffectSystem => _damageEffectSystem;

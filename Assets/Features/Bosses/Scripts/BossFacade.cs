@@ -177,6 +177,8 @@ namespace Features.Bosses.Scripts
 
         public void StopCombat() => _combatSystem?.Stop();
 
+        public virtual int ClaimExperienceReward() => Mathf.Max(0, Config.Exp);
+
         public Transform GetClosestProjectileTarget(Vector3 position)
         {
             Transform closestTarget = null;

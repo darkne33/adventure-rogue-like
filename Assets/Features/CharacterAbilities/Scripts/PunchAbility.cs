@@ -235,7 +235,7 @@ public sealed class PunchAbility : CharacterActiveAbility
             out Quaternion punchRotation);
         SpawnPunchEffect(punchPosition, punchRotation);
 
-        if (preferredEnemy is BossFacade)
+        if (preferredEnemy is BossFacade && preferredEnemy is not MushroomBossFacade)
         {
             ApplyDamage(character, preferredEnemy, punchDamage, punchPosition);
             return;
@@ -263,9 +263,20 @@ public sealed class PunchAbility : CharacterActiveAbility
             if (enemy == null || enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
                 continue;
 
-            Vector3 targetPosition = enemy is BossFacade boss
-                ? boss.GetClosestProjectileTarget(characterPosition).position
-                : enemy.transform.position;
+            Vector3 targetPosition;
+            if (enemy is MushroomBossFacade)
+            {
+                Collider targetCollider = GetEnemyCollider(enemy);
+                targetPosition = targetCollider != null
+                    ? targetCollider.ClosestPoint(characterPosition)
+                    : enemy.transform.position;
+            }
+            else
+            {
+                targetPosition = enemy is BossFacade boss
+                    ? boss.GetClosestProjectileTarget(characterPosition).position
+                    : enemy.transform.position;
+            }
             float sqrDistance = (targetPosition - characterPosition).sqrMagnitude;
             if (sqrDistance >= closestSqrDistance)
                 continue;
@@ -295,7 +306,7 @@ public sealed class PunchAbility : CharacterActiveAbility
         int simultaneousIndex, int simultaneousAttackCount, out Vector3 position,
         out Quaternion rotation)
     {
-        if (enemy is BossFacade)
+        if (enemy is BossFacade && enemy is not MushroomBossFacade)
         {
             position = enemy.GetNextProjectileTarget().position;
             rotation = GetSafeRotation(position - character.ProjectileSpawnPosition,
@@ -303,10 +314,17 @@ public sealed class PunchAbility : CharacterActiveAbility
             return;
         }
 
+        Collider targetCollider = GetEnemyCollider(enemy);
+        if (enemy is MushroomBossFacade && targetCollider != null)
+        {
+            GetMushroomPunchPose(character, targetCollider, punchIndex, simultaneousIndex,
+                simultaneousAttackCount, out position, out rotation);
+            return;
+        }
+
         Transform targetPoint = enemy.TargetToShootDamage != null
             ? enemy.TargetToShootDamage
             : enemy.transform;
-        Collider targetCollider = GetEnemyCollider(enemy);
         Vector3 targetPosition = targetPoint.position;
         Vector3 towardCharacter = character.ProjectileSpawnPosition - targetPosition;
         towardCharacter.y = 0f;
@@ -344,6 +362,59 @@ public sealed class PunchAbility : CharacterActiveAbility
 
         Vector3 punchDirection = targetPosition - position;
         rotation = GetSafeRotation(punchDirection, -towardCharacter);
+    }
+
+    private void GetMushroomPunchPose(CharacterFacade character, Collider targetCollider, int punchIndex,
+        int simultaneousIndex, int simultaneousAttackCount, out Vector3 position, out Quaternion rotation)
+    {
+        Bounds characterBounds = character.Collider != null
+            ? character.Collider.bounds
+            : new Bounds(character.ProjectileSpawnPosition, Vector3.zero);
+        Bounds targetBounds = targetCollider.bounds;
+        float minimumHeight = characterBounds.center.y;
+        float maximumHeight = characterBounds.max.y;
+        float overlapMinimum = Mathf.Max(minimumHeight, targetBounds.min.y);
+        float overlapMaximum = Mathf.Min(maximumHeight, targetBounds.max.y);
+        float height = overlapMinimum <= overlapMaximum
+            ? UnityEngine.Random.Range(overlapMinimum, overlapMaximum)
+            : UnityEngine.Random.Range(minimumHeight, maximumHeight);
+
+        Vector3 towardCharacter = characterBounds.center - targetBounds.center;
+        towardCharacter.y = 0f;
+        if (towardCharacter.sqrMagnitude <= DirectionEpsilon)
+        {
+            towardCharacter = -character.transform.forward;
+            towardCharacter.y = 0f;
+        }
+        towardCharacter = towardCharacter.sqrMagnitude > DirectionEpsilon
+            ? towardCharacter.normalized : Vector3.back;
+        Vector3 tangent = Vector3.Cross(Vector3.up, towardCharacter);
+        float lateralOffset = TargetLateralOffsets[Mathf.Clamp(punchIndex, 0, PunchesPerSeries - 1)];
+        if (simultaneousAttackCount > 1)
+        {
+            float angle = (360f * simultaneousIndex / simultaneousAttackCount + punchIndex * 60f) *
+                          Mathf.Deg2Rad;
+            lateralOffset += Mathf.Cos(angle) * SimultaneousEffectSpread;
+        }
+
+        float probeDistance = targetBounds.extents.magnitude + Mathf.Max(1f, _configuration.ImpactRadius);
+        Vector3 probe = targetBounds.center + towardCharacter * probeDistance;
+        probe.y = height;
+        // Probe horizontally so a curved collider cannot pull the hit above Mr Pocket's height band.
+        if (targetCollider.Raycast(new Ray(probe + tangent * lateralOffset, -towardCharacter),
+                out RaycastHit hit, probeDistance * 2f) ||
+            targetCollider.Raycast(new Ray(probe, -towardCharacter), out hit, probeDistance * 2f))
+        {
+            position = hit.point;
+        }
+        else
+        {
+            // Airborne targets may be out of reach; the normal overlap test decides whether this hits.
+            position = targetCollider.ClosestPoint(probe);
+        }
+        position.y = Mathf.Clamp(position.y, minimumHeight, maximumHeight);
+        position += towardCharacter * _configuration.VisibleEffectOffset;
+        rotation = GetSafeRotation(-towardCharacter, character.transform.forward);
     }
 
     private void GetIdlePunchPose(CharacterFacade character, int globalPunchIndex,
@@ -411,6 +482,10 @@ public sealed class PunchAbility : CharacterActiveAbility
     {
         if (enemy == null)
             return null;
+
+        if (enemy is MushroomBossFacade mushroom && mushroom.Collider != null &&
+            mushroom.Collider.enabled && mushroom.Collider.gameObject.activeInHierarchy)
+            return mushroom.Collider;
 
         Collider collider = enemy.GetComponent<Collider>();
         if (collider != null && collider.enabled)

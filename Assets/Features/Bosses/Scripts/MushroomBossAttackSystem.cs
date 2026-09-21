@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace Features.Bosses.Scripts
 {
@@ -16,6 +17,10 @@ namespace Features.Bosses.Scripts
         private float _wait;
         private int _lastClockFrame = -1;
         private bool _executing;
+        private bool _hasJumpReservation;
+        private Vector3 _reservedJumpDestination;
+
+        internal bool CanAdvanceSplitTransition => CanContinue();
 
         public MushroomBossAttackSystem(MushroomBossFacade boss, CharacterFacade character)
             : base(boss, character)
@@ -29,9 +34,10 @@ namespace Features.Bosses.Scripts
             _configuration = _boss.MovementConfiguration;
             _animation = _boss.AnimationSystem as MushroomBossAnimation;
             _headCooldown = 0f;
-            _wait = Mathf.Max(0f, _boss.Config.InitialAttackDelay);
+            _wait = Mathf.Max(0f, _boss.Config.InitialAttackDelay) + GetSplitAttackDelay();
             _lastClockFrame = -1;
             _executing = false;
+            _hasJumpReservation = false;
             _boss.AnimationSystem.IdleAnimation();
         }
 
@@ -41,7 +47,7 @@ namespace Features.Bosses.Scripts
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 float delta = AdvanceClock();
-                if (CanContinue() && _boss.CanAttack && delta > 0f)
+                if (CanContinue() && !_boss.IsPlayingSplitTransition && _boss.CanAttack && delta > 0f)
                 {
                     _wait = Mathf.Max(0f, _wait - delta);
                     if (_wait <= 0f)
@@ -60,7 +66,7 @@ namespace Features.Bosses.Scripts
             bool CanAnimate() => animateBoss && (ownsAnimation?.Invoke() ?? true);
 
             cancellationToken.ThrowIfCancellationRequested();
-            if (_executing || _configuration == null || _animation == null ||
+            if (_executing || _boss.IsPlayingSplitTransition || _configuration == null || _animation == null ||
                 !CanContinue() || !_boss.CanAttack || Time.deltaTime <= 0f)
                 return;
 
@@ -88,9 +94,27 @@ namespace Features.Bosses.Scripts
             Vector3 impactPoint = default;
             bool headAttack = head != null && _headCooldown <= 0f && distance <= Mathf.Max(0f, head.Range) &&
                               TryGetGround(headGroundProbe, out impactPoint);
-            if (!headAttack && (jump == null ||
-                !TryPlanJump(direction, distance, jump.Distance, out destination, out impactPoint)))
-                return;
+            if (!headAttack)
+            {
+                if (jump == null)
+                    return;
+                bool planned = _boss.IsSplitChild
+                    ? TryPlanSplitJump(jump, head, out destination, out impactPoint)
+                    : TryPlanJump(direction, distance, jump.Distance, out destination, out impactPoint);
+                if (!planned)
+                {
+                    if (_boss.IsSplitChild)
+                        _wait = 0.15f + GetSplitAttackDelay();
+                    return;
+                }
+                Vector3 movement = destination - start;
+                movement.y = 0f;
+                if (_boss.IsSplitChild && movement.sqrMagnitude > 0.001f)
+                {
+                    direction = movement.normalized;
+                    Face(direction);
+                }
+            }
 
             MushroomAttackConfiguration attack = headAttack ? (MushroomAttackConfiguration)head : jump;
             float duration = Mathf.Max(0.01f, attack.Duration);
@@ -102,6 +126,9 @@ namespace Features.Bosses.Scripts
             bool hasHit = false;
             float elapsed = 0f;
             _executing = true;
+            // Reserve before the first await so the sibling can plan a simultaneous, separate route.
+            _hasJumpReservation = _boss.IsSplitChild && !headAttack;
+            _reservedJumpDestination = destination;
             _boss.CombatSystem.SetAttacking(true);
             Vector3 headEffectPoint = impactPoint;
             if (headAttack)
@@ -163,6 +190,7 @@ namespace Features.Bosses.Scripts
                     if (!hasHit && progress >= impact)
                     {
                         hasHit = true;
+                        _hasJumpReservation = false;
                         DestroyIndicator(indicator);
                         indicator = null;
                         Vector3 effectPoint = headAttack
@@ -179,7 +207,8 @@ namespace Features.Bosses.Scripts
             {
                 DestroyIndicator(indicator);
                 _executing = false;
-                _wait = Mathf.Max(0f, attack.RecoveryDuration);
+                _hasJumpReservation = false;
+                _wait = Mathf.Max(0f, attack.RecoveryDuration) + GetSplitAttackDelay();
                 if (_boss != null)
                 {
                     StopVelocity();
@@ -211,7 +240,7 @@ namespace Features.Bosses.Scripts
 
         private float AdvanceClock()
         {
-            float timeScale = CanContinue() ? _boss.RelicTimeScale : 0f;
+            float timeScale = CanContinue() && !_boss.IsPlayingSplitTransition ? _boss.RelicTimeScale : 0f;
             _animation?.SetTimeScale(timeScale);
             if (_lastClockFrame == Time.frameCount)
                 return 0f;
@@ -225,6 +254,129 @@ namespace Features.Bosses.Scripts
             _configuration != null && TryPlanJump(direction, distance, distance,
                 out Vector3 destination, out _) ? destination : _boss.transform.position;
 
+        private float GetSplitAttackDelay()
+        {
+            if (_boss == null || !_boss.IsSplitChild || _configuration == null)
+                return 0f;
+            Vector2 range = _configuration.SplitAttackDelayRange;
+            float minimum = Mathf.Max(0f, Mathf.Min(range.x, range.y));
+            float maximum = Mathf.Max(minimum, Mathf.Max(range.x, range.y));
+            return Random.Range(minimum, maximum);
+        }
+
+        private MushroomBossFacade GetLivingSibling()
+        {
+            MushroomBossFacade sibling = _boss.SplitSibling;
+            return sibling != null && !sibling.IsDead && sibling.isActiveAndEnabled ? sibling : null;
+        }
+
+        private bool TryPlanSplitJump(MushroomJumpAttackConfiguration jump,
+            MushroomHeadAttackConfiguration head, out Vector3 destination, out Vector3 groundPoint)
+        {
+            Vector3 start = _boss.transform.position;
+            Vector3 target = _character.transform.position;
+            MushroomBossFacade sibling = GetLivingSibling();
+            Vector3 center = sibling != null ? (start + sibling.transform.position) * 0.5f : start;
+            Vector3 approach = center - target;
+            approach.y = 0f;
+            approach = approach.sqrMagnitude > 0.001f
+                ? approach.normalized : -(_boss.AttackRotation * Vector3.forward);
+
+            // Land beside the player at a useful head-strike distance, on a different side for each child.
+            float radius = head != null
+                ? Mathf.Min(Mathf.Max(0f, head.ImpactDistance), Mathf.Max(0f, head.Range))
+                : Mathf.Max(0f, jump.Radius) * 0.65f;
+            radius = Mathf.Max(GetBodyRadius(_boss) + 0.5f, radius);
+            float angle = Mathf.Clamp(_configuration.SplitFlankAngle, 10f, 120f) + Random.Range(-10f, 10f);
+            float orbitRadius = radius * Random.Range(0.85f, 1f);
+
+            for (int attempt = 0; attempt < 8; attempt++)
+            {
+                // Try nearby angles on this child's side before taking a wider detour.
+                float adjustment = attempt == 0 ? 0f :
+                    ((attempt + 1) / 2) * 20f * (attempt % 2 == 0 ? 1f : -1f);
+                float flankAngle = Mathf.Clamp(angle + adjustment, 10f, 150f) * _boss.SplitSide;
+                Vector3 waypoint = target + Quaternion.AngleAxis(flankAngle, Vector3.up) * approach * orbitRadius;
+                Vector3 movement = waypoint - start;
+                movement.y = 0f;
+                float travel = movement.magnitude;
+                if (travel <= 0.05f || !TryPlanJump(movement / travel, travel, jump.Distance,
+                        out Vector3 candidate, out Vector3 floor))
+                    continue;
+                Vector3 actualMovement = candidate - start;
+                actualMovement.y = 0f;
+                if (actualMovement.sqrMagnitude < 0.01f || !HasSplitJumpClearance(start, candidate, sibling))
+                    continue;
+                destination = candidate;
+                groundPoint = floor;
+                return true;
+            }
+
+            destination = start;
+            groundPoint = start;
+            return false;
+        }
+
+        private bool HasSplitJumpClearance(Vector3 start, Vector3 destination, MushroomBossFacade sibling)
+        {
+            if (sibling == null)
+                return true;
+            Vector3 otherStart = sibling.transform.position;
+            Vector3 otherEnd = otherStart;
+            if (sibling.AttackSystem is MushroomBossAttackSystem other && other._hasJumpReservation)
+                otherEnd = other._reservedJumpDestination;
+
+            float separation = GetBodyRadius(_boss) + GetBodyRadius(sibling) +
+                               Mathf.Max(0f, _configuration.SplitSeparationPadding);
+            float requiredSquared = separation * separation;
+            if (PointSegmentDistanceSquared(destination, otherStart, otherEnd) < requiredSquared)
+                return false;
+
+            // Children can spawn inside the extra padding near a wall. Allow only a route moving apart.
+            float initialSquared = PointSegmentDistanceSquared(start, otherStart, otherEnd);
+            return SegmentDistanceSquared(start, destination, otherStart, otherEnd) + 0.0001f >=
+                   Mathf.Min(requiredSquared, initialSquared);
+        }
+
+        private static float GetBodyRadius(MushroomBossFacade boss)
+        {
+            float radius = boss.MovementConfiguration != null
+                ? boss.MovementConfiguration.BodyRadius * boss.SizeMultiplier : 0.05f;
+            if (boss.IsSplitChild && boss.Collider != null)
+                radius = Mathf.Max(radius,
+                    Mathf.Max(boss.Collider.bounds.extents.x, boss.Collider.bounds.extents.z));
+            return Mathf.Max(0.05f, radius);
+        }
+
+        private static float PointSegmentDistanceSquared(Vector3 point, Vector3 start, Vector3 end)
+        {
+            point.y = start.y = end.y = 0f;
+            Vector3 segment = end - start;
+            float progress = segment.sqrMagnitude > 0.0001f
+                ? Mathf.Clamp01(Vector3.Dot(point - start, segment) / segment.sqrMagnitude) : 0f;
+            return (point - start - segment * progress).sqrMagnitude;
+        }
+
+        private static float SegmentDistanceSquared(Vector3 start, Vector3 end, Vector3 otherStart, Vector3 otherEnd)
+        {
+            Vector3 first = end - start;
+            Vector3 second = otherEnd - otherStart;
+            Vector3 offset = otherStart - start;
+            float cross = first.x * second.z - first.z * second.x;
+            if (Mathf.Abs(cross) > 0.0001f)
+            {
+                float firstProgress = (offset.x * second.z - offset.z * second.x) / cross;
+                float secondProgress = (offset.x * first.z - offset.z * first.x) / cross;
+                if (firstProgress >= 0f && firstProgress <= 1f && secondProgress >= 0f && secondProgress <= 1f)
+                    return 0f;
+            }
+            return Mathf.Min(
+                Mathf.Min(PointSegmentDistanceSquared(start, otherStart, otherEnd),
+                    PointSegmentDistanceSquared(end, otherStart, otherEnd)),
+                Mathf.Min(PointSegmentDistanceSquared(otherStart, start, end),
+                    PointSegmentDistanceSquared(otherEnd, start, end)));
+        }
+
         private bool TryPlanJump(Vector3 direction, float targetDistance, float jumpDistance,
             out Vector3 destination, out Vector3 groundPoint)
         {
@@ -234,7 +386,7 @@ namespace Features.Bosses.Scripts
 
             Vector3 startGround = groundPoint;
             float distance = Mathf.Min(Mathf.Max(0f, jumpDistance), targetDistance);
-            float bodyRadius = Mathf.Max(0.05f, _configuration.BodyRadius * _boss.SizeMultiplier);
+            float bodyRadius = GetBodyRadius(_boss);
             if (distance > 0f)
             {
                 Vector3 castOrigin = startGround + Vector3.up * (bodyRadius + 0.05f);
