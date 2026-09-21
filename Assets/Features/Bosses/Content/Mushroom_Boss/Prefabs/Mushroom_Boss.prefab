@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 400000}
   - component: {fileID: 540000}
-  - component: {fileID: 136000}
   - component: {fileID: 114000}
   - component: {fileID: 114001}
   m_Layer: 10
@@ -74,7 +73,7 @@ CapsuleCollider:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 100000}
+  m_GameObject: {fileID: 100014}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -87,10 +86,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 3.65
-  m_Height: 21.51
+  m_Radius: 0.0034621267
+  m_Height: 0.03201871
   m_Direction: 1
-  m_Center: {x: 0, y: 10.85, z: 0.39}
+  m_Center: {x: -0.00003452488, y: 0.011436477, z: 0.00014776233}
 --- !u!114 &114000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -534,10 +533,18 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -4956439515746387410, guid: 4bc9dfa298603c740851ae432cbe90d6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 136000}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4bc9dfa298603c740851ae432cbe90d6, type: 3}
       insertIndex: -1
       addedObject: {fileID: 950000}
   m_SourcePrefab: {fileID: 100100000, guid: 4bc9dfa298603c740851ae432cbe90d6, type: 3}
+--- !u!1 &100014 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -4956439515746387410, guid: 4bc9dfa298603c740851ae432cbe90d6, type: 3}
+  m_PrefabInstance: {fileID: 100100001}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &543450653642063946 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 4bc9dfa298603c740851ae432cbe90d6, type: 3}
