@@ -49,10 +49,48 @@ public sealed class CharacterSelectionView : MonoBehaviour
     private bool _isPreviewInitialized;
     private bool _isPreviewVisible;
     private bool _keepPreviewWhenHidden;
+    private Func<string, bool> _ownershipResolver;
+
+    public Material PortraitMaterial => _previewRenderer != null
+        ? _previewRenderer.ColorCorrectionMaterial
+        : null;
 
     public event Action<int, int> SelectionRequested;
     public event Action StartRequested;
     public event Action BackRequested;
+
+    public void SetOwnershipResolver(Func<string, bool> ownershipResolver)
+    {
+        _ownershipResolver = ownershipResolver;
+        RefreshOwnership();
+    }
+
+    public void RefreshOwnership()
+    {
+        if (_characters == null || _characters.Count == 0)
+            return;
+
+        RefreshPortraitSlots(false);
+        RefreshCharacterDetails();
+        ApplyInteractableState();
+    }
+
+    public Sprite GetPortrait(string characterId)
+    {
+        if (string.IsNullOrWhiteSpace(characterId))
+            return null;
+
+        if (_previewRenderer != null &&
+            _previewRenderer.TryGetPortrait(characterId, out Sprite renderedPortrait))
+            return renderedPortrait;
+
+        if (_characters != null)
+            foreach (CharacterDefinition character in _characters)
+                if (character.Id == characterId)
+                    return character.Portrait;
+
+        return null;
+    }
 
     private void Awake() => InitializePreview();
 
@@ -186,7 +224,7 @@ public sealed class CharacterSelectionView : MonoBehaviour
 
     public void RequestStart()
     {
-        if (_isInteractable)
+        if (_isInteractable && _startButton != null && _startButton.interactable)
             StartRequested?.Invoke();
     }
 
@@ -219,7 +257,7 @@ public sealed class CharacterSelectionView : MonoBehaviour
 
             CharacterDefinition character = _characters[characterIndex];
             slot.Bind(characterIndex, characterIndex - _selectedIndex, character,
-                _portraitPlaceholder);
+                _portraitPlaceholder, IsOwned(character));
             if (_previewRenderer != null &&
                 _previewRenderer.TryGetPortrait(character.Id, out Sprite renderedPortrait))
             {
@@ -248,12 +286,16 @@ public sealed class CharacterSelectionView : MonoBehaviour
         if (_isPreviewVisible)
             _previewRenderer?.ShowCharacterAsync(character, destroyCancellationToken).Forget();
 
-        _characterName.text = character.DisplayName.ToUpperInvariant();
+        bool isOwned = IsOwned(character);
+        _characterName.text = character.DisplayName.ToUpperInvariant() + (isOwned ? string.Empty : " (LOCKED)");
         _description.text = !character.IsConfigured
             ? character.ConfigurationError.ToUpperInvariant()
             : string.IsNullOrWhiteSpace(character.Description)
                 ? "NO DESCRIPTION"
                 : character.Description.ToUpperInvariant();
+
+        if (!isOwned && character.IsConfigured)
+            _description.text = "BUY THIS CHARACTER IN UNLOCKS.\n" + _description.text;
 
         RefreshStats(character.CharacterSettings);
         RefreshLoadout(character);
@@ -336,7 +378,7 @@ public sealed class CharacterSelectionView : MonoBehaviour
     {
         bool hasCharacters = _characters is { Count: > 0 };
         _startButton.interactable = _isInteractable && hasCharacters &&
-            _characters[_selectedIndex].IsConfigured;
+            _characters[_selectedIndex].IsConfigured && IsOwned(_characters[_selectedIndex]);
         _backButton.interactable = _isInteractable;
 
         if (_portraitSlots == null)
@@ -385,6 +427,9 @@ public sealed class CharacterSelectionView : MonoBehaviour
 
     private int WrapIndex(int index) =>
         (index % _characters.Count + _characters.Count) % _characters.Count;
+
+    private bool IsOwned(CharacterDefinition character) =>
+        _ownershipResolver?.Invoke(character.Id) ?? true;
 
     private static string FormatNumber(float value) =>
         value.ToString("0.##", CultureInfo.InvariantCulture);

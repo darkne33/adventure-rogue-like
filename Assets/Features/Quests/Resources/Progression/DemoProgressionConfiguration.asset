@@ -1,0 +1,332 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6605e9db08244a1dbdceefcd8f593fad, type: 3}
+  m_Name: DemoProgressionConfiguration
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Quests.Scripts.ProgressionConfiguration
+  _defaultCharacters:
+  - rabbit
+  _defaultAbilities: 0100000000000000120000000700000003000000040000000600000005000000
+  _defaultRelics:
+  - {fileID: 11400000, guid: 159a9539d24f45e5b019237a978c6c20, type: 2}
+  - {fileID: 11400000, guid: 597839a614ef49af984722b5841f670b, type: 2}
+  - {fileID: 11400000, guid: c1421c5f9d094cb18de356244053eeca, type: 2}
+  - {fileID: 11400000, guid: 5566d33206f349fbaa754ce6d65ac35f, type: 2}
+  _quests:
+  - _id: run_kills_150
+    _title: CROWD CONTROL
+    _description: Defeat 150 enemies in one run.
+    _category: 0
+    _metric: 2
+    _target: 150
+    _silverReward: 2
+  - _id: rooms_3
+    _title: ROOM TO GROW
+    _description: Clear 3 combat rooms in one run.
+    _category: 0
+    _metric: 4
+    _target: 3
+    _silverReward: 2
+  - _id: weapon_5
+    _title: FAVORITE WEAPON
+    _description: Raise any weapon to level 5 in one run.
+    _category: 1
+    _metric: 10
+    _target: 5
+    _silverReward: 2
+  - _id: level_5
+    _title: GETTING STARTED
+    _description: Reach character level 5 in one run.
+    _category: 2
+    _metric: 1
+    _target: 5
+    _silverReward: 1
+  - _id: combat_120
+    _title: WARMING UP
+    _description: Spend 120 seconds in active combat in one run.
+    _category: 2
+    _metric: 0
+    _target: 120
+    _silverReward: 1
+  - _id: chests_1
+    _title: WHAT'S INSIDE?
+    _description: Open a relic chest.
+    _category: 2
+    _metric: 6
+    _target: 1
+    _silverReward: 1
+  - _id: run_kills_50
+    _title: FIRST FIFTY
+    _description: Defeat 50 enemies in one run.
+    _category: 3
+    _metric: 2
+    _target: 50
+    _silverReward: 1
+  - _id: run_gold_100
+    _title: POCKET MONEY
+    _description: Collect 100 gold in one run. Spent gold still counts.
+    _category: 3
+    _metric: 8
+    _target: 100
+    _silverReward: 1
+  - _id: two_weapons_3
+    _title: DOUBLE TROUBLE
+    _description: Have two weapons at level 3 or higher in one run.
+    _category: 3
+    _metric: 12
+    _target: 2
+    _silverReward: 3
+  - _id: bosses_1
+    _title: BIG GAME
+    _description: Clear a boss room.
+    _category: 3
+    _metric: 5
+    _target: 1
+    _silverReward: 3
+  - _id: critical_25
+    _title: RIGHT ON TARGET
+    _description: Land 25 critical hits across all runs.
+    _category: 3
+    _metric: 13
+    _target: 25
+    _silverReward: 1
+  - _id: combat_300
+    _title: STILL STANDING
+    _description: Spend 300 seconds in active combat in one run.
+    _category: 3
+    _metric: 0
+    _target: 300
+    _silverReward: 2
+  - _id: scroll_5
+    _title: WELL READ
+    _description: Raise any scroll to level 5 in one run.
+    _category: 2
+    _metric: 11
+    _target: 5
+    _silverReward: 2
+  - _id: rooms_1
+    _title: MAKE SOME ROOM
+    _description: Clear one combat room in a run.
+    _category: 2
+    _metric: 4
+    _target: 1
+    _silverReward: 1
+  - _id: total_gold_500
+    _title: SAVINGS PLAN
+    _description: Collect 500 gold across all runs. Spent gold still counts.
+    _category: 2
+    _metric: 9
+    _target: 500
+    _silverReward: 2
+  - _id: total_kills_500
+    _title: PERSISTENCE
+    _description: Defeat 500 enemies across all runs.
+    _category: 2
+    _metric: 3
+    _target: 500
+    _silverReward: 2
+  - _id: level_10
+    _title: GROWING STRONGER
+    _description: Reach character level 10 in one run.
+    _category: 2
+    _metric: 1
+    _target: 10
+    _silverReward: 2
+  _unlocks:
+  - _id: character_duke
+    _category: 0
+    _characterId: "duke"
+    _ability: {fileID: 0}
+    _relic: {fileID: 0}
+    _displayName: "DUKE"
+    _description: "Tough and deliberate. Duke trades speed for durability, raw damage, and a burst of explosive bullets."
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: run_kills_150
+    _silverCost: 5
+  - _id: character_mr_pocket
+    _category: 0
+    _characterId: "mr-pocket"
+    _ability: {fileID: 0}
+    _relic: {fileID: 0}
+    _displayName: "MR POCKET"
+    _description: "Mr Pocket fights up close with a rapid three-punch combo."
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: rooms_3
+    _silverCost: 8
+  - _id: weapon_fire_field
+    _category: 1
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: b1437a0766b54e539c397110b4f0eee4, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: weapon_5
+    _silverCost: 3
+  - _id: scroll_max_hp
+    _category: 2
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: a5a42258e2b9bbf4cb667fb8d3c8e0ce, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: "Increases maximum health."
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: level_5
+    _silverCost: 2
+  - _id: scroll_movement_speed
+    _category: 2
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: 462b7ad34b074bb4ca80394d65b7b175, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: "Increases movement speed."
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: combat_120
+    _silverCost: 2
+  - _id: scroll_luck
+    _category: 2
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: 565172fcee08b9f45ac6d8877a5cf57e, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: "Increases luck."
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: chests_1
+    _silverCost: 3
+  - _id: scroll_duration
+    _category: 2
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: b66f947bfebb95b41a059497aed70cb6, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: "Increases ability duration."
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: scroll_5
+    _silverCost: 3
+  - _id: scroll_evasion
+    _category: 2
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: 4fec8fb9f3b94ea4b9017ff78a1e870c, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: "Increases the chance to evade damage."
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: rooms_1
+    _silverCost: 2
+  - _id: scroll_gain_gold
+    _category: 2
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: fd6d760a234612f47b6d236f3a6867cb, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: "Increases gold gained."
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: total_gold_500
+    _silverCost: 3
+  - _id: scroll_thorns_damage
+    _category: 2
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: a2d63790de1593f448752f02a4cee925, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: "Damages enemies that hit you."
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: total_kills_500
+    _silverCost: 3
+  - _id: scroll_shield
+    _category: 2
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: 4976130e6aa846d7a3b62065fe10d5ee, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: level_10
+    _silverCost: 4
+  - _id: relic_cactus
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: 7157fa2d2b4047bebb6ba099ed6409a0, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: run_kills_50
+    _silverCost: 2
+  - _id: relic_golden_sneakers
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: ccfbda1def28466ba7b37e00f037a423, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: run_gold_100
+    _silverCost: 3
+  - _id: relic_turbo_skates
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: 980aeba49e0142978750e2ecf19f569c, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: two_weapons_3
+    _silverCost: 4
+  - _id: relic_voodoo_doll
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: 027cd3f28bb14b548d5730d3c9100f5b, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: bosses_1
+    _silverCost: 5
+  - _id: relic_spiky_shield
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: 62a4c944f9e34cd2bfc73faea53422b8, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: critical_25
+    _silverCost: 3
+  - _id: relic_overpowered_chalice
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: 6a01df982dfc4ed996e8b160e2182841, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: combat_300
+    _silverCost: 6
+  _silverIcon: {fileID: 21300000, guid: e4e4fb329176465a9feb87af84564070, type: 3}
+  _portraitPlaceholder: {fileID: 21300000, guid: c34f2f06ef3c4b389d4ca1e60d88e1b7, type: 3}

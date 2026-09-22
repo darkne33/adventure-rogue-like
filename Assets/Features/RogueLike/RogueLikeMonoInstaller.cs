@@ -5,6 +5,7 @@ using Features.Bosses.UI;
 using Features.Enemies.Scripts;
 using Features.Enemies.Scripts.Level.Scripts;
 using Features.Leaderboard;
+using Features.Quests.Scripts;
 using Features.Relics.Scripts;
 using Features.RewardBag;
 using UnityEngine;
@@ -110,6 +111,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<EnemyRoomObserver>().AsSingle();
         Container.BindInterfacesAndSelfTo<RoomCompletionTimeSlowEffect>().AsSingle().NonLazy();
         Container.BindInterfacesAndSelfTo<RoomLeaderboardReporter>().AsSingle().NonLazy();
+        Container.BindInterfacesAndSelfTo<QuestRunTracker>().AsSingle().NonLazy();
     }
 
     private void BindCharacterWallet() =>

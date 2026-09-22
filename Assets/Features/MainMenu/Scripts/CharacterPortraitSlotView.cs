@@ -32,14 +32,16 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
     private Tween _selectionPulseScaleTween;
     private Tween _selectionPulseAlphaTween;
     private bool _isLocked;
+    private bool _isOwned = true;
 
     public RectTransform RectTransform => _rectTransform;
     public bool IsVisible => gameObject.activeSelf;
 
     public void Bind(int characterIndex, int relativeDirection, CharacterDefinition character,
-        Sprite portraitPlaceholder)
+        Sprite portraitPlaceholder, bool isOwned = true)
     {
         _isLocked = false;
+        _isOwned = isOwned;
         _characterIndex = characterIndex;
         _relativeDirection = relativeDirection;
         if (_portrait != null)
@@ -47,16 +49,17 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
             _portrait.material = null;
             _portrait.sprite = character.Portrait != null ? character.Portrait : portraitPlaceholder;
             _portrait.enabled = _portrait.sprite != null;
-            _portrait.color = Color.white;
+            _portrait.color = GetPortraitColor();
         }
 
-        SetLockedLabelVisible(false);
+        SetLockedLabelVisible(!isOwned);
         gameObject.SetActive(true);
     }
 
     public void BindLocked(Sprite portraitPlaceholder)
     {
         _isLocked = true;
+        _isOwned = false;
         _characterIndex = -1;
         _relativeDirection = 0;
         if (_portrait != null)
@@ -81,13 +84,14 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
         _portrait.material = colorCorrectionMaterial;
         _portrait.sprite = portrait;
         _portrait.enabled = true;
-        _portrait.color = Color.white;
+        _portrait.color = GetPortraitColor();
     }
 
     public void Clear()
     {
         KillAnimations();
         _isLocked = false;
+        _isOwned = true;
         SetLockedLabelVisible(false);
         gameObject.SetActive(false);
     }
@@ -121,6 +125,9 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
         if (_lockedLabel != null)
             _lockedLabel.gameObject.SetActive(visible);
     }
+
+    private Color GetPortraitColor() =>
+        _isOwned ? Color.white : new Color(0.42f, 0.42f, 0.48f, 1f);
 
     private void ShowSelectionFrame(bool animate)
     {

@@ -10,6 +10,7 @@ namespace Features.Enemies.Scripts
         public int Count => _enemies.Count;
         public IReadOnlyList<CombatTarget> ActiveEnemies => _enemies;
         public event Action<int> EnemyRemoved;
+        public event Action<CombatTarget> EnemyDefeated;
 
         private readonly EnemyRoomObserver _enemyRoomObserver;
         private readonly List<CombatTarget> _enemies = new();
@@ -30,6 +31,9 @@ namespace Features.Enemies.Scripts
 
             if (_isBatchChange == false)
             {
+                if (enemyFacade != null && enemyFacade.IsDead)
+                    EnemyDefeated?.Invoke(enemyFacade);
+
                 EnemyRemoved?.Invoke(_enemies.Count);
                 _enemyRoomObserver.Observe(_enemies);
             }

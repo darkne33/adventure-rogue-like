@@ -1,28 +1,25 @@
 using System.Collections.Generic;
+using Features.Quests.Scripts;
 
 namespace Features.Relics.Scripts
 {
     public sealed class RelicUnlockService
     {
-        private readonly HashSet<string> _completedQuests = new();
+        private readonly QuestService _questService;
         private readonly HashSet<string> _unlockedRelics = new();
+
+        public RelicUnlockService(QuestService questService)
+        {
+            _questService = questService;
+        }
 
         public bool IsUnlocked(RelicDefinition relic)
         {
             if (relic == null)
                 return false;
 
-            if (relic.IsLockedByQuest == false)
-                return true;
-
             return _unlockedRelics.Contains(relic.Id) ||
-                   _completedQuests.Contains(relic.UnlockQuestId);
-        }
-
-        public void CompleteQuest(string questId)
-        {
-            if (string.IsNullOrWhiteSpace(questId) == false)
-                _completedQuests.Add(questId);
+                   _questService.IsRelicOwned(relic);
         }
 
         public void UnlockRelic(string relicId)

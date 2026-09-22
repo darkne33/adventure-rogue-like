@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Features.Quests.Scripts;
 using UnityEngine;
 
 public class UpgradeOfferGenerator : IUpgradeOfferGenerator
@@ -13,16 +14,19 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
     private readonly UpgradeOfferConfiguration _upgradeOfferConfiguration;
     private readonly UpgradeBuildService _upgradeBuildService;
     private readonly CharacterConfiguration _characterConfiguration;
+    private readonly QuestService _questService;
 
     public UpgradeOfferGenerator(IAbilityChoiceProvider abilityChoiceProvider,
         ICharacterLevelService characterLevelService, UpgradeOfferConfiguration upgradeOfferConfiguration,
-        UpgradeBuildService upgradeBuildService, CharacterConfiguration characterConfiguration)
+        UpgradeBuildService upgradeBuildService, CharacterConfiguration characterConfiguration,
+        QuestService questService)
     {
         _abilityChoiceProvider = abilityChoiceProvider;
         _characterLevelService = characterLevelService;
         _upgradeOfferConfiguration = upgradeOfferConfiguration;
         _upgradeBuildService = upgradeBuildService;
         _characterConfiguration = characterConfiguration;
+        _questService = questService;
     }
 
     public IEnumerable<UpgradeOffer> GenerateOffers(bool isNewUpgrade = true)
@@ -35,6 +39,7 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
 
         List<CharacterAbility> availableAbilities = _abilityChoiceProvider.GetCharacterAbilities().Values
             .Where(ability => _characterConfiguration.SelectedCharacter.IsAvailableInUpgrades(ability.Id))
+            .Where(ability => _upgradeBuildService.Contains(ability) || _questService.IsAbilityOwned(ability.Id))
             .Where(IsAvailableForCurrentBuild)
             .ToList();
 

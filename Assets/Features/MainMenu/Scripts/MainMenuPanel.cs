@@ -1,4 +1,5 @@
 using Features.Leaderboard;
+using Features.Quests.Scripts;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +13,8 @@ public sealed class MainMenuPanel : PanelBase
     [field: SerializeField] public Button ExitButton { get; private set; }
     [field: SerializeField] public CharacterSelectionView CharacterSelection { get; private set; }
     [field: SerializeField] public LeaderboardView Leaderboard { get; private set; }
+    [field: SerializeField] public QuestsPanelView QuestsPanelPrefab { get; private set; }
+    [field: SerializeField] public UnlocksPanelView UnlocksPanelPrefab { get; private set; }
 
     [SerializeField] private CharacterConfiguration _characterConfiguration;
     [SerializeField] private GameObject _titleLogo;
