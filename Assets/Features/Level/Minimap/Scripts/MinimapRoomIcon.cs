@@ -19,18 +19,19 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     [SerializeField] private RectTransform _goldMarkerPrefab;
     [SerializeField] private CanvasGroup _canvasGroup;
     [SerializeField] private Color _availableOutlineColor =
-        new(1f, 1f, 1f, 0.34f);
+        new(0.08f, 0.07f, 0.06f, 1f);
     [SerializeField] private Color _visitedOutlineColor =
-        new(1f, 1f, 1f, 0.68f);
-    [SerializeField] private Color _currentOutlineColor = Color.white;
+        new(0.08f, 0.07f, 0.06f, 1f);
+    [SerializeField] private Color _currentOutlineColor =
+        new(0.12f, 0.1f, 0.07f, 1f);
     [SerializeField] private Color _bossOutlineColor =
-        new(0.9f, 0.25f, 0.2f, 1f);
+        new(0.4f, 0.1f, 0.08f, 1f);
     [SerializeField] private Color _availableFillColor =
-        new(0.02f, 0.02f, 0.02f, 0.04f);
+        new(0.28f, 0.27f, 0.24f, 1f);
     [SerializeField] private Color _visitedFillColor =
-        new(0.02f, 0.02f, 0.02f, 0.12f);
+        new(0.56f, 0.54f, 0.48f, 1f);
     [SerializeField] private Color _currentFillColor =
-        new(0.02f, 0.02f, 0.02f, 0.22f);
+        new(0.93f, 0.88f, 0.69f, 1f);
     [SerializeField] private Vector2 _playerMarkerRange = new(18f, 18f);
     [SerializeField] private Vector2 _enemyMarkerRange = new(18f, 18f);
     [SerializeField] private Vector2 _goldMarkerRange = new(18f, 18f);

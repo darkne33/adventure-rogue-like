@@ -40,6 +40,7 @@ public class LevelView : MonoBehaviour
     public Room StartRoom => GetRoomNode(RoomType.Start).Room;
     public Vector2Int StartRoomGridPosition => GetRoomNode(RoomType.Start).GridPosition;
     public IReadOnlyList<LevelRoomNode> Rooms => _rooms;
+    public bool HasDroppedKeyReward { get; private set; }
 
     private readonly HashSet<RoomData> _keyRoomVisitedRooms = new();
     private Dictionary<Vector2Int, int> _combatDepths;
@@ -48,6 +49,8 @@ public class LevelView : MonoBehaviour
     private int _visitedNonStartRooms;
     private int _spawnedKeyRooms;
     private int _roomsUntilNextKeyRoomChance;
+    private int _spawnedRewardBags;
+    private int _guaranteedKeyRewardBagNumber;
 
     public void Configure(LevelRoomNode[] rooms)
     {
@@ -81,6 +84,7 @@ public class LevelView : MonoBehaviour
         _combatDepths = BuildCombatDepths();
         ConfigureLevelExit(hasNextLevel);
         ResetKeyRoomSpawnState();
+        ResetKeyRewardState();
 
         _isInitialized = true;
     }
@@ -747,6 +751,66 @@ public class LevelView : MonoBehaviour
         exitDoor.ConfigureLevelExit();
     }
 
+    public void MarkKeyRewardDropped() => HasDroppedKeyReward = true;
+
+    public bool RegisterRewardBagForGuaranteedKey()
+    {
+        _spawnedRewardBags++;
+        if (_spawnedRewardBags < 3 || HasDroppedKeyReward)
+            return false;
+
+        return _spawnedRewardBags >= _guaranteedKeyRewardBagNumber ||
+               CanReachKeyRoomBeforeNextReward();
+    }
+
+    private bool CanReachKeyRoomBeforeNextReward()
+    {
+        int nonStartRoomCount = _rooms.Count(roomNode =>
+            roomNode != null && roomNode.Type != RoomType.Start);
+        if (nonStartRoomCount == 0)
+            return false;
+
+        var nodes = _rooms.ToDictionary(node => node.GridPosition);
+        var reached = new HashSet<Vector2Int> { StartRoomGridPosition };
+        var pending = new Queue<Vector2Int>();
+        pending.Enqueue(StartRoomGridPosition);
+
+        int reachableUnvisitedNonCombatRooms = 0;
+        bool hasReachableKeyRoomCandidate = false;
+        while (pending.Count > 0)
+        {
+            Vector2Int position = pending.Dequeue();
+            foreach (RoomDirection direction in CardinalDirections)
+            {
+                Vector2Int neighbourPosition = position + direction.ToGridOffset();
+                if (!nodes.TryGetValue(neighbourPosition, out LevelRoomNode neighbour))
+                    continue;
+                if (!IsConnectionAllowed(nodes[position], direction, nodes) ||
+                    !reached.Add(neighbourPosition))
+                    continue;
+
+                RoomData neighbourData = neighbour.Room.RoomData;
+                bool isVisited = _keyRoomVisitedRooms.Contains(neighbourData);
+                if (!isVisited && neighbourData is DefaultEnemiesRoomData enemiesRoomData)
+                {
+                    hasReachableKeyRoomCandidate |= enemiesRoomData.CanSpawnKeyRoom;
+                    continue;
+                }
+
+                if (!isVisited && neighbour.Type != RoomType.Start)
+                    reachableUnvisitedNonCombatRooms++;
+
+                pending.Enqueue(neighbourPosition);
+            }
+        }
+
+        float nextCombatProgress =
+            (float)(_visitedNonStartRooms + reachableUnvisitedNonCombatRooms + 1) /
+            nonStartRoomCount;
+        return hasReachableKeyRoomCandidate &&
+               nextCombatProgress >= Mathf.Clamp01(_keyRoomStartProgressPercent / 100f);
+    }
+
     public bool TrySpawnKeyRoom(Room room, RoomDoor entryDoor)
     {
         if (!_isInitialized || _container == null)
@@ -918,6 +982,24 @@ public class LevelView : MonoBehaviour
 
         if (StartRoom?.RoomData != null)
             _keyRoomVisitedRooms.Add(StartRoom.RoomData);
+    }
+
+    private void ResetKeyRewardState()
+    {
+        HasDroppedKeyReward = false;
+        _spawnedRewardBags = 0;
+
+        int nonStartRoomCount = _rooms.Count(roomNode =>
+            roomNode != null && roomNode.Type != RoomType.Start);
+        int combatRoomCount = _rooms.Count(roomNode =>
+            roomNode?.Room?.RoomData is DefaultEnemiesRoomData);
+        int lastGuaranteedBagNumber = Mathf.Max(3,
+            Mathf.CeilToInt(nonStartRoomCount *
+                            Mathf.Clamp01(_keyRoomStartProgressPercent / 100f)) - 1);
+        lastGuaranteedBagNumber = Mathf.Min(lastGuaranteedBagNumber,
+            Mathf.Max(3, combatRoomCount));
+        _guaranteedKeyRewardBagNumber = UnityEngine.Random.Range(3,
+            lastGuaranteedBagNumber + 1);
     }
 
     public bool IsExitRoom(RoomData roomData) =>
