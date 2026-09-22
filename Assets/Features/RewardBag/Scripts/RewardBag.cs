@@ -30,7 +30,7 @@ namespace Features.RewardBag
         [SerializeField] private Transform _lootRayRoot;
         [SerializeField, Min(0f)] private float _interactDistance = 4f;
         [SerializeField, Min(1)] private int _rewardAmount = 1;
-        [SerializeField, Range(0f, 1f)] private float _keyDropChance = 0.33f;
+        [SerializeField, Range(0f, 1f)] private float _keyDropChance = 0.075f;
         [SerializeField, Range(0f, 1f)] private float _heartDropChance = 0.33f;
         [SerializeField, Min(0.01f)] private float _rewardScale = 2f;
         [SerializeField, Min(0f)] private float _rewardExtraDropHeight = 0.5f;
@@ -41,6 +41,8 @@ namespace Features.RewardBag
         private InputSystem_Actions _inputActions;
         private ICharacterProvider _characterProvider;
         private CharacterWallet _characterWallet;
+        private LevelView _level;
+        private bool _canDropGuaranteedKey;
         private Action _collectedCallback;
         private bool _isReady;
         private bool _isOpened;
@@ -53,10 +55,12 @@ namespace Features.RewardBag
         }
 
         public void Construct(ICharacterProvider characterProvider, CharacterWallet characterWallet,
-            Action collectedCallback)
+            LevelView level, bool canDropGuaranteedKey, Action collectedCallback)
         {
             _characterProvider = characterProvider;
             _characterWallet = characterWallet;
+            _level = level;
+            _canDropGuaranteedKey = canDropGuaranteedKey;
             _collectedCallback = collectedCallback;
             PlayBagDropAsync().Forget();
         }
@@ -123,7 +127,10 @@ namespace Features.RewardBag
 
             try
             {
-                DropReward(RollReward(), collectedCallback);
+                RewardType rewardType = RollReward();
+                DropReward(rewardType, collectedCallback);
+                if (rewardType == RewardType.Key)
+                    _level?.MarkKeyRewardDropped();
 
                 await transform.DOScale(Vector3.zero, 0.2f)
                     .SetEase(Ease.InBack)
@@ -142,7 +149,11 @@ namespace Features.RewardBag
 
         private RewardType RollReward()
         {
-            float keyChance = Mathf.Clamp01(_keyDropChance);
+            bool keyRewardPending = _level != null && !_level.HasDroppedKeyReward;
+            if (keyRewardPending && _canDropGuaranteedKey)
+                return RewardType.Key;
+
+            float keyChance = keyRewardPending ? 0f : Mathf.Clamp01(_keyDropChance);
             float heartChance = Mathf.Clamp(_heartDropChance, 0f, 1f - keyChance);
             float roll = UnityEngine.Random.value;
 

@@ -55,7 +55,8 @@ namespace Features.RewardBag
             }
 
             AlignBottomToGround(bagObject, groundPoint.y);
-            rewardBag.Construct(_characterProvider, _characterWallet,
+            rewardBag.Construct(_characterProvider, _characterWallet, level,
+                level.RegisterRewardBagForGuaranteedKey(),
                 () => RewardCollected?.Invoke(roomData));
             return true;
         }
