@@ -1314,8 +1314,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 0.104180194, y: 1, z: 1}
+  m_Center: {x: 0.44790906, y: 0, z: -1.7205795e-13}
 --- !u!114 &5339628684579269956
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4813,8 +4813,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 0.14394036, y: 1, z: 1}
+  m_Center: {x: 0.4280298, y: 0, z: -1.1125649e-14}
 --- !u!114 &8682990209369689645
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6119,7 +6119,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4939534581418337023, guid: e8166261637a5ea49bca8c987686aa19, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -6371,7 +6372,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 6349497404779363362, guid: e356ca5cb84f90e458c38fcb88ad3d9a, type: 3}
+  m_Mesh: {fileID: 6349497404779363362, guid: 2f0d3a19833254c459a2c30b493f82bd, type: 3}
 --- !u!114 &83024601024980542
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8267,7 +8268,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4939534581418337023, guid: e8166261637a5ea49bca8c987686aa19, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
