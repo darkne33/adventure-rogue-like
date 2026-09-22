@@ -34,7 +34,7 @@ public class GoldDropper
 
     public void DropGold(Vector3 position)
     {
-        float dropChance = Mathf.Clamp01(_configuration?.DropChance ?? 0.5f);
+        float dropChance = Mathf.Clamp01(_configuration?.DropChance ?? 0.25f);
         if (Random.value >= dropChance)
             return;
 
