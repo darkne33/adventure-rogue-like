@@ -64,9 +64,12 @@ namespace Features.Relics.Scripts
         public bool IsCritical { get; }
         public string WeaponId { get; }
         public Vector3 HitPosition { get; }
+        public CharacterActiveAbility SourceAbility { get; }
+        public int AppliedDamage { get; }
 
         public RelicHitEvent(CharacterFacade attacker, CombatTarget target, int damage,
-            bool isCritical, string weaponId, Vector3 hitPosition)
+            bool isCritical, string weaponId, Vector3 hitPosition,
+            CharacterActiveAbility sourceAbility = null, int? appliedDamage = null)
         {
             Attacker = attacker;
             Target = target;
@@ -74,6 +77,8 @@ namespace Features.Relics.Scripts
             IsCritical = isCritical;
             WeaponId = weaponId;
             HitPosition = hitPosition;
+            SourceAbility = sourceAbility;
+            AppliedDamage = appliedDamage ?? damage;
         }
     }
 

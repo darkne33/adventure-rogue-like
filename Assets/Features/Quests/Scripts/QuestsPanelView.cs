@@ -11,8 +11,7 @@ namespace Features.Quests.Scripts
     {
         [SerializeField] private UnityEngine.UI.Button _closeButton;
         [SerializeField] private UnityEngine.UI.Button _hideCompletedButton;
-        [SerializeField] private GameObject _hideCompletedCheck;
-        [SerializeField] private TMP_Text _balance;
+        [SerializeField] private UnityEngine.UI.Toggle _hideCompletedCheck;
         [SerializeField] private TMP_Text _total;
         [SerializeField] private RectTransform _totalProgressFill;
         [SerializeField] private UnityEngine.UI.ScrollRect _scroll;
@@ -80,22 +79,25 @@ namespace Features.Quests.Scripts
 
         private void Refresh()
         {
-            _balance.text = _service.Silver.ToString("N0");
             _total.text = $"Completed: {_service.CompletedCount} / {_service.TotalCount}";
             float fraction = _service.TotalCount > 0 ? (float)_service.CompletedCount / _service.TotalCount : 0f;
             _totalProgressFill.anchorMax = new Vector2(Mathf.Clamp01(fraction), 1f);
-            _hideCompletedCheck.SetActive(_hideCompleted);
+            _hideCompletedCheck.SetIsOnWithoutNotify(_hideCompleted);
             RebuildRows();
         }
 
         private void RebuildRows()
         {
             string previousId = _selected?.Id;
+            GameObject focused = EventSystem.current != null
+                ? EventSystem.current.currentSelectedGameObject : null;
+            bool focusRow = focused == null || !focused.transform.IsChildOf(transform);
             Vector2 position = _resetScroll ? Vector2.zero : _scroll.content.anchoredPosition;
             _resetScroll = false;
             _rebuilding = true;
             foreach (QuestRowView row in _rows)
             {
+                focusRow |= focused == row.gameObject;
                 row.Selected -= SelectQuest;
                 row.gameObject.SetActive(false);
                 Destroy(row.gameObject);
@@ -120,7 +122,8 @@ namespace Features.Quests.Scripts
             if (!empty)
             {
                 selected ??= _rows[0];
-                ProgressionMenuUi.Focus(selected.Button);
+                if (focusRow)
+                    ProgressionMenuUi.Focus(selected.Button);
                 SelectQuest(selected);
             }
             else
@@ -133,7 +136,8 @@ namespace Features.Quests.Scripts
                 _detailReward.text = _hideCompleted && _service.TotalCount > 0
                     ? "Turn off Hide completed to view finished quests." : string.Empty;
                 _detailSilver.text = string.Empty;
-                ProgressionMenuUi.Focus(_hideCompletedButton);
+                if (focusRow)
+                    ProgressionMenuUi.Focus(_hideCompletedButton);
             }
             Canvas.ForceUpdateCanvases();
             position.y = Mathf.Clamp(position.y, 0f,
@@ -146,8 +150,6 @@ namespace Features.Quests.Scripts
         private void SelectQuest(QuestRowView row)
         {
             _selected = row.Quest;
-            foreach (QuestRowView item in _rows)
-                item.SetSelected(item == row);
             bool complete = _service.IsCompleted(row.Quest.Id);
             UnlockDefinition unlock = _service.GetUnlockForQuest(row.Quest.Id);
             _detailIconFrame.SetActive(true);

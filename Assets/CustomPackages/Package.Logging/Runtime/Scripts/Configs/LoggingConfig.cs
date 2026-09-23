@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Data;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Utilities;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Configs

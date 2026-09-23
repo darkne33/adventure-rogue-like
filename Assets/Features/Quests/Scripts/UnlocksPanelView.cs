@@ -27,6 +27,8 @@ namespace Features.Quests.Scripts
         [SerializeField] private UnityEngine.UI.Image _progressBarFill;
         [SerializeField] private UnlockCellView _cellPrefab;
         [SerializeField] private CategoryTab[] _tabs = Array.Empty<CategoryTab>();
+        [SerializeField] private Color _activeTabColor = new(0.11f, 0.13f, 0.11f, 0.85f);
+        [SerializeField] private Color _inactiveTabColor = new(0.11f, 0.13f, 0.11f, 0.3f);
 
         private readonly List<UnlockCellView> _cells = new();
         private QuestService _service;
@@ -80,7 +82,7 @@ namespace Features.Quests.Scripts
             ResizeGrid();
             _scroll.StopMovement();
             _scroll.verticalNormalizedPosition = 1f;
-            ProgressionMenuUi.Focus(_tabs[_categoryIndex].Button);
+            FocusSelectedUnlock();
         }
 
         public void Hide()
@@ -104,10 +106,12 @@ namespace Features.Quests.Scripts
                     break;
                 }
                 _tabs[i].Alert.gameObject.SetActive(purchasable);
-                _tabs[i].Selection.SetActive(i == _categoryIndex);
+                _tabs[i].Background.color = i == _categoryIndex ? _activeTabColor : _inactiveTabColor;
             }
             if (_builtCategoryIndex != _categoryIndex)
                 RebuildGrid();
+            if (_selected == null && _cells.Count > 0)
+                _selected = _cells[0].Unlock;
             foreach (UnlockCellView cell in _cells)
                 RefreshCell(cell);
             RefreshDetails();
@@ -139,14 +143,12 @@ namespace Features.Quests.Scripts
             bool owned = _service.IsOwned(cell.Unlock);
             bool requirementMet = _service.IsRequirementMet(cell.Unlock);
             ApplyIcon(cell.Icon, cell.Unlock, owned || requirementMet);
-            cell.RefreshState(owned, requirementMet, cell.Unlock == _selected);
+            cell.RefreshState(owned, requirementMet);
         }
 
         private void SelectUnlock(UnlockCellView cell)
         {
             _selected = cell.Unlock;
-            foreach (UnlockCellView item in _cells)
-                item.SetSelected(item == cell);
             RefreshDetails();
             RefreshNavigation();
             ProgressionMenuUi.EnsureVisible(_scroll, (RectTransform)cell.transform);
@@ -270,13 +272,23 @@ namespace Features.Quests.Scripts
         private void SelectCategory(int index)
         {
             int categoryIndex = (index + _tabs.Length) % _tabs.Length;
-            if (categoryIndex == _categoryIndex)
-                return;
             _categoryIndex = categoryIndex;
             _selected = null;
             _scroll.StopMovement();
             _scroll.verticalNormalizedPosition = 1f;
             Refresh();
+            FocusSelectedUnlock();
+        }
+
+        private void FocusSelectedUnlock()
+        {
+            foreach (UnlockCellView cell in _cells)
+            {
+                if (cell.Unlock != _selected)
+                    continue;
+                ProgressionMenuUi.Focus(cell.Button);
+                return;
+            }
             ProgressionMenuUi.Focus(_tabs[_categoryIndex].Button);
         }
 
@@ -310,7 +322,7 @@ namespace Features.Quests.Scripts
                      (gamepad != null && gamepad.rightShoulder.wasPressedThisFrame))
                 SelectCategory(_categoryIndex + 1);
             if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
-                ProgressionMenuUi.Focus(_tabs[_categoryIndex].Button);
+                FocusSelectedUnlock();
         }
 
         private void RequestBack()
@@ -335,7 +347,7 @@ namespace Features.Quests.Scripts
             public ProgressionCategory Category;
             public UnityEngine.UI.Button Button;
             public TMP_Text Alert;
-            public GameObject Selection;
+            public UnityEngine.UI.Image Background;
         }
     }
 }

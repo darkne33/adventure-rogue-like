@@ -2,6 +2,7 @@ using System.Threading;
 using Core.Services;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
+using Features.Quests.Scripts;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Core;
 using UI;
 using Zenject;
@@ -11,6 +12,9 @@ namespace Core
     public class BootstrapState : State
     {
         [Inject] private IGameAddressableService _gameAddressableService;
+        [Inject] private GameplayAssetService _gameplayAssets;
+        [Inject] private QuestService _quests;
+        [Inject] private QuestCompletionNotificationController _questNotifications;
         [Inject] private ICameraService _cameraService;
         [Inject] private IPanelStorage _panelStorage;
         [Inject] private IUIFactory _uiFactory;
@@ -26,6 +30,9 @@ namespace Core
                 await _loadingScreenService.Show(cts);
 
                 await _gameAddressableService.InitializeAddressables();
+                await _gameplayAssets.Initialize(cts);
+                _quests.Initialize(_gameplayAssets.Progression);
+                _questNotifications.Initialize(_gameplayAssets.QuestNotification);
                 await _cameraService.Initialize(cts);
                 await _panelStorage.WarmUp(cts);
                 await _uiFactory.Initialize(cts);

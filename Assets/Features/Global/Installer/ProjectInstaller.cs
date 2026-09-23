@@ -51,12 +51,12 @@ namespace Core.Installer
             Container.Bind<IEffectsService>().To<EffectsService>().AsSingle();
 
             Container.Bind<PlayerWallet>().AsSingle();
-            ProgressionConfiguration progressionConfiguration =
-                Resources.Load<ProgressionConfiguration>(ProgressionConfiguration.ResourcePath);
-            if (progressionConfiguration == null)
-                throw new System.InvalidOperationException("The demo progression configuration is missing from Resources.");
-            Container.Bind<ProgressionConfiguration>().FromInstance(progressionConfiguration).AsSingle();
             Container.BindInterfacesAndSelfTo<QuestService>().AsSingle().NonLazy();
+
+            Container.BindInterfacesAndSelfTo<QuestCompletionNotificationController>()
+                .AsSingle()
+                .WithArguments(transform)
+                .NonLazy();
             
             Container.Bind<CharacterExpConfig>().FromInstance(_characterExpConfig).AsSingle();
             Container.Bind<ICharacterLevelService>().To<CharacterLevelService>().AsSingle();

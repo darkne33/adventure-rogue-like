@@ -60,30 +60,35 @@ namespace Core
         public async UniTask<T> Load<T>(string address, CancellationToken token) where T : class
         {
             if (string.IsNullOrEmpty(address))
+                throw new ArgumentException("Address is null or empty.", nameof(address));
+
+            token.ThrowIfCancellationRequested();
+            if (!_handles.TryGetValue(address, out AsyncOperationHandle handle))
             {
-                Debug.LogError("Address is null or empty");
-                return null;
+                handle = Addressables.LoadAssetAsync<T>(address);
+                _handles.Add(address, handle);
             }
 
             try
             {
-                if (_handles.ContainsKey(address))
-                {
-                    await _handles[address].Task;
-                    return (T)_handles[address].Result;
-                }
-
-                var asyncOperationHandle = Addressables.LoadAssetAsync<T>(address);
-                _handles.Add(address, asyncOperationHandle);
-                await asyncOperationHandle.ToUniTask(cancellationToken: token);
-                return asyncOperationHandle.Result;
+                await handle.ToUniTask(cancellationToken: token);
+                return (T)handle.Result;
             }
-            catch (Exception e)
+            catch (OperationCanceledException)
             {
-                Debug.LogError($"Cant load addressable by address {e.Message}");
-                _handles.Remove(address);
-                await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: token);
-                return await Load<T>(address, token);
+                // Another waiter may still need the same in-flight operation.
+                // Ownership stays in the cache until the caller releases it.
+                throw;
+            }
+            catch
+            {
+                if (_handles.TryGetValue(address, out AsyncOperationHandle cached) && cached.Equals(handle))
+                {
+                    _handles.Remove(address);
+                    if (handle.IsValid())
+                        Addressables.Release(handle);
+                }
+                throw;
             }
         }
 

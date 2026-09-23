@@ -3,6 +3,7 @@ using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
 using Features.Quests.Scripts;
 using Features.Relics.Scripts;
+using Features.RunResults.Scripts;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Core;
 using UI;
 
@@ -27,6 +28,7 @@ namespace Core
         private readonly UpgradeBuildService _upgradeBuildService;
         private readonly EnemySpawner _enemySpawner;
         private readonly QuestRunTracker _questRunTracker;
+        private readonly RunResultsTracker _runResultsTracker;
 
         public RogueLikePrepareState(ICharacterFactory characterFactory,
             ISceneService<RogueLikeSceneProvider> sceneService, ICharacterProvider characterProvider,
@@ -36,7 +38,7 @@ namespace Core
             MinimapController minimapController, RelicChestSpawner relicChestSpawner, RelicEventBus relicEventBus,
             RelicManager relicManager, UpgradeBuildService upgradeBuildService,
             CharacterConfiguration characterConfiguration, EnemySpawner enemySpawner,
-            QuestRunTracker questRunTracker)
+            QuestRunTracker questRunTracker, RunResultsTracker runResultsTracker)
         {
             _characterFactory = characterFactory;
             _sceneService = sceneService;
@@ -55,6 +57,7 @@ namespace Core
             _upgradeBuildService = upgradeBuildService;
             _enemySpawner = enemySpawner;
             _questRunTracker = questRunTracker;
+            _runResultsTracker = runResultsTracker;
         }
 
         public override async UniTask Enter(CancellationToken cts)
@@ -122,6 +125,7 @@ namespace Core
             _cameraService.MainCamera.Follow = _characterProvider.CharacterFacade.CameraPivot;
 
             _questRunTracker.BeginRun();
+            _runResultsTracker.BeginRun();
 
             panel.Show().Forget();
 

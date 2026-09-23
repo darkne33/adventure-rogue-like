@@ -250,7 +250,7 @@ public sealed class FireFieldAbility : CharacterActiveAbility
 
         enemy.EffectsSystem.DealDamage();
         _relicEventBus.PublishHit(new RelicHitEvent(character, enemy, finalDamage,
-            damageResult.IsCritical, Id.ToString(), hitPosition));
+            damageResult.IsCritical, Id.ToString(), hitPosition, this, appliedDamage));
 
         if (killedByHit)
             _relicEventBus.PublishKill(new RelicKillEvent(character, enemy, hitPosition, Id.ToString()));

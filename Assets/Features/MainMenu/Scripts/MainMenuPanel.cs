@@ -1,5 +1,6 @@
 using Features.Leaderboard;
 using Features.Quests.Scripts;
+using TMPro;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,6 +19,8 @@ public sealed class MainMenuPanel : PanelBase
 
     [SerializeField] private CharacterConfiguration _characterConfiguration;
     [SerializeField] private GameObject _titleLogo;
+    [SerializeField] private GameObject _silverBalance;
+    [SerializeField] private TMP_Text _silverBalanceAmount;
     [SerializeField] private MainMenuRoomController _roomPrefab;
 
     private MainMenuRoomController _room;
@@ -41,6 +44,16 @@ public sealed class MainMenuPanel : PanelBase
     }
 
     private void OnDestroy() => CloseRoom();
+
+    public void SetSilverBalance(int silver) => _silverBalanceAmount.text = silver.ToString("N0");
+
+    public void SetSilverBalanceVisible(bool visible)
+    {
+        _silverBalance.SetActive(visible);
+
+        if (visible)
+            _silverBalance.transform.SetAsLastSibling();
+    }
 
     public void SetHomeVisible(bool visible)
     {

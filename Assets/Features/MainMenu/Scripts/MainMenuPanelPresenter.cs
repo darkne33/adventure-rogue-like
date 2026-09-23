@@ -58,6 +58,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         _characterSelectionView.SetOwnershipResolver(_questService.IsCharacterOwned);
 
         Panel.SetHomeVisible(true);
+        Panel.SetSilverBalanceVisible(true);
         _characterSelectionView.Hide();
         Panel.SetButtonsInteractable(false);
         Panel.CreateRoom();
@@ -87,6 +88,9 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         _characterSelectionView.StartRequested += RequestPlay;
         _characterSelectionView.BackRequested += ReturnToMainMenu;
 
+        _questService.Changed += RefreshSilverBalance;
+        RefreshSilverBalance();
+
         if (_runRestartService.ConsumeCharacterSelectionEntryRequest())
             OpenCharacterSelection();
 
@@ -103,6 +107,8 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
 
     public override UniTask OnClosed()
     {
+        _questService.Changed -= RefreshSilverBalance;
+
         if (Panel != null)
         {
             Panel.PlayButton.onClick.RemoveListener(OpenCharacterSelection);
@@ -166,6 +172,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         _isCharacterSelectionOpen = true;
         Panel.SetButtonsInteractable(false);
         Panel.SetHomeVisible(false);
+        Panel.SetSilverBalanceVisible(false);
         _characterSelectionView.Show(_characterConfiguration.Characters,
             _characterConfiguration.SelectedCharacterIndex, previewAlreadyShown: true);
         _characterSelectionView.RefreshOwnership();
@@ -181,6 +188,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         Panel.SetButtonsInteractable(false);
         Panel.SetHomeVisible(false);
         _questsView.Show();
+        Panel.SetSilverBalanceVisible(true);
     }
 
     private void CloseQuests()
@@ -206,6 +214,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         Panel.SetButtonsInteractable(false);
         Panel.SetHomeVisible(false);
         _unlocksView.Show();
+        Panel.SetSilverBalanceVisible(true);
     }
 
     private void CloseUnlocks()
@@ -250,6 +259,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         _isCharacterSelectionOpen = false;
         _characterSelectionView.Hide(keepPreview: true);
         Panel.SetHomeVisible(true);
+        Panel.SetSilverBalanceVisible(true);
         EnableInput();
         MoveToMainMenuAsync().Forget();
     }
@@ -263,6 +273,12 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         catch (OperationCanceledException)
         {
         }
+    }
+
+    private void RefreshSilverBalance()
+    {
+        if (Panel != null)
+            Panel.SetSilverBalance(_questService.Silver);
     }
 
     private async UniTask RefreshLeaderboard(CancellationToken cancellationToken)

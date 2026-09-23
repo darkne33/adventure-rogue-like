@@ -4,12 +4,13 @@ Relics are passive run items. The system is data-driven: a designer adds a new `
 
 ## Where Assets Live
 
-- Definitions: `Assets/Features/Relics/Resources/Relics/Definitions`
-- Icons: `Assets/Features/Relics/Resources/Relics/Icons`
-- Pool config: `Assets/Features/Relics/Resources/Relics/RelicPoolConfiguration.asset`
-- Chest config: `Assets/Features/Relics/Resources/Relics/RelicChestConfiguration.asset`
+- Definitions: `Assets/Features/Relics/Configs/Definitions`
+- Icons: `Assets/Features/Relics/Sprites`
+- Pool config: `Assets/Features/Relics/Configs/RelicPoolConfiguration.asset`
+- Chest config: `Assets/Features/Relics/Configs/RelicChestConfiguration.asset`
+- Pickup and inventory UI prefabs: `Assets/Features/Relics/Prefabs`
 
-The rogue-like installer loads the pool and chest config from `Resources/Relics` if scene fields are not assigned.
+`GameplayAssetService` preloads the pool and chest configs through Addressables during bootstrap. The rogue-like installer uses these loaded assets when scene overrides are not assigned. Definitions, icons, and prefabs are serialized dependencies of the loaded content; no Resources fallback is used.
 
 ## Adding A Relic
 

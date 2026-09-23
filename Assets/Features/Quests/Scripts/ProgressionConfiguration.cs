@@ -8,7 +8,7 @@ namespace Features.Quests.Scripts
     [CreateAssetMenu(menuName = "Configs/Progression/Quests and Unlocks", fileName = "DemoProgressionConfiguration")]
     public sealed class ProgressionConfiguration : ScriptableObject
     {
-        public const string ResourcePath = "Progression/DemoProgressionConfiguration";
+        public const string Address = "Assets/Features/Quests/Configs/DemoProgressionConfiguration.asset";
 
         [Header("Available from the start")]
         [SerializeField] private string[] _defaultCharacters = { "rabbit" };

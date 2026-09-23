@@ -9,13 +9,12 @@ namespace Features.Quests.Scripts
     {
         [SerializeField] private UnityEngine.UI.Button _button;
         [SerializeField] private UnityEngine.UI.Image _background;
-        [SerializeField] private GameObject _completedCheck;
+        [SerializeField] private UnityEngine.UI.Toggle _completedCheck;
         [SerializeField] private TMP_Text _condition;
         [SerializeField] private GameObject _progressRoot;
         [SerializeField] private TMP_Text _progressText;
         [SerializeField] private RectTransform _progressFill;
         [SerializeField] private UnityEngine.UI.Image _rewardIcon;
-        [SerializeField] private GameObject _selection;
 
         private bool _appearanceCached;
         private Color _baseColor;
@@ -40,7 +39,7 @@ namespace Features.Quests.Scripts
             _button.onClick.AddListener(RequestSelection);
             _background.color = index % 2 == 0 ? _baseColor : Color.Lerp(_baseColor, Color.white, 0.025f);
             bool completed = service.IsCompleted(quest.Id);
-            _completedCheck.SetActive(completed);
+            _completedCheck.SetIsOnWithoutNotify(completed);
             _condition.text = quest.Description;
             bool showProgress = quest.Target > 1;
             _progressRoot.SetActive(showProgress);
@@ -66,10 +65,7 @@ namespace Features.Quests.Scripts
                 _rewardIcon.color = Color.white;
                 _rewardIcon.preserveAspect = true;
             }
-            SetSelected(false);
         }
-
-        public void SetSelected(bool selected) => _selection.SetActive(selected);
 
         public void OnSelect(BaseEventData eventData) => RequestSelection();
 

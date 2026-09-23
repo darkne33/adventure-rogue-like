@@ -14,7 +14,6 @@ public sealed class CharacterProximityTransparencySystem
     private const float CandidateRefreshInterval = 1f;
     private const string UniversalLitShaderName = "Universal Render Pipeline/Lit";
     private const string ProximityFadeLitShaderName = "Little Rush/Proximity Fade Lit";
-    private const string ProximityFadeLitResourcePath = "ProximityFadeLit";
 
     private static readonly int BaseColorProperty = Shader.PropertyToID("_BaseColor");
     private static readonly int ColorProperty = Shader.PropertyToID("_Color");
@@ -36,7 +35,7 @@ public sealed class CharacterProximityTransparencySystem
     private static readonly int DitherFadeProperty =
         Shader.PropertyToID("_ClearCoatMask");
 
-    private static Shader _proximityFadeLitShader;
+    private readonly Shader _proximityFadeLitShader;
 
     private readonly Transform _characterRoot;
     private readonly List<Renderer> _candidates = new();
@@ -54,9 +53,10 @@ public sealed class CharacterProximityTransparencySystem
     private float _proximityCheckTimer;
     private bool _isDisposed;
 
-    public CharacterProximityTransparencySystem(Transform characterRoot)
+    public CharacterProximityTransparencySystem(Transform characterRoot, Shader proximityFadeLitShader)
     {
         _characterRoot = characterRoot;
+        _proximityFadeLitShader = proximityFadeLitShader;
     }
 
     public void Tick(float deltaTime)
@@ -201,7 +201,7 @@ public sealed class CharacterProximityTransparencySystem
         return state;
     }
 
-    private static Material CreateFadeMaterial(Material originalMaterial)
+    private Material CreateFadeMaterial(Material originalMaterial)
     {
         Material ditherMaterial = CreateOpaqueDitherMaterial(originalMaterial);
         return ditherMaterial != null
@@ -209,7 +209,7 @@ public sealed class CharacterProximityTransparencySystem
             : CreateTransparentMaterial(originalMaterial);
     }
 
-    private static Material CreateOpaqueDitherMaterial(Material originalMaterial)
+    private Material CreateOpaqueDitherMaterial(Material originalMaterial)
     {
         if (originalMaterial == null || originalMaterial.shader == null ||
             originalMaterial.shader.name != UniversalLitShaderName ||
@@ -220,7 +220,7 @@ public sealed class CharacterProximityTransparencySystem
             return null;
         }
 
-        Shader fadeShader = GetProximityFadeLitShader();
+        Shader fadeShader = _proximityFadeLitShader;
         if (fadeShader == null)
             return null;
 
@@ -258,20 +258,6 @@ public sealed class CharacterProximityTransparencySystem
             fadeMaterial.SetOverrideTag("RenderType", originalRenderType);
 
         return fadeMaterial;
-    }
-
-    private static Shader GetProximityFadeLitShader()
-    {
-        if (_proximityFadeLitShader == null)
-        {
-            _proximityFadeLitShader =
-                Resources.Load<Shader>(ProximityFadeLitResourcePath);
-
-            if (_proximityFadeLitShader == null)
-                _proximityFadeLitShader = Shader.Find(ProximityFadeLitShaderName);
-        }
-
-        return _proximityFadeLitShader;
     }
 
     private static Material CreateTransparentMaterial(Material originalMaterial)

@@ -1,6 +1,7 @@
 using System;
 using Core;
 using Features.Enemies.Scripts;
+using Features.RunResults.Scripts;
 using UI;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -14,14 +15,15 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
     private readonly PauseEntityDistributor _pauseEntityDistributor;
     private readonly CharacterConfiguration _characterConfiguration;
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
-    private readonly RunRestartService _runRestartService;
+    private readonly RunResultsController _runResultsController;
     private readonly IRogueLikeRuntimeDataService _runtimeDataService;
+    private readonly GameplayAssetService _gameplayAssets;
 
     public CharacterSystemsFactory(CharacterCameraSettingsConfiguration cameraSettings, ICameraService cameraService,
         IPanelService panelService, CharacterStats characterStats, PauseEntityDistributor pauseEntityDistributor,
         CharacterConfiguration characterConfiguration,
-        ISceneService<RogueLikeSceneProvider> sceneService, RunRestartService runRestartService,
-        IRogueLikeRuntimeDataService runtimeDataService)
+        ISceneService<RogueLikeSceneProvider> sceneService, RunResultsController runResultsController,
+        IRogueLikeRuntimeDataService runtimeDataService, GameplayAssetService gameplayAssets)
     {
         _cameraSettings = cameraSettings;
         _cameraService = cameraService;
@@ -30,8 +32,9 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         _pauseEntityDistributor = pauseEntityDistributor;
         _characterConfiguration = characterConfiguration;
         _sceneService = sceneService;
-        _runRestartService = runRestartService;
+        _runResultsController = runResultsController;
         _runtimeDataService = runtimeDataService;
+        _gameplayAssets = gameplayAssets;
     }
 
     public void Create(CharacterFacade facade)
@@ -49,7 +52,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         var moveSystem = new CharacterMoveSystem(rigidbody, _cameraService, _characterStats, fxSystem,
             facade.CharacterModel, animationSystem, cameraSystem, pauseEntity);
         var proximityTransparencySystem =
-            new CharacterProximityTransparencySystem(facade.transform);
+            new CharacterProximityTransparencySystem(facade.transform, _gameplayAssets.ProximityFadeShader);
         var abilitySystem = new CharacterAbilitySystem();
         var damageEffectSystem = new DealDamageEffectSystem(facade.MeshRenderers);
         IDamageView damageView = facade.GetComponent<CharacterDamageNumberView>();
@@ -63,7 +66,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         if (lowHealthVignetteView == null)
             throw new InvalidOperationException("Global Volume is missing LowHealthVignetteView.");
 
-        var deathSystem = new CharacterDeathSystem(facade, _runRestartService);
+        var deathSystem = new CharacterDeathSystem(facade, _runResultsController);
         var healthSystem = new HealthSystem(_characterStats.MaxHp,
             new IHealthView[] { characterPanel.CharacterHealthView, worldHealthView, lowHealthVignetteView },
             deathSystem);

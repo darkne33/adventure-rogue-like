@@ -4,7 +4,7 @@ The demo contains 17 quests and 17 purchasable unlocks: 2 characters, 1 weapon, 
 
 ## Configuration
 
-Edit `Assets/Features/Quests/Resources/Progression/DemoProgressionConfiguration.asset` in the Inspector. Its `ProgressionConfiguration` ScriptableObject is loaded by `ProjectInstaller`.
+Edit `Assets/Features/Quests/Configs/DemoProgressionConfiguration.asset` in the Inspector. Its `ProgressionConfiguration` ScriptableObject is registered in Addressables and loaded by `GameplayAssetService` during `BootstrapState`, before quest services are initialized or gameplay scenes are loaded.
 
 - **Default Characters / Abilities / Relics** control what is available on a new save, independently of purchases.
 - **Quests** contain a stable ID, title, condition text, category, metric, target and one-time silver reward.
@@ -62,6 +62,10 @@ Quest categories follow their rewards: Characters for DUKE and MR POCKET, Weapon
 
 ## UI prefabs
 
+New quest completions display a non-interactive dark/gold notification at the top of the screen, slightly right of center. It shows the quest title and condition, automatically received silver, and any content now available to buy in UNLOCKS. Notifications appear in order, hold for four seconds, then fade out. Their animation uses unscaled time, and the project-level queue survives scene changes so a completion just before death is still shown. Existing completed quests are not replayed when loading a save.
+
+Edit `Assets/Features/Quests/Prefabs/QuestCompletionNotification.prefab` to style the card. The prefab is loaded through Addressables during bootstrap and its handle is retained for the project lifetime. `QuestCompletionNotificationController` owns the queue and timing; `QuestCompletionNotificationView` only binds data and presentation. `SoundId.QuestComplete` uses a quiet version of the existing start-click cue through `SoundsCatalog`, respecting the player's SFX volume and mute settings.
+
 Edit these assets directly in Prefab Mode:
 
 - `Assets/Features/Quests/Prefabs/QuestsPanel.prefab` — full window, header, Hide completed button, scroll viewport, completion summary and footer.
@@ -70,6 +74,8 @@ Edit these assets directly in Prefab Mode:
 - `Assets/Features/Quests/Prefabs/UnlockCell.prefab` — item icon, price, available-purchase marker and selection corners. State colors are serialized on its view component.
 
 `MainMenuPanel.prefab` references the two window prefabs. The view scripts instantiate the assigned window and row/cell prefabs and bind data; they do not construct UI hierarchies or add UI components at runtime. The iron frame textures already included in the project are arranged as editable RawImage edge/corner pieces, so their original SpriteImporter settings remain unchanged.
+
+The former QUESTS `SilverBalance` belongs to `MainMenuPanel.prefab` and appears at the top left, mirrored from its original top-right position. It stays visible over QUESTS and UNLOCKS, updates when `QuestService.Changed` fires, hides during character selection, and reappears when returning to the main menu.
 
 ## Controls
 

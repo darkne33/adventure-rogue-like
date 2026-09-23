@@ -6,6 +6,7 @@ namespace Core
         {
             Container.Bind<IAddressableLoadService>().To<AddressableLoadService>().AsSingle();
             Container.Bind<IGameAddressableService>().To<GameAddressableService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<GameplayAssetService>().AsSingle();
         }
     }
 }

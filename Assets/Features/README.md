@@ -13,7 +13,9 @@
 - `Sprites` или `Textures` — собственная 2D-графика фичи.
 - `Models`, `Materials`, `Animations`, `Sounds` — соответствующий контент.
 - `Editor` — код, который должен компилироваться только для Unity Editor.
-- `Resources` — только ассеты, которые действительно загружаются через `Resources`.
+- Собственный runtime-контент загружается через Addressables; папки `Resources`
+  и вызовы `Resources.Load*` для него запрещены. Загружаемый корневой ассет
+  регистрируется в Addressables, его сериализованные зависимости попадают в бандл автоматически.
 - `Content/<ContentName>` — изолированный набор контента со своими `Configs`,
   `Prefabs`, `Materials`, `Models`, `Textures` и другими подпапками.
 

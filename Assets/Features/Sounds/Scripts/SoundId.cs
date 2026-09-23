@@ -6,6 +6,7 @@ namespace Features.Sounds
         UiClick = 1,
         PickupCoin = 2,
         UiSelect = 3,
-        UiStartClick = 4
+        UiStartClick = 4,
+        QuestComplete = 5
     }
 }

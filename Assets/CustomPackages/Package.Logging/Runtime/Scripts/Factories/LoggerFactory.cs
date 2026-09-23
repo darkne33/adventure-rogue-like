@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Configs;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Core;
+using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Data;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Interfaces;
 
 namespace Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Factories
@@ -19,6 +20,8 @@ namespace Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Factori
 
         public static void UpdateMinLogLevels()
         {
+            if (LoggingConfig.Instance == null)
+                return;
             foreach (var logger in _loggers.Values)
             {
                 foreach (var config in LoggingConfig.Instance.Data)
@@ -33,7 +36,13 @@ namespace Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Factori
 
         private static void SetMinLogLevel(ILogger logger)
         {
+            if (LoggingConfig.Instance == null)
+            {
+                logger.MinLogLevel = LogLevel.None;
+                return;
+            }
             var data = LoggingConfig.Instance.Data;
+            logger.MinLogLevel = LogLevel.Verbose;
 
             foreach (var item in data)
             {

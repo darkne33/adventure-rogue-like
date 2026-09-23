@@ -22,9 +22,11 @@ namespace Features.Quests.Scripts
         public event Action Changed;
         public event Action<QuestDefinition> QuestCompleted;
 
-        public ProgressionConfiguration Configuration { get; }
-        public IReadOnlyList<QuestDefinition> Definitions => Configuration.Quests;
-        public IReadOnlyList<UnlockDefinition> Unlocks => Configuration.Unlocks;
+        public ProgressionConfiguration Configuration { get; private set; }
+        public IReadOnlyList<QuestDefinition> Definitions => Configuration != null
+            ? Configuration.Quests : Array.Empty<QuestDefinition>();
+        public IReadOnlyList<UnlockDefinition> Unlocks => Configuration != null
+            ? Configuration.Unlocks : Array.Empty<UnlockDefinition>();
         public int TotalCount => Definitions.Count;
         public int Silver => _wallet.Silver.Count;
         public int CompletedCount
@@ -39,10 +41,14 @@ namespace Features.Quests.Scripts
             }
         }
 
-        public QuestService(PlayerWallet wallet, ProgressionConfiguration configuration)
+        public QuestService(PlayerWallet wallet) => _wallet = wallet;
+
+        public void Initialize(ProgressionConfiguration configuration)
         {
-            _wallet = wallet;
-            Configuration = configuration;
+            if (Configuration != null)
+                return;
+            Configuration = configuration != null ? configuration
+                : throw new ArgumentNullException(nameof(configuration));
             Load();
             _wallet.Silver.CountChanged += HandleSilverChanged;
             Application.quitting += Flush;

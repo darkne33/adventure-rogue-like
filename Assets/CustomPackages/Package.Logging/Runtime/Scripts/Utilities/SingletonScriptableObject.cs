@@ -10,13 +10,21 @@ namespace Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Utiliti
         {
             get
             {
-                if (_instance == null)
+#if UNITY_EDITOR
+                // Editor tooling reads the asset; runtime receives an Addressables-loaded instance.
+                if (_instance == null && !Application.isPlaying)
                 {
-                    _instance = Resources.Load<T>($"Logging/{typeof(T).Name}");
+                    string[] guids = UnityEditor.AssetDatabase.FindAssets($"t:{typeof(T).Name}");
+                    if (guids.Length > 0)
+                        _instance = UnityEditor.AssetDatabase.LoadAssetAtPath<T>(
+                            UnityEditor.AssetDatabase.GUIDToAssetPath(guids[0]));
                 }
+#endif
 
                 return _instance;
             }
         }
+
+        public static void SetInstance(T instance) => _instance = instance;
     }
 }

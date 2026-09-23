@@ -8,6 +8,7 @@ using Features.Leaderboard;
 using Features.Quests.Scripts;
 using Features.Relics.Scripts;
 using Features.RewardBag;
+using Features.RunResults.Scripts;
 using UnityEngine;
 using Zenject;
 
@@ -28,6 +29,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
     [SerializeField] private HeartDropperConfiguration _heartDropperConfiguration;
     [SerializeField] private GameObject _rewardBagPrefab;
     [SerializeField] private PausePanel _pausePanelPrefab;
+    [SerializeField] private RunResultsPanel _runResultsPanelPrefab;
 
     [SerializeField] private SceneNames.SceneNameType _sceneNameType;
 
@@ -48,6 +50,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         BindHeartDropper();
         BindRelics();
         BindPauseMenu();
+        BindRunResults();
         BindDebugMode();
     }
 
@@ -161,8 +164,9 @@ public class RogueLikeMonoInstaller : MonoInstaller
 
     private void BindRelics()
     {
-        _relicPoolConfiguration ??= Resources.Load<RelicPoolConfiguration>("Relics/RelicPoolConfiguration");
-        _relicChestConfiguration ??= Resources.Load<RelicChestConfiguration>("Relics/RelicChestConfiguration");
+        GameplayAssetService assets = Container.Resolve<GameplayAssetService>();
+        _relicPoolConfiguration ??= assets.RelicPool;
+        _relicChestConfiguration ??= assets.RelicChest;
 
         Container.Bind<RelicPoolConfiguration>().FromInstance(_relicPoolConfiguration).AsSingle();
         Container.Bind<RelicChestConfiguration>().FromInstance(_relicChestConfiguration).AsSingle();
@@ -185,4 +189,15 @@ public class RogueLikeMonoInstaller : MonoInstaller
 
     private void BindDebugMode() =>
         Container.BindInterfacesAndSelfTo<GameDebugService>().AsSingle().NonLazy();
+
+    private void BindRunResults()
+    {
+        _runResultsPanelPrefab ??= Container.Resolve<GameplayAssetService>().RunResults;
+
+        Container.BindInterfacesAndSelfTo<RunResultsTracker>().AsSingle().NonLazy();
+        Container.BindInterfacesAndSelfTo<RunResultsController>()
+            .AsSingle()
+            .WithArguments(_runResultsPanelPrefab)
+            .NonLazy();
+    }
 }
