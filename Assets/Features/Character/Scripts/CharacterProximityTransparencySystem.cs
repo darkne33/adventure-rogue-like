@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using Core;
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
 using TMPro;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -38,6 +40,7 @@ public sealed class CharacterProximityTransparencySystem
     private readonly Shader _proximityFadeLitShader;
 
     private readonly Transform _characterRoot;
+    private readonly ICameraService _cameraService;
     private readonly List<Renderer> _candidates = new();
     private readonly HashSet<Renderer> _nearbyRenderers = new();
     private readonly Dictionary<Renderer, RendererTransparencyState> _rendererStates = new();
@@ -53,9 +56,11 @@ public sealed class CharacterProximityTransparencySystem
     private float _proximityCheckTimer;
     private bool _isDisposed;
 
-    public CharacterProximityTransparencySystem(Transform characterRoot, Shader proximityFadeLitShader)
+    public CharacterProximityTransparencySystem(Transform characterRoot,
+        ICameraService cameraService, Shader proximityFadeLitShader)
     {
         _characterRoot = characterRoot;
+        _cameraService = cameraService;
         _proximityFadeLitShader = proximityFadeLitShader;
     }
 
@@ -122,27 +127,34 @@ public sealed class CharacterProximityTransparencySystem
     {
         _nearbyRenderers.Clear();
 
-        Camera camera = Camera.main;
-        if (camera != null)
+        // Use the rendering camera's position, including Cinemachine blends,
+        // without requiring the MainCamera tag on the ProjectContext camera.
+        CinemachineBrain brain = CinemachineCore.FindPotentialTargetBrain(_cameraService.MainCamera);
+        Camera camera = brain != null ? brain.OutputCamera : null;
+        bool hasActiveCamera = camera != null && camera.isActiveAndEnabled;
+        Vector3 cameraPosition = hasActiveCamera ? camera.transform.position : default;
+        Vector3 characterPosition = _characterRoot.position;
+
+        foreach (Renderer renderer in _candidates)
         {
-            Vector3 cameraPosition = camera.transform.position;
-
-            foreach (Renderer renderer in _candidates)
+            if (renderer == null || renderer.enabled == false ||
+                renderer.gameObject.activeInHierarchy == false)
             {
-                if (renderer == null || renderer.enabled == false ||
-                    renderer.gameObject.activeInHierarchy == false ||
-                    IsNearby(renderer.bounds, cameraPosition) == false)
-                {
-                    continue;
-                }
-
-                RendererTransparencyState state = GetOrCreateState(renderer);
-                if (state == null)
-                    continue;
-
-                state.SetFaded(true);
-                _nearbyRenderers.Add(renderer);
+                continue;
             }
+
+            Bounds bounds = renderer.bounds;
+            bool isCharacterNearby = IsNearby(bounds, characterPosition);
+            bool isCameraNearby = hasActiveCamera && IsNearby(bounds, cameraPosition);
+            if (isCharacterNearby == false && isCameraNearby == false)
+                continue;
+
+            RendererTransparencyState state = GetOrCreateState(renderer);
+            if (state == null)
+                continue;
+
+            state.SetFaded(true);
+            _nearbyRenderers.Add(renderer);
         }
 
         foreach (KeyValuePair<Renderer, RendererTransparencyState> pair in _rendererStates)
@@ -377,17 +389,17 @@ public sealed class CharacterProximityTransparencySystem
         return false;
     }
 
-    private static bool IsNearby(Bounds bounds, Vector3 cameraPosition)
+    private static bool IsNearby(Bounds bounds, Vector3 position)
     {
-        float distanceX = cameraPosition.x < bounds.min.x
-            ? bounds.min.x - cameraPosition.x
-            : cameraPosition.x > bounds.max.x
-                ? cameraPosition.x - bounds.max.x
+        float distanceX = position.x < bounds.min.x
+            ? bounds.min.x - position.x
+            : position.x > bounds.max.x
+                ? position.x - bounds.max.x
                 : 0f;
-        float distanceZ = cameraPosition.z < bounds.min.z
-            ? bounds.min.z - cameraPosition.z
-            : cameraPosition.z > bounds.max.z
-                ? cameraPosition.z - bounds.max.z
+        float distanceZ = position.z < bounds.min.z
+            ? bounds.min.z - position.z
+            : position.z > bounds.max.z
+                ? position.z - bounds.max.z
                 : 0f;
 
         return distanceX * distanceX + distanceZ * distanceZ <=

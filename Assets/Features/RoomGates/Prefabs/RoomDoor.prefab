@@ -306,6 +306,7 @@ MonoBehaviour:
   _type: 0
   _leftLeaf: {fileID: 1102117780364710553}
   _rightLeaf: {fileID: 5297861279875035451}
+  _outline: {fileID: 1498726328043519001}
 --- !u!1 &5297861279875035451
 GameObject:
   m_ObjectHideFlags: 0
@@ -513,6 +514,7 @@ GameObject:
   - component: {fileID: 2135571130056969463}
   - component: {fileID: 5219414617584266325}
   - component: {fileID: 1386099471629446263}
+  - component: {fileID: 1498726328043519001}
   m_Layer: 11
   m_Name: Door_gate_3
   m_TagString: Untagged
@@ -592,6 +594,24 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1498726328043519001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5700273095480113777}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 1
+  outlineColor: {r: 1, g: 1, b: 0, a: 1}
+  outlineWidth: 4
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1 &6814855193882911273
 GameObject:
   m_ObjectHideFlags: 0
@@ -735,6 +755,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelDoor
   _doorAnimator: {fileID: 3516761520459087416}
+  _outlineColor: {r: 1, g: 1, b: 0, a: 1}
   _direction: 0
   _nextRoom: {fileID: 0}
 --- !u!65 &9176366286788703104
@@ -823,6 +844,7 @@ MonoBehaviour:
   _type: 1
   _leftLeaf: {fileID: 6814855193882911273}
   _rightLeaf: {fileID: 8653602008452662758}
+  _outline: {fileID: 1498726328043519002}
 --- !u!1 &8494291758453086526
 GameObject:
   m_ObjectHideFlags: 0
@@ -834,6 +856,7 @@ GameObject:
   - component: {fileID: 8725049976751433281}
   - component: {fileID: 288943030114175577}
   - component: {fileID: 9222107558144605825}
+  - component: {fileID: 1498726328043519002}
   m_Layer: 11
   m_Name: Door_gate
   m_TagString: Untagged
@@ -913,6 +936,24 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1498726328043519002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8494291758453086526}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 1
+  outlineColor: {r: 1, g: 1, b: 0, a: 1}
+  outlineWidth: 4
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1 &8653602008452662758
 GameObject:
   m_ObjectHideFlags: 0

@@ -44,6 +44,14 @@ public sealed class DoorAnimator : MonoBehaviour
     public void Close(DoorType type) =>
         Show(type, isOpen: false);
 
+    public void SetHighlight(bool isHighlighted, Color color)
+    {
+        EnsureConfigured();
+
+        foreach (DoorView door in _doors)
+            door.SetHighlight(isHighlighted && door.gameObject.activeSelf, color);
+    }
+
     private void Show(DoorType type, bool isOpen)
     {
         EnsureConfigured();
@@ -64,4 +72,3 @@ public sealed class DoorAnimator : MonoBehaviour
                 $"{name} must contain configured Enemy and Reward DoorView references.");
     }
 }
-

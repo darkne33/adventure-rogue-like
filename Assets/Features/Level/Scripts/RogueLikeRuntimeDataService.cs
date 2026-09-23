@@ -11,6 +11,9 @@ public class RogueLikeRuntimeDataService : IRogueLikeRuntimeDataService
 
     public event Action<RoomData, RoomData> RoomChanged;
 
+    public bool HasVisitedRoom(RoomData roomData) =>
+        roomData != null && _visitedRooms.Contains(roomData);
+
     public void SetCurrentRoomData(RoomData roomData)
     {
         if (roomData == null)

@@ -52,7 +52,8 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         var moveSystem = new CharacterMoveSystem(rigidbody, _cameraService, _characterStats, fxSystem,
             facade.CharacterModel, animationSystem, cameraSystem, pauseEntity);
         var proximityTransparencySystem =
-            new CharacterProximityTransparencySystem(facade.transform, _gameplayAssets.ProximityFadeShader);
+            new CharacterProximityTransparencySystem(
+                facade.transform, _cameraService, _gameplayAssets.ProximityFadeShader);
         var abilitySystem = new CharacterAbilitySystem();
         var damageEffectSystem = new DealDamageEffectSystem(facade.MeshRenderers);
         IDamageView damageView = facade.GetComponent<CharacterDamageNumberView>();

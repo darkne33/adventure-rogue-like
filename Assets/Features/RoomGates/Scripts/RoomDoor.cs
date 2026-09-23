@@ -13,11 +13,13 @@ public sealed class RoomDoor : MonoBehaviour
     private int _roomRotationQuarterTurns;
 
     [SerializeField] private DoorAnimator _doorAnimator;
+    [SerializeField] private Color _outlineColor = Color.yellow;
     [SerializeField] private RoomDirection _direction;
     [SerializeField] private Room _nextRoom;
 
     [Inject] private ITransitToRoomService _transitToRoomService;
     [Inject] private ILevelProgressionService _levelProgressionService;
+    [Inject] private IRogueLikeRuntimeDataService _runtimeDataService;
 
     public RoomDirection AuthoredDirection => _direction;
     public RoomDirection Direction => _direction.RotateClockwise(_roomRotationQuarterTurns);
@@ -27,6 +29,21 @@ public sealed class RoomDoor : MonoBehaviour
     public bool HasRoomDestination => _nextRoom != null;
 
     private bool HasDestination => HasRoomDestination || _isLevelExit;
+
+    private void Start()
+    {
+        if (_runtimeDataService == null)
+            return;
+
+        _runtimeDataService.RoomChanged += OnRoomChanged;
+        RefreshOutline();
+    }
+
+    private void OnDestroy()
+    {
+        if (_runtimeDataService != null)
+            _runtimeDataService.RoomChanged -= OnRoomChanged;
+    }
 
     public void Configure(Room nextRoom, RoomDoor nextRoomEntryDoor)
     {
@@ -90,6 +107,7 @@ public sealed class RoomDoor : MonoBehaviour
 
         if (!HasDestination)
         {
+            RefreshOutline();
             gameObject.SetActive(false);
             return;
         }
@@ -100,6 +118,19 @@ public sealed class RoomDoor : MonoBehaviour
             _doorAnimator.Open(_doorType);
         else
             _doorAnimator.Close(_doorType);
+
+        RefreshOutline();
+    }
+
+    private void OnRoomChanged(RoomData previousRoom, RoomData currentRoom) =>
+        RefreshOutline();
+
+    private void RefreshOutline()
+    {
+        bool isHighlighted = _isOpen && _nextRoom != null && _nextRoom.RoomData != null &&
+                             _runtimeDataService != null &&
+                             !_runtimeDataService.HasVisitedRoom(_nextRoom.RoomData);
+        _doorAnimator.SetHighlight(isHighlighted, _outlineColor);
     }
 
     private void OnTriggerEnter(Collider other) =>
@@ -118,6 +149,7 @@ public sealed class RoomDoor : MonoBehaviour
             return;
 
         _isOpen = false;
+        RefreshOutline();
 
         if (_isLevelExit)
             _levelProgressionService.TransitToNextLevel();
