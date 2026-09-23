@@ -16,7 +16,6 @@ namespace Features.Quests.Scripts
         [SerializeField] private UnityEngine.UI.Button _closeButton;
         [SerializeField] private UnityEngine.UI.Button _purchaseButton;
         [SerializeField] private TMP_Text _purchaseLabel;
-        [SerializeField] private TMP_Text _balance;
         [SerializeField] private UnityEngine.UI.Image _detailIcon;
         [SerializeField] private TMP_Text _detailName;
         [SerializeField] private TMP_Text _detailDescription;
@@ -94,18 +93,17 @@ namespace Features.Quests.Scripts
 
         private void Refresh()
         {
-            _balance.text = _service.Silver.ToString("N0");
             for (int i = 0; i < _tabs.Length; i++)
             {
-                bool purchasable = false;
+                bool hasNewUnlock = false;
                 foreach (UnlockDefinition unlock in _service.Unlocks)
                 {
-                    if (unlock.Category != _tabs[i].Category || !_service.CanPurchase(unlock))
+                    if (unlock.Category != _tabs[i].Category || !_service.IsNewUnlock(unlock))
                         continue;
-                    purchasable = true;
+                    hasNewUnlock = true;
                     break;
                 }
-                _tabs[i].Alert.gameObject.SetActive(purchasable);
+                _tabs[i].Alert.gameObject.SetActive(hasNewUnlock);
                 _tabs[i].Background.color = i == _categoryIndex ? _activeTabColor : _inactiveTabColor;
             }
             if (_builtCategoryIndex != _categoryIndex)
@@ -143,12 +141,13 @@ namespace Features.Quests.Scripts
             bool owned = _service.IsOwned(cell.Unlock);
             bool requirementMet = _service.IsRequirementMet(cell.Unlock);
             ApplyIcon(cell.Icon, cell.Unlock, owned || requirementMet);
-            cell.RefreshState(owned, requirementMet);
+            cell.RefreshState(owned, requirementMet, _service.IsNewUnlock(cell.Unlock));
         }
 
         private void SelectUnlock(UnlockCellView cell)
         {
             _selected = cell.Unlock;
+            _service.MarkUnlockViewed(cell.Unlock);
             RefreshDetails();
             RefreshNavigation();
             ProgressionMenuUi.EnsureVisible(_scroll, (RectTransform)cell.transform);
@@ -346,7 +345,7 @@ namespace Features.Quests.Scripts
         {
             public ProgressionCategory Category;
             public UnityEngine.UI.Button Button;
-            public TMP_Text Alert;
+            public UnityEngine.UI.Image Alert;
             public UnityEngine.UI.Image Background;
         }
     }

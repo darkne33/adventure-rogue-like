@@ -29,14 +29,14 @@ Bullet Explosion and Punch are their characters' signature weapons. They become 
 - Combat time counts only active, unfinished combat rooms. Pauses, transitions, cleared rooms and safe rooms do not advance it.
 - Boss victories count completed boss rooms, so a splitting boss grants one victory.
 - Collected gold includes gold already spent. Starting relics do not count as pickups.
-- Quest silver is awarded automatically once. Every positive silver gain in the run wallet is also credited to the persistent wallet immediately, including final pickup callbacks after death. Ending a run does not deposit the same silver again.
-- Progress, completed quest IDs, purchased unlock IDs and persistent silver are saved together under the existing PlayerPrefs key `little_rush.quests.v1` (payload version 2). Existing progress and balances are retained; old completed quest IDs do not automatically count as purchases.
+- Quest silver is collected once with CLAIM in QUESTS after the quest is completed. Viewing the quest does not claim its reward. Every positive silver gain in the run wallet is also credited to the persistent wallet immediately, including final pickup callbacks after death. Ending a run does not deposit the same silver again.
+- Progress, completed quest IDs, purchased unlock IDs, claimed reward IDs, viewed unlock IDs and persistent silver are saved together under the existing PlayerPrefs key `little_rush.quests.v1` (payload version 3). Existing progress and balances are retained; completed quests from older saves are marked as claimed because their silver was already awarded automatically. Old completed quest IDs do not automatically count as purchases.
 - Completion, purchases and collected silver save immediately. Unfinished progress also saves periodically and at run/lifecycle boundaries.
 - `QuestService` is the ownership authority for character selection, upgrade offers and relic pools. A completed quest alone does not bypass the purchase requirement. The old relic-specific `UnlockQuestId` / `UnlockCost` fields are not the demo's purchase configuration.
 
 ## Quest conditions and unlock prices
 
-These conditions and IDs are retained from the original catalog. Targets, quest silver rewards and purchase prices are editable in the configuration. Quest silver is the automatic completion reward; the purchase price is the separate amount spent to own the unlocked content.
+These conditions and IDs are retained from the original catalog. Targets, quest silver rewards and purchase prices are editable in the configuration. Quest silver is claimed after completion; the purchase price is the separate amount spent to own the unlocked content.
 
 | Quest ID | Condition | Purchasable unlock | Quest silver | Price in silver |
 |---|---|---|---:|---:|
@@ -62,16 +62,20 @@ Quest categories follow their rewards: Characters for DUKE and MR POCKET, Weapon
 
 ## UI prefabs
 
-New quest completions display a non-interactive dark/gold notification at the top of the screen, slightly right of center. It shows the quest title and condition, automatically received silver, and any content now available to buy in UNLOCKS. Notifications appear in order, hold for four seconds, then fade out. Their animation uses unscaled time, and the project-level queue survives scene changes so a completion just before death is still shown. Existing completed quests are not replayed when loading a save.
+New quest completions display a non-interactive dark/gold notification at the top of the screen, slightly right of center. It shows the quest title and condition, silver available to claim in QUESTS, and any content now available to buy in UNLOCKS. Notifications appear in order, hold for four seconds, then fade out. Their animation uses unscaled time, and the project-level queue survives scene changes so a completion just before death is still shown. Existing completed quests are not replayed when loading a save.
 
 Edit `Assets/Features/Quests/Prefabs/QuestCompletionNotification.prefab` to style the card. The prefab is loaded through Addressables during bootstrap and its handle is retained for the project lifetime. `QuestCompletionNotificationController` owns the queue and timing; `QuestCompletionNotificationView` only binds data and presentation. `SoundId.QuestComplete` uses a quiet version of the existing start-click cue through `SoundsCatalog`, respecting the player's SFX volume and mute settings.
 
 Edit these assets directly in Prefab Mode:
 
-- `Assets/Features/Quests/Prefabs/QuestsPanel.prefab` — full window, header, Hide completed button, scroll viewport, completion summary and footer.
-- `Assets/Features/Quests/Prefabs/QuestRow.prefab` — checkbox, condition, progress, reward icon and selection corners.
+- `Assets/Features/Quests/Prefabs/QuestsPanel.prefab` — full window, header, Hide completed button, scroll viewport, completion summary, footer and CLAIM button.
+- `Assets/Features/Quests/Prefabs/QuestRow.prefab` — checkbox, condition, progress, reward icon, claimable-reward marker and selection corners.
 - `Assets/Features/Quests/Prefabs/UnlocksPanel.prefab` — full window, four tabs, grid, currency and purchase details.
-- `Assets/Features/Quests/Prefabs/UnlockCell.prefab` — item icon, price, available-purchase marker and selection corners. State colors are serialized on its view component.
+- `Assets/Features/Quests/Prefabs/UnlockCell.prefab` — item icon, price, new-unlock marker and selection corners. State colors are serialized on its view component.
+- `Assets/Features/Quests/Prefabs/ProgressionAlertYellow.prefab` — yellow pixel exclamation mark for main-menu buttons and UNLOCKS category tabs.
+- `Assets/Features/Quests/Prefabs/ProgressionAlertBlue.prefab` — blue pixel exclamation mark for individual unlocks and claimable quest rewards.
+
+Both alert prefabs use a non-interactive Unity UI Image with the `Sprites/ProgressionExclamation.png` sprite (an unchanged copy of the existing `Retro Arsenal/Textures/Icons/icon_exclamation.png` artwork, imported as a single Sprite with point filtering). Their size, tint and unscaled pulse/tilt are authored in prefabs; serialized dependencies are loaded with the existing Addressables-loaded main menu. No new runtime asset loading is needed. UNLOCKS and category markers indicate unseen, quest-eligible content regardless of the current silver balance. Selecting an unlock's details marks it viewed and saves that state. QUESTS and quest-row markers remain until the corresponding silver is claimed; a zero-silver quest never creates a claim marker.
 
 `MainMenuPanel.prefab` references the two window prefabs. The view scripts instantiate the assigned window and row/cell prefabs and bind data; they do not construct UI hierarchies or add UI components at runtime. The iron frame textures already included in the project are arranged as editable RawImage edge/corner pieces, so their original SpriteImporter settings remain unchanged.
 
@@ -79,4 +83,4 @@ The former QUESTS `SilverBalance` belongs to `MainMenuPanel.prefab` and appears 
 
 ## Controls
 
-Mouse clicks select entries and UNLOCKS tabs; the mouse wheel scrolls without changing the selected quest or footer. Hide completed filters completed quests out of the list. Keyboard/controller navigation selects entries and keeps them visible; Escape/B or the close control returns to the main menu. UNLOCKS opens with an empty detail panel until an item is selected. Locked entries show silhouettes; quest-complete entries show their price and purchase marker; owned entries show their full-color icon. The detail panel shows the quest requirement, purchase action or owned state.
+Mouse clicks select entries and UNLOCKS tabs; the mouse wheel scrolls without changing the selected quest or footer. Hide completed filters finished quests out of the list while keeping any unclaimed silver rewards visible. Select a completed quest and press CLAIM to collect its silver; the button is also reachable with keyboard/controller navigation. Navigation selects entries and keeps them visible; Escape/B or the close control returns to the main menu. Locked unlock entries show silhouettes; quest-complete entries show their price and a blue marker until first viewed; owned entries show their full-color icon. The detail panel shows the quest requirement, purchase action or owned state.

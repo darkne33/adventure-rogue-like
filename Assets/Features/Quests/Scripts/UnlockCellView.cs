@@ -12,7 +12,7 @@ namespace Features.Quests.Scripts
         [SerializeField] private UnityEngine.UI.Image _icon;
         [SerializeField] private RectTransform _priceRoot;
         [SerializeField] private TMP_Text _priceLabel;
-        [SerializeField] private TMP_Text _alert;
+        [SerializeField] private UnityEngine.UI.Image _alert;
         [SerializeField] private Color _ownedColor = new(0.43f, 0.43f, 0.43f);
         [SerializeField] private Color _lockedColor = new(0.12f, 0.12f, 0.12f);
         [SerializeField] private Color _purchaseIconColor = new(0.29f, 0.29f, 0.29f);
@@ -32,13 +32,13 @@ namespace Features.Quests.Scripts
             _button.onClick.AddListener(Select);
         }
 
-        public void RefreshState(bool owned, bool requirementMet)
+        public void RefreshState(bool owned, bool requirementMet, bool isNew)
         {
             _background.color = owned ? _ownedColor : _lockedColor;
             if (!owned && requirementMet)
                 _icon.color = _purchaseIconColor;
             _priceRoot.gameObject.SetActive(!owned && requirementMet);
-            _alert.gameObject.SetActive(!owned && requirementMet);
+            _alert.gameObject.SetActive(isNew);
         }
 
         public void OnSelect(BaseEventData eventData) => Select();

@@ -21,6 +21,8 @@ public sealed class MainMenuPanel : PanelBase
     [SerializeField] private GameObject _titleLogo;
     [SerializeField] private GameObject _silverBalance;
     [SerializeField] private TMP_Text _silverBalanceAmount;
+    [SerializeField] private GameObject _questsAlert;
+    [SerializeField] private GameObject _unlocksAlert;
     [SerializeField] private MainMenuRoomController _roomPrefab;
 
     private MainMenuRoomController _room;
@@ -46,6 +48,12 @@ public sealed class MainMenuPanel : PanelBase
     private void OnDestroy() => CloseRoom();
 
     public void SetSilverBalance(int silver) => _silverBalanceAmount.text = silver.ToString("N0");
+
+    public void SetProgressionAlerts(bool claimableRewards, bool newUnlocks)
+    {
+        _questsAlert.SetActive(claimableRewards);
+        _unlocksAlert.SetActive(newUnlocks);
+    }
 
     public void SetSilverBalanceVisible(bool visible)
     {

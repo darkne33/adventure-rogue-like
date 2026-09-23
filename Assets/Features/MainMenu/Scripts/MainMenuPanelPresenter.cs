@@ -88,8 +88,8 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         _characterSelectionView.StartRequested += RequestPlay;
         _characterSelectionView.BackRequested += ReturnToMainMenu;
 
-        _questService.Changed += RefreshSilverBalance;
-        RefreshSilverBalance();
+        _questService.Changed += RefreshProgression;
+        RefreshProgression();
 
         if (_runRestartService.ConsumeCharacterSelectionEntryRequest())
             OpenCharacterSelection();
@@ -107,7 +107,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
 
     public override UniTask OnClosed()
     {
-        _questService.Changed -= RefreshSilverBalance;
+        _questService.Changed -= RefreshProgression;
 
         if (Panel != null)
         {
@@ -275,10 +275,13 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         }
     }
 
-    private void RefreshSilverBalance()
+    private void RefreshProgression()
     {
         if (Panel != null)
+        {
             Panel.SetSilverBalance(_questService.Silver);
+            Panel.SetProgressionAlerts(_questService.HasClaimableRewards, _questService.HasNewUnlocks);
+        }
     }
 
     private async UniTask RefreshLeaderboard(CancellationToken cancellationToken)

@@ -21,6 +21,7 @@ namespace Features.Quests.Scripts
         [SerializeField] private TMP_Text _detailCondition;
         [SerializeField] private TMP_Text _detailReward;
         [SerializeField] private TMP_Text _detailSilver;
+        [SerializeField] private UnityEngine.UI.Button _claimButton;
         [SerializeField] private QuestRowView _rowPrefab;
 
         private readonly List<QuestRowView> _rows = new();
@@ -53,6 +54,7 @@ namespace Features.Quests.Scripts
             _ui = new ProgressionMenuUi(service.Configuration, getPortrait, portraitMaterial);
             _closeButton.onClick.AddListener(RequestBack);
             _hideCompletedButton.onClick.AddListener(ToggleHideCompleted);
+            _claimButton.onClick.AddListener(ClaimSelectedReward);
             gameObject.SetActive(false);
         }
 
@@ -92,6 +94,7 @@ namespace Features.Quests.Scripts
             GameObject focused = EventSystem.current != null
                 ? EventSystem.current.currentSelectedGameObject : null;
             bool focusRow = focused == null || !focused.transform.IsChildOf(transform);
+            focusRow |= focused == _claimButton.gameObject;
             Vector2 position = _resetScroll ? Vector2.zero : _scroll.content.anchoredPosition;
             _resetScroll = false;
             _rebuilding = true;
@@ -106,7 +109,7 @@ namespace Features.Quests.Scripts
             QuestRowView selected = null;
             foreach (QuestDefinition quest in _service.Definitions)
             {
-                if (_hideCompleted && _service.IsCompleted(quest.Id))
+                if (_hideCompleted && _service.IsCompleted(quest.Id) && !_service.CanClaimReward(quest.Id))
                     continue;
                 QuestRowView row = Instantiate(_rowPrefab, _scroll.content, false);
                 row.Bind(quest, _service, _rows.Count, _getPortrait, _portraitMaterial);
@@ -136,6 +139,7 @@ namespace Features.Quests.Scripts
                 _detailReward.text = _hideCompleted && _service.TotalCount > 0
                     ? "Turn off Hide completed to view finished quests." : string.Empty;
                 _detailSilver.text = string.Empty;
+                _claimButton.gameObject.SetActive(false);
                 if (focusRow)
                     ProgressionMenuUi.Focus(_hideCompletedButton);
             }
@@ -145,6 +149,7 @@ namespace Features.Quests.Scripts
             _scroll.StopMovement();
             _scroll.content.anchoredPosition = position;
             _rebuilding = false;
+            RefreshNavigation();
         }
 
         private void SelectQuest(QuestRowView row)
@@ -166,8 +171,11 @@ namespace Features.Quests.Scripts
             _detailReward.text = unlock != null
                 ? $"{RewardCategory(unlock.Category)} - {unlock.DisplayName}" : row.Quest.Title;
             _detailSilver.text = row.Quest.SilverReward > 0
-                ? $"+{row.Quest.SilverReward} silver" + (complete ? " received" : string.Empty)
+                ? $"+{row.Quest.SilverReward} silver" + (_service.IsRewardClaimed(row.Quest.Id)
+                    ? " received" : _service.CanClaimReward(row.Quest.Id) ? " available" : string.Empty)
                 : string.Empty;
+            _claimButton.gameObject.SetActive(_service.CanClaimReward(row.Quest.Id));
+            RefreshNavigation();
             if (!_rebuilding)
                 ProgressionMenuUi.EnsureVisible(_scroll, row.Rect);
         }
@@ -175,13 +183,26 @@ namespace Features.Quests.Scripts
         private void RefreshNavigation()
         {
             UnityEngine.UI.Selectable first = _rows.Count > 0 ? _rows[0].Button : _closeButton;
+            UnityEngine.UI.Selectable footer = _claimButton.gameObject.activeSelf ? _claimButton : _closeButton;
+            UnityEngine.UI.Selectable selected = first;
+            foreach (QuestRowView row in _rows)
+                if (row.Quest == _selected)
+                    selected = row.Button;
             for (int i = 0; i < _rows.Count; i++)
                 ProgressionMenuUi.Navigate(_rows[i].Button,
                     i > 0 ? _rows[i - 1].Button : _hideCompletedButton,
-                    i + 1 < _rows.Count ? _rows[i + 1].Button : _closeButton,
-                    _hideCompletedButton, _closeButton);
+                    i + 1 < _rows.Count ? _rows[i + 1].Button : footer,
+                    _hideCompletedButton, footer);
             ProgressionMenuUi.Navigate(_hideCompletedButton, _closeButton, first, _closeButton, first);
-            ProgressionMenuUi.Navigate(_closeButton, _hideCompletedButton, first, _hideCompletedButton, first);
+            ProgressionMenuUi.Navigate(_claimButton, selected, _closeButton, selected, _closeButton);
+            ProgressionMenuUi.Navigate(_closeButton, footer == _closeButton ? _hideCompletedButton : footer,
+                first, _hideCompletedButton, first);
+        }
+
+        private void ClaimSelectedReward()
+        {
+            if (_selected != null)
+                _service.TryClaimReward(_selected.Id);
         }
 
         private void ToggleHideCompleted()
@@ -241,6 +262,8 @@ namespace Features.Quests.Scripts
                 _closeButton.onClick.RemoveListener(RequestBack);
             if (_hideCompletedButton != null)
                 _hideCompletedButton.onClick.RemoveListener(ToggleHideCompleted);
+            if (_claimButton != null)
+                _claimButton.onClick.RemoveListener(ClaimSelectedReward);
         }
     }
 }

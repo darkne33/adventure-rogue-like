@@ -114,7 +114,7 @@ namespace Features.Quests.Scripts
                     : _quests.Configuration.SilverIcon;
 
             string reward = quest.SilverReward > 0
-                ? $"+{quest.SilverReward} silver received"
+                ? $"+{quest.SilverReward} silver - claim in QUESTS"
                 : string.Empty;
             if (unlock != null && !_quests.IsOwned(unlock))
             {

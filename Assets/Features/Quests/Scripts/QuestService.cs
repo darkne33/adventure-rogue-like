@@ -15,6 +15,8 @@ namespace Features.Quests.Scripts
         private readonly Dictionary<QuestMetric, int> _progress = new();
         private readonly HashSet<string> _completed = new();
         private readonly HashSet<string> _purchased = new();
+        private readonly HashSet<string> _claimedRewards = new();
+        private readonly HashSet<string> _viewedUnlocks = new();
         private bool _dirty;
         private bool _updatingWallet;
         private float _saveTimer;
@@ -29,6 +31,29 @@ namespace Features.Quests.Scripts
             ? Configuration.Unlocks : Array.Empty<UnlockDefinition>();
         public int TotalCount => Definitions.Count;
         public int Silver => _wallet.Silver.Count;
+
+        public bool HasClaimableRewards
+        {
+            get
+            {
+                foreach (QuestDefinition quest in Definitions)
+                    if (CanClaimReward(quest.Id))
+                        return true;
+                return false;
+            }
+        }
+
+        public bool HasNewUnlocks
+        {
+            get
+            {
+                foreach (UnlockDefinition unlock in Unlocks)
+                    if (IsNewUnlock(unlock))
+                        return true;
+                return false;
+            }
+        }
+
         public int CompletedCount
         {
             get
@@ -61,6 +86,38 @@ namespace Features.Quests.Scripts
 
         public bool IsCompleted(string questId) =>
             !string.IsNullOrWhiteSpace(questId) && _completed.Contains(questId);
+
+        public bool IsRewardClaimed(string questId) =>
+            !string.IsNullOrWhiteSpace(questId) && _claimedRewards.Contains(questId);
+
+        public bool CanClaimReward(string questId) => IsCompleted(questId) &&
+            !IsRewardClaimed(questId) && GetQuest(questId) is { SilverReward: > 0 };
+
+        public bool TryClaimReward(string questId)
+        {
+            if (!CanClaimReward(questId))
+                return false;
+
+            // Record the claim before crediting the wallet; both are flushed in one snapshot.
+            _claimedRewards.Add(questId);
+            _dirty = true;
+            CreditSilver(GetQuest(questId).SilverReward);
+            return true;
+        }
+
+        public bool IsNewUnlock(UnlockDefinition unlock) => unlock != null &&
+            !string.IsNullOrWhiteSpace(unlock.Id) && !IsOwned(unlock) &&
+            IsRequirementMet(unlock) && !_viewedUnlocks.Contains(unlock.Id);
+
+        public void MarkUnlockViewed(UnlockDefinition unlock)
+        {
+            if (!IsNewUnlock(unlock) || !_viewedUnlocks.Add(unlock.Id))
+                return;
+
+            _dirty = true;
+            Flush();
+            Changed?.Invoke();
+        }
 
         public QuestDefinition GetQuest(string questId)
         {
@@ -213,11 +270,13 @@ namespace Features.Quests.Scripts
             if (!_dirty)
                 return;
 
-            var data = new QuestSaveData { Silver = _wallet.Silver.Count };
+            var data = new QuestSaveData { Version = 3, Silver = _wallet.Silver.Count };
             foreach (var entry in _progress)
                 data.Progress[entry.Key.ToString()] = entry.Value;
             data.CompletedIds.AddRange(_completed);
             data.PurchasedIds.AddRange(_purchased);
+            data.ClaimedRewardIds.AddRange(_claimedRewards);
+            data.ViewedUnlockIds.AddRange(_viewedUnlocks);
 
             PlayerPrefs.SetString(SaveKey, JsonConvert.SerializeObject(data));
             PlayerPrefs.Save();
@@ -278,18 +337,9 @@ namespace Features.Quests.Scripts
                 if (quest.Metric != metric || IsCompleted(quest.Id) || GetMetric(metric) < quest.Target)
                     continue;
 
-                // Completion and reward are saved together, so reopening the menu cannot grant it again.
+                // Completion unlocks the content; silver is credited only when the reward is claimed.
                 _completed.Add(quest.Id);
                 _dirty = true;
-                _updatingWallet = true;
-                try
-                {
-                    _wallet.Silver.Set((int)Math.Min(int.MaxValue, (long)Silver + quest.SilverReward));
-                }
-                finally
-                {
-                    _updatingWallet = false;
-                }
                 completedAny = true;
                 QuestCompleted?.Invoke(quest);
             }
@@ -336,6 +386,24 @@ namespace Features.Quests.Scripts
                         if (!string.IsNullOrWhiteSpace(id))
                             _purchased.Add(id);
 
+                // Older saves already received their completed quests' silver automatically.
+                if (data.Version < 3)
+                {
+                    _claimedRewards.UnionWith(_completed);
+                    _dirty = true;
+                }
+                else if (data.ClaimedRewardIds != null)
+                {
+                    foreach (string id in data.ClaimedRewardIds)
+                        if (IsCompleted(id))
+                            _claimedRewards.Add(id);
+                }
+
+                if (data.ViewedUnlockIds != null)
+                    foreach (string id in data.ViewedUnlockIds)
+                        if (!string.IsNullOrWhiteSpace(id))
+                            _viewedUnlocks.Add(id);
+
                 _wallet.Silver.Set(Math.Max(0, data.Silver));
             }
             catch (JsonException exception)
@@ -347,10 +415,13 @@ namespace Features.Quests.Scripts
         [Serializable]
         private sealed class QuestSaveData
         {
+            // Missing Version fields must retain the legacy automatic-reward behavior on migration.
             public int Version = 2;
             public Dictionary<string, int> Progress = new();
             public List<string> CompletedIds = new();
             public List<string> PurchasedIds = new();
+            public List<string> ClaimedRewardIds = new();
+            public List<string> ViewedUnlockIds = new();
             public int Silver;
         }
     }

@@ -15,6 +15,7 @@ namespace Features.Quests.Scripts
         [SerializeField] private TMP_Text _progressText;
         [SerializeField] private RectTransform _progressFill;
         [SerializeField] private UnityEngine.UI.Image _rewardIcon;
+        [SerializeField] private GameObject _rewardAlert;
 
         private bool _appearanceCached;
         private Color _baseColor;
@@ -39,6 +40,7 @@ namespace Features.Quests.Scripts
             _button.onClick.AddListener(RequestSelection);
             _background.color = index % 2 == 0 ? _baseColor : Color.Lerp(_baseColor, Color.white, 0.025f);
             bool completed = service.IsCompleted(quest.Id);
+            _rewardAlert.SetActive(service.CanClaimReward(quest.Id));
             _completedCheck.SetIsOnWithoutNotify(completed);
             _condition.text = quest.Description;
             bool showProgress = quest.Target > 1;
