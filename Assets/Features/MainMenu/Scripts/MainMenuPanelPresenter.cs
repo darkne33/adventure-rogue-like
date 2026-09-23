@@ -175,7 +175,6 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         Panel.SetSilverBalanceVisible(false);
         _characterSelectionView.Show(_characterConfiguration.Characters,
             _characterConfiguration.SelectedCharacterIndex, previewAlreadyShown: true);
-        _characterSelectionView.RefreshOwnership();
         MoveToCharacterSelectionAsync().Forget();
     }
 
