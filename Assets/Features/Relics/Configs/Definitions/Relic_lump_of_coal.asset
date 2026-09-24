@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c6dd3b5329c40c3ad1375b2a2bad5f0, type: 3}
+  m_Name: Relic_lump_of_coal
+  m_EditorClassIdentifier:
+  <Id>k__BackingField: lump_of_coal
+  <DisplayName>k__BackingField: "Lump of Coal"
+  <Description>k__BackingField: "Flying projectiles gain +6% damage per meter traveled per stack, up to +150%. Aquarius gains the same bonus with distance from you."
+  <Rarity>k__BackingField: 0
+  <Tags>k__BackingField:
+  - 0
+  - 12
+  - 18
+  <Icon>k__BackingField: {fileID: 21300000, guid: b30113cf3f194079a87fba05fe3df287, type: 3}
+  <IsUnique>k__BackingField: 0
+  <MaxStacks>k__BackingField: 5
+  <UnlockQuestId>k__BackingField:
+  <UnlockCost>k__BackingField: 0
+  <Effects>k__BackingField:
+  - <TriggerType>k__BackingField: 0
+    <StatType>k__BackingField: 0
+    <Value>k__BackingField: 0.06
+    <BossValue>k__BackingField: 0
+    <Chance>k__BackingField: 1
+    <Cooldown>k__BackingField: 0
+    <Duration>k__BackingField: 0
+    <Radius>k__BackingField: 0
+    <Cap>k__BackingField: 1.5
+    <ScalingType>k__BackingField: 0
+    <StatusEffectId>k__BackingField:
+    <EffectPrefabId>k__BackingField: lump_of_coal

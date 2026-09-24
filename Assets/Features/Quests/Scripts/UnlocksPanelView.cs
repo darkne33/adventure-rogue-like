@@ -34,6 +34,7 @@ namespace Features.Quests.Scripts
         private Func<string, Sprite> _getPortrait;
         private Material _portraitMaterial;
         private UnlockDefinition _selected;
+        private GameObject _lastFocusedObject;
         private int _categoryIndex;
         private int _builtCategoryIndex = -1;
         private float _gridWidth;
@@ -71,6 +72,7 @@ namespace Features.Quests.Scripts
                 return;
             _isOpen = true;
             _selected = null;
+            _lastFocusedObject = null;
             _categoryIndex = 0;
             _builtCategoryIndex = -1;
             _service.Changed += Refresh;
@@ -88,6 +90,7 @@ namespace Features.Quests.Scripts
         {
             _service.Changed -= Refresh;
             _isOpen = false;
+            _lastFocusedObject = null;
             gameObject.SetActive(false);
         }
 
@@ -146,6 +149,7 @@ namespace Features.Quests.Scripts
 
         private void SelectUnlock(UnlockCellView cell)
         {
+            _lastFocusedObject = cell.Button.gameObject;
             _selected = cell.Unlock;
             _service.MarkUnlockViewed(cell.Unlock);
             RefreshDetails();
@@ -276,7 +280,8 @@ namespace Features.Quests.Scripts
             _scroll.StopMovement();
             _scroll.verticalNormalizedPosition = 1f;
             Refresh();
-            FocusSelectedUnlock();
+            _lastFocusedObject = _tabs[_categoryIndex].Button.gameObject;
+            ProgressionMenuUi.Focus(_tabs[_categoryIndex].Button);
         }
 
         private void FocusSelectedUnlock()
@@ -285,9 +290,11 @@ namespace Features.Quests.Scripts
             {
                 if (cell.Unlock != _selected)
                     continue;
+                _lastFocusedObject = cell.Button.gameObject;
                 ProgressionMenuUi.Focus(cell.Button);
                 return;
             }
+            _lastFocusedObject = _tabs[_categoryIndex].Button.gameObject;
             ProgressionMenuUi.Focus(_tabs[_categoryIndex].Button);
         }
 
@@ -320,8 +327,19 @@ namespace Features.Quests.Scripts
             else if ((keyboard != null && keyboard.pageDownKey.wasPressedThisFrame) ||
                      (gamepad != null && gamepad.rightShoulder.wasPressedThisFrame))
                 SelectCategory(_categoryIndex + 1);
-            if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
-                FocusSelectedUnlock();
+            EventSystem eventSystem = EventSystem.current;
+            if (eventSystem == null)
+                return;
+            GameObject focusedObject = eventSystem.currentSelectedGameObject;
+            if (focusedObject != null && focusedObject.transform.IsChildOf(transform))
+                _lastFocusedObject = focusedObject;
+            else if (focusedObject == null)
+            {
+                if (_lastFocusedObject != null && _lastFocusedObject.activeInHierarchy)
+                    eventSystem.SetSelectedGameObject(_lastFocusedObject);
+                else
+                    FocusSelectedUnlock();
+            }
         }
 
         private void RequestBack()

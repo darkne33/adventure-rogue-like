@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Features.Enemies.Scripts;
 using UnityEngine;
 
@@ -8,9 +9,50 @@ public class PlayerCollisionDetector : MonoBehaviour
 
     private Transform _ignoredRoot;
     private bool _isHit;
+    private Vector3 _previousPosition;
+    private float _travelDistance;
+    private HashSet<CombatTarget> _damagedTargets;
+    public bool ManualCollisionHandling { get; set; }
 
-    public void Initialize(Transform ignoredRoot) =>
+    public float TravelDistance
+    {
+        get
+        {
+            RecordMovement();
+            return _travelDistance;
+        }
+    }
+
+    public void Initialize(Transform ignoredRoot)
+    {
         _ignoredRoot = ignoredRoot;
+        _previousPosition = transform.position;
+        _travelDistance = 0f;
+        _isHit = false;
+        _damagedTargets?.Clear();
+        ManualCollisionHandling = false;
+    }
+
+    private void LateUpdate() => RecordMovement();
+
+    public int RecordDamagingHit(CombatTarget target)
+    {
+        _damagedTargets ??= new HashSet<CombatTarget>();
+        if (target != null)
+            _damagedTargets.Add(target);
+        return _damagedTargets.Count;
+    }
+
+    private void RecordMovement()
+    {
+        Vector3 current = transform.position;
+        _travelDistance += Vector3.Distance(current, _previousPosition);
+        _previousPosition = current;
+    }
+
+    public bool Ignores(Collider other) =>
+        other == null || other.transform == transform || other.transform.IsChildOf(transform) ||
+        IsIgnored(other.transform) || IsOtherPlayerProjectile(other);
 
     public void ResetHit() =>
         _isHit = false;
@@ -27,7 +69,7 @@ public class PlayerCollisionDetector : MonoBehaviour
 
     private void HandleHit(Collider other)
     {
-        if (_isHit || other == null || IsIgnored(other.transform) || IsOtherPlayerProjectile(other))
+        if (ManualCollisionHandling || _isHit || Ignores(other))
             return;
 
         _isHit = true;

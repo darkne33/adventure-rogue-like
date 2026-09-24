@@ -75,6 +75,7 @@ namespace Features.Quests.Scripts
             Configuration = configuration != null ? configuration
                 : throw new ArgumentNullException(nameof(configuration));
             Load();
+            RestoreLegacyQuestCompletions();
             _wallet.Silver.CountChanged += HandleSilverChanged;
             Application.quitting += Flush;
             Application.focusChanged += HandleFocusChanged;
@@ -358,6 +359,23 @@ namespace Features.Quests.Scripts
         {
             if (!hasFocus)
                 Flush();
+        }
+
+        private void RestoreLegacyQuestCompletions()
+        {
+            foreach (QuestDefinition quest in Definitions)
+            {
+                foreach (string legacyId in quest.LegacyQuestIds)
+                {
+                    if (!IsCompleted(legacyId))
+                        continue;
+
+                    // Preserve earned purchase eligibility and unclaimed rewards without replaying notifications.
+                    _dirty |= _completed.Add(quest.Id);
+                    if (IsRewardClaimed(legacyId))
+                        _dirty |= _claimedRewards.Add(quest.Id);
+                }
+            }
         }
 
         private void Load()

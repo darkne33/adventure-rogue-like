@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Features.Quests.Scripts
@@ -18,7 +19,17 @@ namespace Features.Quests.Scripts
         WeaponLevel = 10,
         ScrollLevel = 11,
         WeaponsAtLevel3 = 12,
-        TotalCriticalHits = 13
+        TotalCriticalHits = 13,
+        ArmorScrollLevel = 14,
+        ProjectileDistinctTargets = 15,
+        MovingCombatRoomsCleared = 16,
+        RunCombatMeters = 17,
+        RunHits = 18,
+        GoldHeld = 19,
+        KillsInTwoSeconds = 20,
+        MaxHitDamage = 21,
+        RunCloseRangeKills = 22,
+        LowHealthEntryRoomsCleared = 23
     }
 
     [Serializable]
@@ -31,6 +42,7 @@ namespace Features.Quests.Scripts
         [SerializeField] private QuestMetric _metric;
         [SerializeField, Min(1)] private int _target = 1;
         [SerializeField, Min(0)] private int _silverReward;
+        [SerializeField] private string[] _legacyQuestIds = Array.Empty<string>();
 
         public string Id => _id;
         public string Title => _title;
@@ -39,6 +51,7 @@ namespace Features.Quests.Scripts
         public QuestMetric Metric => _metric;
         public int Target => Mathf.Max(1, _target);
         public int SilverReward => Mathf.Max(0, _silverReward);
+        public IReadOnlyList<string> LegacyQuestIds => _legacyQuestIds ?? Array.Empty<string>();
 
     }
 }

@@ -111,13 +111,15 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     protected void ApplyDamage(CharacterFacade character, CombatTarget enemyFacade) =>
         ApplyDamage(character, enemyFacade, Damage);
 
-    protected void ApplyDamage(CharacterFacade character, CombatTarget enemyFacade, int baseDamage)
+    protected void ApplyDamage(CharacterFacade character, CombatTarget enemyFacade, int baseDamage,
+        float projectileTravelDistance = -1f, PlayerCollisionDetector projectile = null)
     {
         if (baseDamage <= 0)
             return;
 
         CharacterDamageResult damageResult = _damageCalculator.Calculate(GetRolledDamage(baseDamage));
-        int finalDamage = _relicManager.ModifyOutgoingDamage(damageResult.Damage, enemyFacade);
+        int finalDamage = _relicManager.ModifyOutgoingDamage(damageResult.Damage, enemyFacade,
+            projectileTravelDistance);
         int appliedDamage = enemyFacade.HealthSystem.GetDamage(finalDamage, damageResult.IsCritical);
         bool killedByDirectHit = enemyFacade.HealthSystem.IsDead;
 
@@ -132,7 +134,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         enemyFacade.EffectsSystem.DealDamage();
         _relicEventBus.PublishHit(new RelicHitEvent(character, enemyFacade, finalDamage,
             damageResult.IsCritical, AbilityConfig.AbilityName.ToString(), enemyFacade.transform.position,
-            this, appliedDamage));
+            this, appliedDamage, projectile != null ? projectile.RecordDamagingHit(enemyFacade) : 0));
 
         if (killedByDirectHit)
             _relicEventBus.PublishKill(new RelicKillEvent(character, enemyFacade, enemyFacade.transform.position));
@@ -141,6 +143,22 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     protected Tween MoveProjectile(GameObject shootObj, Vector3 endPosition) =>
         shootObj.transform.DOMove(endPosition, ProjectileSpeed).SetSpeedBased().SetLink(shootObj)
             .SetId($"Shoot Ability {shootObj.name}");
+
+    protected bool TryStartRelicProjectile(CharacterFacade character, GameObject shootObj,
+        PlayerCollisionDetector detector, Vector3 direction, float range, int damage,
+        CombatTarget nativeTarget = null, int nativeTargetCount = 1, float nativeBounceRadius = 0f)
+    {
+        IRelicProjectileContext projectileContext = _relicManager.ProjectileContext;
+        if (!projectileContext.HasPiercingProjectiles && projectileContext.ProjectileRicochetCount == 0)
+            return false;
+
+        var flight = new RelicProjectileFlight(shootObj, detector, character, _enemiesProvider,
+            projectileContext, ProjectileSpeed, range, direction, nativeTarget, nativeTargetCount,
+            nativeBounceRadius, (target, distance) => ApplyDamage(character, target, damage, distance, detector),
+            () => DestroyShoot(shootObj));
+        flight.Run().Forget();
+        return true;
+    }
 
     protected void IncreaseDamage(float damageIncrease)
     {
@@ -182,7 +200,8 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     {
         try
         {
-            float launchDelay = Mathf.Max(0f, AbilityConfig.AdditionalProjectileLaunchDelay);
+            float launchDelay = Mathf.Max(0f, AbilityConfig.AdditionalProjectileLaunchDelay) /
+                                Mathf.Max(0.01f, _characterStats.RelicAttackSpeedMultiplier);
             int shotsPerProjectile = Mathf.Max(1, ShotsPerProjectile);
             int totalShotCount = Mathf.Max(1, projectileCount) * shotsPerProjectile;
             for (int index = 0; index < totalShotCount; index++)

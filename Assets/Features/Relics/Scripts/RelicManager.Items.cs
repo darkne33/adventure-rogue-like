@@ -24,14 +24,12 @@ namespace Features.Relics.Scripts
         private const string UnstableTeslaCoilId = "unstable_tesla_coil";
         private const string LuckyRerollId = "lucky_reroll";
         private const string ShapedGlassDamageId = "shaped_glass_damage";
-        private const string LumpOfCoalId = "lump_of_coal";
         private const string SpiderBiteId = "spider_bite";
         private const string PiggyBankId = "piggy_bank";
         private const string CharmOfTheVampireId = "charm_of_the_vampire";
         private const string ToughLoveId = "tough_love";
         private const string HabitId = "habit";
         private const string WhoreOfBabylonId = "whore_of_babylon";
-        private const string MoneyEqualsPowerId = "money_equals_power";
         private const string CancerId = "cancer";
         private const string FireMindBurnId = "fire_mind_burn";
         private const string FireMindExplosionId = "fire_mind_explosion";
@@ -291,7 +289,8 @@ namespace Features.Relics.Scripts
             }
         }
 
-        private int ModifySpecialOutgoingDamage(int damage, CombatTarget target)
+        private int ModifySpecialOutgoingDamage(int damage, CombatTarget target,
+            float projectileTravelDistance, bool rollHitEffects)
         {
             if (damage <= 0 || target == null)
                 return damage;
@@ -321,22 +320,13 @@ namespace Features.Relics.Scripts
                                             target.HealthSystem.MaxHealth >= effect.Duration:
                             additiveMultiplier += Mathf.Max(0f, effect.Value) * state.StackCount;
                             break;
-                        case LumpOfCoalId:
-                            additiveMultiplier += Mathf.Min(Mathf.Max(0f, effect.Cap),
-                                distance * Mathf.Max(0f, effect.Value) * state.StackCount);
-                            break;
-                        case MoneyEqualsPowerId:
-                            additiveMultiplier += Mathf.Min(Mathf.Max(0f, effect.Cap),
-                                Mathf.Max(0, _characterWallet.Gold.Count) * Mathf.Max(0f, effect.Value) *
-                                state.StackCount);
-                            break;
-                        case ToughLoveId:
+                        case ToughLoveId when rollHitEffects:
                             float chance = Mathf.Clamp01(effect.Chance * state.StackCount +
                                                          Mathf.Max(0f, _characterStats.Luck) * 0.01f);
                             if (RollSpecialChance(chance))
                                 multiplicativeMultiplier *= 1f + Mathf.Max(0f, effect.Value);
                             break;
-                        case IronHammerId:
+                        case IronHammerId when rollHitEffects:
                             int procCount = RollIronHammerProcCount(state, effect);
                             if (procCount > 0)
                             {
@@ -348,6 +338,10 @@ namespace Features.Relics.Scripts
                         case ShapedGlassDamageId:
                             multiplicativeMultiplier *= Mathf.Pow(1f + Mathf.Max(0f, effect.Value),
                                 state.StackCount);
+                            break;
+                        default:
+                            additiveMultiplier += _buildRuntime.Modifiers.GetDamageBonus(state, effect,
+                                projectileTravelDistance);
                             break;
                     }
                 }
@@ -488,7 +482,8 @@ namespace Features.Relics.Scripts
             if (victim == null)
                 return;
 
-            float damageMultiplier = 1f + Mathf.Max(0f, _characterStats.DamageInPercent) * 0.01f;
+            float damageMultiplier = (1f + Mathf.Max(-90f, _characterStats.DamageInPercent) * 0.01f) *
+                                    Mathf.Max(0.01f, _characterStats.RelicDamageMultiplier);
             int damage = Mathf.Max(1, Mathf.RoundToInt(
                 (Mathf.Max(0f, _characterStats.ThornsDamage) +
                  Mathf.Max(0f, effect.Value) * state.StackCount) * damageMultiplier));
@@ -756,23 +751,14 @@ namespace Features.Relics.Scripts
         private static bool HasEffect(RelicRuntimeState state, string effectId) =>
             state.Definition.Effects?.Any(effect => GetSpecialEffectId(effect) == effectId) == true;
 
-        private static string GetSpecialEffectId(RelicEffectDefinition effect)
-        {
-            if (string.IsNullOrWhiteSpace(effect.EffectPrefabId) == false)
-                return effect.EffectPrefabId.Trim();
-
-            return string.IsNullOrWhiteSpace(effect.StatusEffectId)
-                ? string.Empty
-                : effect.StatusEffectId.Trim();
-        }
+        private static string GetSpecialEffectId(RelicEffectDefinition effect) => RelicBuildEffects.GetId(effect);
 
         private static bool IsSpecialPassiveEffect(RelicEffectDefinition effect)
         {
             string effectId = GetSpecialEffectId(effect);
-            return effectId is CautiousSlugId or RepulsionArmorPlateId or FocusCrystalId or
+            return RelicBuildEffects.IsPassive(effect) || effectId is CautiousSlugId or RepulsionArmorPlateId or FocusCrystalId or
                 CrowbarId or UnstableTeslaCoilId or LuckyRerollId or ShapedGlassDamageId or
-                LumpOfCoalId or ToughLoveId or
-                WhoreOfBabylonId or MoneyEqualsPowerId or WaferId or StopWatchId or
+                ToughLoveId or WhoreOfBabylonId or WaferId or StopWatchId or
                 SpikyShieldId or IronHammerId or TurboSkatesId or OverpoweredChaliceId;
         }
 

@@ -169,7 +169,8 @@ public sealed class PunchAbility : CharacterActiveAbility
     {
         try
         {
-            float punchDelay = Mathf.Max(0f, _configuration.PunchInterval);
+            float punchDelay = Mathf.Max(0f, _configuration.PunchInterval) /
+                               Mathf.Max(0.01f, _characterStats.RelicAttackSpeedMultiplier);
             int totalPunchCount = Mathf.Max(1, seriesCount) * PunchesPerSeries;
             int punchSlotCount = Mathf.Min(totalPunchCount, MaxSequentialPunchSlots);
             int attacksAtOnce = Mathf.Max(1, simultaneousAttackCount);

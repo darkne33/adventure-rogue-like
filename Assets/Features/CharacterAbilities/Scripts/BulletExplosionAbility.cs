@@ -110,10 +110,13 @@ public sealed class BulletExplosionAbility : SingleShootAbility
         PlayerCollisionDetector collisionDetector, CombatTarget targetEnemy, Vector3 spawnPosition,
         Vector3 targetPosition, Vector3 shootDirection, int projectileDamage)
     {
+        if (TryStartRelicProjectile(character, shootObj, collisionDetector, shootDirection,
+                _travelDistance, projectileDamage))
+            return;
         Vector3 endPosition = spawnPosition + shootDirection * _travelDistance;
         MoveProjectile(shootObj, endPosition).OnComplete(() => DestroyShoot(shootObj));
         collisionDetector.OnHit = enemyFacade =>
-            DamageDeal(character, shootObj, enemyFacade, projectileDamage);
+            DamageDeal(character, shootObj, enemyFacade, projectileDamage, collisionDetector);
     }
 
     private void ApplyUpgradeEffect(AbilityUpgradeEffect upgrade)
@@ -133,7 +136,7 @@ public sealed class BulletExplosionAbility : SingleShootAbility
     }
 
     private void DamageDeal(CharacterFacade character, GameObject shootObj, CombatTarget enemyFacade,
-        int projectileDamage)
+        int projectileDamage, PlayerCollisionDetector collisionDetector)
     {
         if (enemyFacade == null || enemyFacade.HealthSystem.IsDead)
         {
@@ -141,7 +144,7 @@ public sealed class BulletExplosionAbility : SingleShootAbility
             return;
         }
 
-        ApplyDamage(character, enemyFacade, projectileDamage);
+        ApplyDamage(character, enemyFacade, projectileDamage, collisionDetector.TravelDistance, collisionDetector);
         DestroyShoot(shootObj);
     }
 

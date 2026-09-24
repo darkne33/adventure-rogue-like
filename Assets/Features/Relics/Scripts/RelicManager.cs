@@ -30,6 +30,7 @@ namespace Features.Relics.Scripts
         private readonly CharacterStats _characterStats;
         private readonly CharacterWallet _characterWallet;
         private readonly EnemyRoomObserver _enemyRoomObserver;
+        private readonly RelicBuildRuntime _buildRuntime;
         private readonly List<RelicRuntimeState> _activeRelics = new();
         private readonly HashSet<ITimeScaleRequest> _timeScaleRequests = new();
         private readonly CancellationTokenSource _disposeCancellation = new();
@@ -41,13 +42,15 @@ namespace Features.Relics.Scripts
         private bool _hasLastMovePosition;
 
         public IReadOnlyList<RelicRuntimeState> ActiveRelics => _activeRelics;
+        public IRelicProjectileContext ProjectileContext => _buildRuntime.Projectiles;
 
         public event Action Changed;
 
         public RelicManager(CharacterStatModifierLayer statModifierLayer, RelicEventBus eventBus,
             ICharacterProvider characterProvider, IRelicVisualEffectService visualEffectService,
             ITimeScaleService timeScaleService, CharacterStats characterStats,
-            CharacterWallet characterWallet, EnemyRoomObserver enemyRoomObserver)
+            CharacterWallet characterWallet, EnemyRoomObserver enemyRoomObserver,
+            IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator)
         {
             _statModifierLayer = statModifierLayer;
             _eventBus = eventBus;
@@ -57,6 +60,9 @@ namespace Features.Relics.Scripts
             _characterStats = characterStats;
             _characterWallet = characterWallet;
             _enemyRoomObserver = enemyRoomObserver;
+            _buildRuntime = new RelicBuildRuntime(_activeRelics, characterStats, characterWallet,
+                enemiesProvider, damageCalculator, eventBus, visualEffectService, _disposeCancellation.Token,
+                ModifyOutgoingDamage, DealAreaDamage);
 
             _eventBus.Hit += HandleHit;
             _eventBus.Kill += HandleKill;
@@ -74,12 +80,14 @@ namespace Features.Relics.Scripts
             CharacterFacade character = _characterProvider.CharacterFacade;
             if (character == null)
             {
+                _buildRuntime.ClearEffects();
                 _hasLastMovePosition = false;
                 return;
             }
 
             TrackMoveDistance(character);
             TickSpecialRelics(character);
+            _buildRuntime.Tick(character);
 
             float stillnessHeal = 0f;
             float requiredStillnessTime = 0f;
@@ -125,6 +133,7 @@ namespace Features.Relics.Scripts
 
                 state.AddStack();
                 AddPassiveModifiers(state, 1);
+                _buildRuntime.Modifiers.Refresh();
                 Changed?.Invoke();
                 return true;
             }
@@ -133,6 +142,7 @@ namespace Features.Relics.Scripts
             _activeRelics.Add(state);
             InitializeSpecialState(state);
             AddPassiveModifiers(state, 1);
+            _buildRuntime.Modifiers.Refresh();
             ProcessTrigger(state, RelicTriggerType.OnPickup, null);
             Changed?.Invoke();
             return true;
@@ -152,7 +162,9 @@ namespace Features.Relics.Scripts
 
             _statModifierLayer.RemoveModifiers(GetModifierSourceId(state));
             RemoveSpecialStateModifiers(state);
+            _buildRuntime.Remove(state);
             _activeRelics.Remove(state);
+            _buildRuntime.Modifiers.Refresh();
             Changed?.Invoke();
             return true;
         }
@@ -166,6 +178,8 @@ namespace Features.Relics.Scripts
             }
 
             _activeRelics.Clear();
+            _buildRuntime.ClearEffects();
+            _buildRuntime.Modifiers.Refresh();
             ApplyStopWatchSlow(1f);
             Changed?.Invoke();
         }
@@ -194,7 +208,8 @@ namespace Features.Relics.Scripts
             return false;
         }
 
-        public int ModifyOutgoingDamage(int damage, CombatTarget target)
+        public int ModifyOutgoingDamage(int damage, CombatTarget target,
+            float projectileTravelDistance = -1f, bool rollHitEffects = true)
         {
             if (damage <= 0 || target == null)
                 return damage;
@@ -215,7 +230,7 @@ namespace Features.Relics.Scripts
             }
 
             int modifiedDamage = Mathf.Max(1, Mathf.RoundToInt(damage * multiplier));
-            return ModifySpecialOutgoingDamage(modifiedDamage, target);
+            return ModifySpecialOutgoingDamage(modifiedDamage, target, projectileTravelDistance, rollHitEffects);
         }
 
         public string PrintActiveRelics()
@@ -229,6 +244,7 @@ namespace Features.Relics.Scripts
 
         public void Dispose()
         {
+            _buildRuntime.Dispose();
             _disposeCancellation.Cancel();
 
             foreach (ITimeScaleRequest request in _timeScaleRequests.ToArray())
@@ -282,6 +298,7 @@ namespace Features.Relics.Scripts
 
         private void HandleRoomStarted(RelicRoomEvent roomEvent)
         {
+            _buildRuntime.BeginRoom();
             ResetMoveTracking(roomEvent.CharacterPosition);
 
             foreach (RelicRuntimeState state in _activeRelics.ToArray())
@@ -293,6 +310,7 @@ namespace Features.Relics.Scripts
 
         private void HandleMoveDistance(RelicMoveDistanceEvent moveDistanceEvent)
         {
+            _buildRuntime.OnMoveDistance(moveDistanceEvent);
             foreach (RelicRuntimeState state in _activeRelics.ToArray())
                 ProcessTrigger(state, RelicTriggerType.OnMoveDistance, moveDistanceEvent);
         }
@@ -328,7 +346,8 @@ namespace Features.Relics.Scripts
                 int procCount = RollTriggerEffect(state, effect, triggerType);
                 for (int procIndex = 0; procIndex < procCount; procIndex++)
                 {
-                    if (TryApplySpecialEffect(state, effect, triggerType, context))
+                    if (_buildRuntime.TryApplyTriggeredEffect(state, effect, triggerType, context) ||
+                        TryApplySpecialEffect(state, effect, triggerType, context))
                         continue;
 
                     if (TryApplyTriggeredScaling(state, effect, context))

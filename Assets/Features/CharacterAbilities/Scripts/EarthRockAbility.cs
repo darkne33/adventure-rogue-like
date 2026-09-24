@@ -142,7 +142,8 @@ public sealed class EarthRockAbility : CharacterActiveAbility
         }
 
         EnsureSlotCount();
-        _orbitAngle = Mathf.Repeat(_orbitAngle + _rotationSpeed * Time.deltaTime, 360f);
+        _orbitAngle = Mathf.Repeat(_orbitAngle + _rotationSpeed *
+            Mathf.Max(0.01f, _characterStats.RelicAttackSpeedMultiplier) * Time.deltaTime, 360f);
         UpdateRespawns(character);
         UpdateStoneTransforms(character);
     }
@@ -173,7 +174,8 @@ public sealed class EarthRockAbility : CharacterActiveAbility
             if (slot.Stone != null)
                 continue;
 
-            slot.RespawnRemaining = Mathf.Max(0f, slot.RespawnRemaining - Time.deltaTime);
+            slot.RespawnRemaining = Mathf.Max(0f, slot.RespawnRemaining -
+                Time.deltaTime * Mathf.Max(0.01f, _characterStats.RelicAttackSpeedMultiplier));
             if (slot.RespawnRemaining <= 0f)
                 SpawnStone(character, slot, index);
         }

@@ -12,7 +12,8 @@ public class CharacterDamageCalculator
     public CharacterDamageResult Calculate(int baseDamage)
     {
         float damageMultiplier = 1f + Mathf.Max(-90f, _characterStats.DamageInPercent) * PERCENT_MULTIPLIER;
-        int modifiedDamage = Mathf.Max(1, Mathf.RoundToInt(baseDamage * damageMultiplier));
+        int modifiedDamage = Mathf.Max(1, Mathf.RoundToInt(baseDamage * damageMultiplier *
+            Mathf.Max(0.01f, _characterStats.RelicDamageMultiplier)));
 
         float critChance = Mathf.Clamp(_characterStats.CritChance, 0f, 100f);
         bool isCritical = Random.value < critChance * PERCENT_MULTIPLIER;

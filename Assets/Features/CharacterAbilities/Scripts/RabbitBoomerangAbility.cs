@@ -130,6 +130,11 @@ public class RabbitBoomerangAbility : SingleShootAbility
         PlayerCollisionDetector collisionDetector, CombatTarget targetEnemy, Vector3 spawnPosition,
         Vector3 targetPosition, Vector3 shootDirection, int projectileDamage)
     {
+        if (TryStartRelicProjectile(character, shootObj, collisionDetector, shootDirection,
+                Vector3.Distance(spawnPosition, targetPosition) + BoomerangConfig.OvertravelDistance +
+                _bounceRadius * Mathf.Max(0, GetBoomerangMaxHitCount() - 1), projectileDamage,
+                targetEnemy, GetBoomerangMaxHitCount(), _bounceRadius))
+            return;
         HashSet<CombatTarget> hitEnemies = new();
         collisionDetector.OnHit = enemyFacade =>
             DamageDeal(character, shootObj, enemyFacade, collisionDetector, hitEnemies, projectileDamage);
@@ -168,7 +173,7 @@ public class RabbitBoomerangAbility : SingleShootAbility
         }
 
         hitEnemies.Add(enemyFacade);
-        ApplyDamage(character, enemyFacade, projectileDamage);
+        ApplyDamage(character, enemyFacade, projectileDamage, collisionDetector.TravelDistance, collisionDetector);
 
         if (hitEnemies.Count >= GetBoomerangMaxHitCount())
         {

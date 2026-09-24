@@ -9,6 +9,9 @@ namespace Features.Relics.Scripts
 {
     public interface IRelicVisualEffectService
     {
+        EffectPlayer BeginPersistent(EffectName effectName, Vector3 position, float scale = 1f);
+        UniTask PlayImpact(EffectName effectName, Vector3 position, float scale,
+            CancellationToken token = default);
         UniTask PlayMeteorImpact(Vector3 position, float radius, CancellationToken token = default);
         UniTask PlayExplosiveCrate(Vector3 position, float radius, Action<Vector3> onDetonate,
             CancellationToken token = default);
@@ -21,6 +24,26 @@ namespace Features.Relics.Scripts
         public RelicVisualEffectService(IEffectsService effectsService)
         {
             _effectsService = effectsService;
+        }
+
+        public EffectPlayer BeginPersistent(EffectName effectName, Vector3 position, float scale = 1f)
+        {
+            EffectPlayer effect = _effectsService.GetEffect(effectName);
+            if (effect == null)
+                return null;
+
+            effect.transform.SetPositionAndRotation(position, Quaternion.identity);
+            effect.transform.localScale = Vector3.one * scale;
+            effect.PlayWithoutRelease();
+            return effect;
+        }
+
+        public async UniTask PlayImpact(EffectName effectName, Vector3 position, float scale,
+            CancellationToken token = default)
+        {
+            if (token.IsCancellationRequested)
+                return;
+            await TryPlayConfiguredEffect(effectName, position, scale, token);
         }
 
         public async UniTask PlayMeteorImpact(Vector3 position, float radius, CancellationToken token = default)
@@ -65,6 +88,7 @@ namespace Features.Relics.Scripts
                 return false;
 
             effect.transform.position = position;
+            effect.transform.rotation = Quaternion.identity;
             effect.transform.localScale = Vector3.one * scale;
             await effect.PlayAsync(token);
             return true;

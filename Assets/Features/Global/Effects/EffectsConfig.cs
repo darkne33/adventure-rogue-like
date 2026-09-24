@@ -33,5 +33,10 @@ namespace Core.Services
         EnemyPortal = 1,
         RelicMeteorImpact = 100,
         RelicExplosiveCrate = 101,
+        RelicExplosivoCharge = 102,
+        RelicExplosivoExplosion = 103,
+        RelicAquariusTrail = 104,
+        RelicSacrificialDagger = 105,
+        RelicRicochet = 106,
     }
 }

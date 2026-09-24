@@ -16,6 +16,7 @@ public sealed class FireFieldDamageArea : MonoBehaviour
 
     private IEnemiesProvider _enemiesProvider;
     private Action<CombatTarget> _damageEnemy;
+    private CharacterStats _characterStats;
     private float _radiusSqr;
     private float _height;
     private float _damageTickInterval;
@@ -25,13 +26,15 @@ public sealed class FireFieldDamageArea : MonoBehaviour
     private Tween _puddleSpreadTween;
 
     public void Initialize(IEnemiesProvider enemiesProvider, float radius, float height,
-        float damageTickInterval, float duration, Action<CombatTarget> damageEnemy)
+        float damageTickInterval, float duration, Action<CombatTarget> damageEnemy,
+        CharacterStats characterStats = null)
     {
         float safeRadius = Mathf.Max(0.1f, radius);
         Vector3 fieldScale = transform.lossyScale;
         float damageRadius = safeRadius * Mathf.Max(Mathf.Abs(fieldScale.x), Mathf.Abs(fieldScale.z));
         _enemiesProvider = enemiesProvider;
         _damageEnemy = damageEnemy;
+        _characterStats = characterStats;
         _radiusSqr = damageRadius * damageRadius;
         _height = Mathf.Max(0.1f, height) * Mathf.Abs(fieldScale.y);
         _damageTickInterval = Mathf.Max(0.05f, damageTickInterval);
@@ -58,7 +61,8 @@ public sealed class FireFieldDamageArea : MonoBehaviour
         if (_damageTickTimer > 0f)
             return;
 
-        _damageTickTimer += _damageTickInterval;
+        _damageTickTimer += Mathf.Max(0.05f, _damageTickInterval /
+            Mathf.Max(0.01f, _characterStats?.RelicAttackSpeedMultiplier ?? 1f));
         DamageEnemiesInRange();
     }
 

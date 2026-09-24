@@ -20,6 +20,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 597839a614ef49af984722b5841f670b, type: 2}
   - {fileID: 11400000, guid: c1421c5f9d094cb18de356244053eeca, type: 2}
   - {fileID: 11400000, guid: 5566d33206f349fbaa754ce6d65ac35f, type: 2}
+  - {fileID: 11400000, guid: 4149b57941bf4e8ca2525bdea710966f, type: 2}
+  - {fileID: 11400000, guid: e5054965a90e458a9e7df1b0ada77b4e, type: 2}
   _quests:
   - _id: run_kills_150
     _title: CROWD CONTROL
@@ -77,34 +79,42 @@ MonoBehaviour:
     _metric: 8
     _target: 100
     _silverReward: 1
-  - _id: two_weapons_3
-    _title: DOUBLE TROUBLE
-    _description: Have two weapons at level 3 or higher in one run.
+  - _id: combat_distance_500
+    _title: KEEP ROLLING
+    _description: "Travel 500 meters during active combat in one run. Pauses and room transitions do not count."
     _category: 3
-    _metric: 12
-    _target: 2
+    _metric: 17
+    _target: 500
     _silverReward: 3
-  - _id: bosses_1
-    _title: BIG GAME
-    _description: Clear a boss room.
+    _legacyQuestIds:
+    - two_weapons_3
+  - _id: low_health_room
+    _title: ON THE EDGE
+    _description: "Clear a combat room that you entered with 25% health or less."
     _category: 3
-    _metric: 5
+    _metric: 23
     _target: 1
     _silverReward: 3
-  - _id: critical_25
-    _title: RIGHT ON TARGET
-    _description: Land 25 critical hits across all runs.
+    _legacyQuestIds:
+    - bosses_1
+  - _id: armor_scroll_3
+    _title: THICK SKIN
+    _description: "Raise the Armor Scroll to level 3 in one run."
     _category: 3
-    _metric: 13
-    _target: 25
+    _metric: 14
+    _target: 3
     _silverReward: 1
-  - _id: combat_300
-    _title: STILL STANDING
-    _description: Spend 300 seconds in active combat in one run.
+    _legacyQuestIds:
+    - critical_25
+  - _id: chests_8
+    _title: A TASTE FOR POWER
+    _description: "Open 8 relic chests across all runs."
     _category: 3
-    _metric: 0
-    _target: 300
+    _metric: 6
+    _target: 8
     _silverReward: 2
+    _legacyQuestIds:
+    - combat_300
   - _id: scroll_5
     _title: WELL READ
     _description: Raise any scroll to level 5 in one run.
@@ -139,6 +149,55 @@ MonoBehaviour:
     _category: 2
     _metric: 1
     _target: 10
+    _silverReward: 2
+  - _id: projectile_targets_3
+    _title: THREE IN ONE
+    _description: "Damage 3 different enemies with one projectile. Piercing shots and boomerang chains count."
+    _category: 3
+    _metric: 15
+    _target: 3
+    _silverReward: 1
+  - _id: moving_room
+    _title: GO WITH THE FLOW
+    _description: "Clear a combat room without standing still for more than 2 consecutive seconds. Pauses do not count."
+    _category: 3
+    _metric: 16
+    _target: 1
+    _silverReward: 1
+  - _id: run_hits_300
+    _title: MORE IS MORE
+    _description: "Land 300 damaging hits in one run."
+    _category: 3
+    _metric: 18
+    _target: 300
+    _silverReward: 2
+  - _id: gold_held_150
+    _title: MONEY TALKS
+    _description: "Hold 150 gold at the same time in a run. Gold already spent does not count."
+    _category: 3
+    _metric: 19
+    _target: 150
+    _silverReward: 2
+  - _id: burst_kills_3
+    _title: CHAIN REACTION
+    _description: "Defeat 3 enemies within 2 seconds of active combat in the same room."
+    _category: 3
+    _metric: 20
+    _target: 3
+    _silverReward: 2
+  - _id: hit_damage_75
+    _title: ONE BIG HIT
+    _description: "Deal 75 damage in one hit. Critical hits and overkill count."
+    _category: 3
+    _metric: 21
+    _target: 75
+    _silverReward: 2
+  - _id: close_kills_30
+    _title: PERSONAL SPACE
+    _description: "Defeat 30 enemies within 2 meters of your character in one run."
+    _category: 3
+    _metric: 22
+    _target: 30
     _silverReward: 2
   _unlocks:
   - _id: character_duke
@@ -293,7 +352,7 @@ MonoBehaviour:
     _description: ""
     _icon: {fileID: 0}
     _unlockedByDefault: 0
-    _requiredQuestId: two_weapons_3
+    _requiredQuestId: combat_distance_500
     _silverCost: 4
   - _id: relic_voodoo_doll
     _category: 3
@@ -304,7 +363,7 @@ MonoBehaviour:
     _description: ""
     _icon: {fileID: 0}
     _unlockedByDefault: 0
-    _requiredQuestId: bosses_1
+    _requiredQuestId: low_health_room
     _silverCost: 5
   - _id: relic_spiky_shield
     _category: 3
@@ -315,7 +374,7 @@ MonoBehaviour:
     _description: ""
     _icon: {fileID: 0}
     _unlockedByDefault: 0
-    _requiredQuestId: critical_25
+    _requiredQuestId: armor_scroll_3
     _silverCost: 3
   - _id: relic_overpowered_chalice
     _category: 3
@@ -326,7 +385,84 @@ MonoBehaviour:
     _description: ""
     _icon: {fileID: 0}
     _unlockedByDefault: 0
-    _requiredQuestId: combat_300
+    _requiredQuestId: chests_8
     _silverCost: 6
+  - _id: relic_rubber_cement
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: 3cda6c3ebc114732a52242cd9df374f0, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: projectile_targets_3
+    _silverCost: 3
+  - _id: relic_aquarius
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: dd1856f9fd504760b6f33cf43d65f601, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: moving_room
+    _silverCost: 3
+  - _id: relic_soy_milk
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: 92bbf219cf7148baaf147583361ef481, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: run_hits_300
+    _silverCost: 4
+  - _id: relic_money_equals_power
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: ee79dc67b6ca49f5a9a4290a0007070c, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: gold_held_150
+    _silverCost: 4
+  - _id: relic_explosivo
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: b234fdf6792b4b91a261a784ee0de22c, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: burst_kills_3
+    _silverCost: 5
+  - _id: relic_polyphemus
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: 8743e23cab6347f7a3425da02de11c64, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: hit_damage_75
+    _silverCost: 5
+  - _id: relic_sacrificial_dagger
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: e034f1ad498f479a91fcce23a3d0c136, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: close_kills_30
+    _silverCost: 5
   _silverIcon: {fileID: 21300000, guid: e4e4fb329176465a9feb87af84564070, type: 3}
   _portraitPlaceholder: {fileID: 21300000, guid: c34f2f06ef3c4b389d4ca1e60d88e1b7, type: 3}

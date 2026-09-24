@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c6dd3b5329c40c3ad1375b2a2bad5f0, type: 3}
+  m_Name: Relic_explosivo
+  m_EditorClassIdentifier:
+  <Id>k__BackingField: explosivo
+  <DisplayName>k__BackingField: "Explosivo"
+  <Description>k__BackingField: "Hits have a 15% chance per stack to attach a bomb. After 1.2s it deals 24 damage per stack plus 50% of the triggering hit in a 2.5m radius. Up to 6 bombs per target."
+  <Rarity>k__BackingField: 2
+  <Tags>k__BackingField:
+  - 0
+  - 9
+  - 13
+  <Icon>k__BackingField: {fileID: 21300000, guid: 45b243bf60844d22a28ac6e4a0ce6c86, type: 3}
+  <IsUnique>k__BackingField: 0
+  <MaxStacks>k__BackingField: 3
+  <UnlockQuestId>k__BackingField:
+  <UnlockCost>k__BackingField: 0
+  <Effects>k__BackingField:
+  - <TriggerType>k__BackingField: 4
+    <StatType>k__BackingField: 0
+    <Value>k__BackingField: 24
+    <BossValue>k__BackingField: 0.5
+    <Chance>k__BackingField: 0.15
+    <Cooldown>k__BackingField: 0
+    <Duration>k__BackingField: 1.2
+    <Radius>k__BackingField: 2.5
+    <Cap>k__BackingField: 6
+    <ScalingType>k__BackingField: 0
+    <StatusEffectId>k__BackingField:
+    <EffectPrefabId>k__BackingField: explosivo

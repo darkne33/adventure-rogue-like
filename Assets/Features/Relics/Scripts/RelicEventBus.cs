@@ -66,10 +66,12 @@ namespace Features.Relics.Scripts
         public Vector3 HitPosition { get; }
         public CharacterActiveAbility SourceAbility { get; }
         public int AppliedDamage { get; }
+        public int ProjectileDistinctTargets { get; }
 
         public RelicHitEvent(CharacterFacade attacker, CombatTarget target, int damage,
             bool isCritical, string weaponId, Vector3 hitPosition,
-            CharacterActiveAbility sourceAbility = null, int? appliedDamage = null)
+            CharacterActiveAbility sourceAbility = null, int? appliedDamage = null,
+            int projectileDistinctTargets = 0)
         {
             Attacker = attacker;
             Target = target;
@@ -79,6 +81,7 @@ namespace Features.Relics.Scripts
             HitPosition = hitPosition;
             SourceAbility = sourceAbility;
             AppliedDamage = appliedDamage ?? damage;
+            ProjectileDistinctTargets = projectileDistinctTargets;
         }
     }
 

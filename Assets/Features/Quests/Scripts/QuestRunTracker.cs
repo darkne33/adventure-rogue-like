@@ -23,6 +23,7 @@ namespace Features.Quests.Scripts
         private readonly ITimeScaleService _timeScale;
         private readonly IRoomTransitionService _roomTransition;
         private readonly RunRestartService _runRestart;
+        private readonly RelicQuestRunProgress _relicProgress;
 
         private bool _isRunActive;
         private bool _isSilverBankingActive;
@@ -55,11 +56,13 @@ namespace Features.Quests.Scripts
             _timeScale = timeScale;
             _roomTransition = roomTransition;
             _runRestart = runRestart;
+            _relicProgress = new RelicQuestRunProgress(quests);
 
             _enemies.EnemyDefeated += HandleEnemyDefeated;
             _events.Hit += HandleHit;
             _events.ChestOpened += HandleChestOpened;
             _events.RelicCollected += HandleRelicCollected;
+            _events.RoomStarted += HandleRoomStarted;
             _roomObserver.RoomCompleted += HandleRoomCompleted;
             _characterLevel.OnLevelUp += HandleLevelUp;
             _wallet.Gold.CountChanged += HandleGoldChanged;
@@ -83,6 +86,8 @@ namespace Features.Quests.Scripts
             _previousSilver = _wallet.Silver.Count;
             _isSilverBankingActive = true;
             _isRunActive = true;
+            _relicProgress.BeginRun(_runtimeData.CurrentRoomData, _characterProvider.CharacterFacade);
+            _quests.RecordBest(QuestMetric.GoldHeld, _wallet.Gold.Count);
 
             HandleLevelUp(_characterLevel.GetLevel);
             HandleBuildChanged();
@@ -118,9 +123,13 @@ namespace Features.Quests.Scripts
                 Time.deltaTime <= 0f ||
                 _runtimeData.CurrentRoomData is not DefaultEnemiesRoomData room ||
                 room.IsCompleted || _roomObserver.IsRoomCompleted)
+            {
+                _relicProgress.SuspendMovement();
                 return;
+            }
 
             _combatSeconds += Time.deltaTime;
+            _relicProgress.TickCombat(room, character, Time.deltaTime);
             int seconds = Mathf.FloorToInt(_combatSeconds);
             if (seconds <= _recordedCombatSeconds)
                 return;
@@ -141,6 +150,7 @@ namespace Features.Quests.Scripts
             _events.Hit -= HandleHit;
             _events.ChestOpened -= HandleChestOpened;
             _events.RelicCollected -= HandleRelicCollected;
+            _events.RoomStarted -= HandleRoomStarted;
             _roomObserver.RoomCompleted -= HandleRoomCompleted;
             _characterLevel.OnLevelUp -= HandleLevelUp;
             _wallet.Gold.CountChanged -= HandleGoldChanged;
@@ -165,13 +175,22 @@ namespace Features.Quests.Scripts
             _runKills++;
             _quests.RecordBest(QuestMetric.RunKills, _runKills);
             _quests.AddProgress(QuestMetric.TotalKills, 1);
+            _relicProgress.RecordDefeat(_characterProvider.CharacterFacade, target, _combatSeconds);
         }
 
         private void HandleHit(RelicHitEvent hit)
         {
-            if (CanTrack() && hit.Attacker == _characterProvider.CharacterFacade &&
-                hit.Damage > 0 && hit.IsCritical)
+            if (!CanTrack() || hit.Attacker != _characterProvider.CharacterFacade)
+                return;
+            _relicProgress.RecordHit(hit);
+            if (hit.Damage > 0 && hit.IsCritical)
                 _quests.AddProgress(QuestMetric.TotalCriticalHits, 1);
+        }
+
+        private void HandleRoomStarted(RelicRoomEvent roomEvent)
+        {
+            if (CanTrack())
+                _relicProgress.BeginRoom(roomEvent.RoomData, _characterProvider.CharacterFacade);
         }
 
         private void HandleRoomCompleted(DefaultEnemiesRoomData room)
@@ -184,6 +203,8 @@ namespace Features.Quests.Scripts
             // A split boss can emit several kill events; clearing its room is one victory.
             if (room is BossRoomData)
                 _quests.AddProgress(QuestMetric.TotalBossKills, 1);
+
+            _relicProgress.CompleteRoom(room);
 
             _quests.Flush();
         }
@@ -213,7 +234,11 @@ namespace Features.Quests.Scripts
         {
             int gained = gold - _previousGold;
             _previousGold = gold;
-            if (CanTrack() == false || gained <= 0)
+            if (CanTrack() == false)
+                return;
+
+            _quests.RecordBest(QuestMetric.GoldHeld, gold);
+            if (gained <= 0)
                 return;
 
             _runGold += gained;
@@ -241,8 +266,11 @@ namespace Features.Quests.Scripts
             int weaponLevel = 0;
             int scrollLevel = 0;
             int weaponsAtLevel3 = 0;
+            int armorScrollLevel = 0;
             foreach (UpgradeBuildEntry entry in _build.SelectedUpgrades)
             {
+                if (entry.Ability.Id == AbilityName.ArmorScroll)
+                    armorScrollLevel = Math.Max(armorScrollLevel, entry.Level);
                 if (entry.Ability is CharacterActiveAbility)
                 {
                     weaponLevel = Math.Max(weaponLevel, entry.Level);
@@ -258,6 +286,7 @@ namespace Features.Quests.Scripts
             _quests.RecordBest(QuestMetric.WeaponLevel, weaponLevel);
             _quests.RecordBest(QuestMetric.ScrollLevel, scrollLevel);
             _quests.RecordBest(QuestMetric.WeaponsAtLevel3, weaponsAtLevel3);
+            _quests.RecordBest(QuestMetric.ArmorScrollLevel, armorScrollLevel);
         }
 
         private void HandleFocusChanged(bool hasFocus)

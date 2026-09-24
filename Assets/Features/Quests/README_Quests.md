@@ -1,13 +1,13 @@
 # Demo quests and unlocks
 
-The demo contains 17 quests and 17 purchasable unlocks: 2 characters, 1 weapon, 8 scrolls and 6 relics. Completing a quest makes its associated unlock available for purchase; the player must spend persistent silver before the content becomes usable. QUESTS uses one scrollable list with a Hide completed filter; UNLOCKS uses category tabs and an eight-column grid. Both windows use the project's own sprites and a selected-entry detail panel.
+The demo contains 24 quests and 24 purchasable unlocks: 2 characters, 1 weapon, 8 scrolls and 13 relics. Six relics are available from the start. Completing a quest makes its associated unlock available for purchase; the player must spend persistent silver before the content becomes usable. QUESTS uses one scrollable list with a Hide completed filter; UNLOCKS uses category tabs and an eight-column grid. Both windows use the project's own sprites and a selected-entry detail panel.
 
 ## Configuration
 
 Edit `Assets/Features/Quests/Configs/DemoProgressionConfiguration.asset` in the Inspector. Its `ProgressionConfiguration` ScriptableObject is registered in Addressables and loaded by `GameplayAssetService` during `BootstrapState`, before quest services are initialized or gameplay scenes are loaded.
 
 - **Default Characters / Abilities / Relics** control what is available on a new save, independently of purchases.
-- **Quests** contain a stable ID, title, condition text, category, metric, target and one-time silver reward.
+- **Quests** contain a stable ID, title, condition text, category, metric, target and one-time silver reward. Optional `Legacy Quest Ids` preserve completed requirements and claimed rewards when a condition is replaced.
 - **Unlocks** contain a stable ID, category, character ID or ability/relic reference, required quest ID and silver cost. Optional name, description and icon override the referenced asset. `Unlocked By Default` can make an individual catalog entry immediately owned.
 - **Fallback Content Icons** contain currency and fallback portrait references. Character portraits also use the existing character-selection portrait cache. Window appearance is authored in prefabs.
 
@@ -18,7 +18,7 @@ Keep quest and unlock IDs stable: saves refer to these IDs. Each demo quest has 
 - Character: RABBIT.
 - Weapons: Rabbitarang, Fireball and Earth Rock. Rabbitarang is RABBIT's starting weapon.
 - Scrolls: Damage, Armor, Attack Speed, Crit Damage and Crit Chance.
-- Relics: Hot Dog, Wallet, Iron Hammer and Venom Blade.
+- Relics: Hot Dog, Wallet, Iron Hammer, Venom Blade, Cupid's Arrow and Lump of Coal.
 
 Bullet Explosion and Punch are their characters' signature weapons. They become available with those characters and are not separate purchases.
 
@@ -36,7 +36,7 @@ Bullet Explosion and Punch are their characters' signature weapons. They become 
 
 ## Quest conditions and unlock prices
 
-These conditions and IDs are retained from the original catalog. Targets, quest silver rewards and purchase prices are editable in the configuration. Quest silver is claimed after completion; the purchase price is the separate amount spent to own the unlocked content.
+Targets, quest silver rewards and purchase prices are editable in the configuration. Quest silver is claimed after completion; the purchase price is the separate amount spent to own the unlocked content. Existing purchase IDs remain stable. Four older relic conditions are replaced with thematic goals, with completed requirements migrated as described below.
 
 | Quest ID | Condition | Purchasable unlock | Quest silver | Price in silver |
 |---|---|---|---:|---:|
@@ -53,12 +53,44 @@ These conditions and IDs are retained from the original catalog. Targets, quest 
 | level_10 | Reach character level 10 in one run. | Shield Scroll | 2 | 4 |
 | run_kills_50 | Defeat 50 enemies in one run. | Cactus | 1 | 2 |
 | run_gold_100 | Collect 100 gold in one run. Spent gold still counts. | Golden Boot | 1 | 3 |
-| two_weapons_3 | Have two weapons at level 3 or higher in one run. | Turbo Skates | 3 | 4 |
-| bosses_1 | Clear a boss room. | Voodoo Doll | 3 | 5 |
-| critical_25 | Land 25 critical hits across all runs. | Spiky Shield | 1 | 3 |
-| combat_300 | Spend 300 seconds in active combat in one run. | Overpowered Chalice | 2 | 6 |
+| combat_distance_500 | Travel 500 m during active combat in one run. | Turbo Skates | 3 | 4 |
+| low_health_room | Clear a combat room entered with 25% HP or less. | Voodoo Doll | 3 | 5 |
+| armor_scroll_3 | Raise the Armor Scroll to level 3 in one run. | Spiky Shield | 1 | 3 |
+| chests_8 | Open 8 relic chests across all runs. | Overpowered Chalice | 2 | 6 |
+| projectile_targets_3 | Damage 3 different enemies with one projectile, including piercing and native boomerang chains. | Rubber Cement | 1 | 3 |
+| moving_room | Clear a combat room without standing still for more than 2 consecutive seconds. | Aquarius | 1 | 3 |
+| run_hits_300 | Land 300 damaging hits in one run. | Soy Milk | 2 | 4 |
+| gold_held_150 | Hold 150 gold at the same time in a run. | Money = Power | 2 | 4 |
+| burst_kills_3 | Defeat 3 enemies within 2 seconds of active combat in the same room. | Explosivo | 2 | 5 |
+| hit_damage_75 | Deal 75 damage in one hit, including critical hits and overkill. | Polyphemus | 2 | 5 |
+| close_kills_30 | Defeat 30 enemies within 2 m of the character in one run. | Sacrificial Dagger | 2 | 5 |
 
-Quest categories follow their rewards: Characters for DUKE and MR POCKET, Weapons for Fire Trail, Scrolls for all eight scrolls and Relics for all six relics. Fire Trail is the display name of the existing Fire Field ability asset (`AbilityName.FireField`).
+Quest categories follow their rewards: Characters for DUKE and MR POCKET, Weapons for Fire Trail, Scrolls for all eight scrolls and Relics for all thirteen purchasable relics. Fire Trail is the display name of the existing Fire Field ability asset (`AbilityName.FireField`).
+
+## Relic challenge tracking
+
+`QuestRunTracker` owns subscriptions and run/activity filtering. `RelicQuestRunProgress` owns the added per-run and per-room counters. New metric enum values are appended; existing values and saved metric names remain unchanged.
+
+- Movement uses actual horizontal displacement during unfinished combat rooms. A speed of at least 0.1 m/s counts as moving. Pauses and transitions suspend position sampling and the stationary timer; displacements over 15 m are ignored as teleports. Distance resets each run, while the best result is persisted.
+- Aquarius fails the current room after a stop strictly longer than 2 seconds. Voodoo Doll snapshots health when entering a fresh combat room, so getting hurt just before the last kill cannot satisfy its requirement. Cleared rooms cannot be revisited to earn either condition; a room must have had active combat or a counted defeat.
+- Explosivo's rolling kill window uses active combat time and resets between rooms. Enemy-provider defeat events count each removed, defeated enemy once and include kills caused by poison, water and explosions. The final enemy is counted before room-completion processing.
+- Dagger progress checks the distance between the enemy and character transforms at the defeat event. No particular weapon is required.
+- Soy Milk and Polyphemus use successful `RelicHitEvent` events. Bomb/water secondary damage does not emit hit events, so it cannot inflate hit totals. Polyphemus uses full hit damage, including overkill; zero-applied-damage hits do not progress either challenge.
+- Each flying projectile's existing `PlayerCollisionDetector` owns its distinct damaged-target set. `SingleShootAbility` forwards the count in `RelicHitEvent.ProjectileDistinctTargets`. Repeated hits on one target and hits from separate projectiles cannot combine toward Rubber Cement. The set lasts only for that projectile and clears on initialization.
+- Money = Power records maximum gold currently held; purchases do not count as held gold. Golden Boot retains its original cumulative gold-collected-in-a-run condition. Spiky Shield tracks the Armor Scroll's selected build level specifically.
+
+## Existing save compatibility
+
+Purchase IDs and the PlayerPrefs save key/payload version remain unchanged, preserving owned relics and silver. Completed old requirements map to their replacements through `Legacy Quest Ids`:
+
+| Previous quest | Replacement |
+| --- | --- |
+| `two_weapons_3` | `combat_distance_500` |
+| `bosses_1` | `low_health_room` |
+| `critical_25` | `armor_scroll_3` |
+| `combat_300` | `chests_8` |
+
+An old completed requirement preserves purchase eligibility. Its claimed status transfers, preventing a second silver reward; an unclaimed reward remains claimable on the replacement quest, with the same amount. Partial progress in a replaced, unrelated metric does not become progress in the new condition. Migration does not replay completion notifications or grant purchases. The two additional starting relics are available on both new and existing saves.
 
 ## UI prefabs
 

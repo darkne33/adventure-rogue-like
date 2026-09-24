@@ -205,7 +205,8 @@ public sealed class FireFieldAbility : CharacterActiveAbility
 
         float duration = _configuration.FieldDuration * AbilityDurationMultiplier;
         damageArea.Initialize(_enemiesProvider, _damageRadius, _configuration.DamageHeight,
-            _configuration.DamageTickInterval, duration, enemy => ApplyDamage(character, enemy));
+            _configuration.DamageTickInterval, duration, enemy => ApplyDamage(character, enemy),
+            _characterStats);
     }
 
     private bool TryGetGroundPosition(Vector3 position, out Vector3 groundPosition, out Vector3 groundNormal)

@@ -13,6 +13,8 @@ public class CharacterStats
     public float ThornsDamage;
     public float CooldownReduction;
     public float ProjectileCount;
+    [NonSerialized] public float RelicDamageMultiplier = 1f;
+    [NonSerialized] public float RelicAttackSpeedMultiplier = 1f;
     
     //Survival
     public float MaxHp;
