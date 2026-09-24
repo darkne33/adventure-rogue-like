@@ -49,7 +49,7 @@ namespace Features.Enemies.Scripts
 
         public async UniTask Execute(CancellationToken cancellationToken)
         {
-            if (_enemyFacade.IsDead || _enemyFacade.IsAggro == false)
+            if (_characterFacade.HealthSystem.IsDead || _enemyFacade.IsDead || _enemyFacade.IsAggro == false)
                 return;
 
             Transform enemyTransform = _enemyFacade.transform;
@@ -67,7 +67,7 @@ namespace Features.Enemies.Scripts
                 float elapsed = 0f;
                 while (elapsed < _attackPreparationDuration)
                 {
-                    if (_enemyFacade.IsDead)
+                    if (_characterFacade.HealthSystem.IsDead || _enemyFacade.IsDead)
                         return;
 
                     RotateTowardsCharacter(enemyTransform);
@@ -77,7 +77,7 @@ namespace Features.Enemies.Scripts
 
                 await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
 
-                if (_enemyFacade.IsDead || _enemyFacade.CanAttack == false)
+                if (_characterFacade.HealthSystem.IsDead || _enemyFacade.IsDead || _enemyFacade.CanAttack == false)
                     return;
 
                 RotateTowardsCharacter(enemyTransform, true);
@@ -107,6 +107,9 @@ namespace Features.Enemies.Scripts
         {
             while (!cancellationToken.IsCancellationRequested)
             {
+                if (_characterFacade.HealthSystem.IsDead)
+                    return;
+
                 float distanceToCharacter = GetFlatDistanceToCharacter();
                 UpdateCooldown();
 

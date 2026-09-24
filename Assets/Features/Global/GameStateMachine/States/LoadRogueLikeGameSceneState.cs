@@ -68,7 +68,11 @@ namespace Core
                         isPanelOpen = true;
                         cancellationToken.ThrowIfCancellationRequested();
                     },
-                    () => presenter.ForceShow(), cancellationToken);
+                    () =>
+                    {
+                        presenter.ForceShow();
+                        _cursorService.ShowUiCursor();
+                    }, cancellationToken);
 
                 await presenter.WaitForPlay(cancellationToken);
                 await _loadingScreenService.Play(

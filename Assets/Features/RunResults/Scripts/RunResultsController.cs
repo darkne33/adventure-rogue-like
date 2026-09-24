@@ -95,9 +95,6 @@ namespace Features.RunResults.Scripts
                 _ownsPause = false;
             }
 
-            if (_isOpen)
-                _cursorService.ShowGameplayCursor();
-
             if (_panel == null)
                 return;
 
@@ -135,6 +132,9 @@ namespace Features.RunResults.Scripts
 
             try
             {
+                if (retry)
+                    _cursorService.ShowGameplayCursor();
+
                 bool completed = retry
                     ? await _runRestart.Restart(_sceneName)
                     : await _runRestart.ReturnToMainMenu(_sceneName);
