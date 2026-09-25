@@ -14,25 +14,18 @@ namespace Features.FortuneWheel
 {
     public sealed class FortuneWheel : MonoBehaviour
     {
-        private enum RewardType
+        private sealed class RewardState
         {
-            None,
-            Heart,
-            Key,
-            Silver,
-            ImprovedRelic,
-            PremiumRelic,
-            PremiumKey
-        }
+            public FortuneWheelReward Definition { get; }
+            public RelicDefinition Relic { get; }
+            public bool IsAvailable { get; set; } = true;
 
-        private enum WheelTier
-        {
-            Basic,
-            Improved,
-            Premium
+            public RewardState(FortuneWheelReward definition, RelicDefinition relic)
+            {
+                Definition = definition;
+                Relic = relic;
+            }
         }
-
-        private static readonly int[] SpinCosts = { 1, 3, 10 };
 
         [Inject] private ICharacterProvider _characterProvider;
         [Inject] private CharacterWallet _characterWallet;
@@ -45,8 +38,11 @@ namespace Features.FortuneWheel
         [Inject] private RelicEventBus _relicEventBus;
         [Inject] private RelicChestConfiguration _relicChestConfiguration;
         [Inject] private ITimeScaleService _timeScaleService;
+        [Inject] private GoldDropperConfiguration _goldDropperConfiguration;
+        [Inject] private UI.IPanelService _panelService;
 
         [SerializeField] private RelicChestInteractionView _interactionView = new();
+        [SerializeField] private FortuneWheelConfiguration _configuration;
 
         [Header("Wheel")]
         [SerializeField] private Transform _wheelTransform;
@@ -57,11 +53,11 @@ namespace Features.FortuneWheel
         [SerializeField] private GameObject _noneRewardPrefab;
         [SerializeField] private GameObject _heartRewardPrefab;
         [SerializeField] private GameObject _keyRewardPrefab;
-        [SerializeField] private GameObject _silverRewardPrefab;
+        [SerializeField] private GameObject _goldRewardPrefab;
+        [SerializeField] private GameObject _relicRewardPrefab;
         [SerializeField] private GameObject[] _relicRewardPrefabs = Array.Empty<GameObject>();
 
         [Header("Dropped Rewards")]
-        [SerializeField] private GameObject _silverDropPrefab;
         [SerializeField] private GameObject _keyDropPrefab;
         [SerializeField, Min(0.01f)] private float _rewardDropScale = 2f;
         [SerializeField, Min(0f)] private float _rewardDropForwardOffset = 0.45f;
@@ -85,27 +81,18 @@ namespace Features.FortuneWheel
         [SerializeField, ColorUsage(true, true)] private Color _grade1FxColor = Color.green;
         [SerializeField, ColorUsage(true, true)] private Color _grade2FxColor = Color.blue;
         [SerializeField, ColorUsage(true, true)] private Color _grade3FxColor = new(0.6f, 0.15f, 1f);
+        [SerializeField, ColorUsage(true, true)] private Color _grade4FxColor = new(1f, 0.75f, 0.12f);
         [SerializeField, ColorUsage(true, true)] private Color _rewardFxColor = Color.yellow;
-
-        [Header("Reward Amounts")]
-        [SerializeField, Min(1)] private int _silverAmount = 1;
-        [SerializeField, Min(1)] private int _keyAmount = 1;
 
         private InputSystem_Actions _inputActions;
         private Transform _spinRoot;
         private readonly Dictionary<RelicDefinition, GameObject> _relicPrefabsByDefinition = new();
-        private RewardType[] _baseRewards = Array.Empty<RewardType>();
-        private RewardType[] _rewards = Array.Empty<RewardType>();
+        private RewardState[][] _tierRewards = Array.Empty<RewardState[]>();
+        private RewardState[] _rewards = Array.Empty<RewardState>();
         private int[][] _tierSlotsBySource = Array.Empty<int[]>();
         private int[] _displayedSourceIndices = Array.Empty<int>();
         private GameObject[] _rewardViews = Array.Empty<GameObject>();
-        private bool[] _availableSources = Array.Empty<bool>();
-        private RelicDefinition _improvedRelic;
-        private RelicDefinition _premiumRelic;
-        private WheelTier _selectedTier;
-        private bool _improvedRelicConsumed;
-        private bool _premiumRelicConsumed;
-        private bool _premiumKeyConsumed;
+        private int _selectedTier;
         private bool _isSpinning;
         private ParticleSystem[] _gradeFxSystems = Array.Empty<ParticleSystem>();
         private Vector3 _wheelBaseScale = Vector3.one;
@@ -118,7 +105,6 @@ namespace Features.FortuneWheel
             CreateSpinRoot();
             if (_wheelTransform != null)
                 _wheelBaseScale = _wheelTransform.localScale;
-            InitializeRewards();
             InitializeGradeFx();
 
             if (_betSelectionHintText != null)
@@ -127,9 +113,7 @@ namespace Features.FortuneWheel
 
         private void Start()
         {
-            _improvedRelic = RollRelic(RelicRarity.Common, RelicRarity.Uncommon);
-            _premiumRelic = RollRelic(RelicRarity.Rare, RelicRarity.Legendary);
-            RefreshDisplayedRewards(false);
+            InitializeRewards();
         }
 
         private void OnEnable()
@@ -185,17 +169,19 @@ namespace Features.FortuneWheel
                        _characterProvider.CharacterFacade.transform.position) <= _interactDistance;
         }
 
-        private int CurrentSpinCost =>
-            SpinCosts[Mathf.Clamp((int)_selectedTier, 0, SpinCosts.Length - 1)];
+        private int CurrentSpinCost => _configuration != null &&
+                                       _selectedTier < _configuration.RewardSets.Count
+            ? _configuration.RewardSets[_selectedTier].SpinCost
+            : 0;
 
         private void ChangeTier(int direction)
         {
-            int tierIndex = Mathf.Clamp((int)_selectedTier + direction,
-                0, SpinCosts.Length - 1);
-            if (tierIndex == (int)_selectedTier)
+            int tierIndex = Mathf.Clamp(_selectedTier + direction,
+                0, _tierRewards.Length - 1);
+            if (tierIndex == _selectedTier)
                 return;
 
-            _selectedTier = (WheelTier)tierIndex;
+            _selectedTier = tierIndex;
             RefreshDisplayedRewards(true);
             UpdatePriceView();
             PlayGradeFx();
@@ -225,8 +211,9 @@ namespace Features.FortuneWheel
         {
             Color color = _selectedTier switch
             {
-                WheelTier.Improved => _grade2FxColor,
-                WheelTier.Premium => _grade3FxColor,
+                1 => _grade2FxColor,
+                2 => _grade3FxColor,
+                3 => _grade4FxColor,
                 _ => _grade1FxColor
             };
 
@@ -288,74 +275,72 @@ namespace Features.FortuneWheel
 
         private void InitializeRewards()
         {
-            _baseRewards = CreateShuffledRewards(_slots.Length);
-            _rewards = (RewardType[])_baseRewards.Clone();
-            InitializeTierSlotMappings(_slots.Length);
+            int tierCount = _configuration != null ? _configuration.RewardSets.Count : 0;
+            _tierRewards = new RewardState[tierCount][];
+            for (int tierIndex = 0; tierIndex < tierCount; tierIndex++)
+            {
+                IReadOnlyList<FortuneWheelReward> definitions =
+                    _configuration.RewardSets[tierIndex].Rewards;
+                RewardState[] rewards = new RewardState[Mathf.Min(definitions.Count, _slots.Length)];
+                HashSet<string> selectedRelicIds = new();
+                for (int sourceIndex = 0; sourceIndex < rewards.Length; sourceIndex++)
+                {
+                    FortuneWheelReward definition = definitions[sourceIndex];
+                    RelicDefinition relic = definition.Type == FortuneWheelRewardType.Relic
+                        ? RollRelic(definition.Rarity, selectedRelicIds)
+                        : null;
+                    if (relic != null)
+                        selectedRelicIds.Add(relic.Id);
+                    rewards[sourceIndex] = new RewardState(definition, relic);
+                }
+
+                _tierRewards[tierIndex] = rewards;
+            }
+
+            InitializeTierSlotMappings();
             _displayedSourceIndices = Array.Empty<int>();
             _rewardViews = new GameObject[_slots.Length];
-            _availableSources = new bool[_slots.Length];
-
-            for (int i = 0; i < _slots.Length; i++)
-                _availableSources[i] = true;
-
             RefreshDisplayedRewards(false);
         }
 
-        private void InitializeTierSlotMappings(int slotCount)
+        private void InitializeTierSlotMappings()
         {
-            _tierSlotsBySource = new int[SpinCosts.Length][];
-            int[] shuffledSlots = new int[Mathf.Max(0, slotCount)];
-            for (int i = 0; i < shuffledSlots.Length; i++)
-                shuffledSlots[i] = i;
-
-            for (int i = shuffledSlots.Length - 1; i > 0; i--)
-            {
-                int swapIndex = UnityEngine.Random.Range(0, i + 1);
-                (shuffledSlots[i], shuffledSlots[swapIndex]) =
-                    (shuffledSlots[swapIndex], shuffledSlots[i]);
-            }
-
-            int[] tierShifts = new int[SpinCosts.Length];
-            if (slotCount > 1)
-                tierShifts[(int)WheelTier.Improved] = UnityEngine.Random.Range(1, slotCount);
-
-            if (slotCount > 2)
-            {
-                int improvedShift = tierShifts[(int)WheelTier.Improved];
-                tierShifts[(int)WheelTier.Premium] = improvedShift % (slotCount - 1) + 1;
-            }
-
+            _tierSlotsBySource = new int[_tierRewards.Length][];
             for (int tierIndex = 0; tierIndex < _tierSlotsBySource.Length; tierIndex++)
             {
-                int[] slotsBySource = new int[slotCount];
-                for (int sourceIndex = 0; sourceIndex < slotCount; sourceIndex++)
+                int[] shuffledSlots = new int[_slots.Length];
+                for (int i = 0; i < shuffledSlots.Length; i++)
+                    shuffledSlots[i] = i;
+
+                for (int i = shuffledSlots.Length - 1; i > 0; i--)
                 {
-                    int shiftedIndex = (sourceIndex + tierShifts[tierIndex]) % slotCount;
-                    slotsBySource[sourceIndex] = shuffledSlots[shiftedIndex];
+                    int swapIndex = UnityEngine.Random.Range(0, i + 1);
+                    (shuffledSlots[i], shuffledSlots[swapIndex]) =
+                        (shuffledSlots[swapIndex], shuffledSlots[i]);
                 }
 
-                _tierSlotsBySource[tierIndex] = slotsBySource;
+                _tierSlotsBySource[tierIndex] = shuffledSlots;
             }
         }
 
         private void RefreshDisplayedRewards(bool animateChanges)
         {
-            RewardType[] previousRewards = _rewards;
+            RewardState[] previousRewards = _rewards;
             int[] previousSourceIndices = _displayedSourceIndices;
-            BuildDisplayedRewards(out RewardType[] displayedRewards,
+            BuildDisplayedRewards(out RewardState[] displayedRewards,
                 out int[] displayedSourceIndices);
 
             for (int i = 0; i < _slots.Length; i++)
             {
                 Transform slot = _slots[i];
-                RewardType previousReward = i < previousRewards.Length
+                RewardState previousReward = i < previousRewards.Length
                     ? previousRewards[i]
                     : displayedRewards[i];
                 int previousSourceIndex = i < previousSourceIndices.Length
                     ? previousSourceIndices[i]
                     : -1;
                 int displayedSourceIndex = displayedSourceIndices[i];
-                RewardType displayedReward = displayedRewards[i];
+                RewardState displayedReward = displayedRewards[i];
                 GameObject rewardPrefab = GetRewardPrefab(displayedReward);
 
                 if (displayedSourceIndex < 0 || slot == null || rewardPrefab == null)
@@ -383,6 +368,13 @@ namespace Features.FortuneWheel
                     Quaternion.identity);
                 rewardView.transform.localScale = rewardPrefab.transform.localScale;
 
+                if (displayedReward.Relic != null)
+                {
+                    SpriteRenderer relicRenderer = rewardView.GetComponent<SpriteRenderer>();
+                    if (relicRenderer != null)
+                        relicRenderer.sprite = displayedReward.Relic.Icon;
+                }
+
                 if (animateChanges &&
                     (previousSourceIndex != displayedSourceIndex ||
                      previousReward != displayedReward))
@@ -402,55 +394,23 @@ namespace Features.FortuneWheel
             _displayedSourceIndices = displayedSourceIndices;
         }
 
-        private void BuildDisplayedRewards(out RewardType[] displayedRewards,
+        private void BuildDisplayedRewards(out RewardState[] displayedRewards,
             out int[] displayedSourceIndices)
         {
-            RewardType[] rewardsBySource = (RewardType[])_baseRewards.Clone();
-            bool[] reservedSources = new bool[rewardsBySource.Length];
-
-            if (_selectedTier == WheelTier.Premium)
-            {
-                if (_premiumRelicConsumed == false && _premiumRelic != null)
-                {
-                    TryAssignUpgrade(rewardsBySource, reservedSources,
-                        RewardType.PremiumRelic, RewardType.None, RewardType.Heart,
-                        RewardType.Silver, RewardType.Key);
-                }
-
-                if (_improvedRelicConsumed == false && _improvedRelic != null)
-                {
-                    TryAssignUpgrade(rewardsBySource, reservedSources,
-                        RewardType.ImprovedRelic, RewardType.Heart, RewardType.Silver,
-                        RewardType.None, RewardType.Key);
-                }
-
-                if (_premiumKeyConsumed == false)
-                {
-                    TryAssignUpgrade(rewardsBySource, reservedSources,
-                        RewardType.PremiumKey, RewardType.Heart, RewardType.Silver,
-                        RewardType.None, RewardType.Key);
-                }
-            }
-            else if (_selectedTier == WheelTier.Improved &&
-                     _improvedRelicConsumed == false && _improvedRelic != null)
-            {
-                TryAssignUpgrade(rewardsBySource, reservedSources,
-                    RewardType.ImprovedRelic, RewardType.Heart, RewardType.Silver,
-                    RewardType.None, RewardType.Key);
-            }
-
-            displayedRewards = new RewardType[rewardsBySource.Length];
-            displayedSourceIndices = new int[rewardsBySource.Length];
+            displayedRewards = new RewardState[_slots.Length];
+            displayedSourceIndices = new int[_slots.Length];
             for (int i = 0; i < displayedSourceIndices.Length; i++)
                 displayedSourceIndices[i] = -1;
 
-            int tierIndex = Mathf.Clamp((int)_selectedTier, 0,
-                _tierSlotsBySource.Length - 1);
-            int[] slotsBySource = _tierSlotsBySource[tierIndex];
+            if (_tierRewards.Length == 0)
+                return;
+
+            RewardState[] rewardsBySource = _tierRewards[_selectedTier];
+            int[] slotsBySource = _tierSlotsBySource[_selectedTier];
 
             for (int sourceIndex = 0; sourceIndex < rewardsBySource.Length; sourceIndex++)
             {
-                if (_availableSources[sourceIndex] == false)
+                if (rewardsBySource[sourceIndex].IsAvailable == false)
                     continue;
 
                 int slotIndex = slotsBySource[sourceIndex];
@@ -460,24 +420,6 @@ namespace Features.FortuneWheel
 
                 displayedRewards[slotIndex] = rewardsBySource[sourceIndex];
                 displayedSourceIndices[slotIndex] = sourceIndex;
-            }
-        }
-
-        private void TryAssignUpgrade(RewardType[] rewardsBySource, bool[] reservedSources,
-            RewardType upgradeReward, params RewardType[] sourcePriority)
-        {
-            foreach (RewardType sourceReward in sourcePriority)
-            {
-                for (int i = 0; i < _baseRewards.Length; i++)
-                {
-                    if (_availableSources[i] == false || reservedSources[i] ||
-                        _baseRewards[i] != sourceReward)
-                        continue;
-
-                    rewardsBySource[i] = upgradeReward;
-                    reservedSources[i] = true;
-                    return;
-                }
             }
         }
 
@@ -502,65 +444,44 @@ namespace Features.FortuneWheel
             targetView.name = sourcePrefab.name;
         }
 
-        private static RewardType[] CreateShuffledRewards(int slotCount)
-        {
-            RewardType[] fixedRewards =
-            {
-                RewardType.None,
-                RewardType.None,
-                RewardType.Heart,
-                RewardType.Heart,
-                RewardType.Key,
-                RewardType.Silver
-            };
-            RewardType[] rewards = new RewardType[Mathf.Max(0, slotCount)];
-
-            for (int i = 0; i < rewards.Length; i++)
-                rewards[i] = i < fixedRewards.Length
-                    ? fixedRewards[i]
-                    : RewardType.Silver;
-
-            for (int i = rewards.Length - 1; i > 0; i--)
-            {
-                int swapIndex = UnityEngine.Random.Range(0, i + 1);
-                (rewards[i], rewards[swapIndex]) = (rewards[swapIndex], rewards[i]);
-            }
-
-            return rewards;
-        }
-
-        private RelicDefinition RollRelic(RelicRarity firstRarity,
-            RelicRarity secondRarity)
+        private RelicDefinition RollRelic(RelicRarity rarity,
+            IReadOnlyCollection<string> selectedRelicIds)
         {
             if (_relicPool == null)
                 return null;
 
-            List<RelicDefinition> firstCandidates = new();
-            List<RelicDefinition> secondCandidates = new();
+            List<RelicDefinition> candidates = GetRelicCandidates(rarity,
+                _relicPool.GetAvailable(_relicManager?.ActiveRelics, selectedRelicIds));
 
-            foreach (RelicDefinition relic in
-                     _relicPool.GetAvailable(_relicManager?.ActiveRelics))
-            {
-                if (relic == null || _relicPrefabsByDefinition.ContainsKey(relic) == false)
-                    continue;
-
-                if (relic.Rarity == firstRarity)
-                    firstCandidates.Add(relic);
-                else if (relic.Rarity == secondRarity)
-                    secondCandidates.Add(relic);
-            }
-
-            bool rollFirstRarity = UnityEngine.Random.value < 0.5f;
-            List<RelicDefinition> candidates = rollFirstRarity
-                ? firstCandidates
-                : secondCandidates;
+            // The wheel may offer locked relics when the player has no eligible
+            // unlocked option of this rarity. This does not unlock the collection entry.
+            if (candidates.Count == 0)
+                candidates = GetRelicCandidates(rarity,
+                    _relicPool.GetAvailable(_relicManager?.ActiveRelics, selectedRelicIds,
+                        includeLocked: true));
 
             if (candidates.Count == 0)
-                candidates = rollFirstRarity ? secondCandidates : firstCandidates;
+                candidates = GetRelicCandidates(rarity,
+                    _relicPool.GetAvailable(_relicManager?.ActiveRelics, includeLocked: true));
 
             return candidates.Count > 0
                 ? candidates[UnityEngine.Random.Range(0, candidates.Count)]
                 : null;
+        }
+
+        private static List<RelicDefinition> GetRelicCandidates(RelicRarity rarity,
+            IEnumerable<RelicDefinition> availableRelics)
+        {
+            List<RelicDefinition> candidates = new();
+            foreach (RelicDefinition relic in availableRelics)
+            {
+                if (relic == null || relic.Rarity != rarity || relic.Icon == null)
+                    continue;
+
+                candidates.Add(relic);
+            }
+
+            return candidates;
         }
 
         private async UniTaskVoid SpinAsync()
@@ -599,13 +520,10 @@ namespace Features.FortuneWheel
                     0f, 0f, -winningSlotIndex * slotAngle);
                 _spinRoot.localScale = Vector3.one;
 
-                RewardType rewardType = _rewards[winningSlotIndex];
-                int winningSourceIndex = _displayedSourceIndices[winningSlotIndex];
+                RewardState reward = _rewards[winningSlotIndex];
                 await PlayWinningRewardAnimationAsync(winningSlotIndex, cancellationToken);
-                MarkUpgradeConsumed(rewardType);
-                if (winningSourceIndex >= 0 && winningSourceIndex < _availableSources.Length)
-                    _availableSources[winningSourceIndex] = false;
-                DropReward(rewardType);
+                reward.IsAvailable = false;
+                DropReward(reward);
                 RefreshDisplayedRewards(true);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -646,29 +564,16 @@ namespace Features.FortuneWheel
 
         private bool HasAvailableRewards()
         {
-            foreach (int sourceIndex in _displayedSourceIndices)
+            foreach (RewardState[] rewards in _tierRewards)
             {
-                if (sourceIndex >= 0)
-                    return true;
+                foreach (RewardState reward in rewards)
+                {
+                    if (reward.IsAvailable)
+                        return true;
+                }
             }
 
             return false;
-        }
-
-        private void MarkUpgradeConsumed(RewardType rewardType)
-        {
-            switch (rewardType)
-            {
-                case RewardType.ImprovedRelic:
-                    _improvedRelicConsumed = true;
-                    break;
-                case RewardType.PremiumRelic:
-                    _premiumRelicConsumed = true;
-                    break;
-                case RewardType.PremiumKey:
-                    _premiumKeyConsumed = true;
-                    break;
-            }
         }
 
         private Sequence CreateSpinSequence(float targetAngle, int winningSlotIndex,
@@ -788,36 +693,60 @@ namespace Features.FortuneWheel
             rewardView.SetActive(false);
         }
 
-        private void DropReward(RewardType rewardType)
+        private void DropReward(RewardState reward)
         {
-            if (rewardType == RewardType.None)
+            if (reward.Definition.Type == FortuneWheelRewardType.None)
                 return;
 
             PlayGradeFx(_rewardFxColor);
 
-            switch (rewardType)
+            switch (reward.Definition.Type)
             {
-                case RewardType.Heart:
+                case FortuneWheelRewardType.Heart:
                     _heartDropper?.DropHeart(GetRewardSpawnPosition(),
                         collectWhenHealthFull: true, additionalDropHeight: 0.5f);
                     return;
-                case RewardType.Key:
-                case RewardType.PremiumKey:
+                case FortuneWheelRewardType.Key:
                     if (TryDropCurrencyReward(_keyDropPrefab,
-                            () => _characterWallet?.Keys.Add(Mathf.Max(1, _keyAmount))) == false)
-                        _characterWallet?.Keys.Add(Mathf.Max(1, _keyAmount));
+                            () => _characterWallet?.Keys.Add(reward.Definition.Amount)) == false)
+                        _characterWallet?.Keys.Add(reward.Definition.Amount);
                     return;
-                case RewardType.Silver:
-                    if (TryDropCurrencyReward(_silverDropPrefab,
-                            () => _characterWallet?.Silver.Add(Mathf.Max(1, _silverAmount))) == false)
-                        _characterWallet?.Silver.Add(Mathf.Max(1, _silverAmount));
+                case FortuneWheelRewardType.Gold:
+                    DropGold(reward.Definition.Amount);
                     return;
-                case RewardType.ImprovedRelic:
-                    DropRelic(_improvedRelic);
+                case FortuneWheelRewardType.Relic:
+                    DropRelic(reward.Relic);
                     return;
-                case RewardType.PremiumRelic:
-                    DropRelic(_premiumRelic);
-                    return;
+            }
+        }
+
+        private void DropGold(int amount)
+        {
+            GameObject coinPrefab = _goldDropperConfiguration?.CoinGoldPrefab;
+            if (coinPrefab == null || _container == null || _characterProvider == null)
+            {
+                _characterWallet?.Gold.Add(amount);
+                return;
+            }
+
+            Vector3 spawnPosition = GetRewardSpawnPosition();
+            for (int i = 0; i < amount; i++)
+            {
+                GameObject coinObject = _container.InstantiatePrefab(coinPrefab,
+                    spawnPosition, Quaternion.identity, null);
+                CoinGold coin = coinObject.GetComponent<CoinGold>();
+                if (coin == null)
+                {
+                    Destroy(coinObject);
+                    _characterWallet?.Gold.Add(1);
+                    continue;
+                }
+
+                coinObject.layer = gameObject.layer;
+                coinObject.transform.localScale = Vector3.one * Mathf.Max(0.01f, _rewardDropScale);
+                coin.Construct(1, _goldDropperConfiguration, _characterWallet,
+                    _characterProvider, _characterStats, _panelService, spawnPosition, null,
+                    flyToCharacter: true);
             }
         }
 
@@ -900,22 +829,21 @@ namespace Features.FortuneWheel
                 ? _levelsConfiguration.GroundLayer
                 : Physics.DefaultRaycastLayers;
 
-        private GameObject GetRewardPrefab(RewardType rewardType) => rewardType switch
+        private GameObject GetRewardPrefab(RewardState reward) => reward?.Definition.Type switch
         {
-            RewardType.None => _noneRewardPrefab,
-            RewardType.Heart => _heartRewardPrefab,
-            RewardType.Key => _keyRewardPrefab,
-            RewardType.PremiumKey => _keyRewardPrefab,
-            RewardType.Silver => _silverRewardPrefab,
-            RewardType.ImprovedRelic => GetRelicRewardPrefab(_improvedRelic),
-            RewardType.PremiumRelic => GetRelicRewardPrefab(_premiumRelic),
+            FortuneWheelRewardType.None => _noneRewardPrefab,
+            FortuneWheelRewardType.Heart => _heartRewardPrefab,
+            FortuneWheelRewardType.Key => _keyRewardPrefab,
+            FortuneWheelRewardType.Gold => _goldRewardPrefab,
+            FortuneWheelRewardType.Relic => GetRelicRewardPrefab(reward.Relic),
             _ => null
         };
 
-        private GameObject GetRelicRewardPrefab(RelicDefinition relic) =>
-            relic != null && _relicPrefabsByDefinition.TryGetValue(relic, out GameObject prefab)
+        private GameObject GetRelicRewardPrefab(RelicDefinition relic) => relic == null
+            ? _noneRewardPrefab
+            : _relicPrefabsByDefinition.TryGetValue(relic, out GameObject prefab)
                 ? prefab
-                : null;
+                : _relicRewardPrefab;
 
     }
 }

@@ -735,6 +735,7 @@ MonoBehaviour:
     _promptTransform: {fileID: 870000051}
     _showDuration: 0.14
     _hideDuration: 0.12
+  _configuration: {fileID: 11400000, guid: 90ae356e995d4f7e94495cc1d5ceca71, type: 2}
   _wheelTransform: {fileID: 7035190247607180554}
   _slotsRoot: {fileID: 3074010891419092506}
   _slots:
@@ -747,7 +748,8 @@ MonoBehaviour:
   _noneRewardPrefab: {fileID: 100000, guid: 58ff9598de4b46a38d46dc9abb74ea14, type: 3}
   _heartRewardPrefab: {fileID: 100000, guid: 183960e90eda4ce4bc6234db5cb1e238, type: 3}
   _keyRewardPrefab: {fileID: 100000, guid: e34d8fd32be84d8b9d1b1cc9b01b9250, type: 3}
-  _silverRewardPrefab: {fileID: 100000, guid: b3d503a38a3f42c186e8948acd4c2168, type: 3}
+  _goldRewardPrefab: {fileID: 100000, guid: 1c5173738c7c4178930cbb48fef539e5, type: 3}
+  _relicRewardPrefab: {fileID: 100000, guid: 4f1593f7deba4918a702ad52b87b31bb, type: 3}
   _relicRewardPrefabs:
   - {fileID: 100000, guid: bc4b9624012940d0b071e579cf37f391, type: 3}
   - {fileID: 100000, guid: 1a77002b3d4646d5b1ab17d5f5f57c00, type: 3}
@@ -759,7 +761,15 @@ MonoBehaviour:
   - {fileID: 100000, guid: f3665f6613144aca9f2df587728d5d9b, type: 3}
   - {fileID: 100000, guid: bac36e25ac3b41648b32d0e1307ce5b4, type: 3}
   - {fileID: 100000, guid: 852b12fdc8754118b5fc7c8ddcf7cb4c, type: 3}
-  _silverDropPrefab: {fileID: 5590898654358259726, guid: 1b6e9c3f4a7d42e8b5c0196f3d2a8e41, type: 3}
+  - {fileID: 100000, guid: 7581c28c1c34461cac8ac90d9969b4e0, type: 3}
+  - {fileID: 100000, guid: 2d7d70313a5549ab9892f386347e72b6, type: 3}
+  - {fileID: 100000, guid: 2606abc320254f328f5dcd0c4d9cc351, type: 3}
+  - {fileID: 100000, guid: dd80646f4b884d5ba3d39a7ba13216f9, type: 3}
+  - {fileID: 100000, guid: 345801e76b1d4051abf5d8be21c66132, type: 3}
+  - {fileID: 100000, guid: 3df85bd1189946cba4d961e6d8c7ffd5, type: 3}
+  - {fileID: 100000, guid: 284078dbffb94f3aa1e0f37a5afccd00, type: 3}
+  - {fileID: 100000, guid: 918e49c2cb0f413b8620c7cceb76feaf, type: 3}
+  - {fileID: 100000, guid: 891cf0b415ef4e97b67e001567c7bdd7, type: 3}
   _keyDropPrefab: {fileID: 5590898654358259726, guid: 7d3a1e8c5b6f49d2a0c7e4f1938b6d52, type: 3}
   _rewardDropScale: 2
   _rewardDropForwardOffset: 0.45
@@ -777,9 +787,8 @@ MonoBehaviour:
   _grade1FxColor: {r: 0.2164807, g: 1, b: 0.18396229, a: 1}
   _grade2FxColor: {r: 0, g: 0.37010074, b: 1, a: 1}
   _grade3FxColor: {r: 0.45611066, g: 0.1490196, b: 1, a: 1}
+  _grade4FxColor: {r: 1, g: 0.75, b: 0.12, a: 1}
   _rewardFxColor: {r: 1, g: 0.6256213, b: 0.1462264, a: 1}
-  _silverAmount: 1
-  _keyAmount: 1
 --- !u!65 &3735122314906229265
 BoxCollider:
   m_ObjectHideFlags: 0

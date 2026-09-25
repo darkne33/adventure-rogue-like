@@ -33,7 +33,9 @@ Weights are configured in `RelicPoolConfiguration`.
 
 ## Unlocks
 
-`QuestService` controls ownership through `DemoProgressionConfiguration.asset`. Its default relic list grants Hot Dog, Wallet, Iron Hammer, Venom Blade, Cupid's Arrow and Lump of Coal immediately. The other thirteen relics require completing their configured quest and purchasing the unlock for persistent silver. All nineteen definitions are present in progression as either defaults or purchasable entries. The old relic-specific `UnlockQuestId` / `UnlockCost` fields do not control this catalog. See `Assets/Features/Quests/README_Quests.md` for conditions, prices and save migration.
+`QuestService` controls ownership through `DemoProgressionConfiguration.asset`. Its default collection contains two green relics (Hot Dog, Venom Blade), two blue relics (Iron Hammer, Cupid's Arrow), two purple relics (Turbo Skates, Sacrificial Dagger), and no legendary relics. These defaults apply to new and existing saves without adding items to the run inventory. The other thirteen relics are purchasable for persistent silver; Wallet and Lump of Coal cost 2 silver each without a quest requirement, and the other eleven require their configured quest. All nineteen definitions are present in progression as either defaults or purchasable entries. The old relic-specific `UnlockQuestId` / `UnlockCost` fields do not control this catalog. See `Assets/Features/Quests/README_Quests.md` for conditions, prices and save migration.
+
+The fortune wheel first picks an eligible unlocked relic of the requested rarity. If none is left for that set, it may use a locked relic of the same rarity through `RelicPool.GetAvailable(..., includeLocked: true)`. This wheel-only fallback still respects run inventory stack limits and does not permanently unlock the relic. Different relics are preferred within a set; other reward sources continue to exclude locked relics.
 
 ## Triggers
 

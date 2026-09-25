@@ -17,11 +17,11 @@ MonoBehaviour:
   _defaultAbilities: 0100000000000000120000000700000003000000040000000600000005000000
   _defaultRelics:
   - {fileID: 11400000, guid: 159a9539d24f45e5b019237a978c6c20, type: 2}
-  - {fileID: 11400000, guid: 597839a614ef49af984722b5841f670b, type: 2}
-  - {fileID: 11400000, guid: c1421c5f9d094cb18de356244053eeca, type: 2}
   - {fileID: 11400000, guid: 5566d33206f349fbaa754ce6d65ac35f, type: 2}
+  - {fileID: 11400000, guid: c1421c5f9d094cb18de356244053eeca, type: 2}
   - {fileID: 11400000, guid: 4149b57941bf4e8ca2525bdea710966f, type: 2}
-  - {fileID: 11400000, guid: e5054965a90e458a9e7df1b0ada77b4e, type: 2}
+  - {fileID: 11400000, guid: 980aeba49e0142978750e2ecf19f569c, type: 2}
+  - {fileID: 11400000, guid: e034f1ad498f479a91fcce23a3d0c136, type: 2}
   _quests:
   - _id: run_kills_150
     _title: CROWD CONTROL
@@ -464,5 +464,27 @@ MonoBehaviour:
     _unlockedByDefault: 0
     _requiredQuestId: close_kills_30
     _silverCost: 5
+  - _id: relic_wallet
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: 597839a614ef49af984722b5841f670b, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: ""
+    _silverCost: 2
+  - _id: relic_lump_of_coal
+    _category: 3
+    _characterId: ""
+    _ability: {fileID: 0}
+    _relic: {fileID: 11400000, guid: e5054965a90e458a9e7df1b0ada77b4e, type: 2}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: ""
+    _silverCost: 2
   _silverIcon: {fileID: 21300000, guid: e4e4fb329176465a9feb87af84564070, type: 3}
   _portraitPlaceholder: {fileID: 21300000, guid: c34f2f06ef3c4b389d4ca1e60d88e1b7, type: 3}

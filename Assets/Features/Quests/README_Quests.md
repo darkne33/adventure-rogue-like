@@ -11,14 +11,14 @@ Edit `Assets/Features/Quests/Configs/DemoProgressionConfiguration.asset` in the 
 - **Unlocks** contain a stable ID, category, character ID or ability/relic reference, required quest ID and silver cost. Optional name, description and icon override the referenced asset. `Unlocked By Default` can make an individual catalog entry immediately owned.
 - **Fallback Content Icons** contain currency and fallback portrait references. Character portraits also use the existing character-selection portrait cache. Window appearance is authored in prefabs.
 
-Keep quest and unlock IDs stable: saves refer to these IDs. Each demo quest has one purchasable unlock. Content absent from both the default arrays and the unlock catalog is excluded from demo selection and reward pools. Character-specific starting weapons remain upgradeable after selecting an owned character; character weapon exclusions still apply.
+Keep quest and unlock IDs stable: saves refer to these IDs. Turbo Skates and Sacrificial Dagger retain their catalog entries and quest IDs, but are now owned from the start; their quests still award silver. Wallet and Lump of Coal are purchasable for 2 silver each without a quest requirement. Content absent from both the default arrays and the unlock catalog is excluded from normal demo selection and reward pools. The fortune wheel can offer a locked relic of the required rarity if eligible unlocked relics run out; winning it does not purchase its collection entry. Character-specific starting weapons remain upgradeable after selecting an owned character; character weapon exclusions still apply.
 
 ## Starting content
 
 - Character: RABBIT.
 - Weapons: Rabbitarang, Fireball and Earth Rock. Rabbitarang is RABBIT's starting weapon.
 - Scrolls: Damage, Armor, Attack Speed, Crit Damage and Crit Chance.
-- Relics: Hot Dog, Wallet, Iron Hammer, Venom Blade, Cupid's Arrow and Lump of Coal.
+- Relics: Hot Dog and Venom Blade (green), Iron Hammer and Cupid's Arrow (blue), Turbo Skates and Sacrificial Dagger (purple). No legendary relic is unlocked by default. These are six available collection entries, not six items granted to the run inventory.
 
 Bullet Explosion and Punch are their characters' signature weapons. They become available with those characters and are not separate purchases.
 
@@ -53,7 +53,7 @@ Targets, quest silver rewards and purchase prices are editable in the configurat
 | level_10 | Reach character level 10 in one run. | Shield Scroll | 2 | 4 |
 | run_kills_50 | Defeat 50 enemies in one run. | Cactus | 1 | 2 |
 | run_gold_100 | Collect 100 gold in one run. Spent gold still counts. | Golden Boot | 1 | 3 |
-| combat_distance_500 | Travel 500 m during active combat in one run. | Turbo Skates | 3 | 4 |
+| combat_distance_500 | Travel 500 m during active combat in one run. | Turbo Skates (owned from the start) | 3 | — |
 | low_health_room | Clear a combat room entered with 25% HP or less. | Voodoo Doll | 3 | 5 |
 | armor_scroll_3 | Raise the Armor Scroll to level 3 in one run. | Spiky Shield | 1 | 3 |
 | chests_8 | Open 8 relic chests across all runs. | Overpowered Chalice | 2 | 6 |
@@ -63,7 +63,9 @@ Targets, quest silver rewards and purchase prices are editable in the configurat
 | gold_held_150 | Hold 150 gold at the same time in a run. | Money = Power | 2 | 4 |
 | burst_kills_3 | Defeat 3 enemies within 2 seconds of active combat in the same room. | Explosivo | 2 | 5 |
 | hit_damage_75 | Deal 75 damage in one hit, including critical hits and overkill. | Polyphemus | 2 | 5 |
-| close_kills_30 | Defeat 30 enemies within 2 m of the character in one run. | Sacrificial Dagger | 2 | 5 |
+| close_kills_30 | Defeat 30 enemies within 2 m of the character in one run. | Sacrificial Dagger (owned from the start) | 2 | — |
+| — | No quest requirement. | Wallet | — | 2 |
+| — | No quest requirement. | Lump of Coal | — | 2 |
 
 Quest categories follow their rewards: Characters for DUKE and MR POCKET, Weapons for Fire Trail, Scrolls for all eight scrolls and Relics for all thirteen purchasable relics. Fire Trail is the display name of the existing Fire Field ability asset (`AbilityName.FireField`).
 
@@ -90,7 +92,7 @@ Purchase IDs and the PlayerPrefs save key/payload version remain unchanged, pres
 | `critical_25` | `armor_scroll_3` |
 | `combat_300` | `chests_8` |
 
-An old completed requirement preserves purchase eligibility. Its claimed status transfers, preventing a second silver reward; an unclaimed reward remains claimable on the replacement quest, with the same amount. Partial progress in a replaced, unrelated metric does not become progress in the new condition. Migration does not replay completion notifications or grant purchases. The two additional starting relics are available on both new and existing saves.
+An old completed requirement preserves purchase eligibility. Its claimed status transfers, preventing a second silver reward; an unclaimed reward remains claimable on the replacement quest, with the same amount. Partial progress in a replaced, unrelated metric does not become progress in the new condition. Migration does not replay completion notifications or grant purchases. The current default relic list applies to both new and existing saves; purchased unlocks remain owned. Wallet and Lump of Coal are no longer defaults and now have their own purchase entries.
 
 ## UI prefabs
 

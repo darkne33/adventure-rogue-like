@@ -30,7 +30,7 @@ public sealed class CoinGold : MonoBehaviour
 
     public void Construct(int amount, GoldDropperConfiguration configuration, CharacterWallet characterWallet,
         ICharacterProvider characterProvider, CharacterStats characterStats, IPanelService panelService,
-        Vector3 landPosition, RoomData roomData)
+        Vector3 landPosition, RoomData roomData, bool flyToCharacter = false)
     {
         _amount = Mathf.Max(1, amount);
         _configuration = configuration;
@@ -42,7 +42,10 @@ public sealed class CoinGold : MonoBehaviour
         _startScale = transform.localScale;
 
         name = $"CoinGold_{_amount}";
-        PlayDropAnimation(landPosition);
+        if (flyToCharacter)
+            PlayFlightToCharacter();
+        else
+            PlayDropAnimation(landPosition);
     }
 
     private void Update()
@@ -105,6 +108,52 @@ public sealed class CoinGold : MonoBehaviour
             _canAttract = true;
         });
 
+        PlayRotationAnimation();
+    }
+
+    private void PlayFlightToCharacter()
+    {
+        transform.DOKill();
+        _canAttract = false;
+
+        Transform character = _characterProvider?.CharacterFacade != null
+            ? _characterProvider.CharacterFacade.transform
+            : null;
+        if (character == null)
+        {
+            Collect();
+            return;
+        }
+
+        Vector3 startPosition = transform.position;
+        Vector3 targetPosition = GetCollectionTargetPosition(character);
+        Vector3 scatter = UnityEngine.Random.insideUnitSphere *
+                          Mathf.Max(0f, _configuration.DropScatterRadius);
+        scatter.y = Mathf.Abs(scatter.y);
+        float duration = Mathf.Max(0.01f, _configuration.DropDuration) *
+                         UnityEngine.Random.Range(0.85f, 1.15f);
+        transform.localScale = _startScale * 0.75f;
+
+        DOVirtual.Float(0f, 1f, duration, progress =>
+            {
+                if (character != null)
+                    targetPosition = GetCollectionTargetPosition(character);
+
+                transform.position = Vector3.Lerp(startPosition, targetPosition, progress) +
+                                     scatter * Mathf.Sin(progress * Mathf.PI);
+                transform.localScale = _startScale * Mathf.Lerp(0.75f,
+                    _configuration.AttractionScaleMultiplier, progress);
+            })
+            .SetEase(Ease.InQuad)
+            .SetTarget(transform)
+            .SetLink(gameObject)
+            .OnComplete(Collect);
+
+        PlayRotationAnimation();
+    }
+
+    private void PlayRotationAnimation()
+    {
         _ = transform.DORotate(new Vector3(0f, 360f, 0f), RotationDuration, RotateMode.FastBeyond360)
             .SetEase(Ease.Linear)
             .SetLoops(-1)
