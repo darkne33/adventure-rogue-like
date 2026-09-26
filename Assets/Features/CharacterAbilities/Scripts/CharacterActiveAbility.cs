@@ -35,14 +35,19 @@ public abstract class CharacterActiveAbility : CharacterAbility
             StartCooldown();
     }
 
-    protected void StartCooldown()
+    public abstract float CalculateEstimatedDps();
+
+    protected void StartCooldown() =>
+        CurrentCooldown = GetModifiedCooldown();
+
+    protected float GetModifiedCooldown()
     {
         float attackSpeedMultiplier =
             1f + Mathf.Max(-90f, _characterStats?.AttackSpeed ?? 0f) * PERCENT_MULTIPLIER;
         float cooldownReductionMultiplier =
             1f - Mathf.Clamp(_characterStats?.CooldownReduction ?? 0f, 0f, CooldownReductionCap) * PERCENT_MULTIPLIER;
         attackSpeedMultiplier *= Mathf.Max(0.01f, _characterStats?.RelicAttackSpeedMultiplier ?? 1f);
-        CurrentCooldown = Cooldown * cooldownReductionMultiplier / attackSpeedMultiplier;
+        return Cooldown * cooldownReductionMultiplier / attackSpeedMultiplier;
     }
 
     public override void OnEquip(CharacterStats characterStats)

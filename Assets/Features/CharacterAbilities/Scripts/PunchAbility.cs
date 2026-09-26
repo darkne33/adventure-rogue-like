@@ -149,6 +149,32 @@ public sealed class PunchAbility : CharacterActiveAbility
         };
     }
 
+    public override float CalculateEstimatedDps()
+    {
+        if (_configuration == null || _configuration.Prefab == null)
+            return 0f;
+
+        float seriesDamage = 0f;
+        for (int index = 0; index < PunchesPerSeries; index++)
+            seriesDamage += _damageCalculator.CalculateAverageDamage(GetPunchDamage(index));
+
+        float averageSeries = GetCurrentSeriesCount();
+        int series = Mathf.Max(1, Mathf.FloorToInt(averageSeries));
+        float extraSeriesChance = averageSeries - series;
+        float interval = Mathf.Lerp(GetEstimatedSeriesInterval(series),
+            GetEstimatedSeriesInterval(series + 1), extraSeriesChance);
+        return seriesDamage * averageSeries * GetCurrentSimultaneousAttackCount() /
+               Mathf.Max(0.01f, interval);
+    }
+
+    private float GetEstimatedSeriesInterval(int seriesCount)
+    {
+        float slots = Mathf.Min(seriesCount * (float)PunchesPerSeries, MaxSequentialPunchSlots);
+        float delay = Mathf.Max(0f, _configuration.PunchInterval) /
+                      Mathf.Max(0.01f, _characterStats.RelicAttackSpeedMultiplier);
+        return GetModifiedCooldown() + (slots - 1f) * delay;
+    }
+
     protected override bool IsReady(CharacterFacade character) =>
         _isAttacking == false &&
         character != null &&

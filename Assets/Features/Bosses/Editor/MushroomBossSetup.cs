@@ -87,7 +87,7 @@ namespace Features.Bosses.Editor
             {
                 var serialized = new SerializedObject(config);
                 Property(serialized, "DisplayName").stringValue = "Mushroom";
-                Property(serialized, "MaxHealth").intValue = 2200;
+                Property(serialized, "MaxHealth").intValue = 6000;
                 Property(serialized, "Exp").intValue = 25;
                 Property(serialized, "InitialAttackDelay").floatValue = 1.5f;
                 SetAsset(serialized, "HealthCanvasPrefab", healthCanvas);

@@ -130,6 +130,19 @@ public sealed class EarthRockAbility : CharacterActiveAbility
         };
     }
 
+    public override float CalculateEstimatedDps()
+    {
+        if (_configuration == null || _configuration.Prefab == null || _rotationSpeed <= 0f)
+            return 0f;
+
+        float speedMultiplier = Mathf.Max(0.01f, _characterStats.RelicAttackSpeedMultiplier);
+        float revolutionDuration = 360f / (_rotationSpeed * speedMultiplier);
+        float respawnDuration = Mathf.Max(0f, _configuration.RespawnDelay) / speedMultiplier;
+        // One contact per stone per revolution, limited by the stone's respawn time.
+        float hitInterval = Mathf.Max(0.01f, Mathf.Max(revolutionDuration, respawnDuration));
+        return _damageCalculator.CalculateAverageDamage(_damage) * Mathf.Max(1, _stoneCount) / hitInterval;
+    }
+
     protected override void OnUse(CharacterFacade character)
     {
         if (character == null || _configuration.Prefab == null)

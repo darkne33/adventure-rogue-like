@@ -46,6 +46,14 @@ public class CharacterAbilitySystem
         }
     }
 
+    public float CalculateEstimatedDps()
+    {
+        float dps = 0f;
+        foreach (CharacterActiveAbility ability in _activeAbilities.Values)
+            dps += Mathf.Max(0f, ability.CalculateEstimatedDps());
+        return dps;
+    }
+
     public void TickAbilities(CharacterFacade character)
     {
         foreach (CharacterActiveAbility ability in _activeAbilities.Values)

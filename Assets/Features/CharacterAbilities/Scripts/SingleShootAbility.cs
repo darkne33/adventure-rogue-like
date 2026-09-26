@@ -70,6 +70,45 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         _additionalProjectileCount = 0f;
     }
 
+    public override float CalculateEstimatedDps()
+    {
+        if (AbilityConfig == null || AbilityConfig.Prefab == null)
+            return 0f;
+
+        float averageCount = GetCurrentProjectileCount();
+        int count = Mathf.Max(1, Mathf.FloorToInt(averageCount));
+        float extraProjectileChance = averageCount - count;
+        // Average damage and cycle time separately: long volleys delay the next use.
+        float damage = GetEstimatedVolleyDamage(count);
+        float interval = GetEstimatedVolleyInterval(count);
+        if (extraProjectileChance > 0f)
+        {
+            damage = Mathf.Lerp(damage, GetEstimatedVolleyDamage(count + 1), extraProjectileChance);
+            interval = Mathf.Lerp(interval, GetEstimatedVolleyInterval(count + 1), extraProjectileChance);
+        }
+        return damage / Mathf.Max(0.01f, interval);
+    }
+
+    private float GetEstimatedVolleyDamage(int projectileCount)
+    {
+        int shots = Mathf.Max(1, ShotsPerProjectile);
+        int shotCount = shots > 1 ? shots : projectileCount;
+        float damage = 0f;
+        for (int index = 0; index < shotCount; index++)
+            damage += _damageCalculator.CalculateAverageDamage(GetProjectileDamage(index, shotCount));
+        // Multi-shot weapons split their damage across a series, not across bonus series.
+        return shots > 1 ? damage * projectileCount : damage;
+    }
+
+    private float GetEstimatedVolleyInterval(int projectileCount)
+    {
+        float launchDelay = Mathf.Max(0f, AbilityConfig.AdditionalProjectileLaunchDelay) /
+                            Mathf.Max(0.01f, _characterStats.RelicAttackSpeedMultiplier);
+        float duration = (projectileCount * (float)Mathf.Max(1, ShotsPerProjectile) - 1f) * launchDelay;
+        float cooldown = GetModifiedCooldown();
+        return StartCooldownImmediately ? Mathf.Max(cooldown, duration) : cooldown + duration;
+    }
+
     protected override bool IsReady(CharacterFacade character) =>
         _isLaunchingProjectiles == false &&
         base.IsReady(character);

@@ -13,9 +13,17 @@ namespace Features.Bosses.Scripts
         [field: SerializeField] public BossHealthCanvas HealthCanvasPrefab { get; private set; }
 
         [field: Header("Health and rewards")]
-        [field: SerializeField, Min(1)] public int MaxHealth { get; private set; } = 500;
+        [field: SerializeField, Min(1)]
+        [field: Tooltip("Base health at Base Dps. Runtime health is fixed once before combat.")]
+        public int MaxHealth { get; private set; } = 6000;
         [field: SerializeField, Min(0)] public int Exp { get; private set; } = 20;
         [field: SerializeField, Min(0f)] public float DeathFadeDuration { get; private set; } = 0.25f;
+
+        [field: Header("Health scaling by build DPS")]
+        [field: SerializeField, Min(0.01f)] public float BaseDps { get; private set; } = 100f;
+        [field: SerializeField, Range(0f, 1f)]
+        [field: Tooltip("HP = Max Health * (build DPS / Base Dps)^exponent. 0 is fixed HP; 1 fully matches DPS.")]
+        public float HealthScalingExponent { get; private set; } = 0.6f;
 
         [field: Header("Animation")]
         [field: SerializeField, Min(0f)]
@@ -36,6 +44,20 @@ namespace Features.Bosses.Scripts
         [field: Tooltip("The matching phase with the lowest health threshold supplies the attack pool. " +
                         "Use thresholds 100, 70 and 40 for three phases. Array order does not matter.")]
         public BossAttackPhase[] AttackPhases { get; private set; } = Array.Empty<BossAttackPhase>();
+
+        public int GetScaledMaxHealth(float estimatedDps)
+        {
+            int baseHealth = Mathf.Max(1, MaxHealth);
+            // Missing offensive abilities must not produce a boss with zero health.
+            if (estimatedDps <= 0f || float.IsNaN(estimatedDps))
+                return baseHealth;
+
+            double ratio = estimatedDps / (double)Mathf.Max(0.01f, BaseDps);
+            double health = baseHealth * Math.Pow(ratio, Mathf.Clamp01(HealthScalingExponent));
+            if (double.IsNaN(health))
+                return baseHealth;
+            return (int)Math.Max(1d, Math.Min(int.MaxValue, Math.Ceiling(health)));
+        }
 
         public BossAttackConfiguration[] GetAttacksForHealth(float healthPercentage)
         {

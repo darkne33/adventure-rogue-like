@@ -1,5 +1,6 @@
 using System;
 using Features.Enemies.Scripts;
+using Features.Relics.Scripts;
 using UnityEngine;
 
 namespace Features.Bosses.Scripts
@@ -9,15 +10,17 @@ namespace Features.Bosses.Scripts
         private readonly ICharacterProvider _characterProvider;
         private readonly IEnemiesProvider _enemiesProvider;
         private readonly CharacterStats _characterStats;
+        private readonly RelicManager _relicManager;
         private readonly GoldDropper _goldDropper;
         private readonly ExpDropper _expDropper;
 
         public BossSystemsFactory(ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
-            CharacterStats characterStats, GoldDropper goldDropper, ExpDropper expDropper)
+            CharacterStats characterStats, RelicManager relicManager, GoldDropper goldDropper, ExpDropper expDropper)
         {
             _characterProvider = characterProvider;
             _enemiesProvider = enemiesProvider;
             _characterStats = characterStats;
+            _relicManager = relicManager;
             _goldDropper = goldDropper;
             _expDropper = expDropper;
         }
@@ -44,7 +47,13 @@ namespace Features.Bosses.Scripts
                 meshRenderers, useWhiteHitFlash: true, hitColorOverride: Color.white);
             var deathSystem = new BossDeathSystem(facade, _enemiesProvider, character,
                 _characterStats, _goldDropper, _expDropper);
-            var healthSystem = new HealthSystem(Mathf.Max(1, configuration.MaxHealth),
+            // Split children receive their parent's health immediately after Initialize;
+            // never take another build snapshot during the same encounter.
+            int maxHealth = facade is MushroomBossFacade { IsSplitChild: true }
+                ? Mathf.Max(1, configuration.MaxHealth)
+                : configuration.GetScaledMaxHealth(character.CharacterAbilitySystem.CalculateEstimatedDps() *
+                    _relicManager.GetEstimatedBossDamageMultiplier());
+            var healthSystem = new HealthSystem(maxHealth,
                 facade.GetComponents<IHealthView>(), deathSystem, facade.GetComponents<IDamageView>());
             BossAttackSystem attackSystem = facade is MushroomBossFacade mushroom
                 ? new MushroomBossAttackSystem(mushroom, character)

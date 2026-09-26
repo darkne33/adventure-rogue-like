@@ -144,6 +144,21 @@ public sealed class FireFieldAbility : CharacterActiveAbility
         };
     }
 
+    public override float CalculateEstimatedDps()
+    {
+        if (_configuration == null || _configuration.Prefab == null)
+            return 0f;
+
+        float interval = Mathf.Max(0.05f, Mathf.Max(0.05f, _configuration.DamageTickInterval) /
+            Mathf.Max(0.01f, _characterStats.RelicAttackSpeedMultiplier));
+        float duration = Mathf.Max(0.1f, _configuration.FieldDuration * AbilityDurationMultiplier);
+        float fieldsPerSecond = Mathf.Max(0f, _characterStats.MovementSpeed) /
+                               Mathf.Max(0.1f, _distancePerField);
+        // A single maintained field on the target; overlapping fields and extra targets are excluded.
+        float uptime = Mathf.Clamp01(duration * fieldsPerSecond);
+        return _damageCalculator.CalculateAverageDamage(_damage) * uptime / interval;
+    }
+
     protected override void OnUse(CharacterFacade character)
     {
         if (character == null || _configuration.Prefab == null)
