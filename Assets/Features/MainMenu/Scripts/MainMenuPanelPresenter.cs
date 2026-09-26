@@ -84,7 +84,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
             _characterSelectionView.GetPortrait, _characterSelectionView.PortraitMaterial);
         _questsView.BackRequested += CloseQuests;
         _questsView.Hide();
-        _unlocksView = UnlocksPanelView.Create(Panel.UnlocksPanelPrefab, Panel.transform, _questService,
+        _unlocksView = UnlocksPanelView.Create(Panel.UnlocksPanelPrefab, Panel.transform, _container, _questService,
             _characterSelectionView.GetPortrait, _characterSelectionView.PortraitMaterial);
         _unlocksView.BackRequested += CloseUnlocks;
         _unlocksView.Hide();

@@ -68,12 +68,12 @@ The pool contains the original ten relics and these nine additions. Values are a
 
 | ID | Rarity / maximum stacks | Effect |
 | --- | --- | --- |
-| `soy_milk` | Uncommon / unique | Damage x0.25, attack frequency x4. |
+| `soy_milk` | Rare / unique | Damage x0.25, attack frequency x4. |
 | `polyphemus` | Rare / unique | Damage x3, attack frequency x0.45. |
 | `cupids_arrow` | Uncommon / unique | Flying projectiles pierce enemies. |
 | `rubber_cement` | Uncommon / 3 | Three additional enemy/wall ricochets per stack. With Cupid's Arrow, enemies are pierced and walls cause bounces. |
 | `explosivo` | Rare / 3 | 15% on-hit chance per stack. Attach a bomb for 1.2 seconds; blast damage is 24 per stack + 50% of the triggering hit, radius 2.5 m. Six charges per target, 64 globally. No player damage. |
-| `aquarius` | Uncommon / 3 | Moving in combat leaves a patch every meter, lasting 3 seconds; radius 0.85 m. Each patch deals 6 damage per stack every 0.4 seconds before modifiers. Maximum 12 live patches. |
+| `aquarius` | Rare / 3 | Moving in combat leaves a patch every meter, lasting 3 seconds; radius 0.85 m. Each patch deals 6 damage per stack every 0.4 seconds before modifiers. Maximum 12 live patches. |
 | `lump_of_coal` | Common / 5 | +6% damage per meter of actual projectile travel per stack, capped at +150%. Aquarius uses current owner-to-enemy distance instead. |
 | `sacrificial_dagger` | Rare / 3 | One orbiting dagger per stack; radius 2 m, 180 degrees/sec, base damage 12. Per-target hit interval 0.3 seconds before attack-speed modifiers. Blocks enemy projectiles. |
 | `money_equals_power` | Uncommon / 3 | +0.5% damage per currently held gold per stack, capped at +100%; spending gold reduces the bonus. |

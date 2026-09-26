@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using Zenject;
 
 namespace Features.Quests.Scripts
 {
@@ -43,9 +44,10 @@ namespace Features.Quests.Scripts
         public event Action BackRequested;
 
         public static UnlocksPanelView Create(UnlocksPanelView prefab, Transform parent,
-            QuestService service, Func<string, Sprite> getPortrait = null, Material portraitMaterial = null)
+            DiContainer container, QuestService service, Func<string, Sprite> getPortrait = null,
+            Material portraitMaterial = null)
         {
-            UnlocksPanelView view = Instantiate(prefab, parent, false);
+            UnlocksPanelView view = container.InstantiatePrefabForComponent<UnlocksPanelView>(prefab, parent);
             view.Initialize(service, getPortrait, portraitMaterial);
             return view;
         }

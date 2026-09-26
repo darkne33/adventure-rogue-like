@@ -55,6 +55,7 @@ namespace Features.Relics.Scripts
         private const string SpikyShieldAppliedKey = "spiky_shield_applied";
         private const string TurboSkatesAppliedKey = "turbo_skates_applied";
         private const float DefaultTeslaDamage = 12f;
+        private static readonly Color VenomBladeDamageColor = new Color32(140, 230, 75, 255);
 
         private readonly Dictionary<string, RelicRuntimeState> _temporaryModifierOwners = new();
         private readonly Dictionary<CombatTarget, int> _activeVenomBladePoisons = new();
@@ -538,7 +539,7 @@ namespace Features.Relics.Scripts
                     if (cancelled || target == null || target.IsDead)
                         return;
 
-                    int appliedDamage = target.HealthSystem.GetDamage(tickDamage);
+                    int appliedDamage = target.HealthSystem.GetDamage(tickDamage, damageColor: VenomBladeDamageColor);
                     if (appliedDamage <= 0)
                         continue;
 

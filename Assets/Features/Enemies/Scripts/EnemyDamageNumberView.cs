@@ -33,7 +33,7 @@ namespace Features.Enemies.Scripts
         private void LateUpdate() =>
             SyncRootTransform();
 
-        public void ShowDamage(int damage, float maximumHealth, bool isCritical)
+        public void ShowDamage(int damage, float maximumHealth, bool isCritical, Color? damageColor = null)
         {
             SyncRootTransform();
             DamageNumber number = GetNumber();
@@ -41,7 +41,7 @@ namespace Features.Enemies.Scripts
             number.Sequence?.Kill();
             number.Text.text = isCritical ? $"{damage}!" : damage.ToString();
             number.Text.fontSize = DAMAGE_NUMBER_FONT_SIZE;
-            number.Text.color = Color.white;
+            number.Text.color = damageColor ?? Color.white;
             number.Text.outlineColor = TextOutlineColor;
             number.CanvasGroup.alpha = 1f;
 

@@ -18,6 +18,10 @@ Saved asset: `Sprites/soy_milk.png`.
 
 Generation source: `exec-7aad60d9-73a7-4745-ae81-d058247932be.png`.
 
+Rare outline edit — 2026-09-26, built-in ImageGen. Replaced `Sprites/soy_milk.png` while preserving its `.meta` and GUID. Edit source: `exec-ebffc981-d889-4599-841c-1c84d1acd475.png`.
+
+Edit prompt: Use case: precise-object-edit. Asset type: existing pixel-art inventory icon for Little Rush. Input image 1 is the EDIT TARGET, Soy Milk. Perform only a localized color replacement: change the bright electric-blue outer rarity outline around the entire milk carton silhouette to vivid Rare purple (#D940FF), matching the Aquarius rarity outline. Keep the outline's exact width and blocky pixel shape. Preserve the cream milk carton, pale-blue side panel, golden soybean symbol, white milk-drop symbol, folded top, white highlights, dark inner outline, all interior shading, object geometry, exact placement, proportions and canvas framing. Do not recolor any interior details and do not redraw or redesign any element. Preserve the original pixel-art texture, original canvas dimensions and transparent background. No added text, objects, glow or background. Output a transparent PNG.
+
 ### explosivo
 
 One round charcoal-black sticky bomb with a short curved fuse ending in a bright orange spark and one orange-red band. Slightly lumpy tar-like bomb shape, warm red-orange highlights, purple outer pixel outline. No explosion surrounding it.
@@ -58,6 +62,10 @@ Saved asset: `Sprites/aquarius.png`.
 
 Generation source: `exec-bb0f0da1-daf1-4410-beff-ce17d0d1be2b.png`.
 
+Rare outline edit — 2026-09-26, built-in ImageGen. Replaced `Sprites/aquarius.png` while preserving its `.meta` and GUID. Edit source: `exec-ab1cf4da-37e4-45b8-8063-1c6bfbb939a8.png`.
+
+Edit prompt: Use case: precise-object-edit. Asset type: existing pixel-art inventory icon for Little Rush. Input image 1 is the EDIT TARGET, Aquarius. Perform only a localized color replacement: change the bright electric-blue outer rarity outline around the entire silhouette, including outline bordering the handle hole and other transparent gaps, to vivid Rare purple (#D940FF). Keep the outline's exact width and blocky pixel shape. Preserve the cobalt-blue jug, cyan water, white highlights, dark inner outline, all interior shading, object geometry, exact placement, proportions and canvas framing. Do not recolor the jug or water and do not redraw or redesign any element. Preserve the original pixel-art texture and transparent background and transparent negative space. Keep the source canvas dimensions. No added text, objects, glow or background. Output a transparent PNG.
+
 ### lump_of_coal
 
 One chunky faceted lump of dark charcoal coal, irregular jagged silhouette, dark blue-gray planes with a few crisp silvery highlights and subtle tiny orange ember cracks. Bright green outer pixel outline. Keep it clearly a coal rock, no scenery or flame cloud.
@@ -85,4 +93,3 @@ Generation source: `exec-f1d6d8af-e453-4bea-9016-5a6d78532a6a.png`.
 ## Import settings
 
 Single sprites, point sampling, mipmaps disabled, transparent alpha and no texture compression. Maximum imported texture size is 128 pixels. Pixels per unit equals each original PNG's width, keeping the full canvas one world unit wide despite the higher source resolution. Source PNGs are retained unchanged.
-

@@ -14,7 +14,7 @@ public sealed class CharacterDamageNumberView : MonoBehaviour, IDamageView
 
     private int _spawnIndex;
 
-    public void ShowDamage(int damage, float maximumHealth, bool isCritical)
+    public void ShowDamage(int damage, float maximumHealth, bool isCritical, Color? damageColor = null)
     {
         if (damage <= 0)
             return;
@@ -42,6 +42,8 @@ public sealed class CharacterDamageNumberView : MonoBehaviour, IDamageView
         }
 
         text.text = $"-{damage}";
+        if (damageColor.HasValue)
+            text.color = damageColor.Value;
         canvasGroup.alpha = 1f;
 
         int offsetIndex = _spawnIndex++ % 5;

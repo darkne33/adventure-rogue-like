@@ -33,7 +33,7 @@ public class HealthSystem
         UpdateViews();
     }
 
-    public int GetDamage(int damage, bool isCritical = false)
+    public int GetDamage(int damage, bool isCritical = false, UnityEngine.Color? damageColor = null)
     {
         if (_isDead || damage <= 0)
             return 0;
@@ -41,7 +41,7 @@ public class HealthSystem
         int appliedDamage = (int)Math.Ceiling(Math.Min(_currentHealth, damage));
         _currentHealth = Math.Max(0f, _currentHealth - appliedDamage);
         UpdateViews();
-        UpdateDamageViews(appliedDamage, isCritical);
+        UpdateDamageViews(appliedDamage, isCritical, damageColor);
 
         if (_currentHealth > 0)
             return appliedDamage;
@@ -93,12 +93,12 @@ public class HealthSystem
             healthView.UpdateHealth(_currentHealth, _maxHealth);
     }
 
-    private void UpdateDamageViews(int damage, bool isCritical)
+    private void UpdateDamageViews(int damage, bool isCritical, UnityEngine.Color? damageColor)
     {
         if (_damageViews == null)
             return;
 
         foreach (var damageView in _damageViews)
-            damageView.ShowDamage(damage, _maxHealth, isCritical);
+            damageView.ShowDamage(damage, _maxHealth, isCritical, damageColor);
     }
 }
