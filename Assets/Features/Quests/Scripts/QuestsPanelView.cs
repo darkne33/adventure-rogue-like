@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using Zenject;
 
 namespace Features.Quests.Scripts
 {
@@ -38,9 +39,10 @@ namespace Features.Quests.Scripts
         public event Action BackRequested;
 
         public static QuestsPanelView Create(QuestsPanelView prefab, Transform parent,
-            QuestService service, Func<string, Sprite> getPortrait = null, Material portraitMaterial = null)
+            DiContainer container, QuestService service, Func<string, Sprite> getPortrait = null,
+            Material portraitMaterial = null)
         {
-            QuestsPanelView view = Instantiate(prefab, parent, false);
+            QuestsPanelView view = container.InstantiatePrefabForComponent<QuestsPanelView>(prefab, parent);
             view.Initialize(service, getPortrait, portraitMaterial);
             return view;
         }
@@ -170,9 +172,9 @@ namespace Features.Quests.Scripts
             _detailCondition.text = row.Quest.Description;
             _detailReward.text = unlock != null
                 ? $"{RewardCategory(unlock.Category)} - {unlock.DisplayName}" : row.Quest.Title;
-            _detailSilver.text = row.Quest.SilverReward > 0
-                ? $"+{row.Quest.SilverReward} silver" + (_service.IsRewardClaimed(row.Quest.Id)
-                    ? " received" : _service.CanClaimReward(row.Quest.Id) ? " available" : string.Empty)
+            _detailSilver.text = row.Quest.SilverReward > 0 && !_service.IsRewardClaimed(row.Quest.Id)
+                ? $"+{row.Quest.SilverReward} silver" +
+                  (_service.CanClaimReward(row.Quest.Id) ? " available" : string.Empty)
                 : string.Empty;
             _claimButton.gameObject.SetActive(_service.CanClaimReward(row.Quest.Id));
             RefreshNavigation();

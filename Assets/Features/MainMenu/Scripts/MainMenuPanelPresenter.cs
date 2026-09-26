@@ -7,6 +7,7 @@ using Features.Sounds;
 using UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Zenject;
 
 public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
 {
@@ -14,6 +15,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
     private readonly RunRestartService _runRestartService;
     private readonly ISoundsService _soundsService;
     private readonly QuestService _questService;
+    private readonly DiContainer _container;
 
     private bool _playRequested;
     private bool _isCharacterSelectionOpen;
@@ -26,12 +28,14 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
     private UnlocksPanelView _unlocksView;
 
     public MainMenuPanelPresenter(ILeaderboardService leaderboardService,
-        RunRestartService runRestartService, ISoundsService soundsService, QuestService questService)
+        RunRestartService runRestartService, ISoundsService soundsService, QuestService questService,
+        DiContainer container)
     {
         _leaderboardService = leaderboardService;
         _runRestartService = runRestartService;
         _soundsService = soundsService;
         _questService = questService;
+        _container = container;
     }
 
     public override async UniTask Initialize()
@@ -76,7 +80,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         Panel.PlayButton.onClick.AddListener(OpenCharacterSelection);
         Panel.QuestsButton.onClick.AddListener(OpenQuests);
         Panel.UnlocksButton.onClick.AddListener(OpenUnlocks);
-        _questsView = QuestsPanelView.Create(Panel.QuestsPanelPrefab, Panel.transform, _questService,
+        _questsView = QuestsPanelView.Create(Panel.QuestsPanelPrefab, Panel.transform, _container, _questService,
             _characterSelectionView.GetPortrait, _characterSelectionView.PortraitMaterial);
         _questsView.BackRequested += CloseQuests;
         _questsView.Hide();

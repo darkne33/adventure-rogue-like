@@ -41,9 +41,9 @@ namespace Features.Quests.Scripts
             _background.color = index % 2 == 0 ? _baseColor : Color.Lerp(_baseColor, Color.white, 0.025f);
             bool completed = service.IsCompleted(quest.Id);
             _rewardAlert.SetActive(service.CanClaimReward(quest.Id));
-            _completedCheck.SetIsOnWithoutNotify(completed);
+            _completedCheck.SetIsOnWithoutNotify(service.IsRewardClaimed(quest.Id));
             _condition.text = quest.Description;
-            bool showProgress = quest.Target > 1;
+            bool showProgress = quest.Target > 1 && !service.IsRewardClaimed(quest.Id);
             _progressRoot.SetActive(showProgress);
             Vector2 conditionRight = _conditionAnchorMax;
             if (!showProgress)
