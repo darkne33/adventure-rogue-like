@@ -17,11 +17,14 @@ namespace Features.Quests.Scripts
         [SerializeField] private RectTransform _totalProgressFill;
         [SerializeField] private UnityEngine.UI.ScrollRect _scroll;
         [SerializeField] private TMP_Text _emptyLabel;
+        [SerializeField] private UnityEngine.UI.Image _detailBackground;
+        [SerializeField] private Color _detailClaimedColor = new Color32(54, 179, 140, 255);
         [SerializeField] private GameObject _detailIconFrame;
         [SerializeField] private UnityEngine.UI.Image _detailIcon;
         [SerializeField] private TMP_Text _detailCondition;
         [SerializeField] private TMP_Text _detailReward;
         [SerializeField] private TMP_Text _detailSilver;
+        [SerializeField] private GameObject _detailReceived;
         [SerializeField] private UnityEngine.UI.Button _claimButton;
         [SerializeField] private QuestRowView _rowPrefab;
 
@@ -30,6 +33,7 @@ namespace Features.Quests.Scripts
         private ProgressionMenuUi _ui;
         private Func<string, Sprite> _getPortrait;
         private Material _portraitMaterial;
+        private Color _detailDefaultColor;
         private QuestDefinition _selected;
         private bool _hideCompleted;
         private bool _isOpen;
@@ -53,6 +57,8 @@ namespace Features.Quests.Scripts
             _service = service;
             _getPortrait = getPortrait;
             _portraitMaterial = portraitMaterial;
+            _detailDefaultColor = _detailBackground.color;
+            _detailReceived.SetActive(false);
             _ui = new ProgressionMenuUi(service.Configuration, getPortrait, portraitMaterial);
             _closeButton.onClick.AddListener(RequestBack);
             _hideCompletedButton.onClick.AddListener(ToggleHideCompleted);
@@ -134,6 +140,8 @@ namespace Features.Quests.Scripts
             else
             {
                 _selected = null;
+                _detailBackground.color = _detailDefaultColor;
+                _detailReceived.SetActive(false);
                 _emptyLabel.text = _hideCompleted && _service.TotalCount > 0
                     ? "All quests completed!" : "No quests available.";
                 _detailIconFrame.SetActive(false);
@@ -158,6 +166,9 @@ namespace Features.Quests.Scripts
         {
             _selected = row.Quest;
             bool complete = _service.IsCompleted(row.Quest.Id);
+            bool rewardClaimed = _service.IsRewardClaimed(row.Quest.Id);
+            _detailBackground.color = rewardClaimed ? _detailClaimedColor : _detailDefaultColor;
+            _detailReceived.SetActive(rewardClaimed);
             UnlockDefinition unlock = _service.GetUnlockForQuest(row.Quest.Id);
             _detailIconFrame.SetActive(true);
             if (unlock != null)
@@ -172,7 +183,7 @@ namespace Features.Quests.Scripts
             _detailCondition.text = row.Quest.Description;
             _detailReward.text = unlock != null
                 ? $"{RewardCategory(unlock.Category)} - {unlock.DisplayName}" : row.Quest.Title;
-            _detailSilver.text = row.Quest.SilverReward > 0 && !_service.IsRewardClaimed(row.Quest.Id)
+            _detailSilver.text = row.Quest.SilverReward > 0 && !rewardClaimed
                 ? $"+{row.Quest.SilverReward} silver" +
                   (_service.CanClaimReward(row.Quest.Id) ? " available" : string.Empty)
                 : string.Empty;
