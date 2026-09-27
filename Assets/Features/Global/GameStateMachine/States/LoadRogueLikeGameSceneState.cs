@@ -75,7 +75,7 @@ namespace Core
                     }, cancellationToken);
 
                 await presenter.WaitForPlay(cancellationToken);
-                await _loadingScreenService.Play(
+                await _loadingScreenService.PlayPixelated(
                     async () =>
                     {
                         await _panelService.HidePanelForce(PanelName.MainMenuPanel);

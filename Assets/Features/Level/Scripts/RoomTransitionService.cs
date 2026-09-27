@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UI;
@@ -19,6 +20,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
         private const float DefaultBeforeRevealDelay = 0.08f;
 
         private readonly IPanelService _panelService;
+        private readonly ILoadingScreenService _loadingScreenService;
 
         private RoomTransitionPanel _panel;
         private Material _irisMaterial;
@@ -28,9 +30,10 @@ namespace Features.Enemies.Scripts.Level.Scripts
 
         public bool IsPlaying { get; private set; }
 
-        public RoomTransitionService(IPanelService panelService)
+        public RoomTransitionService(IPanelService panelService, ILoadingScreenService loadingScreenService)
         {
             _panelService = panelService;
+            _loadingScreenService = loadingScreenService;
         }
 
         public UniTask Play(Func<UniTask> hiddenAction, Action beforeReveal = null) =>
@@ -46,6 +49,36 @@ namespace Features.Enemies.Scripts.Level.Scripts
         public UniTask PlaySolidFade(Func<UniTask> hiddenAction, float hiddenActionPadding,
             Action beforeReveal = null) =>
             PlaySolidFadeInternal(hiddenAction, hiddenActionPadding, beforeReveal);
+
+        public async UniTask PlayPixelated(Func<UniTask> hiddenAction, Action beforeReveal = null,
+            bool showLoading = false, CancellationToken cancellationToken = default)
+        {
+            if (hiddenAction == null)
+                throw new ArgumentNullException(nameof(hiddenAction));
+
+            if (IsPlaying)
+                return;
+
+            cancellationToken.ThrowIfCancellationRequested();
+            IsPlaying = true;
+
+            try
+            {
+                await _loadingScreenService.PlayPixelated(
+                    async () =>
+                    {
+                        await hiddenAction();
+                        // Keep the existing settling time for the camera and room UI.
+                        await UniTask.Delay(TimeSpan.FromSeconds(DefaultBeforeRevealDelay),
+                            ignoreTimeScale: true, cancellationToken: cancellationToken);
+                    },
+                    beforeReveal, cancellationToken, showLoading);
+            }
+            finally
+            {
+                IsPlaying = false;
+            }
+        }
 
         private async UniTask PlayInternal(Func<UniTask> hiddenAction, Action beforeReveal,
             bool showLoading, float beforeRevealDelay)
@@ -243,5 +276,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
         UniTask PlayLoading(Func<UniTask> hiddenAction, Action beforeReveal = null);
         UniTask PlaySolidFade(Func<UniTask> hiddenAction, float hiddenActionPadding,
             Action beforeReveal = null);
+        UniTask PlayPixelated(Func<UniTask> hiddenAction, Action beforeReveal = null,
+            bool showLoading = false, CancellationToken cancellationToken = default);
     }
 }

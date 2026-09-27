@@ -144,9 +144,11 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         try
         {
             character?.SetTransitionPaused(true);
-            await _roomTransitionService.PlayLoading(
+            await _roomTransitionService.PlayPixelated(
                 () => ReplaceLevel(nextLevelIndex),
-                () => character?.SetTransitionPaused(false));
+                () => character?.SetTransitionPaused(false),
+                showLoading: true,
+                cancellationToken: character != null ? character.GetCancellationTokenOnDestroy() : default);
         }
         finally
         {
