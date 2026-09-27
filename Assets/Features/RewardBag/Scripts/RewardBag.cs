@@ -43,6 +43,7 @@ namespace Features.RewardBag
         private CharacterWallet _characterWallet;
         private LevelView _level;
         private bool _canDropGuaranteedKey;
+        private bool _dropGuaranteedHeart;
         private Action _collectedCallback;
         private bool _isReady;
         private bool _isOpened;
@@ -55,12 +56,13 @@ namespace Features.RewardBag
         }
 
         public void Construct(ICharacterProvider characterProvider, CharacterWallet characterWallet,
-            LevelView level, bool canDropGuaranteedKey, Action collectedCallback)
+            LevelView level, bool canDropGuaranteedKey, bool dropGuaranteedHeart, Action collectedCallback)
         {
             _characterProvider = characterProvider;
             _characterWallet = characterWallet;
             _level = level;
             _canDropGuaranteedKey = canDropGuaranteedKey;
+            _dropGuaranteedHeart = dropGuaranteedHeart;
             _collectedCallback = collectedCallback;
             PlayBagDropAsync().Forget();
         }
@@ -128,7 +130,18 @@ namespace Features.RewardBag
             try
             {
                 RewardType rewardType = RollReward();
-                DropReward(rewardType, collectedCallback);
+                int pendingRewards = _dropGuaranteedHeart ? 2 : 1;
+                void OnRewardCollected()
+                {
+                    pendingRewards--;
+                    if (pendingRewards == 0)
+                        collectedCallback?.Invoke();
+                }
+
+                DropReward(rewardType, OnRewardCollected);
+                if (_dropGuaranteedHeart)
+                    DropReward(RewardType.Heart, OnRewardCollected);
+
                 if (rewardType == RewardType.Key)
                     _level?.MarkKeyRewardDropped();
 

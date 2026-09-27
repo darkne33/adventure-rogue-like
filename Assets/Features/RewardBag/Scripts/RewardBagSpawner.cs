@@ -56,7 +56,7 @@ namespace Features.RewardBag
 
             AlignBottomToGround(bagObject, groundPoint.y);
             rewardBag.Construct(_characterProvider, _characterWallet, level,
-                level.RegisterRewardBagForGuaranteedKey(),
+                level.RegisterRewardBagForGuaranteedKey(), roomData is BossRoomData,
                 () => RewardCollected?.Invoke(roomData));
             return true;
         }
