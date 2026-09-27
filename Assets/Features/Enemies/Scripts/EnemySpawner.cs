@@ -25,7 +25,10 @@ public class EnemySpawner
     private CharacterFacade _activeCharacter;
     private int _spawnedEnemiesInCurrentRoom;
     private int _allEnemiesInCurrentRoom;
-    private int _waveEnemyCount;
+    private int[] _waveEnemyCounts;
+    private int _waveIndex;
+    private int _waveSpawnTarget;
+    private int _waveReinforcementThreshold;
     private int _pendingEnemySpawnCount;
     private int _spawnGeneration;
     private EnemyRoomScalingConfiguration _roomBalance;
@@ -102,10 +105,14 @@ public class EnemySpawner
         if (_roomBalance == null)
             throw new System.InvalidOperationException("Enemy room balance configuration is missing.");
 
+        int levelIndex = _rogueLikeRuntimeDataService.CurrentIndexLevel;
         _roomProgressIndex = _levelsConfiguration.GetCombatProgressIndex(
-            _rogueLikeRuntimeDataService.CurrentIndexLevel, currentLevel, currentRoomData);
-        _waveEnemyCount = _roomBalance.GetStartEnemyCount(_roomProgressIndex);
+            levelIndex, currentLevel, currentRoomData);
         _allEnemiesInCurrentRoom = _roomBalance.GetAllEnemyCount(_roomProgressIndex);
+        _waveEnemyCounts = _roomBalance.CreateWaveEnemyCounts(levelIndex, _roomProgressIndex);
+        _waveIndex = 0;
+        _waveSpawnTarget = _waveEnemyCounts[0];
+        _waveReinforcementThreshold = _roomBalance.GetWaveReinforcementThreshold(_waveEnemyCounts[0]);
         _activeRoomData = currentRoomData;
         _activeCharacter = characterFacade;
         _spawnedEnemiesInCurrentRoom = 0;
@@ -116,7 +123,7 @@ public class EnemySpawner
         SelectRoomEnemyRules(configuration, levelSettings.EnemyFactoryConfiguration);
         _isRoomSpawningActive = true;
 
-        int initialEnemyCount = Mathf.Min(_waveEnemyCount, _allEnemiesInCurrentRoom);
+        int initialEnemyCount = _waveEnemyCounts[0];
         List<EnemyType> enemyTypes = BuildSpawnQueue(initialEnemyCount);
         Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
         SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes, characterFacade, spawnImmediately: true);
@@ -173,10 +180,21 @@ public class EnemySpawner
             return;
         }
 
-        if (activeEnemyCount > _roomBalance.GetReinforcementThreshold(_roomProgressIndex))
+        if (activeEnemyCount > _waveReinforcementThreshold)
             return;
 
-        int spawnCount = Mathf.Min(_waveEnemyCount - activeEnemyCount, remainingEnemyCount);
+        if (_spawnedEnemiesInCurrentRoom >= _waveSpawnTarget &&
+            _waveIndex + 1 < _waveEnemyCounts.Length)
+        {
+            _waveIndex++;
+            _waveSpawnTarget += _waveEnemyCounts[_waveIndex];
+            _waveReinforcementThreshold =
+                _roomBalance.GetWaveReinforcementThreshold(_waveEnemyCounts[_waveIndex]);
+        }
+
+        // Count new enemies in this wave independently of survivors from earlier waves.
+        // A partial queue caused by enemy-type limits still belongs to the same wave.
+        int spawnCount = Mathf.Min(_waveSpawnTarget - _spawnedEnemiesInCurrentRoom, remainingEnemyCount);
 
         int spawnedEnemyCount = TrySpawnAdditionalEnemies(_activeCharacter, spawnCount);
         if (_pendingEnemySpawnCount == 0 &&
@@ -433,7 +451,7 @@ public class EnemySpawner
                               (_spawnedEnemiesInCurrentRoom + i + 1) - spawned;
                 // Introduce each selected behaviour once in the opening group.
                 if (spawned == 0)
-                    score += _waveEnemyCount;
+                    score += _allEnemiesInCurrentRoom;
                 if (score <= bestScore)
                     continue;
                 selected = rule;

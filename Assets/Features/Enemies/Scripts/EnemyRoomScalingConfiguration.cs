@@ -10,7 +10,14 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     [SerializeField] private int[] _totalEnemies = { 2, 3, 4, 5, 7, 9, 6, 10, 12, 8, 12, 15, 10, 13, 15 };
     [Tooltip("Maximum simultaneous enemies for a Small room. Larger groups use Medium rooms.")]
     [SerializeField, Min(1)] private int _maxEnemiesInSmallRoom = 8;
-    [SerializeField, Range(0f, 0.5f)] private float _reinforcementRemainingFraction = 0.25f;
+    [Header("Combat Waves")]
+    [Tooltip("First one-based level where combat rooms can use three waves.")]
+    [SerializeField, Min(1)] private int _firstWaveLevel = 2;
+    [SerializeField, Range(0f, 100f)] private float _waveRoomChancePercent = 50f;
+    [Tooltip("Relative sizes of three waves, scaled to preserve the room's total enemy count.")]
+    [SerializeField] private Vector3Int[] _wavePatterns = { new(4, 5, 4), new(3, 7, 3) };
+    [Tooltip("Inclusive range of surviving enemies that triggers the next wave.")]
+    [SerializeField] private Vector2Int _waveRemainingEnemiesRange = new(1, 2);
     [Tooltip("Maximum enemies prepared and spawned in one group of a wave.")]
     [SerializeField, Min(1)] private int _spawnBatchSize = 10;
     [Tooltip("Delay between spawn groups in seconds of game time.")]
@@ -35,14 +42,40 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     public bool UsesSmallRoom(int roomIndex) =>
         GetStartEnemyCount(roomIndex) <= Mathf.Max(1, _maxEnemiesInSmallRoom);
 
+    public int[] CreateWaveEnemyCounts(int levelIndex, int roomIndex)
+    {
+        int totalEnemies = GetAllEnemyCount(roomIndex);
+        float waveChance = Mathf.Clamp01(_waveRoomChancePercent / 100f);
+        if (levelIndex + 1 < Mathf.Max(1, _firstWaveLevel) || totalEnemies < 3 ||
+            _wavePatterns == null || _wavePatterns.Length == 0 || waveChance <= 0f ||
+            (waveChance < 1f && UnityEngine.Random.value >= waveChance))
+            return new[] { totalEnemies };
+
+        Vector3Int pattern = _wavePatterns[UnityEngine.Random.Range(0, _wavePatterns.Length)];
+        float firstWeight = Mathf.Max(1, pattern.x);
+        float middleWeight = Mathf.Max(1, pattern.y);
+        float lastWeight = Mathf.Max(1, pattern.z);
+        float totalWeight = firstWeight + middleWeight + lastWeight;
+        int firstWave = Mathf.Clamp(Mathf.RoundToInt(totalEnemies * firstWeight / totalWeight),
+            1, totalEnemies - 2);
+        int lastWave = Mathf.Clamp(Mathf.RoundToInt(totalEnemies * lastWeight / totalWeight),
+            1, totalEnemies - firstWave - 1);
+        return new[] { firstWave, totalEnemies - firstWave - lastWave, lastWave };
+    }
+
+    public int GetWaveReinforcementThreshold(int waveEnemyCount)
+    {
+        int minimum = Mathf.Clamp(_waveRemainingEnemiesRange.x, 1, 2);
+        int maximum = Mathf.Clamp(_waveRemainingEnemiesRange.y, minimum, 2);
+        int threshold = UnityEngine.Random.Range(minimum, maximum + 1);
+        // Even a small wave must lose an enemy before the next wave can start.
+        return Mathf.Min(threshold, Mathf.Max(0, waveEnemyCount - 1));
+    }
+
     public bool IsSpecialistRoom(int roomIndex) => roomIndex >= 3 && roomIndex % 3 == 0;
     public bool IsSwarmRoom(int roomIndex) => roomIndex < 2 || roomIndex % 3 == 1;
     public int GetSpecialTypeLimit(int roomIndex) => roomIndex < 3 ? 1 : roomIndex < 6 ? 2 : 3;
     public int GetRangedLimit(int roomIndex) => roomIndex < 6 ? 2 : roomIndex < 9 ? 5 : 8;
-    public int GetReinforcementThreshold(int roomIndex) => IsSpecialistRoom(roomIndex)
-        ? 0
-        : Mathf.FloorToInt(GetStartEnemyCount(roomIndex) * _reinforcementRemainingFraction);
-
     public int GetEliteLimit(int roomIndex) =>
         roomIndex + 1 >= _firstEliteRoom &&
         (roomIndex + 1 - _firstEliteRoom) % Mathf.Max(1, _eliteRoomInterval) == 0

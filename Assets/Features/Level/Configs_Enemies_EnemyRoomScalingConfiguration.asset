@@ -14,7 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyRoomScalingConfiguration
   _startingEnemies: 020000000300000004000000050000000700000009000000060000000a0000000c000000080000000c0000000f0000000a0000000d0000000f000000
   _totalEnemies: 020000000300000004000000050000000700000009000000060000000a0000000c000000080000000c0000000f0000000a0000000d0000000f000000
-  _reinforcementRemainingFraction: 0.25
+  _firstWaveLevel: 2
+  _waveRoomChancePercent: 50
+  _wavePatterns:
+  - {x: 4, y: 5, z: 4}
+  - {x: 3, y: 7, z: 3}
+  _waveRemainingEnemiesRange: {x: 1, y: 2}
   _spawnBatchSize: 10
   _spawnBatchDelay: 1
   _maxEnemiesInSmallRoom: 8
