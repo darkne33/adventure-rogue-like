@@ -39,6 +39,9 @@ public class CharacterAbilityChoiceProvider : IAbilityChoiceProvider
                 case AbilityName.Punch:
                     CreateAbility<PunchAbility>(abilityConfig, abilityConfig.AbilityName);
                     break;
+                case AbilityName.Aura:
+                    CreateAbility<AuraAbility>(abilityConfig, abilityConfig.AbilityName);
+                    break;
                 case AbilityName.AbilityDurationScroll:
                     CreateAbility<CharacterScrollAbilityDurationAbility>(abilityConfig, abilityConfig.AbilityName);
                     break;

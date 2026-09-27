@@ -28,13 +28,11 @@ public class LevelView : MonoBehaviour
     [Header("Key Room Spawning")]
     [Tooltip("Prefab spawned at the point configured in DefaultEnemiesRoomData.")]
     [SerializeField] private GameObject _keyRoomPrefab;
-    [Tooltip("Chance for each eligible combat room after the start-progress threshold. " +
-             "The last remaining candidate is forced if no Key_Room has spawned.")]
-    [SerializeField, Range(0f, 100f)] private float _keyRoomSpawnChancePercent = 50f;
-    [Tooltip("Percent of unique non-start rooms that must be visited before spawning can begin.")]
+
+    [Header("Key Reward Timing")]
+    [Tooltip("Level progress used to schedule guaranteed key rewards. " +
+             "Key_Room always spawns in rooms where CanSpawnKeyRoom is enabled.")]
     [SerializeField, Range(0f, 100f)] private float _keyRoomStartProgressPercent = 50f;
-    [Tooltip("Number of newly visited rooms skipped after a successful Key_Room spawn.")]
-    [SerializeField, Min(0)] private int _roomsBetweenKeyRoomSpawns = 2;
 
     public Room StartRoomPrefab => GetRoomNode(RoomType.Start).RoomPrefab;
     public Room StartRoom => GetRoomNode(RoomType.Start).Room;
@@ -47,8 +45,6 @@ public class LevelView : MonoBehaviour
     private DiContainer _container;
     private bool _isInitialized;
     private int _visitedNonStartRooms;
-    private int _spawnedKeyRooms;
-    private int _roomsUntilNextKeyRoomChance;
     private int _spawnedRewardBags;
     private int _guaranteedKeyRewardBagNumber;
 
@@ -833,21 +829,6 @@ public class LevelView : MonoBehaviour
 
         _visitedNonStartRooms++;
 
-        if (_roomsUntilNextKeyRoomChance > 0)
-        {
-            _roomsUntilNextKeyRoomChance--;
-            return false;
-        }
-
-        int nonStartRoomCount = _rooms.Count(roomNode =>
-            roomNode != null && roomNode.Type != RoomType.Start);
-        if (nonStartRoomCount == 0)
-            return false;
-
-        float levelProgress = (float)_visitedNonStartRooms / nonStartRoomCount;
-        if (levelProgress < Mathf.Clamp01(_keyRoomStartProgressPercent / 100f))
-            return false;
-
         if (roomData is not DefaultEnemiesRoomData enemiesRoomData ||
             !enemiesRoomData.CanSpawnKeyRoom)
         {
@@ -855,33 +836,9 @@ public class LevelView : MonoBehaviour
         }
 
         ValidateKeyRoomSpawnPoint(room.name, enemiesRoomData);
-
-        bool mustGuaranteeFirstSpawn = _spawnedKeyRooms == 0 &&
-                                       !HasUnvisitedKeyRoomCandidate();
-        if (!mustGuaranteeFirstSpawn && !PassedKeyRoomSpawnChance())
-            return false;
-
         SpawnKeyRoom(room, enemiesRoomData.KeyRoomSpawnPoint, entryDoor);
-        _spawnedKeyRooms++;
-        _roomsUntilNextKeyRoomChance = Mathf.Max(0, _roomsBetweenKeyRoomSpawns);
         return true;
     }
-
-    private bool PassedKeyRoomSpawnChance()
-    {
-        float chance = Mathf.Clamp01(_keyRoomSpawnChancePercent / 100f);
-        return chance >= 1f || chance > 0f && UnityEngine.Random.value < chance;
-    }
-
-    private bool HasUnvisitedKeyRoomCandidate() =>
-        _rooms.Any(roomNode =>
-        {
-            if (roomNode?.Room?.RoomData is not DefaultEnemiesRoomData roomData)
-                return false;
-
-            return roomData.CanSpawnKeyRoom &&
-                   !_keyRoomVisitedRooms.Contains(roomData);
-        });
 
     private void SpawnKeyRoom(Room room, Transform spawnPoint, RoomDoor entryDoor)
     {
@@ -977,8 +934,6 @@ public class LevelView : MonoBehaviour
     {
         _keyRoomVisitedRooms.Clear();
         _visitedNonStartRooms = 0;
-        _spawnedKeyRooms = 0;
-        _roomsUntilNextKeyRoomChance = 0;
 
         if (StartRoom?.RoomData != null)
             _keyRoomVisitedRooms.Add(StartRoom.RoomData);

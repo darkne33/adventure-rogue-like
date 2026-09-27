@@ -26,7 +26,7 @@ public class RoomData
 public class DefaultEnemiesRoomData : RoomData
 {
     [field: SerializeField]
-    [field: Tooltip("Allows Key_Room to spawn in this combat room.")]
+    [field: Tooltip("Always spawns Key_Room on the first visit to this combat room.")]
     public bool CanSpawnKeyRoom { get; private set; }
 
     [field: SerializeField]

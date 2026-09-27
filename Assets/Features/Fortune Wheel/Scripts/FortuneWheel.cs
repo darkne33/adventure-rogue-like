@@ -453,16 +453,10 @@ namespace Features.FortuneWheel
             List<RelicDefinition> candidates = GetRelicCandidates(rarity,
                 _relicPool.GetAvailable(_relicManager?.ActiveRelics, selectedRelicIds));
 
-            // The wheel may offer locked relics when the player has no eligible
-            // unlocked option of this rarity. This does not unlock the collection entry.
+            // Repeated offers still require ownership; the wheel never bypasses a purchase.
             if (candidates.Count == 0)
                 candidates = GetRelicCandidates(rarity,
-                    _relicPool.GetAvailable(_relicManager?.ActiveRelics, selectedRelicIds,
-                        includeLocked: true));
-
-            if (candidates.Count == 0)
-                candidates = GetRelicCandidates(rarity,
-                    _relicPool.GetAvailable(_relicManager?.ActiveRelics, includeLocked: true));
+                    _relicPool.GetAvailable(_relicManager?.ActiveRelics));
 
             return candidates.Count > 0
                 ? candidates[UnityEngine.Random.Range(0, candidates.Count)]

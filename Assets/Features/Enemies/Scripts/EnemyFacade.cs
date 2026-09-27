@@ -20,6 +20,7 @@ namespace Features.Enemies.Scripts
         public bool IsStopped => _navMeshAgent != null && _navMeshAgent.isActiveAndEnabled &&
                                  _navMeshAgent.isOnNavMesh ? _navMeshAgent.isStopped : _isStopped;
         public bool IsAggro { get; private set; }
+        public bool IsRelicStunned => _isRelicStunned;
         public bool CanAttack => _movementSystem?.CanAttack != false && _isRelicStunned == false;
         public override float RelicTimeScale => _isRelicStunned
             ? 0f

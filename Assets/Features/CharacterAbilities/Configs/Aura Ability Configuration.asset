@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe9b5d1ae73247d2b5e590964511e785, type: 3}
+  m_Name: Aura Ability Configuration
+  m_EditorClassIdentifier: Assembly-CSharp::AuraAbilityConfiguration
+  <AbilityName>k__BackingField: 21
+  DisplayName: Aura
+  Description: Continuously surrounds you with a green aura that damages every nearby enemy each tick.
+  <Icon>k__BackingField: {fileID: 21300000, guid: 788b251348b8463297b9c9858c291e82, type: 3}
+  <Prefab>k__BackingField: {fileID: 100000, guid: 90d0d06a31de459080debf5410c7ae13, type: 3}
+  <DamageRadius>k__BackingField: 2.5
+  <DamageHeight>k__BackingField: 2.5
+  <DamageTickInterval>k__BackingField: 0.5
+  <MinimumTickInterval>k__BackingField: 0.15
+  <VisualBaseRadius>k__BackingField: 1
+  <VisualHeightOffset>k__BackingField: 0.05
+  <StartDamage>k__BackingField: 4
+  <DamageVariationPercent>k__BackingField: 20
+  <DamageUpgradeIncrease>k__BackingField: 2
+  <TickIntervalUpgradeReduction>k__BackingField: 0.05
+  <RadiusUpgradeIncrease>k__BackingField: 0.35

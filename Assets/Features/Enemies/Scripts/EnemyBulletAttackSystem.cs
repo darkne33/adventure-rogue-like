@@ -82,7 +82,8 @@ namespace Features.Enemies.Scripts
 
                 await _enemyFacade.EffectsSystem.CompleteAttackTelegraph(cancellationToken);
 
-                if (_enemyFacade.IsDead || _enemyFacade.CanAttack == false)
+                // Distance gates the start of the cast, not a shot already prepared.
+                if (_enemyFacade.IsDead || _enemyFacade.IsRelicStunned)
                     return;
 
                 RotateTowardsCharacter(enemyTransform, true);

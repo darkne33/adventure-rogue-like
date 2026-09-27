@@ -20,5 +20,6 @@
     FireField = 17,
     EarthRock = 18,
     BulletExplosion = 19,
-    Punch = 20
+    Punch = 20,
+    Aura = 21
 }

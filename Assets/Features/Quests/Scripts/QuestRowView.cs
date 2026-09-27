@@ -43,7 +43,7 @@ namespace Features.Quests.Scripts
             _rewardAlert.SetActive(service.CanClaimReward(quest.Id));
             _completedCheck.SetIsOnWithoutNotify(service.IsRewardClaimed(quest.Id));
             _condition.text = quest.Description;
-            bool showProgress = quest.Target > 1 && !service.IsRewardClaimed(quest.Id);
+            bool showProgress = quest.Target > 1 && !completed;
             _progressRoot.SetActive(showProgress);
             Vector2 conditionRight = _conditionAnchorMax;
             if (!showProgress)

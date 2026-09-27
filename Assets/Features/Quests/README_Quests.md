@@ -1,6 +1,6 @@
 # Demo quests and unlocks
 
-The demo contains 24 quests and 24 purchasable unlocks: 2 characters, 1 weapon, 8 scrolls and 13 relics. Six relics are available from the start. Completing a quest makes its associated unlock available for purchase; the player must spend persistent silver before the content becomes usable. QUESTS uses one scrollable list with a Hide completed filter; UNLOCKS uses category tabs and an eight-column grid. Both windows use the project's own sprites and a selected-entry detail panel.
+The demo contains 25 quests and 27 unlock catalog entries: 2 characters, 2 weapons, 8 scrolls and 15 relics. Six relics are available from the start. Completing a quest makes its associated unlock available for purchase; the player must spend persistent silver before the content becomes usable. QUESTS uses one scrollable list with a Hide completed filter; UNLOCKS uses category tabs and an eight-column grid. Both windows use the project's own sprites and a selected-entry detail panel.
 
 ## Configuration
 
@@ -11,7 +11,7 @@ Edit `Assets/Features/Quests/Configs/DemoProgressionConfiguration.asset` in the 
 - **Unlocks** contain a stable ID, category, character ID or ability/relic reference, required quest ID and silver cost. Optional name, description and icon override the referenced asset. `Unlocked By Default` can make an individual catalog entry immediately owned.
 - **Fallback Content Icons** contain currency and fallback portrait references. Character portraits also use the existing character-selection portrait cache. Window appearance is authored in prefabs.
 
-Keep quest and unlock IDs stable: saves refer to these IDs. Turbo Skates and Sacrificial Dagger retain their catalog entries and quest IDs, but are now owned from the start; their quests still award silver. Wallet and Lump of Coal are purchasable for 2 silver each without a quest requirement. Content absent from both the default arrays and the unlock catalog is excluded from normal demo selection and reward pools. The fortune wheel can offer a locked relic of the required rarity if eligible unlocked relics run out; winning it does not purchase its collection entry. Character-specific starting weapons remain upgradeable after selecting an owned character; character weapon exclusions still apply.
+Keep quest and unlock IDs stable: saves refer to these IDs. Turbo Skates and Sacrificial Dagger retain their catalog entries and quest IDs, but are now owned from the start; their quests still award silver. Wallet and Lump of Coal are purchasable for 2 silver each without a quest requirement. Content absent from both the default arrays and the unlock catalog is excluded from normal demo selection and reward pools. The fortune wheel only offers owned relics. It can repeat an eligible owned relic of the required rarity if distinct options run out; if no eligible owned relic exists, the slot shows the existing empty reward. Character-specific starting weapons remain upgradeable after selecting an owned character; character weapon exclusions still apply.
 
 ## Starting content
 
@@ -29,7 +29,7 @@ Bullet Explosion and Punch are their characters' signature weapons. They become 
 - Combat time counts only active, unfinished combat rooms. Pauses, transitions, cleared rooms and safe rooms do not advance it.
 - Boss victories count completed boss rooms, so a splitting boss grants one victory.
 - Collected gold includes gold already spent. Starting relics do not count as pickups.
-- Quest silver is collected once with CLAIM in QUESTS after the quest is completed. Viewing the quest does not claim its reward. Every positive silver gain in the run wallet is also credited to the persistent wallet immediately, including final pickup callbacks after death. Ending a run does not deposit the same silver again.
+- Completing a quest immediately makes its associated unlock purchasable in UNLOCKS. Buying it makes the content available in the game independently of CLAIM. Quest silver is an additional reward collected once with CLAIM in QUESTS after completion; claiming does not purchase content, and buying content does not claim the silver. Viewing the quest does not claim its reward. Every positive silver gain in the run wallet is also credited to the persistent wallet immediately, including final pickup callbacks after death. Ending a run does not deposit the same silver again.
 - Progress, completed quest IDs, purchased unlock IDs, claimed reward IDs, viewed unlock IDs and persistent silver are saved together under the existing PlayerPrefs key `little_rush.quests.v1` (payload version 3). Existing progress and balances are retained; completed quests from older saves are marked as claimed because their silver was already awarded automatically. Old completed quest IDs do not automatically count as purchases.
 - Completion, purchases and collected silver save immediately. Unfinished progress also saves periodically and at run/lifecycle boundaries.
 - `QuestService` is the ownership authority for character selection, upgrade offers and relic pools. A completed quest alone does not bypass the purchase requirement. The old relic-specific `UnlockQuestId` / `UnlockCost` fields are not the demo's purchase configuration.
@@ -43,6 +43,7 @@ Targets, quest silver rewards and purchase prices are editable in the configurat
 | run_kills_150 | Defeat 150 enemies in one run. | DUKE | 2 | 5 |
 | rooms_3 | Clear 3 combat rooms in one run. | MR POCKET | 2 | 8 |
 | weapon_5 | Raise any weapon to level 5 in one run. | Fire Trail | 2 | 3 |
+| aura_close_kills_50 | Defeat 50 enemies within 2 m of the character in one run. | Aura | 2 | 3 |
 | level_5 | Reach character level 5 in one run. | Max HP Scroll | 1 | 2 |
 | combat_120 | Spend 120 seconds in active combat in one run. | Movement Speed Scroll | 1 | 2 |
 | chests_1 | Open a relic chest. | Luck Scroll | 1 | 3 |
@@ -67,7 +68,7 @@ Targets, quest silver rewards and purchase prices are editable in the configurat
 | — | No quest requirement. | Wallet | — | 2 |
 | — | No quest requirement. | Lump of Coal | — | 2 |
 
-Quest categories follow their rewards: Characters for DUKE and MR POCKET, Weapons for Fire Trail, Scrolls for all eight scrolls and Relics for all thirteen purchasable relics. Fire Trail is the display name of the existing Fire Field ability asset (`AbilityName.FireField`).
+Quest categories follow their rewards: Characters for DUKE and MR POCKET, Weapons for Fire Trail and Aura, Scrolls for all eight scrolls and Relics for all thirteen relic quests. Fire Trail is the display name of the existing Fire Field ability asset (`AbilityName.FireField`). Aura (`AbilityName.Aura`) is shared by all characters and follows the normal quest-then-purchase flow.
 
 ## Relic challenge tracking
 
@@ -117,4 +118,4 @@ The former QUESTS `SilverBalance` belongs to `MainMenuPanel.prefab` and appears 
 
 ## Controls
 
-Mouse clicks select entries and UNLOCKS tabs; the mouse wheel scrolls without changing the selected quest or footer. Hide completed filters finished quests out of the list while keeping any unclaimed silver rewards visible. Select a completed quest and press CLAIM to collect its silver; the button is also reachable with keyboard/controller navigation. Navigation selects entries and keeps them visible; Escape/B or the close control returns to the main menu. Locked unlock entries show silhouettes; quest-complete entries show their price and a blue marker until first viewed; owned entries show their full-color icon. The detail panel shows the quest requirement, purchase action or owned state.
+Mouse clicks select entries and UNLOCKS tabs; the mouse wheel scrolls without changing the selected quest or footer. The quest checkbox is checked only after CLAIM collects its silver reward; its progress bar hides at completion independently of CLAIM. The reward marker stays visible until the additional silver is claimed. Quest details distinguish content available to buy in UNLOCKS, owned content, and silver available to claim or already claimed. Hide completed filters finished quests out of the list while keeping any unclaimed silver rewards visible. Select a completed quest and press CLAIM to collect its silver; the button is also reachable with keyboard/controller navigation. Navigation selects entries and keeps them visible; Escape/B or the close control returns to the main menu. Locked unlock entries show silhouettes; quest-complete entries show their price and a blue marker until first viewed; owned entries show their full-color icon. The detail panel shows the quest requirement, purchase action or owned state.

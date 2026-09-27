@@ -181,11 +181,17 @@ namespace Features.Quests.Scripts
                 _detailIcon.preserveAspect = true;
             }
             _detailCondition.text = row.Quest.Description;
-            _detailReward.text = unlock != null
-                ? $"{RewardCategory(unlock.Category)} - {unlock.DisplayName}" : row.Quest.Title;
-            _detailSilver.text = row.Quest.SilverReward > 0 && !rewardClaimed
+            if (unlock != null)
+            {
+                string unlockStatus = _service.IsOwned(unlock) ? "Owned"
+                    : complete ? "Buy in UNLOCKS" : RewardCategory(unlock.Category);
+                _detailReward.text = $"{unlockStatus} - {unlock.DisplayName}";
+            }
+            else
+                _detailReward.text = row.Quest.Title;
+            _detailSilver.text = row.Quest.SilverReward > 0
                 ? $"+{row.Quest.SilverReward} silver" +
-                  (_service.CanClaimReward(row.Quest.Id) ? " available" : string.Empty)
+                  (rewardClaimed ? " claimed" : complete ? " - CLAIM" : string.Empty)
                 : string.Empty;
             _claimButton.gameObject.SetActive(_service.CanClaimReward(row.Quest.Id));
             RefreshNavigation();

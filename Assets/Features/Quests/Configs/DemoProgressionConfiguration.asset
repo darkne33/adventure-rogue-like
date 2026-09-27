@@ -44,6 +44,13 @@ MonoBehaviour:
     _metric: 10
     _target: 5
     _silverReward: 2
+  - _id: aura_close_kills_50
+    _title: DANGER ZONE
+    _description: Defeat 50 enemies within 2 meters of your character in one run.
+    _category: 1
+    _metric: 22
+    _target: 50
+    _silverReward: 2
   - _id: level_5
     _title: GETTING STARTED
     _description: Reach character level 5 in one run.
@@ -232,6 +239,17 @@ MonoBehaviour:
     _icon: {fileID: 0}
     _unlockedByDefault: 0
     _requiredQuestId: weapon_5
+    _silverCost: 3
+  - _id: weapon_aura
+    _category: 1
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: e240ee70b698427db11bc312f815ff07, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: aura_close_kills_50
     _silverCost: 3
   - _id: scroll_max_hp
     _category: 2

@@ -43,7 +43,7 @@ namespace Features.Relics.Scripts
         }
 
         public IEnumerable<RelicDefinition> GetAvailable(IReadOnlyCollection<RelicRuntimeState> activeRelics,
-            IReadOnlyCollection<string> excludedIds = null, bool includeLocked = false)
+            IReadOnlyCollection<string> excludedIds = null)
         {
             HashSet<string> excluded = excludedIds != null
                 ? new HashSet<string>(excludedIds)
@@ -52,7 +52,7 @@ namespace Features.Relics.Scripts
             foreach (RelicDefinition relic in _configuration.Relics)
             {
                 if (relic == null || excluded.Contains(relic.Id) ||
-                    (includeLocked == false && _unlockService.IsUnlocked(relic) == false))
+                    _unlockService.IsUnlocked(relic) == false)
                     continue;
 
                 RelicRuntimeState owned = activeRelics?.FirstOrDefault(state => state.Definition == relic);
