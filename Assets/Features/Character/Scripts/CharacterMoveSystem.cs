@@ -48,6 +48,7 @@ public class CharacterMoveSystem
     private Vector3 _jumpInertiaVelocity;
 
     public bool IsGrounded => _isGrounded;
+    public Vector3 GroundNormal => _groundNormal;
 
     public CharacterMoveSystem(Rigidbody rigidbody,
         ICameraService cameraService, CharacterStats characterStats,
@@ -204,8 +205,15 @@ public class CharacterMoveSystem
     private void ApplyGroundStickForce()
     {
         // Move runs before Jump in FixedUpdate. Do not counteract a jump queued for this step.
-        if (_jumpInputBufferTimer > 0f)
+        if (_jumpInputBufferTimer > 0f || _rigidbody.isKinematic)
             return;
+
+        // Keep motion tangent to the support; let physics close any gap under the body.
+        // Moving the position here fights collision resolution and causes visible snapping.
+        Vector3 velocity = _rigidbody.linearVelocity;
+        float separationSpeed = Vector3.Dot(velocity, _groundNormal);
+        if (separationSpeed > 0f)
+            _rigidbody.linearVelocity = velocity - _groundNormal * separationSpeed;
 
         float stickAcceleration = Mathf.Max(0f, _characterStats.GroundStickAcceleration);
         if (stickAcceleration <= 0f)

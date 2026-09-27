@@ -38,7 +38,8 @@ public class CharacterFacade : MonoBehaviour
     [InjectOptional] private RelicManager _relicManager;
     [InjectOptional] private RelicEventBus _relicEventBus;
 
-    private const float MinGroundNormalY = 0.5f;
+    // Normals must point upward: slopes below 90 degrees, with a small floating-point tolerance.
+    private const float MinGroundNormalY = 0.00001f;
     private const float MaxGroundedVerticalSpeed = 0.1f;
     private const float GroundCheckDistance = 0.3f;
     private const float GroundProbeRadiusScale = 0.9f;
@@ -65,6 +66,8 @@ public class CharacterFacade : MonoBehaviour
     private Color[] _defaultOutlineColors;
     private Color _shieldOutlineColor = Color.blue;
     private bool _isShieldOutlineActive;
+    private bool _hasGroundContact;
+    private Vector3 _groundContactNormal;
     private readonly RaycastHit[] _groundProbeHits = new RaycastHit[GroundProbeHitCapacity];
 
     private bool IsControlLocked => _isTransitionPaused ||
@@ -117,6 +120,8 @@ public class CharacterFacade : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
+        RecordGroundContacts(collision);
+
         if (IsObstacleOrWall(collision.gameObject) == false)
             return;
 
@@ -126,6 +131,9 @@ public class CharacterFacade : MonoBehaviour
         if (HasWalkableContact(collision) == false)
             _moveSystem.ResetBunnyHopBonus();
     }
+
+    private void OnCollisionStay(Collision collision) =>
+        RecordGroundContacts(collision);
 
     public void Initialize()
     {
@@ -353,12 +361,16 @@ public class CharacterFacade : MonoBehaviour
     private void UpdateGroundedState()
     {
         bool hasGroundSurface = TryGetGroundSurface(out Vector3 groundNormal);
+        _hasGroundContact = false;
 
         float surfaceSeparationSpeed = hasGroundSurface
             ? Vector3.Dot(_rigidbody.linearVelocity, groundNormal)
             : float.PositiveInfinity;
+        // Jump clears IsGrounded. Reattach only while descending, even beside an uphill slope.
+        bool canLand = _rigidbody.linearVelocity.y <= MaxGroundedVerticalSpeed &&
+                       surfaceSeparationSpeed <= MaxGroundedVerticalSpeed;
         bool isGrounded = hasGroundSurface &&
-                          surfaceSeparationSpeed <= MaxGroundedVerticalSpeed;
+                          (_moveSystem.IsGrounded || canLand);
 
         _moveSystem.SetGrounded(isGrounded, hasGroundSurface ? groundNormal : Vector3.up);
 
@@ -368,10 +380,29 @@ public class CharacterFacade : MonoBehaviour
 
     private bool TryGetGroundSurface(out Vector3 groundNormal)
     {
+        if (_hasGroundContact)
+        {
+            groundNormal = _groundContactNormal;
+            return true;
+        }
+
         Bounds bounds = _collider.bounds;
+        float bodyRadius = Mathf.Min(bounds.extents.x, bounds.extents.z);
         float probeRadius = Mathf.Max(
             Physics.defaultContactOffset,
-            Mathf.Min(bounds.extents.x, bounds.extents.z) * GroundProbeRadiusScale);
+            bodyRadius * GroundProbeRadiusScale);
+
+        // A downward-only probe can miss almost vertical slopes. Follow the last support normal.
+        if (_moveSystem.IsGrounded)
+        {
+            Vector3 lowerSphereCenter = bounds.center -
+                                        Vector3.up * Mathf.Max(0f, bounds.extents.y - bodyRadius);
+            float surfaceProbeDistance = Mathf.Max(0f, bodyRadius - probeRadius) + GroundCheckDistance;
+            if (ProbeGroundSurface(lowerSphereCenter, probeRadius, -_moveSystem.GroundNormal,
+                    surfaceProbeDistance, out groundNormal))
+                return true;
+        }
+
         Vector3 probeOrigin = bounds.center;
 
         if (_pivotGroundChecker != null)
@@ -381,14 +412,20 @@ public class CharacterFacade : MonoBehaviour
         }
 
         float castDistance = Mathf.Max(0f, bounds.extents.y - probeRadius) + GroundCheckDistance;
+        return ProbeGroundSurface(probeOrigin, probeRadius, Vector3.down, castDistance, out groundNormal);
+    }
+
+    private bool ProbeGroundSurface(Vector3 origin, float radius, Vector3 direction,
+        float distance, out Vector3 groundNormal)
+    {
         int fallbackObstacleMask = _defaultLayer >= 0 ? 1 << _defaultLayer : 0;
         int groundProbeMask = _shadowLayer.value | fallbackObstacleMask;
         int hitCount = Physics.SphereCastNonAlloc(
-            probeOrigin,
-            probeRadius,
-            Vector3.down,
+            origin,
+            radius,
+            direction,
             _groundProbeHits,
-            castDistance,
+            distance,
             groundProbeMask,
             QueryTriggerInteraction.Ignore);
 
@@ -399,15 +436,50 @@ public class CharacterFacade : MonoBehaviour
         {
             RaycastHit hit = _groundProbeHits[i];
             if (hit.collider == null || hit.rigidbody == _rigidbody ||
-                IsGroundSurface(hit.collider) == false ||
-                hit.normal.y < MinGroundNormalY || hit.distance >= closestDistance)
+                IsGroundSurface(hit.collider) == false || hit.distance >= closestDistance ||
+                !TryGetGroundNormal(hit.collider, hit.point, hit.normal, out Vector3 surfaceNormal))
                 continue;
 
             closestDistance = hit.distance;
-            groundNormal = hit.normal.normalized;
+            groundNormal = surfaceNormal;
         }
 
         return closestDistance < float.PositiveInfinity;
+    }
+
+    private void RecordGroundContacts(Collision collision)
+    {
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            ContactPoint contact = collision.GetContact(i);
+            Collider surfaceCollider = contact.otherCollider;
+            if (surfaceCollider == null || IsGroundSurface(surfaceCollider) == false ||
+                !TryGetGroundNormal(surfaceCollider, contact.point, contact.normal, out Vector3 normal))
+                continue;
+
+            if (!_hasGroundContact || normal.y > _groundContactNormal.y)
+            {
+                _hasGroundContact = true;
+                _groundContactNormal = normal;
+            }
+        }
+    }
+
+    private static bool TryGetGroundNormal(Collider surfaceCollider, Vector3 point,
+        Vector3 contactNormal, out Vector3 groundNormal)
+    {
+        // Sphere casts can report a rounded edge normal. Read the actual face to reject walls.
+        float offset = Mathf.Max(Physics.defaultContactOffset, surfaceCollider.contactOffset) * 2f;
+        Ray ray = new(point + contactNormal * offset, -contactNormal);
+        if (surfaceCollider.Raycast(ray, out RaycastHit surfaceHit, offset * 2f) &&
+            surfaceHit.normal.y > MinGroundNormalY)
+        {
+            groundNormal = surfaceHit.normal.normalized;
+            return true;
+        }
+
+        groundNormal = Vector3.up;
+        return false;
     }
 
     private bool IsGroundSurface(Collider surfaceCollider)
@@ -431,7 +503,7 @@ public class CharacterFacade : MonoBehaviour
     {
         for (int i = 0; i < collision.contactCount; i++)
         {
-            if (collision.GetContact(i).normal.y >= MinGroundNormalY)
+            if (collision.GetContact(i).normal.y > MinGroundNormalY)
                 return true;
         }
 
