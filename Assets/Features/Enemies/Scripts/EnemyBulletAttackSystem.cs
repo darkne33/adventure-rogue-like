@@ -86,7 +86,7 @@ namespace Features.Enemies.Scripts
                     return;
 
                 RotateTowardsCharacter(enemyTransform, true);
-                SpawnProjectile(cancellationToken);
+                SpawnProjectiles(cancellationToken);
                 projectileReleased = true;
 
                 _enemyFacade.AnimationSystem.IdleAnimation();
@@ -165,7 +165,7 @@ namespace Features.Enemies.Scripts
             return offset.magnitude;
         }
 
-        private void SpawnProjectile(CancellationToken cancellationToken)
+        private void SpawnProjectiles(CancellationToken cancellationToken)
         {
             Vector3 startPosition = _enemyFacade.TargetToShootDamage != null
                 ? _enemyFacade.TargetToShootDamage.position
@@ -178,13 +178,24 @@ namespace Features.Enemies.Scripts
                 direction = _enemyFacade.transform.forward;
 
             direction.Normalize();
-            Quaternion rotation = Quaternion.LookRotation(direction);
-            EnemyBullet projectile = UnityEngine.Object.Instantiate(
-                _bulletConfiguration.ProjectilePrefab, startPosition, rotation);
             float relicTimeScale = Mathf.Max(0.05f, _enemyFacade.RelicTimeScale);
-            projectile.Launch(startPosition, direction, _bulletConfiguration.Speed * relicTimeScale,
-                _bulletConfiguration.Lifetime / relicTimeScale, _enemyConfiguration.Damage, _enemyFacade,
-                _characterFacade, cancellationToken);
+            int projectileCount = Mathf.Max(1, _bulletConfiguration.ProjectileCount);
+            float spreadAngle = Mathf.Clamp(_bulletConfiguration.SpreadAngle, 0f, 180f);
+            float centerIndex = (projectileCount - 1) * 0.5f;
+
+            for (int i = 0; i < projectileCount; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                float angle = (i - centerIndex) * spreadAngle;
+                Vector3 projectileDirection = Quaternion.AngleAxis(angle, Vector3.up) * direction;
+                Quaternion rotation = Quaternion.LookRotation(projectileDirection);
+                EnemyBullet projectile = UnityEngine.Object.Instantiate(
+                    _bulletConfiguration.ProjectilePrefab, startPosition, rotation);
+                projectile.Launch(startPosition, projectileDirection,
+                    _bulletConfiguration.Speed * relicTimeScale,
+                    _bulletConfiguration.Lifetime / relicTimeScale, _enemyConfiguration.Damage,
+                    _enemyFacade, _characterFacade, cancellationToken);
+            }
         }
 
         private void RotateTowardsCharacter(Transform enemyTransform, bool immediately = false)
