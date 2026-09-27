@@ -90,6 +90,38 @@ Saved asset: `Sprites/money_equals_power.png`.
 
 Generation source: `exec-f1d6d8af-e453-4bea-9016-5a6d78532a6a.png`.
 
+### turbo_skates
+
+Modest icon redesign — 2026-09-27, built-in ImageGen. Updated the cuff, laces, buckle, toe cap and blade while preserving the pixel-art style and magenta-purple rarity outline. Replaced `Sprites/turbo_skates.png` at its original 128x128 canvas size using nearest-neighbor resampling; retained the generated transparency and existing `.meta` and GUID.
+
+Generation source: `exec-29831571-ac6e-4b85-a73d-0c95009b5e95.png`.
+
+Edit prompt:
+
+```text
+Use case: precise-object-edit.
+Asset type: existing 128x128 RGBA pixel-art relic inventory icon for the Unity game Little Rush.
+Input image 1 is the EDIT TARGET: turbo_skates.png, a single lavender-gray ice skate with a magenta-purple rarity outline.
+Primary request: make a modest original redesign so this skate looks noticeably distinct from the source while remaining closely compatible with the existing icon set. Keep the same single ice skate, toe pointing right in the same three-quarter view, similar proportions, position and occupied canvas area. Change only these design details: make the upper cuff a little shorter and angular, replace the prominent tall zigzag lacing with two short neat pale crossed laces plus one small dark-violet ankle strap with a square silver buckle, and give the silver skate runner a slightly longer, clean upturned front tip. Add a small cool pale-blue toe-cap panel that stays within the existing muted lavender/silver palette. Preserve the dark inner contour and thin saturated magenta-purple outer rarity border at their original visual thickness. Retain chunky low-resolution square pixel clusters and just 3-4 flat stepped shades per material, consistent with the provided image. This is a small game sprite edit, not a new high-detail illustration.
+Scene/backdrop: genuinely transparent RGBA background, transparent corners and gaps under the boot.
+Constraints: output one standalone icon; keep the original 128x128 canvas if possible. All essential details should read at small inventory size. Sharp nearest-neighbor pixel edges, no blur, no antialiasing, no soft shading. No text, no letters, no logos, no watermark, no extra objects, no particles, no scenery, no floor, no shadow outside the icon, no checkerboard drawn into the image. No wings, wheels, flames, or effects. Preserve recognizable ice skate silhouette.
+```
+
+Navy and turquoise palette edit — 2026-09-27, built-in ImageGen. Replaced the lavender boot palette with navy blue and turquoise inserts, retaining a silver blade and magenta-purple rarity outline. Saved `Sprites/turbo_skates.png` at 128x128 with nearest-neighbor resampling and generated transparency; the existing `.meta` and GUID were retained.
+
+Generation source: `exec-8f23daad-c737-4cce-b21a-8cf61e8b5475.png`.
+
+Edit prompt:
+
+```text
+Use case: precise-object-edit.
+Asset type: existing 128x128 transparent RGBA pixel-art relic inventory icon for the Unity game Little Rush.
+Input image 1 is the EDIT TARGET: the latest turbo_skates.png, a single ice skate with an ankle strap and silver square buckle, two crossed laces, a toe-cap panel and an upturned silver runner.
+Primary request: recolor only the existing boot to dark navy blue with turquoise inserts and a silver skate blade. Preserve the exact current silhouette, object design, pixel shapes, perspective, framing, position, size and every detail. This is strictly a palette swap of the provided image, not a redraw or redesign.
+Palette mapping: recolor the lavender and purple leather areas of the boot and ankle strap into deep navy blue, using dark navy shadows around #162344, navy midtones around #233C70 and restrained blue highlights around #41689B. Recolor the existing toe-cap insert and narrow existing cuff trim into bright turquoise with stepped shades around #198EAD, #31C8CD and #8DE9E5. Keep the laces pale ivory-silver, the square buckle silver, and the whole skate runner silver-gray with cold white highlights. Keep the original dark inner contour and vivid magenta-purple outer rarity outline exactly as they are, same color, thickness and pixel positions. Do not recolor the rarity outline blue or turquoise.
+Constraints: preserve the existing low-resolution chunky pixel art, original 128x128 canvas if possible, transparent background and transparent gaps. Exactly one standalone icon. Hard square pixel edges with only a few discrete stepped color shades. No added details, no new shapes, no wings, no wheels, no particles, no text, no logos, no gradient, no antialiasing, no blur, no glow, no floor, no shadows outside the silhouette, no checkerboard painted into the image. Genuine transparent RGBA PNG.
+```
+
 ## Import settings
 
 Single sprites, point sampling, mipmaps disabled, transparent alpha and no texture compression. Maximum imported texture size is 128 pixels. Pixels per unit equals each original PNG's width, keeping the full canvas one world unit wide despite the higher source resolution. Source PNGs are retained unchanged.

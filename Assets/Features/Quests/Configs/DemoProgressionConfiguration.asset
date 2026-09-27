@@ -207,6 +207,17 @@ MonoBehaviour:
     _target: 30
     _silverReward: 2
   _unlocks:
+  - _id: character_rabbit
+    _category: 0
+    _characterId: "rabbit"
+    _ability: {fileID: 0}
+    _relic: {fileID: 0}
+    _displayName: "RABBIT"
+    _description: "Quick and nimble. Rabbit controls the fight with a returning boomerang and superior movement."
+    _icon: {fileID: 0}
+    _unlockedByDefault: 1
+    _requiredQuestId: ""
+    _silverCost: 0
   - _id: character_duke
     _category: 0
     _characterId: "duke"
@@ -229,6 +240,39 @@ MonoBehaviour:
     _unlockedByDefault: 0
     _requiredQuestId: rooms_3
     _silverCost: 8
+  - _id: weapon_rabbit_boomerang
+    _category: 1
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: d1f61c5394e93294ab79fe9496bb9e40, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 1
+    _requiredQuestId: ""
+    _silverCost: 0
+  - _id: weapon_fireball
+    _category: 1
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: af151fe30d27c134f96ad342fa3eecf6, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 1
+    _requiredQuestId: ""
+    _silverCost: 0
+  - _id: weapon_earth_rock
+    _category: 1
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: 09f98bf2e11f48abb384e940c90bcaf7, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 1
+    _requiredQuestId: ""
+    _silverCost: 0
   - _id: weapon_fire_field
     _category: 1
     _characterId: ""

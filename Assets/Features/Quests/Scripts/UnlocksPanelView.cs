@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -129,10 +130,12 @@ namespace Features.Quests.Scripts
                 Destroy(cell.gameObject);
             }
             _cells.Clear();
-            foreach (UnlockDefinition unlock in _service.Unlocks)
+            ProgressionCategory category = _tabs[_categoryIndex].Category;
+            IEnumerable<UnlockDefinition> unlocks = _service.Unlocks.Where(unlock => unlock.Category == category);
+            if (category == ProgressionCategory.Relics)
+                unlocks = unlocks.OrderBy(unlock => unlock.Relic != null ? (int)unlock.Relic.Rarity : int.MaxValue);
+            foreach (UnlockDefinition unlock in unlocks)
             {
-                if (unlock.Category != _tabs[_categoryIndex].Category)
-                    continue;
                 UnlockCellView cell = Instantiate(_cellPrefab, _scroll.content, false);
                 cell.Bind(unlock, () => SelectUnlock(cell));
                 cell.gameObject.SetActive(true);
