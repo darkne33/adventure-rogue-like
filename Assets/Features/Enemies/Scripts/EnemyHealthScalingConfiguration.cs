@@ -6,7 +6,7 @@ public class EnemyHealthScalingConfiguration : ScriptableObject
 {
     [Tooltip("Health multipliers by combat depth, independent of the player's current build.")]
     [SerializeField] private float[] _healthByRoom =
-        { 1f, 1.05f, 1.15f, 1.3f, 1.5f, 1.75f, 2f, 2.3f, 2.65f, 3f, 3.5f, 4f };
+        { 2.5f, 2.75f, 3f, 3.5f, 4f, 4.5f, 5f, 5.75f, 6.5f, 7.5f, 8.75f, 10f };
     [SerializeField, Min(1f)] private float _finalSpeedMultiplier = 1.2f;
     [SerializeField, Min(1f)] private float _finalDamageMultiplier = 1.6f;
     [SerializeField, Range(0.5f, 1f)] private float _finalAttackCooldownMultiplier = 0.85f;

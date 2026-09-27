@@ -15,7 +15,7 @@ namespace Features.Bosses.Scripts
         [field: Header("Health and rewards")]
         [field: SerializeField, Min(1)]
         [field: Tooltip("Base health at Base Dps. Runtime health is fixed once before combat.")]
-        public int MaxHealth { get; private set; } = 6000;
+        public int MaxHealth { get; private set; } = 7500;
         [field: SerializeField, Min(0)] public int Exp { get; private set; } = 20;
         [field: SerializeField, Min(0f)] public float DeathFadeDuration { get; private set; } = 0.25f;
 

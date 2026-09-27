@@ -6,8 +6,8 @@ using UnityEngine;
 public class EnemyRoomScalingConfiguration : ScriptableObject
 {
     [Tooltip("One entry per combat depth. Later rooms repeat the final three encounters.")]
-    [SerializeField] private int[] _startingEnemies = { 3, 5, 8, 7, 12, 16, 12, 22, 28, 20, 36, 40 };
-    [SerializeField] private int[] _totalEnemies = { 3, 5, 10, 10, 18, 26, 22, 38, 50, 40, 68, 80 };
+    [SerializeField] private int[] _startingEnemies = { 2, 3, 4, 3, 5, 6, 4, 6, 7, 5, 7, 8 };
+    [SerializeField] private int[] _totalEnemies = { 2, 3, 4, 3, 5, 6, 4, 6, 7, 5, 7, 8 };
     [Tooltip("Maximum simultaneous enemies for a Small room. Larger groups use Medium rooms.")]
     [SerializeField, Min(1)] private int _maxEnemiesInSmallRoom = 8;
     [SerializeField, Range(0f, 0.5f)] private float _reinforcementRemainingFraction = 0.25f;
