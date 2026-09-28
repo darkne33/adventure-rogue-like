@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class UpgradeOfferGenerator : IUpgradeOfferGenerator
 {
-    private const int TotalOfferCount = 3;
+    private const int BaseOfferCount = 3;
     private const int LevelsPerGuaranteedPassiveAbility = 5;
     private const int MaxGuaranteedPassiveAbilityCount = 2;
 
@@ -36,6 +36,7 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
 
         List<UpgradeOffer> offers = new();
         List<CharacterAbility> offerAbilities = new();
+        int totalOfferCount = BaseOfferCount + (_upgradeBuildService.HasAdditionalUpgradeOffer ? 1 : 0);
 
         List<CharacterAbility> availableAbilities = _abilityChoiceProvider.GetCharacterAbilities().Values
             .Where(ability => _characterConfiguration.SelectedCharacter.IsAvailableInUpgrades(ability.Id))
@@ -45,7 +46,7 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
 
         if (_upgradeBuildService.IsFull)
         {
-            AddRandomOffers(availableAbilities, TotalOfferCount, offerAbilities, offers);
+            AddRandomOffers(availableAbilities, totalOfferCount, offerAbilities, offers);
             return offers;
         }
 
@@ -66,7 +67,7 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         AddRandomOffers(selectedActiveAbilities, 1, offerAbilities, offers);
         AddPassiveOffer(passiveAbilities, offerAbilities, offers);
 
-        if (newActiveAbilities.Count == 0 && offers.Count < TotalOfferCount)
+        if (newActiveAbilities.Count == 0 && offers.Count < BaseOfferCount)
         {
             if (RollChance(_upgradeOfferConfiguration.ActiveAbilityOfferChance))
                 AddRandomOffers(selectedActiveAbilities, 1, offerAbilities, offers);
@@ -74,7 +75,7 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
                 AddRandomOffers(passiveAbilities, 1, offerAbilities, offers);
         }
 
-        AddRandomOffers(availableAbilities, TotalOfferCount - offers.Count, offerAbilities, offers);
+        AddRandomOffers(availableAbilities, totalOfferCount - offers.Count, offerAbilities, offers);
 
         return offers;
     }

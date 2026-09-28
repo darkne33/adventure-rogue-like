@@ -91,6 +91,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         _characterProvider.CharacterFacade.CharacterAbilitySystem.AddAbility(upgradeOffer.Ability, _characterStats,
             upgradeOffer.PrimaryUpgrade, upgradeOffer.SecondaryUpgrade);
         _upgradeBuildService.RecordAppliedSelection(upgradeOffer.Ability);
+        UpgradeOfferPanel.SetMoreUpgradeConditionVisible(_upgradeBuildService.HasAdditionalUpgradeOffer == false);
         SkipUpgrades();
     }
 
@@ -145,6 +146,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
 
     private void GenerateUpgrades(Transform upgradesRoot, bool isNewUpgrade = true)
     {
+        UpgradeOfferPanel.SetMoreUpgradeConditionVisible(_upgradeBuildService.HasAdditionalUpgradeOffer == false);
         List<UpgradeOffer> upgradeOffers = _upgradeOfferGenerator.GenerateOffers(isNewUpgrade).ToList();
         _currentOffers.Clear();
         _currentOffers.AddRange(upgradeOffers);

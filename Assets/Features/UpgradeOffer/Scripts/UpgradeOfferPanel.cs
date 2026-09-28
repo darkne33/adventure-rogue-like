@@ -7,6 +7,7 @@ using Zenject;
 public class UpgradeOfferPanel : MonoBehaviour
 {
     [field: SerializeField] public Transform UpgradesRoot { get; private set; }
+    [SerializeField] private GameObject _conditionToMoreUpgradeText;
 
     public event Action<bool> VisibilityChanged;
 
@@ -17,6 +18,12 @@ public class UpgradeOfferPanel : MonoBehaviour
     private void Awake()
     {
         _panelAnimationsMonoComponent = GetComponent<PanelAnimationsMonoComponent>();
+    }
+
+    public void SetMoreUpgradeConditionVisible(bool isVisible)
+    {
+        if (_conditionToMoreUpgradeText != null)
+            _conditionToMoreUpgradeText.SetActive(isVisible);
     }
 
     public UniTask Show()

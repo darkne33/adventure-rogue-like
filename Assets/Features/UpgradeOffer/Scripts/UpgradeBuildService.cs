@@ -5,6 +5,7 @@ public sealed class UpgradeBuildService
 {
     private const int MinSkippedUpgradeRounds = 1;
     private const int MaxSkippedUpgradeRounds = 3;
+    private const int RequiredLuckScrollLevel = 3;
 
     private readonly List<UpgradeBuildEntry> _selectedUpgrades = new();
     private readonly Dictionary<UpgradeOfferKey, int> _rejectedOfferCounts = new();
@@ -28,6 +29,9 @@ public sealed class UpgradeBuildService
     public int MaxActiveAbilities => _maxActiveAbilities;
     public int MaxPassiveAbilities => _maxPassiveAbilities;
     public bool IsFull => _selectedUpgrades.Count >= _maxSlots;
+    public bool HasAdditionalUpgradeOffer => _selectedUpgrades.Exists(entry =>
+        entry.Ability.Id == AbilityName.LuckScroll && entry.Ability.IsAcquired &&
+        entry.Level >= RequiredLuckScrollLevel);
     public int ActiveAbilityCount
     {
         get
