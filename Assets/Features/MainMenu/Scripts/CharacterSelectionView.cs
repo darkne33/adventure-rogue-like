@@ -11,36 +11,29 @@ using UnityEngine.UI;
 
 public sealed class CharacterSelectionView : MonoBehaviour
 {
-    [Header("Roster")]
-    [SerializeField] private Sprite _portraitPlaceholder;
+    [Header("Roster")] [SerializeField] private Sprite _portraitPlaceholder;
     [SerializeField] private CharacterPortraitSlotView[] _portraitSlots;
 
-    [Header("Character")]
-    [SerializeField] private TMP_Text _characterName;
-    [SerializeField] private TMP_Text _description;
+    [Header("Character")] [SerializeField] private TMP_Text _characterName;
 
-    [Header("Stats")]
-    [SerializeField] private TMP_Text _healthValue;
+    [Header("Stats")] [SerializeField] private TMP_Text _healthValue;
     [SerializeField] private TMP_Text _damageValue;
     [SerializeField] private TMP_Text _attackSpeedValue;
     [SerializeField] private TMP_Text _movementSpeedValue;
 
-    [Header("Preview")]
-    [SerializeField] private CharacterPreviewRenderer _previewRenderer;
+    [Header("Preview")] [SerializeField] private CharacterPreviewRenderer _previewRenderer;
     [SerializeField] private RawImage _previewViewport;
 
-    [Header("Loadout")]
-    [SerializeField] private Image _abilityIcon;
+    [Header("Loadout")] [SerializeField] private Image _abilityIcon;
     [SerializeField] private TMP_Text _abilityName;
     [SerializeField] private TMP_Text _abilityDescription;
-    [SerializeField] private Image _abilityAccent;
     [SerializeField] private Image _relicIcon;
     [SerializeField] private TMP_Text _relicName;
     [SerializeField] private TMP_Text _relicDescription;
-    [SerializeField] private Image _relicAccent;
 
-    [Header("Navigation")]
-    [SerializeField] private Button _startButton;
+    [Header("Navigation")] [SerializeField]
+    private Button _startButton;
+
     [SerializeField] private Button _backButton;
 
     private IReadOnlyList<CharacterDefinition> _characters;
@@ -238,7 +231,9 @@ public sealed class CharacterSelectionView : MonoBehaviour
     {
         int direction = relativeDirection != 0
             ? Math.Sign(relativeDirection)
-            : index < _selectedIndex ? -1 : 1;
+            : index < _selectedIndex
+                ? -1
+                : 1;
         RequestSelection(index, direction);
     }
 
@@ -288,14 +283,6 @@ public sealed class CharacterSelectionView : MonoBehaviour
 
         bool isOwned = IsOwned(character);
         _characterName.text = character.DisplayName.ToUpperInvariant() + (isOwned ? string.Empty : " (LOCKED)");
-        _description.text = !character.IsConfigured
-            ? character.ConfigurationError.ToUpperInvariant()
-            : string.IsNullOrWhiteSpace(character.Description)
-                ? "NO DESCRIPTION"
-                : character.Description.ToUpperInvariant();
-
-        if (!isOwned && character.IsConfigured)
-            _description.text = "BUY THIS CHARACTER IN UNLOCKS.\n" + _description.text;
 
         RefreshStats(character.CharacterSettings);
         RefreshLoadout(character);
@@ -328,7 +315,6 @@ public sealed class CharacterSelectionView : MonoBehaviour
         _abilityDescription.text = ability != null && !string.IsNullOrWhiteSpace(ability.Description)
             ? ability.Description.ToUpperInvariant()
             : "NO ABILITY DESCRIPTION";
-        SetOptionalColor(_abilityAccent, new Color(1f, 0.46f, 0.16f));
 
         RelicDefinition relic = character.StartingRelic;
         if (relic == null)
@@ -336,7 +322,6 @@ public sealed class CharacterSelectionView : MonoBehaviour
             SetOptionalIcon(_relicIcon, null);
             _relicName.text = "EMPTY RELIC SLOT";
             _relicDescription.text = "THIS CHARACTER DOES NOT START WITH A RELIC.";
-            SetOptionalColor(_relicAccent, new Color(0.38f, 0.34f, 0.4f));
             return;
         }
 
@@ -347,7 +332,6 @@ public sealed class CharacterSelectionView : MonoBehaviour
         _relicDescription.text = string.IsNullOrWhiteSpace(relic.Description)
             ? "NO RELIC DESCRIPTION"
             : relic.Description.ToUpperInvariant();
-        SetOptionalColor(_relicAccent, RelicRarityPalette.GetColor(relic.Rarity));
     }
 
     private static void SetOptionalIcon(Image image, Sprite sprite)
@@ -357,12 +341,6 @@ public sealed class CharacterSelectionView : MonoBehaviour
 
         image.sprite = sprite;
         image.enabled = sprite != null;
-    }
-
-    private static void SetOptionalColor(Image image, Color color)
-    {
-        if (image != null)
-            image.color = color;
     }
 
     private void HandlePortraitRendered(string characterId, Sprite portrait)
@@ -378,7 +356,7 @@ public sealed class CharacterSelectionView : MonoBehaviour
     {
         bool hasCharacters = _characters is { Count: > 0 };
         _startButton.interactable = _isInteractable && hasCharacters &&
-            _characters[_selectedIndex].IsConfigured && IsOwned(_characters[_selectedIndex]);
+                                    _characters[_selectedIndex].IsConfigured && IsOwned(_characters[_selectedIndex]);
         _backButton.interactable = _isInteractable;
 
         if (_portraitSlots == null)
