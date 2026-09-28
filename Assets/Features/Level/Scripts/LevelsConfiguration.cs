@@ -5,17 +5,36 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Create LevelsConfiguration", fileName = "LevelsConfiguration", order = 0)]
 public class LevelsConfiguration : ScriptableObject
 {
+    public const int AuthoredLevelCount = 3;
+
     [field: SerializeField] public LayerMask GroundLayer { get; private set; }
     [field: SerializeField] public LayerMask ObstacleLayer { get; private set; }
     [field: SerializeField] public EnemyHealthScalingConfiguration EnemyHealthScalingConfiguration { get; private set; }
     [field: SerializeField] public EnemyRoomScalingConfiguration EnemyRoomScalingConfiguration { get; private set; }
     [field: SerializeField] public List<LevelSettings> Levels { get; private set; }
 
+    [SerializeField] private ProceduralLevelSettings _proceduralLevels = new();
+    public ProceduralLevelSettings ProceduralLevels => _proceduralLevels;
+
+    public bool IsProceduralLevel(int levelIndex) =>
+        _proceduralLevels != null && _proceduralLevels.Enabled && levelIndex >= AuthoredLevelCount;
+
+    public int GetGeneratedLevelNumber(int levelIndex) =>
+        IsProceduralLevel(levelIndex) ? levelIndex - AuthoredLevelCount + 1 : 0;
+
     public bool HasLevel(int levelIndex) =>
+        HasAuthoredLevel(IsProceduralLevel(levelIndex) ? AuthoredLevelCount - 1 : levelIndex);
+
+    private bool HasAuthoredLevel(int levelIndex) =>
         Levels != null && levelIndex >= 0 && levelIndex < Levels.Count && Levels[levelIndex] != null;
 
     public LevelSettings GetLevel(int levelIndex)
     {
+        // Generated levels reuse the loaded level-three shell, room variants,
+        // and enemy catalog. Only their runtime room graph is replaced.
+        if (IsProceduralLevel(levelIndex))
+            levelIndex = AuthoredLevelCount - 1;
+
         if (Levels == null || levelIndex < 0 || levelIndex >= Levels.Count)
             throw new ArgumentOutOfRangeException(nameof(levelIndex), levelIndex,
                 $"Level index must be between 0 and {(Levels?.Count ?? 0) - 1}.");
@@ -40,10 +59,14 @@ public class LevelsConfiguration : ScriptableObject
 
     public int GetCombatProgressOffset(int levelIndex)
     {
-        int index = 0;
-        for (int i = 0; i < levelIndex; i++)
+        long index = 0;
+        int authoredCount = IsProceduralLevel(levelIndex) ? AuthoredLevelCount : levelIndex;
+        for (int i = 0; i < authoredCount; i++)
             index += GetLevel(i).LevelView.GetCombatRoomsToExit();
-        return index;
+
+        if (IsProceduralLevel(levelIndex))
+            index += _proceduralLevels.GetPreviousCombatRoomCount(levelIndex - AuthoredLevelCount);
+        return (int)Math.Min(int.MaxValue, index);
     }
 }
 

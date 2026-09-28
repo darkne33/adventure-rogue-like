@@ -142,7 +142,9 @@ namespace Features.Enemies.Scripts
 
             int roomIndex = _levelsConfiguration.GetCombatProgressIndex(
                 _runtimeDataService.CurrentIndexLevel, currentLevel, currentRoomData);
-            facade.ConfigureForRoom(_levelsConfiguration.GetEnemyHealthScalingConfiguration(), roomIndex);
+            facade.ConfigureForRoom(_levelsConfiguration.GetEnemyHealthScalingConfiguration(), roomIndex,
+                _levelsConfiguration.ProceduralLevels,
+                _levelsConfiguration.GetGeneratedLevelNumber(_runtimeDataService.CurrentIndexLevel));
         }
     }
 }

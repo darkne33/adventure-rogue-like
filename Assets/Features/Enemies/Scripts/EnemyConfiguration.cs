@@ -130,7 +130,8 @@ public class EnemyConfiguration : ScriptableObject
         EnemyMovementType == EnemyMovementType.AggressiveChase;
 
     public EnemyConfiguration CreateForRoom(EnemyHealthScalingConfiguration scaling,
-        int roomIndex, bool isSplittingBomb)
+        int roomIndex, bool isSplittingBomb,
+        ProceduralLevelSettings proceduralSettings = null, int generatedLevelNumber = 0)
     {
         EnemyConfiguration instance = Instantiate(this);
         instance.hideFlags = HideFlags.DontSave;
@@ -147,6 +148,11 @@ public class EnemyConfiguration : ScriptableObject
         instance.Damage = scaling.GetDamage(instance.Damage, roomIndex);
         instance.Speed *= scaling.GetSpeedMultiplier(roomIndex);
         instance.DamageCooldown *= scaling.GetAttackCooldownMultiplier(roomIndex);
+        if (proceduralSettings != null && generatedLevelNumber > 0)
+        {
+            instance.MaxHealth = proceduralSettings.ScaleHealth(instance.MaxHealth, generatedLevelNumber);
+            instance.Damage = proceduralSettings.ScaleDamage(instance.Damage, generatedLevelNumber);
+        }
         return instance;
     }
 }

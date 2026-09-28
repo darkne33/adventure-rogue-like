@@ -623,6 +623,9 @@ public class LevelView : MonoBehaviour
             "Use a prefab with matching entrances or move the room to a compatible grid cell.");
     }
 
+    internal static bool CanFitRoom(Room room, IReadOnlyCollection<RoomDirection> requiredDirections) =>
+        TryMatchRotation(room, requiredDirections, out _);
+
     private static bool TryMatchRotation(Room room,
         IReadOnlyCollection<RoomDirection> requiredDirections, out int rotation)
     {
@@ -1229,13 +1232,15 @@ public sealed class LevelRoomNode
 
     public LevelRoomNode(Room roomPrefab, Vector2Int gridPosition, RoomType type,
         RoomDirection levelExitDirection = default,
-        EnemyRoomSettings enemySettings = null)
+        EnemyRoomSettings enemySettings = null,
+        RoomConnectionMask blockedConnections = RoomConnectionMask.None)
     {
         _roomPrefab = roomPrefab;
         GridPosition = gridPosition;
         Type = type;
         LevelExitDirection = levelExitDirection;
         EnemySettings = enemySettings ?? new EnemyRoomSettings();
+        BlockedConnections = blockedConnections;
     }
 
     public void Bind(Room room) =>

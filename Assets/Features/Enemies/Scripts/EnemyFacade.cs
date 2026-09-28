@@ -36,10 +36,12 @@ namespace Features.Enemies.Scripts
         [SerializeField] private Renderer[] _meshRenderers;
         private EnemyConfiguration _runtimeConfiguration;
 
-        internal void ConfigureForRoom(EnemyHealthScalingConfiguration scaling, int roomIndex)
+        internal void ConfigureForRoom(EnemyHealthScalingConfiguration scaling, int roomIndex,
+            ProceduralLevelSettings proceduralSettings = null, int generatedLevelNumber = 0)
         {
             _runtimeConfiguration = _enemyConfiguration.CreateForRoom(
-                scaling, roomIndex, GetComponent<BombEnemySplitOnDeath>() != null);
+                scaling, roomIndex, GetComponent<BombEnemySplitOnDeath>() != null,
+                proceduralSettings, generatedLevelNumber);
         }
 
         private void OnDestroy()

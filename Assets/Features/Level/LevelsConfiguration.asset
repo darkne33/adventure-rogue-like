@@ -20,6 +20,15 @@ MonoBehaviour:
     m_Bits: 384
   <EnemyHealthScalingConfiguration>k__BackingField: {fileID: 11400000, guid: 269b399b251b4a73bfc4eba3c360d2b0, type: 2}
   <EnemyRoomScalingConfiguration>k__BackingField: {fileID: 11400000, guid: fb7bf36fe7ef494f8b324d31bc3f2742, type: 2}
+  _proceduralLevels:
+    _enabled: 1
+    _initialCombatRooms: 8
+    _maximumCombatRooms: 14
+    _levelsPerAdditionalRoom: 2
+    _rewardRooms: 3
+    _shopRooms: 2
+    _healthGrowthPerLevel: 0.15
+    _damageGrowthPerLevel: 0.05
   <Levels>k__BackingField:
   - <EnemyFactoryConfiguration>k__BackingField: {fileID: 11400000, guid: fb19e7270ba2f1248a4ad5c3d99fd81c, type: 2}
     <LevelView>k__BackingField: {fileID: 5716263380797961638, guid: 19fb5b68d7c0c7141808cb37a5efe87e, type: 3}

@@ -18,12 +18,30 @@ public class LevelFactory : ILevelFactory
         if (levelSettings.LevelView == null)
             throw new MissingReferenceException($"Level view is not configured for level index {levelNumber}.");
 
+        LevelRoomNode[] generatedRooms = _levelsConfiguration.IsProceduralLevel(levelNumber)
+            ? ProceduralLevelGenerator.Generate(_levelsConfiguration, levelNumber)
+            : null;
         LevelView levelView = _container.InstantiatePrefabForComponent<LevelView>(levelSettings.LevelView, parent);
-        levelView.Initialize(
-            _container,
-            _levelsConfiguration.HasLevel(levelNumber + 1),
-            _levelsConfiguration.EnemyRoomScalingConfiguration,
-            _levelsConfiguration.GetCombatProgressOffset(levelNumber));
-        return levelView;
+        try
+        {
+            if (generatedRooms != null)
+            {
+                levelView.name = $"Level_{levelNumber + 1}";
+                levelView.Configure(generatedRooms);
+            }
+
+            levelView.Initialize(
+                _container,
+                _levelsConfiguration.HasLevel(levelNumber + 1),
+                _levelsConfiguration.EnemyRoomScalingConfiguration,
+                _levelsConfiguration.GetCombatProgressOffset(levelNumber));
+            return levelView;
+        }
+        catch
+        {
+            levelView.gameObject.SetActive(false);
+            Object.Destroy(levelView.gameObject);
+            throw;
+        }
     }
 }

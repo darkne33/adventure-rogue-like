@@ -13,9 +13,12 @@ namespace Features.Bosses.Scripts
         private readonly RelicManager _relicManager;
         private readonly GoldDropper _goldDropper;
         private readonly ExpDropper _expDropper;
+        private readonly LevelsConfiguration _levelsConfiguration;
+        private readonly IRogueLikeRuntimeDataService _runtimeDataService;
 
         public BossSystemsFactory(ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
-            CharacterStats characterStats, RelicManager relicManager, GoldDropper goldDropper, ExpDropper expDropper)
+            CharacterStats characterStats, RelicManager relicManager, GoldDropper goldDropper, ExpDropper expDropper,
+            LevelsConfiguration levelsConfiguration, IRogueLikeRuntimeDataService runtimeDataService)
         {
             _characterProvider = characterProvider;
             _enemiesProvider = enemiesProvider;
@@ -23,6 +26,8 @@ namespace Features.Bosses.Scripts
             _relicManager = relicManager;
             _goldDropper = goldDropper;
             _expDropper = expDropper;
+            _levelsConfiguration = levelsConfiguration;
+            _runtimeDataService = runtimeDataService;
         }
 
         public void Create(BossFacade facade)
@@ -53,6 +58,10 @@ namespace Features.Bosses.Scripts
                 ? Mathf.Max(1, configuration.MaxHealth)
                 : configuration.GetScaledMaxHealth(character.CharacterAbilitySystem.CalculateEstimatedDps() *
                     _relicManager.GetEstimatedBossDamageMultiplier());
+            int generatedLevelNumber =
+                _levelsConfiguration.GetGeneratedLevelNumber(_runtimeDataService.CurrentIndexLevel);
+            if (generatedLevelNumber > 0 && facade is not MushroomBossFacade { IsSplitChild: true })
+                maxHealth = _levelsConfiguration.ProceduralLevels.ScaleHealth(maxHealth, generatedLevelNumber);
             var healthSystem = new HealthSystem(maxHealth,
                 facade.GetComponents<IHealthView>(), deathSystem, facade.GetComponents<IDamageView>());
             BossAttackSystem attackSystem = facade is MushroomBossFacade mushroom
