@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Features.Bosses.Scripts;
 using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
@@ -38,6 +39,7 @@ public class LevelView : MonoBehaviour
     public Room StartRoom => GetRoomNode(RoomType.Start).Room;
     public Vector2Int StartRoomGridPosition => GetRoomNode(RoomType.Start).GridPosition;
     public IReadOnlyList<LevelRoomNode> Rooms => _rooms;
+    public int CombatProgressOffset { get; private set; }
     public bool HasDroppedKeyReward { get; private set; }
 
     private readonly HashSet<RoomData> _keyRoomVisitedRooms = new();
@@ -65,6 +67,7 @@ public class LevelView : MonoBehaviour
             throw new ArgumentNullException(nameof(container));
 
         _container = container;
+        CombatProgressOffset = combatProgressOffset;
         MaterializeRooms(container, roomBalance, combatProgressOffset);
         ResolveAuthoredDoors();
         ResetRoomProgress();
@@ -172,7 +175,8 @@ public class LevelView : MonoBehaviour
 
             Room room = MaterializeRoom(container, source,
                 roomNode.Room, roomNode.GridPosition, "room");
-            ApplyRoomRotation(room, GetMatchingRotation(room, requiredDirections));
+            ApplyRoomRotation(room, GetMatchingRotation(room, requiredDirections,
+                GetBossDoorDirection(roomNode, nodesByPosition)));
 
             if (roomNode.Type is RoomType.Enemy or RoomType.Exit)
             {
@@ -539,7 +543,8 @@ public class LevelView : MonoBehaviour
         var nodesByPosition = _rooms.Where(node => node != null)
             .ToDictionary(node => node.GridPosition);
         int rotation = GetMatchingRotation(roomNode.RoomPrefab,
-            GetRequiredDirections(roomNode, nodesByPosition));
+            GetRequiredDirections(roomNode, nodesByPosition),
+            GetBossDoorDirection(roomNode, nodesByPosition));
         return GetAvailableDirections(roomNode.RoomPrefab, authored: true)
             .Select(direction => direction.RotateClockwise(rotation))
             .Where(direction => IsConnectionAllowed(roomNode, direction, nodesByPosition))
@@ -611,28 +616,72 @@ public class LevelView : MonoBehaviour
                RoomConnectionMask.None;
     }
 
-    private static int GetMatchingRotation(Room room,
-        IReadOnlyCollection<RoomDirection> requiredDirections)
+    private static RoomDirection? GetBossDoorDirection(LevelRoomNode roomNode,
+        IReadOnlyDictionary<Vector2Int, LevelRoomNode> nodesByPosition)
     {
-        if (TryMatchRotation(room, requiredDirections, out int rotation))
+        if (roomNode.Type != RoomType.Boss && roomNode.RoomPrefab.RoomData is not BossRoomData)
+            return null;
+
+        RoomDirection? entrance = null;
+        foreach (RoomDirection direction in CardinalDirections)
+        {
+            if (!nodesByPosition.ContainsKey(roomNode.GridPosition + direction.ToGridOffset()) ||
+                !IsConnectionAllowed(roomNode, direction, nodesByPosition))
+                continue;
+
+            if (entrance.HasValue)
+                throw new InvalidOperationException(
+                    $"Boss room at {roomNode.GridPosition} must have exactly one entrance.");
+            entrance = direction;
+        }
+
+        if (!entrance.HasValue)
+            throw new InvalidOperationException(
+                $"Boss room at {roomNode.GridPosition} must have an entrance.");
+
+        return entrance.Value.Opposite();
+    }
+
+    private static int GetMatchingRotation(Room room,
+        IReadOnlyCollection<RoomDirection> requiredDirections, RoomDirection? bossDoorDirection = null)
+    {
+        if (TryMatchRotation(room, requiredDirections, out int rotation, bossDoorDirection))
             return rotation;
 
         throw new InvalidOperationException(
             $"{room.name} cannot fit the required doors " +
             $"({string.Join(", ", requiredDirections)}) at any 90-degree rotation. " +
+            (bossDoorDirection.HasValue ? $"The boss door must face {bossDoorDirection.Value}. " : "") +
             "Use a prefab with matching entrances or move the room to a compatible grid cell.");
     }
 
-    internal static bool CanFitRoom(Room room, IReadOnlyCollection<RoomDirection> requiredDirections) =>
-        TryMatchRotation(room, requiredDirections, out _);
+    internal static bool CanFitRoom(Room room, IReadOnlyCollection<RoomDirection> requiredDirections,
+        RoomDirection? bossDoorDirection = null) =>
+        TryMatchRotation(room, requiredDirections, out _, bossDoorDirection);
 
     private static bool TryMatchRotation(Room room,
-        IReadOnlyCollection<RoomDirection> requiredDirections, out int rotation)
+        IReadOnlyCollection<RoomDirection> requiredDirections, out int rotation,
+        RoomDirection? bossDoorDirection = null)
     {
         HashSet<RoomDirection> authoredDirections =
             GetAvailableDirections(room, authored: true);
+        RoomDoor bossDoor = null;
+        if (bossDoorDirection.HasValue)
+        {
+            BossSpawnPoint spawnPoint = room.GetComponentInChildren<BossSpawnPoint>(true);
+            bossDoor = spawnPoint != null ? spawnPoint.BossDoor : null;
+            if (bossDoor == null || !room.RoomData.RoomDoors.Contains(bossDoor) ||
+                !bossDoor.transform.IsChildOf(room.transform))
+                throw new InvalidOperationException(
+                    $"{room.name} must assign one of its configured doors to BossSpawnPoint.BossDoor.");
+        }
+
         for (int candidate = 0; candidate < 4; candidate++)
         {
+            if (bossDoor != null &&
+                bossDoor.AuthoredDirection.RotateClockwise(candidate) != bossDoorDirection.Value)
+                continue;
+
             bool matches = true;
             foreach (RoomDirection required in requiredDirections)
             {
@@ -1123,7 +1172,8 @@ public class LevelView : MonoBehaviour
         var nodesByPosition = _rooms.Where(node => node != null)
             .ToDictionary(node => node.GridPosition);
         ApplyRoomRotation(room,
-            GetMatchingRotation(room, GetRequiredDirections(roomNode, nodesByPosition)));
+            GetMatchingRotation(room, GetRequiredDirections(roomNode, nodesByPosition),
+                GetBossDoorDirection(roomNode, nodesByPosition)));
     }
 
     private void OnDrawGizmos()

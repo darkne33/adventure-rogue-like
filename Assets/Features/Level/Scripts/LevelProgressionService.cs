@@ -210,6 +210,8 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
 
         character.transform.SetPositionAndRotation(startRoomData.StartPoint.position,
             startRoomData.StartPoint.rotation);
+        character.CharacterModel.transform.rotation = startRoomData.StartPoint.rotation;
+        character.CameraSystem.SetLookDirection(startRoomData.StartPoint.forward);
         Physics.SyncTransforms();
 
         _runtimeDataService.SetCurrentRoomData(startRoomData);

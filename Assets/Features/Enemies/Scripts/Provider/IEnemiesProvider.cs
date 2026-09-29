@@ -7,6 +7,7 @@ namespace Features.Enemies.Scripts
     public interface IEnemiesProvider
     {
         public int Count { get; }
+        public int AliveCount { get; }
         public IReadOnlyList<CombatTarget> ActiveEnemies { get; }
         public event Action<int> EnemyRemoved;
         public event Action<CombatTarget> EnemyDefeated;

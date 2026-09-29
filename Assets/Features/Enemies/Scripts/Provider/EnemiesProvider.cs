@@ -8,6 +8,21 @@ namespace Features.Enemies.Scripts
     public class EnemiesProvider : IEnemiesProvider
     {
         public int Count => _enemies.Count;
+        public int AliveCount
+        {
+            get
+            {
+                int count = 0;
+                foreach (CombatTarget enemy in _enemies)
+                {
+                    if (enemy != null && !enemy.IsDead)
+                        count++;
+                }
+
+                return count;
+            }
+        }
+
         public IReadOnlyList<CombatTarget> ActiveEnemies => _enemies;
         public event Action<int> EnemyRemoved;
         public event Action<CombatTarget> EnemyDefeated;

@@ -21,7 +21,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c1421c5f9d094cb18de356244053eeca, type: 2}
   - {fileID: 11400000, guid: 4149b57941bf4e8ca2525bdea710966f, type: 2}
   - {fileID: 11400000, guid: 980aeba49e0142978750e2ecf19f569c, type: 2}
-  - {fileID: 11400000, guid: e034f1ad498f479a91fcce23a3d0c136, type: 2}
   _quests:
   - _id: run_kills_150
     _title: CROWD CONTROL
@@ -198,13 +197,6 @@ MonoBehaviour:
     _category: 3
     _metric: 21
     _target: 75
-    _silverReward: 2
-  - _id: close_kills_30
-    _title: PERSONAL SPACE
-    _description: "Defeat 30 enemies within 2 meters of your character in one run."
-    _category: 3
-    _metric: 22
-    _target: 30
     _silverReward: 2
   _unlocks:
   - _id: character_rabbit
@@ -514,17 +506,6 @@ MonoBehaviour:
     _icon: {fileID: 0}
     _unlockedByDefault: 0
     _requiredQuestId: hit_damage_75
-    _silverCost: 5
-  - _id: relic_sacrificial_dagger
-    _category: 3
-    _characterId: ""
-    _ability: {fileID: 0}
-    _relic: {fileID: 11400000, guid: e034f1ad498f479a91fcce23a3d0c136, type: 2}
-    _displayName: ""
-    _description: ""
-    _icon: {fileID: 0}
-    _unlockedByDefault: 0
-    _requiredQuestId: close_kills_30
     _silverCost: 5
   - _id: relic_wallet
     _category: 3

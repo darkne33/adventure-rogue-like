@@ -5,14 +5,18 @@ using UnityEngine;
     fileName = "EnemyRoomScalingConfiguration", order = 0)]
 public class EnemyRoomScalingConfiguration : ScriptableObject
 {
-    [Tooltip("One entry per combat depth. Later rooms repeat the final three encounters.")]
-    [SerializeField] private int[] _startingEnemies = { 2, 3, 4, 5, 7, 9, 6, 10, 12, 8, 12, 15, 10, 13, 15 };
-    [SerializeField] private int[] _totalEnemies = { 2, 3, 4, 5, 7, 9, 6, 10, 12, 8, 12, 15, 10, 13, 15 };
-    [Tooltip("Maximum simultaneous enemies for a Small room. Larger groups use Medium rooms.")]
-    [SerializeField, Min(1)] private int _maxEnemiesInSmallRoom = 8;
+    [Tooltip("One entry per combat depth. Later rooms keep the final value.")]
+    [SerializeField] private int[] _startingEnemies = { 2, 3, 4, 5, 7, 9, 12, 18, 24, 18, 30, 30, 30, 30, 30 };
+    [Tooltip("Total enemies across all waves; this can exceed the simultaneous enemy limit. Later rooms keep the final value.")]
+    [SerializeField] private int[] _totalEnemies =
+        { 2, 3, 4, 5, 7, 9, 12, 18, 24, 18, 30, 42, 36, 48, 60, 66, 72, 78, 84, 90 };
+    [Tooltip("Maximum living enemies at once, including survivors from earlier waves.")]
+    [SerializeField, Min(1)] private int _maxAliveEnemies = 30;
+    [Tooltip("Maximum total enemies across all waves for a Small room. Larger groups use Medium rooms.")]
+    [SerializeField, Min(1)] private int _maxEnemiesInSmallRoom = 9;
     [Header("Combat Waves")]
-    [Tooltip("First one-based level where combat rooms can use three waves.")]
-    [SerializeField, Min(1)] private int _firstWaveLevel = 2;
+    [Tooltip("First one-based combat depth where rooms can use three waves, regardless of level.")]
+    [SerializeField, Min(1)] private int _firstWaveRoom = 5;
     [SerializeField, Range(0f, 100f)] private float _waveRoomChancePercent = 50f;
     [Tooltip("Relative sizes of three waves, scaled to preserve the room's total enemy count.")]
     [SerializeField] private Vector3Int[] _wavePatterns = { new(4, 5, 4), new(3, 7, 3) };
@@ -34,19 +38,21 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     };
 
     public EnemySpawnRule[] EnemyRules => _enemyRules;
+    public int MaxAliveEnemies => Mathf.Max(1, _maxAliveEnemies);
     public int SpawnBatchSize => Mathf.Max(1, _spawnBatchSize);
     public float SpawnBatchDelay => Mathf.Max(0f, _spawnBatchDelay);
-    public int GetStartEnemyCount(int roomIndex) => GetCount(_startingEnemies, roomIndex, 3);
+    public int GetStartEnemyCount(int roomIndex) =>
+        Mathf.Min(MaxAliveEnemies, GetCount(_startingEnemies, roomIndex, 3));
     public int GetAllEnemyCount(int roomIndex) =>
         Mathf.Max(GetStartEnemyCount(roomIndex), GetCount(_totalEnemies, roomIndex, 3));
     public bool UsesSmallRoom(int roomIndex) =>
-        GetStartEnemyCount(roomIndex) <= Mathf.Max(1, _maxEnemiesInSmallRoom);
+        GetAllEnemyCount(roomIndex) <= Mathf.Max(1, _maxEnemiesInSmallRoom);
 
-    public int[] CreateWaveEnemyCounts(int levelIndex, int roomIndex)
+    public int[] CreateWaveEnemyCounts(int roomIndex)
     {
         int totalEnemies = GetAllEnemyCount(roomIndex);
         float waveChance = Mathf.Clamp01(_waveRoomChancePercent / 100f);
-        if (levelIndex + 1 < Mathf.Max(1, _firstWaveLevel) || totalEnemies < 3 ||
+        if (roomIndex < Mathf.Max(1, _firstWaveRoom) - 1 || totalEnemies < 3 ||
             _wavePatterns == null || _wavePatterns.Length == 0 || waveChance <= 0f ||
             (waveChance < 1f && UnityEngine.Random.value >= waveChance))
             return new[] { totalEnemies };
@@ -96,13 +102,7 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
         if (counts == null || counts.Length == 0)
             return fallback;
 
-        int index = Mathf.Max(0, roomIndex);
-        if (index >= counts.Length)
-        {
-            int cycleLength = Mathf.Min(3, counts.Length);
-            index = counts.Length - cycleLength + (index - counts.Length) % cycleLength;
-        }
-
+        int index = Mathf.Clamp(roomIndex, 0, counts.Length - 1);
         return Mathf.Max(1, counts[index]);
     }
 }

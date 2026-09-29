@@ -13,6 +13,10 @@ public class LevelsConfiguration : ScriptableObject
     [field: SerializeField] public EnemyRoomScalingConfiguration EnemyRoomScalingConfiguration { get; private set; }
     [field: SerializeField] public List<LevelSettings> Levels { get; private set; }
 
+    [Tooltip("Levels one through three always generate a new layout using their corresponding example.")]
+    [SerializeField] private OpeningLevelGenerationSettings _openingLevels = new();
+    public OpeningLevelGenerationSettings OpeningLevels => _openingLevels;
+
     [SerializeField] private ProceduralLevelSettings _proceduralLevels = new();
     public ProceduralLevelSettings ProceduralLevels => _proceduralLevels;
 
@@ -55,14 +59,29 @@ public class LevelsConfiguration : ScriptableObject
     }
 
     public int GetCombatProgressIndex(int levelIndex, LevelView level, RoomData roomData) =>
-        GetCombatProgressOffset(levelIndex) + level.GetEnemyRoomIndex(roomData);
+        level.CombatProgressOffset + level.GetEnemyRoomIndex(roomData);
 
-    public int GetCombatProgressOffset(int levelIndex)
+    public int GetCombatProgressOffset(int levelIndex,
+        IReadOnlyDictionary<int, int> openingCombatRoomCounts = null)
     {
         long index = 0;
         int authoredCount = IsProceduralLevel(levelIndex) ? AuthoredLevelCount : levelIndex;
         for (int i = 0; i < authoredCount; i++)
-            index += GetLevel(i).LevelView.GetCombatRoomsToExit();
+        {
+            if (i < AuthoredLevelCount)
+            {
+                // Runtime lengths belong to the current run, not the loaded config asset.
+                // Use the example's nominal length only when starting at a later level directly.
+                index += openingCombatRoomCounts != null &&
+                         openingCombatRoomCounts.TryGetValue(i, out int count)
+                    ? count
+                    : _openingLevels.GetDefaultCombatRoomsToExit(GetLevel(i).LevelView);
+            }
+            else
+            {
+                index += GetLevel(i).LevelView.GetCombatRoomsToExit();
+            }
+        }
 
         if (IsProceduralLevel(levelIndex))
             index += _proceduralLevels.GetPreviousCombatRoomCount(levelIndex - AuthoredLevelCount);

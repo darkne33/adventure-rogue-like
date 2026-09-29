@@ -96,6 +96,24 @@ public class CharacterCameraMoveSystem
         _damageShakePhase = Mathf.Repeat(_damageShakePhase + 1.618f, Mathf.PI * 2f);
     }
 
+    public void SetLookDirection(Vector3 direction)
+    {
+        direction = Vector3.ProjectOnPlane(direction, Vector3.up);
+        if (_cameraPivot == null || direction.sqrMagnitude < 0.0001f)
+            return;
+
+        _yaw = Quaternion.LookRotation(direction, Vector3.up).eulerAngles.y;
+        _pitch = 0f;
+        _yawVelocity = 0f;
+        _pitchVelocity = 0f;
+        ResetLandingShakeBump();
+        ResetDamageShake();
+        ApplyCameraPivotTransform();
+
+        if (_cameraService.MainCamera != null)
+            _cameraService.MainCamera.PreviousStateIsValid = false;
+    }
+
     public void SetInputEnabled(bool state)
     {
         if (state)

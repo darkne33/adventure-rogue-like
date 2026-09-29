@@ -20,6 +20,13 @@ MonoBehaviour:
     m_Bits: 384
   <EnemyHealthScalingConfiguration>k__BackingField: {fileID: 11400000, guid: 269b399b251b4a73bfc4eba3c360d2b0, type: 2}
   <EnemyRoomScalingConfiguration>k__BackingField: {fileID: 11400000, guid: fb7bf36fe7ef494f8b324d31bc3f2742, type: 2}
+  _openingLevels:
+    _enemyRoomVariation: 1
+    _mainPathEnemyFraction: 0.7
+    _smallLevelRoomCount: 6
+    _largeLevelRoomCount: 18
+    _smallLevelShopChancePercent: 20
+    _largeLevelShopChancePercent: 80
   _proceduralLevels:
     _enabled: 1
     _initialCombatRooms: 8

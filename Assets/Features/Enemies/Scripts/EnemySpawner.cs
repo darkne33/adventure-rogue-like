@@ -109,7 +109,7 @@ public class EnemySpawner
         _roomProgressIndex = _levelsConfiguration.GetCombatProgressIndex(
             levelIndex, currentLevel, currentRoomData);
         _allEnemiesInCurrentRoom = _roomBalance.GetAllEnemyCount(_roomProgressIndex);
-        _waveEnemyCounts = _roomBalance.CreateWaveEnemyCounts(levelIndex, _roomProgressIndex);
+        _waveEnemyCounts = _roomBalance.CreateWaveEnemyCounts(_roomProgressIndex);
         _waveIndex = 0;
         _waveSpawnTarget = _waveEnemyCounts[0];
         _waveReinforcementThreshold = _roomBalance.GetWaveReinforcementThreshold(_waveEnemyCounts[0]);
@@ -280,6 +280,9 @@ public class EnemySpawner
             if (IsSpawnRequestActive(currentRoom, characterFacade, spawnGeneration) == false)
                 return;
 
+            if (await WaitForSpawnCapacity(currentRoom, characterFacade, spawnGeneration) == false)
+                return;
+
             var enemyType = enemyTypes[i];
             bool allowElite = _elitesSpawnedInCurrentRoom < _roomBalance.GetEliteLimit(_roomProgressIndex);
             GameObject enemy = levelSettings.EnemyFactoryConfiguration.GetEnemyByType(
@@ -338,6 +341,9 @@ public class EnemySpawner
             if (IsSpawnRequestActive(room, characterFacade, spawnGeneration) == false)
                 return;
 
+            if (await WaitForSpawnCapacity(room, characterFacade, spawnGeneration) == false)
+                return;
+
             if (availableGroundColliders.Count == 0)
                 availableGroundColliders = GetGroundColliders(room);
 
@@ -366,6 +372,21 @@ public class EnemySpawner
             }
 
         }
+    }
+
+    private async UniTask<bool> WaitForSpawnCapacity(Room room, CharacterFacade characterFacade,
+        int spawnGeneration)
+    {
+        // Splitting enemies can occupy slots after this wave's queue was prepared.
+        while (IsSpawnRequestActive(room, characterFacade, spawnGeneration))
+        {
+            if (_enemiesProvider.AliveCount < _roomBalance.MaxAliveEnemies)
+                return true;
+
+            await UniTask.NextFrame();
+        }
+
+        return false;
     }
 
     private bool IsSpawnRequestActive(Room room, CharacterFacade characterFacade,
@@ -417,6 +438,9 @@ public class EnemySpawner
 
     private List<EnemyType> BuildSpawnQueue(int enemyCount)
     {
+        int remainingCapacity = _roomBalance.MaxAliveEnemies -
+                                _enemiesProvider.AliveCount - _pendingEnemySpawnCount;
+        enemyCount = Mathf.Clamp(enemyCount, 0, Mathf.Max(0, remainingCapacity));
         var aliveByType = new Dictionary<EnemyType, int>();
         int rangedAlive = 0;
         foreach (CombatTarget enemy in _enemiesProvider.ActiveEnemies)

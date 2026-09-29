@@ -26,13 +26,16 @@ namespace Features.Enemies.Scripts
 
         private IEnemyFactory _enemyFactory;
         private IEnemiesProvider _enemiesProvider;
+        private LevelsConfiguration _levelsConfiguration;
         private bool _hasSpawned;
 
         [Inject]
-        private void Construct(IEnemyFactory enemyFactory, IEnemiesProvider enemiesProvider)
+        private void Construct(IEnemyFactory enemyFactory, IEnemiesProvider enemiesProvider,
+            LevelsConfiguration levelsConfiguration)
         {
             _enemyFactory = enemyFactory;
             _enemiesProvider = enemiesProvider;
+            _levelsConfiguration = levelsConfiguration;
         }
 
         public void SpawnNormalBombs()
@@ -48,6 +51,11 @@ namespace Features.Enemies.Scripts
 
             for (int i = 0; i < _spawnCount; i++)
             {
+                // The dying parent no longer occupies a living-enemy slot.
+                if (_enemiesProvider.AliveCount >=
+                    _levelsConfiguration.EnemyRoomScalingConfiguration.MaxAliveEnemies)
+                    break;
+
                 Vector3 direction = Quaternion.Euler(0f, startAngle + angleStep * i, 0f) *
                                     Vector3.forward;
                 Vector3 landingPosition = FindLandingPosition(origin, direction);

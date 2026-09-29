@@ -10,6 +10,66 @@ public static class ProceduralLevelGenerator
         RoomDirection.Up, RoomDirection.Down, RoomDirection.Left, RoomDirection.Right
     };
 
+    public static LevelRoomNode[] GenerateFromExample(LevelsConfiguration configuration, int levelIndex)
+    {
+        if (levelIndex < 0 || levelIndex >= LevelsConfiguration.AuthoredLevelCount)
+            throw new ArgumentOutOfRangeException(nameof(levelIndex));
+
+        LevelView example = configuration.GetLevel(levelIndex).LevelView;
+        OpeningLevelGenerationSettings settings = configuration.OpeningLevels;
+        Dictionary<RoomType, List<LevelRoomNode>> templates = CollectExampleTemplates(example);
+        int finalRooms = GetTemplateCount(templates, RoomType.Boss) + GetTemplateCount(templates, RoomType.Exit);
+        if (GetTemplateCount(templates, RoomType.Start) != 1 || finalRooms != 1 ||
+            GetTemplateCount(templates, RoomType.Enemy) == 0)
+            throw new InvalidOperationException(
+                $"{example.name} must provide one Start, one Boss or Exit, and ordinary enemy room examples.");
+
+        int variation = settings.EnemyRoomVariation;
+        int enemyRooms = Mathf.Max(3, GetTemplateCount(templates, RoomType.Enemy) +
+                                      Random.Range(-variation, variation + 1));
+        int mainPathEnemies = settings.GetMainPathEnemyRoomCount(enemyRooms);
+        int rewardRooms = GetTemplateCount(templates, RoomType.Reward);
+        int roomsWithoutShop = 2 + enemyRooms + rewardRooms;
+        bool hasShop = templates.ContainsKey(RoomType.Shop) &&
+                       Random.value < settings.GetShopChance(roomsWithoutShop);
+        RoomType finalType = templates.ContainsKey(RoomType.Boss) ? RoomType.Boss : RoomType.Exit;
+
+        // Only geometry is retried. Counts and the shop roll stay fixed for this level.
+        // Every node refers to an already loaded prefab from this specific example.
+        for (int attempt = 0; attempt < 32; attempt++)
+        {
+            if (!TryCreateOpeningPath(mainPathEnemies, finalType, templates,
+                    out List<LayoutRoom> layout, out HashSet<Vector2Int> occupied,
+                    out Vector2Int exitPosition))
+                continue;
+
+            bool complete = true;
+            for (int i = mainPathEnemies; i < enemyRooms && complete; i++)
+                complete = TryAddBranch(layout, occupied, exitPosition, RoomType.Enemy,
+                    templates, mainPathEnemies - 1);
+
+            var specialRooms = new List<RoomType>();
+            for (int i = 0; i < rewardRooms; i++)
+                specialRooms.Add(RoomType.Reward);
+            if (hasShop)
+                specialRooms.Add(RoomType.Shop);
+            Shuffle(specialRooms);
+            foreach (RoomType type in specialRooms)
+            {
+                if (!complete)
+                    break;
+                complete = TryAddBranch(layout, occupied, exitPosition, type, templates, mainPathEnemies);
+            }
+
+            if (complete)
+                return CreateNodes(layout, templates);
+        }
+
+        throw new InvalidOperationException(
+            $"Cannot generate a connected layout from {example.name}. " +
+            "Its room prefabs must support the main path and side branches.");
+    }
+
     public static LevelRoomNode[] Generate(LevelsConfiguration configuration, int levelIndex)
     {
         ProceduralLevelSettings settings = configuration.ProceduralLevels;
@@ -55,11 +115,18 @@ public static class ProceduralLevelGenerator
         foreach (RoomType type in branches)
             AddBranch(layout, occupied, exitPosition, type, templates);
 
+        return CreateNodes(layout, templates);
+    }
+
+    private static LevelRoomNode[] CreateNodes(List<LayoutRoom> layout,
+        Dictionary<RoomType, List<LevelRoomNode>> templates)
+    {
         var nodes = new LevelRoomNode[layout.Count];
         for (int i = 0; i < layout.Count; i++)
         {
             LayoutRoom room = layout[i];
-            List<LevelRoomNode> compatible = GetCompatibleTemplates(templates, room.Type, room.Connections);
+            List<LevelRoomNode> compatible = GetCompatibleTemplates(templates, room.Type, room.Connections,
+                room.Type == RoomType.Boss ? room.ExitDirection : null);
             if (compatible.Count == 0)
                 throw new InvalidOperationException(
                     $"No {room.Type} prefab fits generated room {room.Position} ({room.Connections}).");
@@ -70,6 +137,89 @@ public static class ProceduralLevelGenerator
         }
 
         return nodes;
+    }
+
+    private static Dictionary<RoomType, List<LevelRoomNode>> CollectExampleTemplates(LevelView example)
+    {
+        var result = new Dictionary<RoomType, List<LevelRoomNode>>();
+        foreach (LevelRoomNode node in example.Rooms)
+        {
+            if (node?.RoomPrefab == null)
+                throw new InvalidOperationException($"{example.name} contains a missing room prefab.");
+            if (node.RoomPrefab.transform.IsChildOf(example.transform))
+                throw new InvalidOperationException(
+                    $"Opening room {node.RoomPrefab.name} must reference a standalone room prefab.");
+            if (node.Type is RoomType.Enemy or RoomType.Exit &&
+                (node.EnemySettings == null || !node.EnemySettings.HasSpawnableEnemies))
+                throw new InvalidOperationException(
+                    $"{example.name} contains a combat room without spawnable enemies.");
+
+            if (!result.TryGetValue(node.Type, out List<LevelRoomNode> pool))
+            {
+                pool = new List<LevelRoomNode>();
+                result.Add(node.Type, pool);
+            }
+
+            // Keep repeated entries: their count and encounter settings define this level's profile.
+            pool.Add(node);
+        }
+        return result;
+    }
+
+    private static int GetTemplateCount(Dictionary<RoomType, List<LevelRoomNode>> templates, RoomType type) =>
+        templates.TryGetValue(type, out List<LevelRoomNode> pool) ? pool.Count : 0;
+
+    private static bool TryCreateOpeningPath(int enemyRooms, RoomType finalType,
+        Dictionary<RoomType, List<LevelRoomNode>> templates, out List<LayoutRoom> layout,
+        out HashSet<Vector2Int> occupied, out Vector2Int exitPosition)
+    {
+        var start = new LayoutRoom(Vector2Int.zero, RoomType.Start);
+        layout = new List<LayoutRoom> { start };
+        occupied = new HashSet<Vector2Int> { start.Position };
+        exitPosition = default;
+        RoomDirection forward = Directions[Random.Range(0, Directions.Length)];
+        RoomDirection sideways = forward.RotateClockwise(Random.value < 0.5f ? 1 : -1);
+        var options = new List<RoomDirection> { forward, sideways };
+
+        // A monotone path cannot intersect itself. Side branches supply the extra
+        // fights, while explicit masks prevent adjacent cells from creating shortcuts.
+        for (int i = 0; i <= enemyRooms; i++)
+        {
+            LayoutRoom parent = layout[layout.Count - 1];
+            bool isFinal = i == enemyRooms;
+            RoomType type = isFinal ? finalType : RoomType.Enemy;
+            Shuffle(options);
+            bool added = false;
+            foreach (RoomDirection direction in options)
+            {
+                RoomConnectionMask connections = direction.Opposite().ToConnectionMask();
+                if (isFinal)
+                    connections |= direction.ToConnectionMask();
+                if (GetCompatibleTemplates(templates, parent.Type,
+                        parent.Connections | direction.ToConnectionMask()).Count == 0 ||
+                    GetCompatibleTemplates(templates, type, connections,
+                        type == RoomType.Boss ? direction : null).Count == 0)
+                    continue;
+
+                var room = new LayoutRoom(parent.Position + direction.ToGridOffset(), type);
+                Connect(parent, room, direction);
+                layout.Add(room);
+                occupied.Add(room.Position);
+                if (isFinal)
+                {
+                    room.ExitDirection = direction;
+                    room.Connections |= direction.ToConnectionMask();
+                    exitPosition = room.Position + direction.ToGridOffset();
+                }
+                added = true;
+                break;
+            }
+
+            if (!added)
+                return false;
+        }
+
+        return true;
     }
 
     private static Dictionary<RoomType, List<LevelRoomNode>> CollectTemplates(LevelsConfiguration configuration)
@@ -107,10 +257,19 @@ public static class ProceduralLevelGenerator
     private static void AddBranch(List<LayoutRoom> layout, HashSet<Vector2Int> occupied,
         Vector2Int exitPosition, RoomType type, Dictionary<RoomType, List<LevelRoomNode>> templates)
     {
+        if (!TryAddBranch(layout, occupied, exitPosition, type, templates))
+            throw new InvalidOperationException(
+                $"Cannot attach a generated {type} room. Reduce branch counts or add compatible room prefabs.");
+    }
+
+    private static bool TryAddBranch(List<LayoutRoom> layout, HashSet<Vector2Int> occupied,
+        Vector2Int exitPosition, RoomType type, Dictionary<RoomType, List<LevelRoomNode>> templates,
+        int maximumDepth = int.MaxValue)
+    {
         var candidates = new List<(LayoutRoom Parent, RoomDirection Direction)>();
         foreach (LayoutRoom parent in layout)
         {
-            if (parent.Type != RoomType.Enemy)
+            if (parent.Type != RoomType.Enemy || parent.Depth >= maximumDepth)
                 continue;
 
             foreach (RoomDirection direction in Directions)
@@ -128,18 +287,19 @@ public static class ProceduralLevelGenerator
         }
 
         if (candidates.Count == 0)
-            throw new InvalidOperationException(
-                $"Cannot attach a generated {type} room. Reduce branch counts or add compatible room prefabs.");
+            return false;
 
         var selected = candidates[Random.Range(0, candidates.Count)];
         var branch = new LayoutRoom(selected.Parent.Position + selected.Direction.ToGridOffset(), type);
         Connect(selected.Parent, branch, selected.Direction);
         layout.Add(branch);
         occupied.Add(branch.Position);
+        return true;
     }
 
     private static List<LevelRoomNode> GetCompatibleTemplates(
-        Dictionary<RoomType, List<LevelRoomNode>> templates, RoomType type, RoomConnectionMask connections)
+        Dictionary<RoomType, List<LevelRoomNode>> templates, RoomType type, RoomConnectionMask connections,
+        RoomDirection? bossDoorDirection = null)
     {
         var result = new List<LevelRoomNode>();
         if (!templates.TryGetValue(type, out List<LevelRoomNode> pool))
@@ -150,7 +310,7 @@ public static class ProceduralLevelGenerator
             if ((connections & direction.ToConnectionMask()) != RoomConnectionMask.None)
                 required.Add(direction);
         foreach (LevelRoomNode node in pool)
-            if (LevelView.CanFitRoom(node.RoomPrefab, required))
+            if (LevelView.CanFitRoom(node.RoomPrefab, required, bossDoorDirection))
                 result.Add(node);
         return result;
     }
@@ -159,6 +319,7 @@ public static class ProceduralLevelGenerator
     {
         from.Connections |= direction.ToConnectionMask();
         to.Connections |= direction.Opposite().ToConnectionMask();
+        to.Depth = from.Depth + 1;
     }
 
     private static void Shuffle<T>(List<T> values)
@@ -176,6 +337,7 @@ public static class ProceduralLevelGenerator
         public readonly RoomType Type;
         public RoomConnectionMask Connections;
         public RoomDirection ExitDirection;
+        public int Depth;
 
         public LayoutRoom(Vector2Int position, RoomType type)
         {

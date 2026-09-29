@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
@@ -5,6 +6,7 @@ public class LevelFactory : ILevelFactory
 {
     private readonly LevelsConfiguration _levelsConfiguration;
     private readonly DiContainer _container;
+    private readonly Dictionary<int, int> _openingCombatRoomCounts = new();
 
     public LevelFactory(LevelsConfiguration levelsConfiguration, DiContainer container)
     {
@@ -18,9 +20,15 @@ public class LevelFactory : ILevelFactory
         if (levelSettings.LevelView == null)
             throw new MissingReferenceException($"Level view is not configured for level index {levelNumber}.");
 
-        LevelRoomNode[] generatedRooms = _levelsConfiguration.IsProceduralLevel(levelNumber)
-            ? ProceduralLevelGenerator.Generate(_levelsConfiguration, levelNumber)
-            : null;
+        if (levelNumber == 0)
+            _openingCombatRoomCounts.Clear();
+
+        bool isOpeningLevel = levelNumber < LevelsConfiguration.AuthoredLevelCount;
+        LevelRoomNode[] generatedRooms = isOpeningLevel
+            ? ProceduralLevelGenerator.GenerateFromExample(_levelsConfiguration, levelNumber)
+            : _levelsConfiguration.IsProceduralLevel(levelNumber)
+                ? ProceduralLevelGenerator.Generate(_levelsConfiguration, levelNumber)
+                : null;
         LevelView levelView = _container.InstantiatePrefabForComponent<LevelView>(levelSettings.LevelView, parent);
         try
         {
@@ -34,7 +42,9 @@ public class LevelFactory : ILevelFactory
                 _container,
                 _levelsConfiguration.HasLevel(levelNumber + 1),
                 _levelsConfiguration.EnemyRoomScalingConfiguration,
-                _levelsConfiguration.GetCombatProgressOffset(levelNumber));
+                _levelsConfiguration.GetCombatProgressOffset(levelNumber, _openingCombatRoomCounts));
+            if (isOpeningLevel)
+                _openingCombatRoomCounts[levelNumber] = levelView.GetCombatRoomsToExit();
             return levelView;
         }
         catch
