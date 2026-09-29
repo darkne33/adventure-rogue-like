@@ -80,7 +80,9 @@ public class EnemyDeathSystem : IDeathSystem
 
     private int CalculateExpReward(int baseReward)
     {
-        float scaledReward = baseReward * (1f + Mathf.Max(0f, _characterStats.XPBonus) * 0.01f);
+        float scaledReward = baseReward *
+                             _expDropper.GetExperienceMultiplier(_enemyConfiguration.EnemyRank) *
+                             (1f + Mathf.Max(0f, _characterStats.XPBonus) * 0.01f);
         int reward = Mathf.FloorToInt(scaledReward);
 
         if (Random.value < scaledReward - reward)

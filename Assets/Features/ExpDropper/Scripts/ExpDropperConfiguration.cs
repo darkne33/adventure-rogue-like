@@ -8,6 +8,9 @@ public sealed class ExpDropperConfiguration : ScriptableObject
     [field: SerializeField] public GameObject ExpRupeePrefab { get; private set; }
     [field: SerializeField] public GameObject PickupEffectPrefab { get; private set; }
 
+    [field: Header("Rewards")]
+    [field: SerializeField, Min(1f)] public float EliteExperienceMultiplier { get; private set; } = 2f;
+
     [field: Header("Spawn")]
     [field: SerializeField, Min(0f)] public float BurstHeight { get; private set; } = 0.85f;
     [field: SerializeField, Min(0f)] public float BurstScatterRadius { get; private set; } = 0.35f;

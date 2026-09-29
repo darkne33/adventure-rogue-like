@@ -402,36 +402,45 @@ public class EnemySpawner
         EnemyFactoryConfiguration factory)
     {
         _roomEnemyRules.Clear();
-        var specialRules = new List<EnemySpawnRule>();
+        var availableRules = new List<EnemySpawnRule>();
+        var availableTypes = new HashSet<EnemyType>();
         foreach (EnemySpawnRule rule in _roomBalance.EnemyRules)
         {
             if (rule == null || rule.Weight <= 0f || rule.FirstRoom > _roomProgressIndex + 1 ||
                 System.Array.IndexOf(configuration.EnemyTypes, rule.EnemyType) < 0 ||
-                !factory.EnemyPrefabs.Exists(prefab => prefab.EnemyType == rule.EnemyType))
+                !factory.EnemyPrefabs.Exists(prefab => prefab.EnemyType == rule.EnemyType) ||
+                !availableTypes.Add(rule.EnemyType))
                 continue;
 
-            if (rule.EnemyType == EnemyType.Dummy)
-                _roomEnemyRules.Add(rule);
-            else
-                specialRules.Add(rule);
+            availableRules.Add(rule);
         }
 
-        if (specialRules.Count > 0)
+        if (availableRules.Count == 0)
+            throw new System.InvalidOperationException("No enemies are unlocked for this combat room.");
+
+        // Pick a weighted subset without replacement once per room. Unlocking a type
+        // makes it eligible; neither it nor Dummy is mandatory in every encounter.
+        int typeCount = _roomBalance.RollEnemyTypeCount(availableRules.Count, _roomProgressIndex);
+        for (int i = 0; i < typeCount; i++)
         {
-            int first = _roomProgressIndex % specialRules.Count;
-            for (int i = 0; i < specialRules.Count; i++)
+            float totalWeight = 0f;
+            foreach (EnemySpawnRule rule in availableRules)
+                totalWeight += _roomBalance.GetWeight(rule, _roomProgressIndex);
+
+            float roll = Random.value * totalWeight;
+            int selectedIndex = availableRules.Count - 1;
+            for (int j = 0; j < availableRules.Count; j++)
             {
-                if (specialRules[i].FirstRoom == _roomProgressIndex + 1)
-                    first = i;
+                roll -= _roomBalance.GetWeight(availableRules[j], _roomProgressIndex);
+                if (roll > 0f)
+                    continue;
+                selectedIndex = j;
+                break;
             }
 
-            int count = Mathf.Min(specialRules.Count, _roomBalance.GetSpecialTypeLimit(_roomProgressIndex));
-            for (int i = 0; i < count; i++)
-                _roomEnemyRules.Add(specialRules[(first + i) % specialRules.Count]);
+            _roomEnemyRules.Add(availableRules[selectedIndex]);
+            availableRules.RemoveAt(selectedIndex);
         }
-
-        if (_roomEnemyRules.Count == 0)
-            throw new System.InvalidOperationException("No enemies are unlocked for this combat room.");
     }
 
     private List<EnemyType> BuildSpawnQueue(int enemyCount)

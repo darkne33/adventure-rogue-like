@@ -144,13 +144,13 @@ public class EnemyConfiguration : ScriptableObject
             instance.Exp = 4;
         }
 
-        instance.MaxHealth = scaling.GetMaxHealth(instance.MaxHealth, roomIndex);
+        instance.MaxHealth = scaling.GetMaxHealth(instance.MaxHealth, roomIndex,
+            proceduralSettings, generatedLevelNumber);
         instance.Damage = scaling.GetDamage(instance.Damage, roomIndex);
         instance.Speed *= scaling.GetSpeedMultiplier(roomIndex);
         instance.DamageCooldown *= scaling.GetAttackCooldownMultiplier(roomIndex);
         if (proceduralSettings != null && generatedLevelNumber > 0)
         {
-            instance.MaxHealth = proceduralSettings.ScaleHealth(instance.MaxHealth, generatedLevelNumber);
             instance.Damage = proceduralSettings.ScaleDamage(instance.Damage, generatedLevelNumber);
         }
         return instance;

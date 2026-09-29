@@ -6,10 +6,11 @@ using UnityEngine;
 public class EnemyRoomScalingConfiguration : ScriptableObject
 {
     [Tooltip("One entry per first combat-room visit in the run. Later rooms keep the final value.")]
-    [SerializeField] private int[] _startingEnemies = { 2, 3, 4, 5, 7, 9, 12, 18, 24, 18, 30, 30, 30, 30, 30 };
+    [SerializeField] private int[] _startingEnemies =
+        { 2, 3, 4, 5, 7, 9, 12, 14, 19, 14, 24, 24, 24, 24, 24, 24, 26, 27, 28, 30 };
     [Tooltip("Total enemies across all waves; this can exceed the simultaneous enemy limit. Later rooms keep the final value.")]
     [SerializeField] private int[] _totalEnemies =
-        { 2, 3, 4, 5, 7, 9, 12, 18, 24, 18, 30, 42, 36, 48, 60, 66, 72, 78, 84, 90 };
+        { 2, 3, 4, 5, 7, 9, 12, 14, 19, 14, 24, 34, 29, 38, 48, 53, 61, 70, 80, 90 };
     [Tooltip("Maximum living enemies at once, including survivors from earlier waves.")]
     [SerializeField, Min(1)] private int _maxAliveEnemies = 30;
     [Tooltip("Maximum total enemies across all waves for a Small room. Larger groups use Medium rooms.")]
@@ -28,6 +29,11 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     [SerializeField, Min(0f)] private float _spawnBatchDelay = 1f;
     [SerializeField, Min(1)] private int _firstEliteRoom = 4;
     [SerializeField, Min(1)] private int _eliteRoomInterval = 3;
+    [Header("Room Enemy Mix")]
+    [Tooltip("Maximum distinct enemy types selected once for the entire room, across all waves.")]
+    [SerializeField, Range(1, 5)] private int _maximumEnemyTypesPerRoom = 3;
+    [Tooltip("Chance to use just one of the unlocked enemy types. Other rooms mix two or more.")]
+    [SerializeField, Range(0f, 100f)] private float _singleEnemyTypeRoomChancePercent = 20f;
     [SerializeField] private EnemySpawnRule[] _enemyRules =
     {
         new(EnemyType.Dummy, 1, 50f, 0),
@@ -81,6 +87,20 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     public bool IsSpecialistRoom(int roomIndex) => roomIndex >= 3 && roomIndex % 3 == 0;
     public bool IsSwarmRoom(int roomIndex) => roomIndex < 2 || roomIndex % 3 == 1;
     public int GetSpecialTypeLimit(int roomIndex) => roomIndex < 3 ? 1 : roomIndex < 6 ? 2 : 3;
+    public int RollEnemyTypeCount(int availableTypes, int roomIndex)
+    {
+        if (availableTypes <= 0)
+            return 0;
+
+        int maximum = Mathf.Min(availableTypes, Mathf.Max(1, _maximumEnemyTypesPerRoom),
+            GetSpecialTypeLimit(roomIndex) + 1);
+        float singleTypeChance = Mathf.Clamp01(_singleEnemyTypeRoomChancePercent / 100f);
+        if (maximum == 1 || singleTypeChance >= 1f ||
+            (singleTypeChance > 0f && UnityEngine.Random.value < singleTypeChance))
+            return 1;
+
+        return UnityEngine.Random.Range(2, maximum + 1);
+    }
     public int GetRangedLimit(int roomIndex) => roomIndex < 6 ? 2 : roomIndex < 9 ? 5 : 8;
     public int GetEliteLimit(int roomIndex) =>
         roomIndex + 1 >= _firstEliteRoom &&

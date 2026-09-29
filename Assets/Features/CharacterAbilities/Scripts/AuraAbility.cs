@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
 using UnityEngine;
@@ -28,11 +27,10 @@ public sealed class AuraAbility : CharacterActiveAbility
     private readonly CharacterStats _characterStats;
     private readonly RelicEventBus _relicEventBus;
     private readonly RelicManager _relicManager;
-    private readonly List<CombatTarget> _enemiesInRange = new();
 
     private AuraAbilityConfiguration _configuration;
     private CharacterFacade _owner;
-    private GameObject _aura;
+    private AuraDamageArea _aura;
     private int _damage;
     private float _radius;
 
@@ -61,6 +59,8 @@ public sealed class AuraAbility : CharacterActiveAbility
         CleanupAura();
         base.Initialize(abilityConfig);
         _configuration = (AuraAbilityConfiguration)abilityConfig;
+        if (_configuration.Prefab == null)
+            Debug.LogError("AURA requires a prefab with an AuraDamageArea component.", _configuration);
         Level = 0;
         _damage = Mathf.Max(1, _configuration.StartDamage);
         _radius = Mathf.Max(0.1f, _configuration.DamageRadius);
@@ -78,7 +78,8 @@ public sealed class AuraAbility : CharacterActiveAbility
         if (CurrentSecondaryUpgrade.HasValue)
             ApplyUpgradeEffect(CurrentSecondaryUpgrade.Value);
         RefreshStats();
-        UpdateVisual();
+        if (_aura != null)
+            _aura.SetRadius(_radius);
     }
 
     public override void OnUnequip(CharacterStats characterStats)
@@ -106,42 +107,20 @@ public sealed class AuraAbility : CharacterActiveAbility
             CurrentCooldown = 0f;
         }
 
-        // Keep the visual attached between damage ticks; destroying the owner also destroys it.
+        // Instantiate the prepared damage-area component together with its configured visual.
         if (_aura == null)
-            _aura = Object.Instantiate(_configuration.Prefab, character.transform.position,
-                Quaternion.identity, character.transform);
+        {
+            _aura = Object.Instantiate(_configuration.Prefab, character.transform, false);
+            _aura.Initialize(character, _enemiesProvider, _configuration, _radius, ApplyDamage);
+        }
 
-        UpdateVisual();
         base.Use(character);
     }
 
     protected override void OnUse(CharacterFacade character)
     {
         CurrentCooldown = GetTickInterval();
-        _enemiesInRange.Clear();
-        IReadOnlyList<CombatTarget> activeEnemies = _enemiesProvider.ActiveEnemies;
-        Vector3 center = character.transform.position;
-        float radiusSqr = _radius * _radius;
-        float height = Mathf.Max(0.1f, _configuration.DamageHeight);
-
-        // Damage callbacks can remove enemies or spawn new ones, so collect targets first.
-        for (int index = 0; index < activeEnemies.Count; index++)
-        {
-            CombatTarget enemy = activeEnemies[index];
-            if (enemy == null || !enemy.gameObject.activeInHierarchy || enemy.IsDead)
-                continue;
-
-            Vector3 offset = enemy.transform.position - center;
-            if (Mathf.Abs(offset.y) > height)
-                continue;
-            offset.y = 0f;
-            if (offset.sqrMagnitude <= radiusSqr)
-                _enemiesInRange.Add(enemy);
-        }
-
-        foreach (CombatTarget enemy in _enemiesInRange)
-            ApplyDamage(character, enemy);
-        _enemiesInRange.Clear();
+        _aura.DamageEnemies();
     }
 
     public override float CalculateEstimatedDps() =>
@@ -220,22 +199,6 @@ public sealed class AuraAbility : CharacterActiveAbility
             _relicEventBus.PublishKill(new RelicKillEvent(character, enemy, hitPosition, Id.ToString()));
     }
 
-    private void UpdateVisual()
-    {
-        if (_aura == null || _owner == null)
-            return;
-
-        _aura.transform.SetPositionAndRotation(
-            _owner.transform.position + Vector3.up * _configuration.VisualHeightOffset,
-            Quaternion.identity);
-        float scale = _radius / Mathf.Max(0.01f, _configuration.VisualBaseRadius);
-        Vector3 ownerScale = _owner.transform.lossyScale;
-        _aura.transform.localScale = new Vector3(
-            scale / Mathf.Max(0.0001f, Mathf.Abs(ownerScale.x)),
-            scale / Mathf.Max(0.0001f, Mathf.Abs(ownerScale.y)),
-            scale / Mathf.Max(0.0001f, Mathf.Abs(ownerScale.z)));
-    }
-
     private float GetTickInterval() =>
         Mathf.Max(MinimumEffectiveTickInterval, GetModifiedCooldown());
 
@@ -258,9 +221,11 @@ public sealed class AuraAbility : CharacterActiveAbility
     private void CleanupAura()
     {
         if (_aura != null)
-            Object.Destroy(_aura);
+        {
+            _aura.gameObject.SetActive(false);
+            Object.Destroy(_aura.gameObject);
+        }
         _aura = null;
         _owner = null;
-        _enemiesInRange.Clear();
     }
 }

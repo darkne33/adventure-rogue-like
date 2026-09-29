@@ -17,6 +17,11 @@ public sealed class ExpDropper
         _container = container;
     }
 
+    public float GetExperienceMultiplier(EnemyRank rank) =>
+        rank == EnemyRank.Elite
+            ? Mathf.Max(1f, _configuration != null ? _configuration.EliteExperienceMultiplier : 2f)
+            : 1f;
+
     public void DropExp(Vector3 position, int amount)
     {
         if (amount <= 0)
