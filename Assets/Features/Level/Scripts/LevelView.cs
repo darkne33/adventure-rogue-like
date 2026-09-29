@@ -50,9 +50,14 @@ public class LevelView : MonoBehaviour
     private int _spawnedRewardBags;
     private int _guaranteedKeyRewardBagNumber;
 
-    public void Configure(LevelRoomNode[] rooms)
+    public void Configure(LevelRoomNode[] rooms, LevelRoomCatalog catalog = null)
     {
         _rooms = rooms;
+        if (catalog != null)
+        {
+            _smallEnemyRooms = catalog.SmallEnemyRooms.ToArray();
+            _mediumEnemyRooms = catalog.MediumEnemyRooms.ToArray();
+        }
         _combatDepths = null;
         _isInitialized = false;
     }

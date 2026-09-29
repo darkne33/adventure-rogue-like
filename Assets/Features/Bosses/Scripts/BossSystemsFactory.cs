@@ -59,7 +59,7 @@ namespace Features.Bosses.Scripts
                 : configuration.GetScaledMaxHealth(character.CharacterAbilitySystem.CalculateEstimatedDps() *
                     _relicManager.GetEstimatedBossDamageMultiplier());
             int generatedLevelNumber =
-                _levelsConfiguration.GetGeneratedLevelNumber(_runtimeDataService.CurrentIndexLevel);
+                _levelsConfiguration.GetStatGrowthStep(_runtimeDataService.CurrentIndexLevel);
             if (generatedLevelNumber > 0 && facade is not MushroomBossFacade { IsSplitChild: true })
                 maxHealth = _levelsConfiguration.ProceduralLevels.ScaleHealth(maxHealth, generatedLevelNumber);
             var healthSystem = new HealthSystem(maxHealth,

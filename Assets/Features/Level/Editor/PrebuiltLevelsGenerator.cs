@@ -19,8 +19,6 @@ public static class PrebuiltLevelsGenerator
         "Assets/Features/RoomGates/Prefabs/RoomDoor.prefab";
     private const string CoinDoorPrefabPath =
         "Assets/Features/RoomGates/Prefabs/RoomDoor.prefab";
-    private const string ConfigurationPath =
-        "Assets/Features/Level/LevelsConfiguration.asset";
     private const string EnemyRoomConfigurationPath =
         "Assets/Features/Level/Configs_Enemies_EnemyRoomConfiguration.asset";
 
@@ -63,11 +61,6 @@ public static class PrebuiltLevelsGenerator
     [MenuItem("Tools/Little Rush/Levels/Generate Prebuilt Grid Levels")]
     public static void Generate()
     {
-        LevelsConfiguration configuration =
-            AssetDatabase.LoadAssetAtPath<LevelsConfiguration>(ConfigurationPath);
-        if (configuration == null)
-            throw new InvalidOperationException("Levels configuration asset is missing.");
-
         EnemyRoomConfiguration enemyRoomConfiguration =
             AssetDatabase.LoadAssetAtPath<EnemyRoomConfiguration>(
                 EnemyRoomConfigurationPath);
@@ -94,7 +87,6 @@ public static class PrebuiltLevelsGenerator
                     enemyRoomConfiguration));
             }
 
-            UpdateConfiguration(configuration, levelViews);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Validate();
@@ -112,16 +104,12 @@ public static class PrebuiltLevelsGenerator
     [MenuItem("Tools/Little Rush/Levels/Validate Prebuilt Grid Levels")]
     public static void Validate()
     {
-        LevelsConfiguration configuration =
-            AssetDatabase.LoadAssetAtPath<LevelsConfiguration>(ConfigurationPath);
-        if (configuration?.Levels == null || configuration.Levels.Count == 0)
-            throw new InvalidOperationException(
-                "Levels configuration must contain at least one level.");
-
-        for (int index = 0; index < configuration.Levels.Count; index++)
+        // Legacy authoring is independent of the procedural runtime configuration.
+        for (int index = 0; index < LevelsCount; index++)
         {
             int levelNumber = index + 1;
-            LevelView levelView = configuration.Levels[index]?.LevelView;
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(GetLevelPath(levelNumber));
+            LevelView levelView = prefab != null ? prefab.GetComponent<LevelView>() : null;
 
             if (levelView == null)
                 throw new InvalidOperationException(
@@ -129,10 +117,10 @@ public static class PrebuiltLevelsGenerator
 
             ValidateStartRoom(levelView, levelNumber);
             ValidateLevelRooms(levelView, levelNumber,
-                hasNextLevel: index < configuration.Levels.Count - 1);
+                hasNextLevel: index < LevelsCount - 1);
         }
 
-        Debug.Log($"Validated {configuration.Levels.Count} configured grid levels.");
+        Debug.Log($"Validated {LevelsCount} legacy grid levels.");
     }
 
     private static void ConfigureRoomPrefabs()
@@ -695,37 +683,6 @@ public static class PrebuiltLevelsGenerator
         if (visited.Count != roomsByPosition.Count)
             throw new InvalidOperationException(
                 $"Level {levelNumber} contains rooms unreachable from the start.");
-    }
-
-    private static void UpdateConfiguration(LevelsConfiguration configuration,
-        IReadOnlyList<LevelView> levelViews)
-    {
-        var serializedConfiguration = new SerializedObject(configuration);
-        SerializedProperty levelsProperty =
-            serializedConfiguration.FindProperty("<Levels>k__BackingField");
-
-        UnityEngine.Object enemyFactoryConfiguration = levelsProperty.arraySize > 0
-            ? levelsProperty.GetArrayElementAtIndex(0)
-                .FindPropertyRelative("<EnemyFactoryConfiguration>k__BackingField").objectReferenceValue
-            : null;
-
-        levelsProperty.arraySize = Math.Max(levelsProperty.arraySize, LevelsCount);
-        for (int index = 0; index < LevelsCount; index++)
-        {
-            SerializedProperty levelProperty = levelsProperty.GetArrayElementAtIndex(index);
-            SerializedProperty enemyFactoryProperty =
-                levelProperty.FindPropertyRelative("<EnemyFactoryConfiguration>k__BackingField");
-
-            if (enemyFactoryProperty.objectReferenceValue == null)
-                enemyFactoryProperty.objectReferenceValue = enemyFactoryConfiguration;
-
-            levelProperty.FindPropertyRelative("<LevelView>k__BackingField").objectReferenceValue =
-                levelViews[index];
-        }
-
-        serializedConfiguration.ApplyModifiedPropertiesWithoutUndo();
-        EditorUtility.SetDirty(configuration);
-        AssetDatabase.ForceReserializeAssets(new[] { ConfigurationPath });
     }
 
     private static void EnsureLevelFolders(int levelNumber)

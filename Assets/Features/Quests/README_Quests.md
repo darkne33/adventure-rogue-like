@@ -43,7 +43,7 @@ Targets, quest silver rewards and purchase prices are editable in the configurat
 | run_kills_150 | Defeat 150 enemies in one run. | DUKE | 2 | 5 |
 | rooms_3 | Clear 3 combat rooms in one run. | MR POCKET | 2 | 8 |
 | weapon_5 | Raise any weapon to level 5 in one run. | Fire Trail | 2 | 3 |
-| aura_close_kills_50 | Defeat 50 enemies within 2 m of the character in one run. | Aura | 2 | 3 |
+| aura_close_kills_50 | Defeat 50 enemies within 10 m of the character in one run. | Aura | 2 | 3 |
 | level_5 | Reach character level 5 in one run. | Max HP Scroll | 1 | 2 |
 | combat_120 | Spend 120 seconds in active combat in one run. | Movement Speed Scroll | 1 | 2 |
 | chests_1 | Open a relic chest. | Luck Scroll | 1 | 3 |

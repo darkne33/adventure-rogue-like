@@ -6,6 +6,7 @@ public class RogueLikeRuntimeDataService : IRogueLikeRuntimeDataService
     public int CurrentIndexLevel { get; set; }
     public RoomData CurrentRoomData { get; private set; }
     public int VisitedRoomsCount => _visitedRooms.Count;
+    public int VisitedCombatRoomsCount => _combatRoomVisitIndices.Count;
 
     private readonly HashSet<RoomData> _visitedRooms = new();
     private readonly Dictionary<RoomData, int> _combatRoomVisitIndices = new();

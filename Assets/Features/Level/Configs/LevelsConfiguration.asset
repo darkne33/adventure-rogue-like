@@ -20,26 +20,21 @@ MonoBehaviour:
     m_Bits: 384
   <EnemyHealthScalingConfiguration>k__BackingField: {fileID: 11400000, guid: 269b399b251b4a73bfc4eba3c360d2b0, type: 2}
   <EnemyRoomScalingConfiguration>k__BackingField: {fileID: 11400000, guid: fb7bf36fe7ef494f8b324d31bc3f2742, type: 2}
-  _openingLevels:
-    _enemyRoomVariation: 1
-    _mainPathEnemyFraction: 0.7
-    _smallLevelRoomCount: 6
-    _largeLevelRoomCount: 18
-    _smallLevelShopChancePercent: 20
-    _largeLevelShopChancePercent: 80
+  _level:
+    <EnemyFactoryConfiguration>k__BackingField: {fileID: 11400000, guid: fb19e7270ba2f1248a4ad5c3d99fd81c, type: 2}
+    <LevelView>k__BackingField: {fileID: 5716263380797961638, guid: f64c5404253446bd855ec4d5c2284ddd, type: 3}
+  _roomCatalog: {fileID: 11400000, guid: d0519b813c1d4d97ba7f2fd79aa0fdac, type: 2}
   _proceduralLevels:
-    _enabled: 1
     _initialCombatRooms: 8
     _maximumCombatRooms: 14
     _levelsPerAdditionalRoom: 2
-    _rewardRooms: 3
-    _shopRooms: 2
+    _mainPathCombatFraction: 0.7
+    _maximumBranchCombatRooms: 2
+    _firstBranchMaximumDepth: 2
+    _gridRadius: 6
+    _generationAttempts: 128
+    _rewardRoomCountWeights: {x: 1, y: 1, z: 1, w: 1}
+    _shopChancePercent: 50
+    _statGrowthStartLevel: 4
     _healthGrowthPerLevel: 0.15
     _damageGrowthPerLevel: 0.05
-  <Levels>k__BackingField:
-  - <EnemyFactoryConfiguration>k__BackingField: {fileID: 11400000, guid: fb19e7270ba2f1248a4ad5c3d99fd81c, type: 2}
-    <LevelView>k__BackingField: {fileID: 5716263380797961638, guid: 19fb5b68d7c0c7141808cb37a5efe87e, type: 3}
-  - <EnemyFactoryConfiguration>k__BackingField: {fileID: 11400000, guid: fb19e7270ba2f1248a4ad5c3d99fd81c, type: 2}
-    <LevelView>k__BackingField: {fileID: 5716263380797961638, guid: 32d083062fa74b79a38491aef60338ce, type: 3}
-  - <EnemyFactoryConfiguration>k__BackingField: {fileID: 11400000, guid: fb19e7270ba2f1248a4ad5c3d99fd81c, type: 2}
-    <LevelView>k__BackingField: {fileID: 5716263380797961638, guid: 48b4f2eb172c4b8db8eeb00a6ac3c951, type: 3}

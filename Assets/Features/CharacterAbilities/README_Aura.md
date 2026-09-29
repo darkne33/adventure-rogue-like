@@ -28,4 +28,4 @@ The card uses its own green energy-ring sprite, `Icons/AuraAbilityIcon.png`, ref
 
 ## Unlock
 
-The separate **DANGER ZONE** quest (`aura_close_kills_50`) requires defeating 50 enemies within 2 meters of the character in one run. It uses the existing `RunCloseRangeKills` metric, awards 2 silver, and enables purchasing `weapon_aura` for 3 persistent silver. Completing the quest alone does not grant ownership. The aura is excluded from the default ability list.
+The separate **DANGER ZONE** quest (`aura_close_kills_50`) requires defeating 50 enemies within 10 meters of the character in one run. It uses the existing `RunCloseRangeKills` metric, awards 2 silver, and enables purchasing `weapon_aura` for 3 persistent silver. Completing the quest alone does not grant ownership. The aura is excluded from the default ability list.
