@@ -28,7 +28,7 @@ public class EnemyRoomConfiguration : ScriptableObject
 public sealed class EnemyRoomSettings
 {
     [field: SerializeField]
-    [field: Tooltip("Allowed enemy types. Combat depth and the room balance select the actual composition.")]
+    [field: Tooltip("Allowed enemy types. First combat-room visit order and the room balance select the actual composition.")]
     public EnemyType[] EnemyTypes { get; private set; } = System.Array.Empty<EnemyType>();
 
     public bool HasSpawnableEnemies

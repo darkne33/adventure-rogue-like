@@ -1,5 +1,4 @@
 using System;
-using Core;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -11,21 +10,19 @@ namespace Features.Enemies.Scripts
         private readonly IEnemiesProvider _enemiesProvider;
         private readonly CharacterStats _characterStats;
         private readonly IRogueLikeRuntimeDataService _runtimeDataService;
-        private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
         private readonly LevelsConfiguration _levelsConfiguration;
         private readonly GoldDropper _goldDropper;
         private readonly ExpDropper _expDropper;
 
         public EnemySystemsFactory(ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
             CharacterStats characterStats, IRogueLikeRuntimeDataService runtimeDataService,
-            ISceneService<RogueLikeSceneProvider> sceneService, LevelsConfiguration levelsConfiguration,
+            LevelsConfiguration levelsConfiguration,
             GoldDropper goldDropper, ExpDropper expDropper)
         {
             _characterProvider = characterProvider;
             _enemiesProvider = enemiesProvider;
             _characterStats = characterStats;
             _runtimeDataService = runtimeDataService;
-            _sceneService = sceneService;
             _levelsConfiguration = levelsConfiguration;
             _goldDropper = goldDropper;
             _expDropper = expDropper;
@@ -136,12 +133,7 @@ namespace Features.Enemies.Scripts
             if (_runtimeDataService.CurrentRoomData is not DefaultEnemiesRoomData currentRoomData)
                 return;
 
-            LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
-            if (currentLevel == null)
-                throw new InvalidOperationException("Current level view is not available.");
-
-            int roomIndex = _levelsConfiguration.GetCombatProgressIndex(
-                _runtimeDataService.CurrentIndexLevel, currentLevel, currentRoomData);
+            int roomIndex = _runtimeDataService.GetCombatProgressIndex(currentRoomData);
             facade.ConfigureForRoom(_levelsConfiguration.GetEnemyHealthScalingConfiguration(), roomIndex,
                 _levelsConfiguration.ProceduralLevels,
                 _levelsConfiguration.GetGeneratedLevelNumber(_runtimeDataService.CurrentIndexLevel));

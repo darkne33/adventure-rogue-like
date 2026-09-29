@@ -120,7 +120,8 @@ namespace Features.Relics.Scripts
         }
 
         private bool SpawnChest(Room room, RoomData roomData, Transform spawnPoint) =>
-            SpawnChest(room, roomData, spawnPoint, Quaternion.identity, out _);
+            SpawnChest(room, roomData, spawnPoint,
+                spawnPoint != null ? spawnPoint.rotation : room.transform.rotation, out _);
 
         private bool SpawnChest(Room room, RoomData roomData, Transform spawnPoint,
             Quaternion rotation, out RelicChest spawnedChest)

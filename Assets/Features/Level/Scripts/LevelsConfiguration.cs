@@ -58,9 +58,6 @@ public class LevelsConfiguration : ScriptableObject
         return EnemyHealthScalingConfiguration;
     }
 
-    public int GetCombatProgressIndex(int levelIndex, LevelView level, RoomData roomData) =>
-        level.CombatProgressOffset + level.GetEnemyRoomIndex(roomData);
-
     public int GetCombatProgressOffset(int levelIndex,
         IReadOnlyDictionary<int, int> openingCombatRoomCounts = null)
     {

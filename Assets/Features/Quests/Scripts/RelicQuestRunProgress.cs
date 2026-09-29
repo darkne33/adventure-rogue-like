@@ -12,7 +12,7 @@ namespace Features.Quests.Scripts
         private const float MinimumMovingSpeed = 0.1f;
         private const float MaximumStationarySeconds = 2f;
         private const float BurstSeconds = 2f;
-        private const float CloseKillDistance = 2f;
+        private const float CloseKillDistance = 10f;
         private readonly QuestService _quests;
         private readonly Queue<float> _recentKills = new();
 

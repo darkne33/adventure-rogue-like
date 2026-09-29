@@ -4,7 +4,7 @@ using UnityEngine;
     fileName = "EnemyHealthScalingConfiguration", order = 0)]
 public class EnemyHealthScalingConfiguration : ScriptableObject
 {
-    [Tooltip("Health multipliers by combat depth, independent of the player's current build.")]
+    [Tooltip("Health multipliers by first combat-room visit order in the run, independent of the player's current build.")]
     [SerializeField] private float[] _healthByRoom =
         { 2.5f, 2.75f, 3f, 3.5f, 4f, 4.5f, 5f, 5.75f, 6.5f, 7.5f, 8.75f, 10f };
     [SerializeField, Min(1f)] private float _finalSpeedMultiplier = 1.2f;

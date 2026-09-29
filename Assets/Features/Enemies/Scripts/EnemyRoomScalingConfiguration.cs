@@ -5,7 +5,7 @@ using UnityEngine;
     fileName = "EnemyRoomScalingConfiguration", order = 0)]
 public class EnemyRoomScalingConfiguration : ScriptableObject
 {
-    [Tooltip("One entry per combat depth. Later rooms keep the final value.")]
+    [Tooltip("One entry per first combat-room visit in the run. Later rooms keep the final value.")]
     [SerializeField] private int[] _startingEnemies = { 2, 3, 4, 5, 7, 9, 12, 18, 24, 18, 30, 30, 30, 30, 30 };
     [Tooltip("Total enemies across all waves; this can exceed the simultaneous enemy limit. Later rooms keep the final value.")]
     [SerializeField] private int[] _totalEnemies =
@@ -15,7 +15,7 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     [Tooltip("Maximum total enemies across all waves for a Small room. Larger groups use Medium rooms.")]
     [SerializeField, Min(1)] private int _maxEnemiesInSmallRoom = 9;
     [Header("Combat Waves")]
-    [Tooltip("First one-based combat depth where rooms can use three waves, regardless of level.")]
+    [Tooltip("First one-based combat-room visit where rooms can use three waves, regardless of level.")]
     [SerializeField, Min(1)] private int _firstWaveRoom = 5;
     [SerializeField, Range(0f, 100f)] private float _waveRoomChancePercent = 50f;
     [Tooltip("Relative sizes of three waves, scaled to preserve the room's total enemy count.")]

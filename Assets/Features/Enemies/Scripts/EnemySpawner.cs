@@ -105,9 +105,7 @@ public class EnemySpawner
         if (_roomBalance == null)
             throw new System.InvalidOperationException("Enemy room balance configuration is missing.");
 
-        int levelIndex = _rogueLikeRuntimeDataService.CurrentIndexLevel;
-        _roomProgressIndex = _levelsConfiguration.GetCombatProgressIndex(
-            levelIndex, currentLevel, currentRoomData);
+        _roomProgressIndex = _rogueLikeRuntimeDataService.GetCombatProgressIndex(currentRoomData);
         _allEnemiesInCurrentRoom = _roomBalance.GetAllEnemyCount(_roomProgressIndex);
         _waveEnemyCounts = _roomBalance.CreateWaveEnemyCounts(_roomProgressIndex);
         _waveIndex = 0;

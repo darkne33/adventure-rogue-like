@@ -23,7 +23,7 @@ public class EnemyPrefabData
     public AddressableLoadContainerGameObject ElitePrefabContainer = new();
 
     [Range(0f, 1f)] public float EliteSpawnChance;
-    [Tooltip("Minimum zero-based combat depth for this elite variant.")]
+    [Tooltip("Minimum zero-based combat-room visit index in the run for this elite variant.")]
     [Min(0)] public int RequiredCompletedRoomsForElite;
     public EnemyType EnemyType;
 

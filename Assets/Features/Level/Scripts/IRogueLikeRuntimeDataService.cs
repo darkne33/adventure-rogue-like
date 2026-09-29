@@ -7,5 +7,6 @@ public interface IRogueLikeRuntimeDataService
     int VisitedRoomsCount { get; }
     event Action<RoomData, RoomData> RoomChanged;
     bool HasVisitedRoom(RoomData roomData);
+    int GetCombatProgressIndex(RoomData roomData);
     void SetCurrentRoomData(RoomData roomData);
 }

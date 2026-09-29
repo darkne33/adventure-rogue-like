@@ -37,7 +37,8 @@ public sealed class LevelViewEditor : Editor
             "If several neighbors are available, the entrance is chosen in Up, Down, Left, Right order. " +
             "Use Blocked Connections to select a different neighbor. " +
             "Enemy and Exit rooms keep their enemy types directly on their room node. " +
-            "At runtime, combat depth determines the enemy count and selects a Small or Medium layout " +
+            "At runtime, first combat-room visit order across the run determines enemy counts and stats. " +
+            "Combat depth selects a Small or Medium layout " +
             "from Combat Room Variants. Empty pools keep the authored prefab. " +
             "Each level must contain exactly one final room: Exit or Boss. Both use Level Exit Direction. " +
             "Boss rooms use their authored prefab and BossSpawnPoint with its separate Boss Config.",
