@@ -16,6 +16,7 @@ namespace Features.Relics.Scripts
         public event Action<Vector3> ChestOpened;
         public event Action<RoomData, Room, Vector3> ChestSpawned;
         public event Action<RoomData, Room> ChestCollected;
+        public event Action<RelicDefinition> RelicOffered;
         public event Action<RelicDefinition> RelicCollected;
         public event Action ChestsCleared;
 
@@ -48,6 +49,9 @@ namespace Features.Relics.Scripts
 
         public void PublishChestCollected(RoomData roomData, Room room) =>
             ChestCollected?.Invoke(roomData, room);
+
+        public void PublishRelicOffered(RelicDefinition relic) =>
+            RelicOffered?.Invoke(relic);
 
         public void PublishRelicCollected(RelicDefinition relic) =>
             RelicCollected?.Invoke(relic);

@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using TMPro;
 using UI;
 using UnityEngine;
-using UnityEngine.UI;
 using Zenject;
 
 namespace Features.Relics.Scripts
@@ -13,23 +12,31 @@ namespace Features.Relics.Scripts
         [SerializeField] private TMP_Text _relicName;
         [SerializeField] private TMP_Text _relicGrade;
         [SerializeField] private TMP_Text _relicDescription;
-        [SerializeField] private Image _relicIcon;
-        [SerializeField] private Button _takeRelicButton;
+        [SerializeField] private UnityEngine.UI.Image _relicIcon;
+        [SerializeField] private UnityEngine.UI.Button _takeRelicButton;
+        [SerializeField] private UnityEngine.UI.Button _skipRelicButton;
 
         [Inject] private ICursorService _cursorService;
 
         private PanelAnimationsMonoComponent _panelAnimations;
 
         public event Action TakeRequested;
+        public event Action SkipRequested;
 
         private void Awake()
         {
             _panelAnimations = GetComponent<PanelAnimationsMonoComponent>();
             _takeRelicButton.onClick.AddListener(HandleTakeRequested);
+            if (_skipRelicButton != null)
+                _skipRelicButton.onClick.AddListener(HandleSkipRequested);
         }
 
-        private void OnDestroy() =>
+        private void OnDestroy()
+        {
             _takeRelicButton.onClick.RemoveListener(HandleTakeRequested);
+            if (_skipRelicButton != null)
+                _skipRelicButton.onClick.RemoveListener(HandleSkipRequested);
+        }
 
         public void Show(RelicDefinition relic)
         {
@@ -59,5 +66,8 @@ namespace Features.Relics.Scripts
 
         private void HandleTakeRequested() =>
             TakeRequested?.Invoke();
+
+        private void HandleSkipRequested() =>
+            SkipRequested?.Invoke();
     }
 }

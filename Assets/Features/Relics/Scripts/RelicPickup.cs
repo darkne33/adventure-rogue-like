@@ -160,7 +160,7 @@ namespace Features.Relics.Scripts
                 return;
 
             _isPicked = true;
-            await ActivateAndDestroy();
+            await OfferAndDestroy();
         }
 
         private async UniTaskVoid AutoCollect()
@@ -170,7 +170,7 @@ namespace Features.Relics.Scripts
 
             _isPicked = true;
             await FlyToCharacter();
-            await ActivateAndDestroy();
+            await OfferAndDestroy();
         }
 
         public async UniTask<bool> CollectImmediatelyAsync(RelicDefinition relic,
@@ -186,7 +186,7 @@ namespace Features.Relics.Scripts
             _isPicked = true;
 
             await FlyToCharacter();
-            return await ActivateAndDestroy();
+            return await OfferAndDestroy();
         }
 
         private async UniTask FlyToCharacter()
@@ -233,9 +233,9 @@ namespace Features.Relics.Scripts
             }
         }
 
-        private async UniTask<bool> ActivateAndDestroy()
+        private async UniTask<bool> OfferAndDestroy()
         {
-            if (TryActivate() == false)
+            if (TryConsumePickup() == false)
             {
                 _isPicked = false;
                 return false;
@@ -250,14 +250,14 @@ namespace Features.Relics.Scripts
                 .SetEase(Ease.InBack)
                 .ToUniTask(cancellationToken: this.GetCancellationTokenOnDestroy());
 
-            _eventBus.PublishRelicCollected(_relic);
+            _eventBus.PublishRelicOffered(_relic);
             Destroy(gameObject);
             return true;
         }
 
-        private bool TryActivate()
+        private bool TryConsumePickup()
         {
-            if (_relicManager.AddRelic(_relic) == false)
+            if (_relicManager.CanAddRelic(_relic) == false)
                 return false;
 
             _collectedCallback?.Invoke();

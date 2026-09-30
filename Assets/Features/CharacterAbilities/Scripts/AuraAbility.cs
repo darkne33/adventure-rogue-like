@@ -111,7 +111,7 @@ public sealed class AuraAbility : CharacterActiveAbility
         if (_aura == null)
         {
             _aura = Object.Instantiate(_configuration.Prefab, character.transform, false);
-            _aura.Initialize(character, _enemiesProvider, _configuration, _radius, ApplyDamage);
+            _aura.Initialize(character, _enemiesProvider, _configuration, _radius, GetTickInterval(), ApplyDamage);
         }
 
         base.Use(character);
@@ -120,6 +120,7 @@ public sealed class AuraAbility : CharacterActiveAbility
     protected override void OnUse(CharacterFacade character)
     {
         CurrentCooldown = GetTickInterval();
+        _aura.SetTickInterval(CurrentCooldown);
         _aura.DamageEnemies();
     }
 

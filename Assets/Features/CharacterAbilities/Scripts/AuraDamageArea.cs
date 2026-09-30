@@ -9,6 +9,7 @@ public sealed class AuraDamageArea : MonoBehaviour
     [SerializeField] private Transform _visualRoot;
 
     private readonly List<CombatTarget> _enemiesInRange = new();
+    private readonly List<ParticleSystem> _particleSystems = new();
     private CharacterFacade _owner;
     private IEnemiesProvider _enemiesProvider;
     private AuraAbilityConfiguration _configuration;
@@ -17,7 +18,7 @@ public sealed class AuraDamageArea : MonoBehaviour
     private bool _isInitialized;
 
     public void Initialize(CharacterFacade owner, IEnemiesProvider enemiesProvider,
-        AuraAbilityConfiguration configuration, float radius,
+        AuraAbilityConfiguration configuration, float radius, float tickInterval,
         Action<CharacterFacade, CombatTarget> damageEnemy)
     {
         _owner = owner;
@@ -29,8 +30,27 @@ public sealed class AuraDamageArea : MonoBehaviour
         SetRadius(radius);
         _isInitialized = true;
 
+        _particleSystems.Clear();
+        if (_visualRoot != null)
+            _visualRoot.GetComponentsInChildren(true, _particleSystems);
+        SetTickInterval(tickInterval);
+
         if (_visualRoot != null && _visualRoot.TryGetComponent(out ParticleSystem particles))
             particles.Play(true);
+    }
+
+    public void SetTickInterval(float tickInterval)
+    {
+        // A 0.5-second tick uses speed 0.5; shorter intervals speed up the existing effect.
+        float simulationSpeed = 0.25f / Mathf.Max(0.0001f, tickInterval);
+        foreach (ParticleSystem particles in _particleSystems)
+        {
+            if (particles == null)
+                continue;
+
+            ParticleSystem.MainModule main = particles.main;
+            main.simulationSpeed = simulationSpeed;
+        }
     }
 
     public void SetRadius(float radius)
@@ -47,8 +67,10 @@ public sealed class AuraDamageArea : MonoBehaviour
             1f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.z)));
 
         if (_visualRoot != null)
-            _visualRoot.localScale = Vector3.one *
-                                     (_radius / Mathf.Max(0.01f, _configuration.VisualBaseRadius));
+        {
+            float horizontalScale = _radius / Mathf.Max(0.01f, _configuration.VisualBaseRadius);
+            _visualRoot.localScale = new Vector3(horizontalScale, _visualRoot.localScale.y, horizontalScale);
+        }
     }
 
     // Called once per ability tick, so pause, upgrades and cooldown modifiers share one timer.
@@ -100,5 +122,6 @@ public sealed class AuraDamageArea : MonoBehaviour
         _enemiesProvider = null;
         _configuration = null;
         _enemiesInRange.Clear();
+        _particleSystems.Clear();
     }
 }

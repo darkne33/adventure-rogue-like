@@ -10,7 +10,7 @@ public sealed class AuraAbilityConfiguration : AbilityConfiguration
     [field: SerializeField, Min(0.05f)] public float DamageTickInterval { get; private set; } = 0.5f;
     [field: SerializeField, Min(0.05f)] public float MinimumTickInterval { get; private set; } = 0.15f;
     [field: SerializeField, Min(0.01f)] public float VisualBaseRadius { get; private set; } = 1f;
-    [field: SerializeField] public float VisualHeightOffset { get; private set; } = 0.15f;
+    [field: SerializeField] public float VisualHeightOffset { get; private set; } = 0f;
 
     [field: Header("Damage")]
     [field: SerializeField, Min(1)] public int StartDamage { get; private set; } = 4;

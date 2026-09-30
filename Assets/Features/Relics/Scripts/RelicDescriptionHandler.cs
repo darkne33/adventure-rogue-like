@@ -10,34 +10,40 @@ namespace Features.Relics.Scripts
         private readonly RelicEventBus _eventBus;
         private readonly IPanelService _panelService;
         private readonly IPauseService _pauseService;
+        private readonly RelicManager _relicManager;
         private readonly Queue<RelicDefinition> _pendingRelics = new();
 
         private RelicDescriptionPanel _panel;
+        private RelicDefinition _currentRelic;
         private bool _isOpen;
         private bool _isClosing;
 
         public RelicDescriptionHandler(RelicEventBus eventBus, IPanelService panelService,
-            IPauseService pauseService)
+            IPauseService pauseService, RelicManager relicManager)
         {
             _eventBus = eventBus;
             _panelService = panelService;
             _pauseService = pauseService;
+            _relicManager = relicManager;
 
-            _eventBus.RelicCollected += HandleRelicCollected;
+            _eventBus.RelicOffered += HandleRelicOffered;
         }
 
         public void Dispose()
         {
-            _eventBus.RelicCollected -= HandleRelicCollected;
+            _eventBus.RelicOffered -= HandleRelicOffered;
 
             if (_panel != null)
+            {
                 _panel.TakeRequested -= HandleTakeRequested;
+                _panel.SkipRequested -= HandleSkipRequested;
+            }
 
             if (_isOpen)
                 _pauseService.CancelPause();
         }
 
-        private void HandleRelicCollected(RelicDefinition relic)
+        private void HandleRelicOffered(RelicDefinition relic)
         {
             if (relic == null)
                 return;
@@ -55,19 +61,38 @@ namespace Features.Relics.Scripts
             if (panel == null)
                 return;
 
-            RelicDefinition relic = _pendingRelics.Dequeue();
+            _currentRelic = _pendingRelics.Dequeue();
             _isOpen = true;
 
             _pauseService.HandlePause();
-            panel.Show(relic);
+            panel.Show(_currentRelic);
         }
 
-        private void HandleTakeRequested()
+        private void HandleTakeRequested() =>
+            ResolveCurrentRelic(true);
+
+        private void HandleSkipRequested() =>
+            ResolveCurrentRelic(false);
+
+        private void ResolveCurrentRelic(bool takeRelic)
         {
             if (_isOpen == false || _isClosing)
                 return;
 
             _isClosing = true;
+
+            if (takeRelic)
+            {
+                if (_relicManager.AddRelic(_currentRelic) == false)
+                {
+                    _isClosing = false;
+                    return;
+                }
+
+                _eventBus.PublishRelicCollected(_currentRelic);
+            }
+
+            _currentRelic = null;
             CloseCurrentRelic().Forget();
         }
 
@@ -91,7 +116,10 @@ namespace Features.Relics.Scripts
             _panel = presenter?.Panel?.RelicDescriptionPanel;
 
             if (_panel != null)
+            {
                 _panel.TakeRequested += HandleTakeRequested;
+                _panel.SkipRequested += HandleSkipRequested;
+            }
 
             return _panel;
         }

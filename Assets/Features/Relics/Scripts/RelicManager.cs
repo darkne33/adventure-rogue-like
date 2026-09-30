@@ -120,17 +120,23 @@ namespace Features.Relics.Scripts
                 _eventBus.PublishHeal(new RelicHealEvent(character, healed));
         }
 
-        public bool AddRelic(RelicDefinition relic)
+        public bool CanAddRelic(RelicDefinition relic)
         {
             if (relic == null)
                 return false;
 
             RelicRuntimeState state = _activeRelics.FirstOrDefault(x => x.Definition == relic);
+            return state == null || (relic.IsUnique == false && state.StackCount < relic.MaxStacks);
+        }
+
+        public bool AddRelic(RelicDefinition relic)
+        {
+            if (CanAddRelic(relic) == false)
+                return false;
+
+            RelicRuntimeState state = _activeRelics.FirstOrDefault(x => x.Definition == relic);
             if (state != null)
             {
-                if (relic.IsUnique || state.StackCount >= relic.MaxStacks)
-                    return false;
-
                 state.AddStack();
                 AddPassiveModifiers(state, 1);
                 _buildRuntime.Modifiers.Refresh();
