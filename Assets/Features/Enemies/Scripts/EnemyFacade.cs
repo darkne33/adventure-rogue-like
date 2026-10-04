@@ -234,9 +234,16 @@ namespace Features.Enemies.Scripts
         {
             if (_navMeshAgent == null || !_navMeshAgent.isActiveAndEnabled)
                 return;
-            if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, NavMeshSampleDistance,
-                    NavMesh.AllAreas))
-                _navMeshAgent.Warp(hit.position);
+
+            Vector3 bodyPosition = _rigidbody != null ? _rigidbody.position : transform.position;
+            if (NavMesh.SamplePosition(bodyPosition, out NavMeshHit hit, NavMeshSampleDistance,
+                    NavMesh.AllAreas) == false || _navMeshAgent.Warp(hit.position) == false)
+                return;
+
+            // Synchronize navigation without losing the body's clearance above the floor.
+            transform.position = bodyPosition;
+            if (_rigidbody != null)
+                _rigidbody.position = bodyPosition;
         }
 
         public void NotifyAttackFinished() =>
