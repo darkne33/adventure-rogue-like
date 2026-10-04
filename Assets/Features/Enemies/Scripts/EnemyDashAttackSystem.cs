@@ -19,8 +19,6 @@ namespace Features.Enemies.Scripts
             Finished
         }
 
-        private const float NavigationSampleDistance = 4f;
-
         private readonly CharacterFacade _characterFacade;
         private readonly EnemyConfiguration _enemyConfiguration;
         private readonly EnemyFacade _enemyFacade;
@@ -33,12 +31,11 @@ namespace Features.Enemies.Scripts
         private NavMeshAgent _navMeshAgent;
         private SphereCollider _hitCollider;
         private Collider[] _colliders;
-        private EnemyDashSkirmisherMovement _skirmisherMovement;
+        private EnemyPursuitMovementSystem _pursuitMovement;
         private bool[] _wasTrigger;
         private State _state;
         private float _cooldown;
         private float _attackRange;
-        private float _stopDistance;
         private float _stateTime;
         private float _remainingDashDistance;
         private float _lastDashStep;
@@ -81,23 +78,10 @@ namespace Features.Enemies.Scripts
             _wasTrigger = new bool[_colliders.Length];
             _attackRange = Mathf.Min(Mathf.Max(0f, _enemyConfiguration.DamageRange),
                 Mathf.Max(0f, _enemyConfiguration.DashDistance));
-            _stopDistance = Mathf.Clamp(_enemyConfiguration.DistanceToStop > 0f
-                ? _enemyConfiguration.DistanceToStop
-                : _attackRange * 0.8f, 0f, _attackRange);
             _cooldown = Mathf.Max(0f, _enemyConfiguration.DamageCooldown);
 
-            // The agent supplies steering only. It never writes the visible body's pose.
-            _navMeshAgent.updatePosition = false;
-            _navMeshAgent.updateRotation = false;
-            _navMeshAgent.autoBraking = true;
-            _navMeshAgent.stoppingDistance = _stopDistance;
-            if (_enemyConfiguration.EnemyMovementType == EnemyMovementType.Skirmisher)
-            {
-                _skirmisherMovement = new EnemyDashSkirmisherMovement(_enemyFacade,
-                    _characterFacade, _enemiesProvider, _navMeshAgent, _attackRange);
-                _navMeshAgent.stoppingDistance = 0.25f;
-            }
-            _rigidbody.constraints |= RigidbodyConstraints.FreezeRotation;
+            _pursuitMovement = new EnemyPursuitMovementSystem(_enemyFacade, _characterFacade,
+                _enemyConfiguration, _navMeshAgent, _enemiesProvider);
             _enemyFacade.EnemyCollisionDetector.OnCollisionEnterEvent += ApplyDamage;
         }
 
@@ -108,7 +92,7 @@ namespace Features.Enemies.Scripts
 
             if (_state == State.Pursuit)
             {
-                TickPursuit();
+                _pursuitMovement.Tick();
                 return;
             }
 
@@ -205,80 +189,11 @@ namespace Features.Enemies.Scripts
             if (_state != State.Pursuit || _navMeshAgent == null || _navMeshAgent.isOnNavMesh == false)
                 return;
 
-            _skirmisherMovement?.Reset();
-            _navMeshAgent.nextPosition = _rigidbody.position;
-            if (_navMeshAgent.hasPath)
-                _navMeshAgent.ResetPath();
+            _pursuitMovement.Reset();
         }
 
         public void OnAttackFinished()
         {
-        }
-
-        private void TickPursuit()
-        {
-            if (_enemyFacade.IsDead || _characterFacade == null)
-                return;
-
-            if (_enemyFacade.IsStopped || _navMeshAgent.isOnNavMesh == false)
-            {
-                StopHorizontalMovement();
-                _enemyFacade.AnimationSystem.IdleAnimation();
-                return;
-            }
-
-            Vector3 toCharacter = GetFlatOffsetToCharacter();
-            if (_enemyFacade.IsAggro == false &&
-                toCharacter.sqrMagnitude <= Mathf.Pow(Mathf.Max(0.1f, _enemyConfiguration.AggroRange), 2f))
-            {
-                _enemyFacade.ActivateAggro();
-                StopHorizontalMovement();
-                return;
-            }
-
-            _navMeshAgent.nextPosition = _rigidbody.position;
-            bool isSkirmishing = _skirmisherMovement != null && _enemyFacade.IsAggro;
-            if (isSkirmishing == false && _enemyFacade.IsAggro &&
-                toCharacter.sqrMagnitude <= _stopDistance * _stopDistance)
-            {
-                if (_navMeshAgent.hasPath)
-                    _navMeshAgent.ResetPath();
-                StopHorizontalMovement();
-                RotateBodyTowards(toCharacter, _enemyConfiguration.RotationSpeed);
-                _enemyFacade.AnimationSystem.IdleAnimation();
-                return;
-            }
-
-            Vector3 destination = _characterFacade.transform.position;
-            if (isSkirmishing && _skirmisherMovement.TryGetDestination(
-                    Time.fixedDeltaTime * _enemyFacade.RelicTimeScale, out destination) == false)
-            {
-                if (_navMeshAgent.hasPath)
-                    _navMeshAgent.ResetPath();
-                StopHorizontalMovement();
-                RotateBodyTowards(toCharacter, _enemyConfiguration.RotationSpeed);
-                _enemyFacade.AnimationSystem.IdleAnimation();
-                return;
-            }
-
-            if (NavMesh.SamplePosition(destination, out NavMeshHit hit,
-                    NavigationSampleDistance, _navMeshAgent.areaMask) == false ||
-                _navMeshAgent.SetDestination(hit.position) == false)
-            {
-                StopHorizontalMovement();
-                _enemyFacade.AnimationSystem.IdleAnimation();
-                return;
-            }
-
-            Vector3 velocity = _navMeshAgent.desiredVelocity;
-            velocity.y = 0f;
-            velocity = Vector3.ClampMagnitude(velocity, _navMeshAgent.speed);
-            _rigidbody.linearVelocity = new Vector3(velocity.x, _rigidbody.linearVelocity.y, velocity.z);
-            RotateBodyTowards(velocity, _enemyConfiguration.RotationSpeed);
-            if (velocity.sqrMagnitude > 0.001f)
-                _enemyFacade.AnimationSystem.RunAnimation();
-            else
-                _enemyFacade.AnimationSystem.IdleAnimation();
         }
 
         private void TickWindup()
@@ -465,17 +380,6 @@ namespace Features.Enemies.Scripts
             Vector3 velocity = _rigidbody.linearVelocity;
             _rigidbody.linearVelocity = new Vector3(0f, velocity.y, 0f);
             _rigidbody.angularVelocity = Vector3.zero;
-        }
-
-        private void RotateBodyTowards(Vector3 direction, float rotationSpeed)
-        {
-            direction.y = 0f;
-            if (direction.sqrMagnitude <= 0.001f)
-                return;
-            _rigidbody.angularVelocity = Vector3.zero;
-            _rigidbody.MoveRotation(Quaternion.RotateTowards(_rigidbody.rotation,
-                Quaternion.LookRotation(direction.normalized, Vector3.up),
-                Mathf.Max(0f, rotationSpeed) * Time.fixedDeltaTime));
         }
 
         private Vector3 GetFlatOffsetToCharacter()

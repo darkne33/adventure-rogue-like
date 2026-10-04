@@ -42,7 +42,7 @@ namespace Features.Enemies.Scripts
                 facade.gameObject.AddComponent<EnemyAggroIndicatorView>();
 
             IEnemyAnimationSystem animationSystem = CreateAnimationSystem(configuration, animator);
-            IEnemyMovementSystem movementSystem = configuration.EnemyDamageType == EnemyDamageType.Dash
+            IEnemyMovementSystem movementSystem = configuration.EnemyDamageType is EnemyDamageType.Dash or EnemyDamageType.Jump
                 ? null
                 : CreateMovementSystem(configuration, facade, character, navMeshAgent, animationSystem);
             float attackPreparationDuration = configuration.AttackPreparationDuration;
@@ -95,6 +95,8 @@ namespace Features.Enemies.Scripts
                     facade, character, configuration, attackPreparationDuration),
                 EnemyDamageType.Dash => new EnemyDashAttackSystem(
                     character, configuration, facade, dashView, attackPreparationDuration, _enemiesProvider),
+                EnemyDamageType.Jump => new EnemyJumpAttackSystem(
+                    facade, character, configuration, _enemiesProvider),
                 EnemyDamageType.RangeArea => new EnemyDamageAreaSystem(
                     character, configuration, facade,
                     _enemiesProvider,

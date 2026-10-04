@@ -157,6 +157,75 @@ public class EnemySpawner
             characterFacade);
     }
 
+    public IReadOnlyList<EnemyType> GetAvailableEnemyTypes()
+    {
+        EnemyFactoryConfiguration factory = _levelsConfiguration
+            .GetLevel(_rogueLikeRuntimeDataService.CurrentIndexLevel).EnemyFactoryConfiguration;
+        var enemyTypes = new List<EnemyType>();
+        if (factory?.EnemyPrefabs == null)
+            return enemyTypes;
+
+        foreach (EnemyPrefabData prefabData in factory.EnemyPrefabs)
+        {
+            if (prefabData != null && prefabData.EnemyType != EnemyType.None &&
+                !enemyTypes.Contains(prefabData.EnemyType))
+                enemyTypes.Add(prefabData.EnemyType);
+        }
+
+        return enemyTypes;
+    }
+
+    public int TrySpawnSelectedEnemies(CharacterFacade characterFacade, EnemyType enemyType,
+        int enemyCount)
+    {
+        if (enemyCount <= 0)
+            return 0;
+
+        GetCurrentConfiguration(characterFacade, out DefaultEnemiesRoomData currentRoomData,
+            out LevelSettings levelSettings);
+        EnemyFactoryConfiguration factory = levelSettings.EnemyFactoryConfiguration;
+        EnemyPrefabData prefabData = factory.EnemyPrefabs.Find(
+            prefab => prefab != null && prefab.EnemyType == enemyType && enemyType != EnemyType.None);
+        if (prefabData == null)
+            throw new System.InvalidOperationException(
+                $"Enemy type {enemyType} is not available for the current level. Use debug.enemies to list types.");
+
+        if (ReferenceEquals(_loadedEnemyFactoryConfiguration, factory) == false)
+            throw new System.InvalidOperationException("Wait until the current level's enemy prefabs are loaded.");
+
+        LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
+        if (currentLevel == null)
+            throw new System.InvalidOperationException("Current level view is not available.");
+
+        Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
+        Physics.SyncTransforms();
+        List<Collider> groundColliders = GetGroundColliders(currentRoom);
+        if (groundColliders.Count == 0)
+            throw new System.InvalidOperationException("The current room has no ground colliders for enemy spawning.");
+
+        GameObject enemy = prefabData.NormalPrefabContainer.Get();
+        EnemySpawnVolume spawnVolume = GetSpawnVolume(enemy);
+        Vector3? reusableSpawnPosition = null;
+        int spawnedCount = 0;
+
+        for (int i = 0; i < enemyCount; i++)
+        {
+            if (TryFindValidSpawnPosition(currentRoom, groundColliders, spawnVolume,
+                    characterFacade, out Vector3 spawnPosition))
+                reusableSpawnPosition = spawnPosition;
+            else if (reusableSpawnPosition.HasValue)
+                spawnPosition = reusableSpawnPosition.Value;
+            else
+                break;
+
+            // Debug enemies are additional to the room's configured waves and type limits.
+            SpawnEnemy(enemy, spawnPosition, enemyType).Forget();
+            spawnedCount++;
+        }
+
+        return spawnedCount;
+    }
+
     private void HandleEnemyRemoved(int activeEnemyCount)
     {
         if (_isRoomSpawningActive == false || _enemyRoomObserver.IsRoomCompleted)

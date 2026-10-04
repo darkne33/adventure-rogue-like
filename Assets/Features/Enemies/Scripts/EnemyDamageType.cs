@@ -6,4 +6,5 @@
     RangeArea = 3,
     RangeDirection = 4,
     RangeBullet = 5,
+    Jump = 6,
 }

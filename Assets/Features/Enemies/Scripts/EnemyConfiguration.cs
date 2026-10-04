@@ -31,6 +31,8 @@ public class EnemyConfiguration : ScriptableObject
     [field: Min(0f)]
     [field: SerializeField] public float AttackPreparationDuration { get; private set; } = 0.55f;
     [field: SerializeField] public EnemyDamageType EnemyDamageType { get; private set; }
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Jump)]
+    [field: SerializeField] public Features.Enemies.Scripts.EnemyJumpAttackConfiguration JumpConfiguration { get; private set; }
     [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeArea)]
     [field: Tooltip("Particle prefab spawned when a Range Area enemy detonates.")]
     [field: SerializeField] public GameObject ExplosionPrefab { get; private set; }

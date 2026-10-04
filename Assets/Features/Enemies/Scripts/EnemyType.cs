@@ -3,7 +3,7 @@
     None = 0,
     Bun = 1,
     Dummy = 2,
-    Skeleton = 3,
+    Skeleton_Head = 3,
     Ghost = 4,
     Bomb = 5,
     Chan = 6,

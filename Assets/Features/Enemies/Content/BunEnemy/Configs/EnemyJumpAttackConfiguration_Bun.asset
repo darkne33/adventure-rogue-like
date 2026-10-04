@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 321bd17b3dc840abbe4b141b685b00a2, type: 3}
+  m_Name: EnemyJumpAttackConfiguration_Bun
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.Scripts.EnemyJumpAttackConfiguration
+  <Interval>k__BackingField: 3.25
+  <Duration>k__BackingField: 2
+  <TakeoffNormalized>k__BackingField: 0.2666667
+  <ImpactNormalized>k__BackingField: 0.6666667
+  <Height>k__BackingField: 12
+  <TargetOffsetRadius>k__BackingField: 3.5
+  <DirectTargetChance>k__BackingField: 0.3333333
+  <Radius>k__BackingField: 7
+  <IndicatorPrefab>k__BackingField: {fileID: 100000, guid: 77c6f7d4fa5944e4bf6b664771fd32ba, type: 3}
+  <InitialIndicatorScale>k__BackingField: 0.05
+  <IndicatorGroundOffset>k__BackingField: 0.05
+  <KnockbackForce>k__BackingField: 7
+  <KnockbackUpwardForce>k__BackingField: 7
+  <EffectPrefab>k__BackingField: {fileID: 7916812593445680669, guid: 1feb8bdfa2ff3104b9773c131cffd8eb, type: 3}
+  <EffectScale>k__BackingField: 0.7
+  <EffectLifetime>k__BackingField: 3
+  <GroundMask>k__BackingField:
+    serializedVersion: 2
+    m_Bits: 64
+  <ObstacleMask>k__BackingField:
+    serializedVersion: 2
+    m_Bits: 2432
+  <GroundProbeHeight>k__BackingField: 4
+  <GroundProbeDistance>k__BackingField: 10

@@ -22,6 +22,8 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
     private const string ClearRelicsCommand = "debug.relic.clear";
     private const string PrintRelicsCommand = "debug.relics";
     private const string AddGoldCommand = "debug.gold";
+    private const string SpawnEnemyCommand = "debug.enemy.spawn";
+    private const string PrintEnemyTypesCommand = "debug.enemies";
 
     private readonly ICharacterLevelService _characterLevelService;
     private readonly CharacterExpConfig _characterExpConfig;
@@ -37,6 +39,8 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
     private readonly RelicManager _relicManager;
     private readonly RelicPool _relicPool;
     private readonly CharacterWallet _characterWallet;
+    private readonly EnemySpawner _enemySpawner;
+    private readonly ICharacterProvider _characterProvider;
 
     private bool _commandsRegistered;
 
@@ -47,7 +51,8 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         ISceneService<RogueLikeSceneProvider> sceneService,
         IRoomTransitionService roomTransitionService, IPauseService pauseService,
         ITimeScaleService timeScaleService, RunRestartService runRestartService,
-        RelicManager relicManager, RelicPool relicPool, CharacterWallet characterWallet)
+        RelicManager relicManager, RelicPool relicPool, CharacterWallet characterWallet,
+        EnemySpawner enemySpawner, ICharacterProvider characterProvider)
     {
         _characterLevelService = characterLevelService;
         _characterExpConfig = characterExpConfig;
@@ -63,6 +68,8 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         _relicManager = relicManager;
         _relicPool = relicPool;
         _characterWallet = characterWallet;
+        _enemySpawner = enemySpawner;
+        _characterProvider = characterProvider;
     }
 
     public void Initialize()
@@ -92,6 +99,11 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
             "Prints active relics", PrintRelics);
         DebugLogConsole.AddCommand<int, string>(AddGoldCommand,
             "Adds gold coins to the character", AddGold, "amount");
+        DebugLogConsole.AddCommand<EnemyType, int, string>(SpawnEnemyCommand,
+            "Spawns selected enemies in the current room; use debug.enemies to list types",
+            SpawnEnemies, "type", "count");
+        DebugLogConsole.AddCommand(PrintEnemyTypesCommand,
+            "Lists enemy types available for debug.enemy.spawn", PrintEnemyTypes);
 
         _commandsRegistered = true;
     }
@@ -122,6 +134,8 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         DebugLogConsole.RemoveCommand(ClearRelicsCommand);
         DebugLogConsole.RemoveCommand(PrintRelicsCommand);
         DebugLogConsole.RemoveCommand(AddGoldCommand);
+        DebugLogConsole.RemoveCommand(SpawnEnemyCommand);
+        DebugLogConsole.RemoveCommand(PrintEnemyTypesCommand);
         _commandsRegistered = false;
     }
 
@@ -238,6 +252,41 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         int previousGold = _characterWallet.Gold.Count;
         _characterWallet.Gold.Add(amount);
         return $"Gold: {previousGold} -> {_characterWallet.Gold.Count}.";
+    }
+
+    private string SpawnEnemies(EnemyType enemyType, int count)
+    {
+        if (count <= 0)
+            return "Enemy count must be greater than zero.";
+
+        string validationError = ValidateRoomCommand(requireEnemies: false);
+        if (validationError != null)
+            return validationError;
+
+        if (_characterProvider.CharacterFacade == null)
+            return "A living character is required to spawn enemies.";
+
+        try
+        {
+            int spawnedCount = _enemySpawner.TrySpawnSelectedEnemies(
+                _characterProvider.CharacterFacade, enemyType, count);
+            return spawnedCount > 0
+                ? $"Spawned {spawnedCount}/{count} enemies of type {enemyType}."
+                : "No valid enemy spawn position was found in the current room.";
+        }
+        catch (InvalidOperationException exception)
+        {
+            return exception.Message;
+        }
+    }
+
+    private string PrintEnemyTypes()
+    {
+        var enemyTypes = _enemySpawner.GetAvailableEnemyTypes();
+        return enemyTypes.Count > 0
+            ? $"Available enemy types: {string.Join(", ", enemyTypes)}. " +
+              $"Usage: {SpawnEnemyCommand} <type> <count>."
+            : "No enemy types are configured for the current level.";
     }
 
     private string ValidateRoomCommand(bool requireEnemies)

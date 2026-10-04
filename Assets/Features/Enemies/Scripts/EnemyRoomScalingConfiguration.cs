@@ -37,10 +37,11 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     [SerializeField] private EnemySpawnRule[] _enemyRules =
     {
         new(EnemyType.Dummy, 1, 50f, 0),
-        new(EnemyType.Bun, 2, 14f, 4),
+        new(EnemyType.Skeleton_Head, 2, 14f, 4),
         new(EnemyType.Bomb, 4, 20f, 8),
         new(EnemyType.Ghost, 6, 18f, 8),
-        new(EnemyType.Chan, 8, 5f, 2)
+        new(EnemyType.Chan, 8, 5f, 2),
+        new(EnemyType.Bun, 10, 5f, 2)
     };
 
     public EnemySpawnRule[] EnemyRules => _enemyRules;
