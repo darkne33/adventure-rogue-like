@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -115,7 +116,7 @@ namespace Features.Quests.Scripts
             }
             _rows.Clear();
             QuestRowView selected = null;
-            foreach (QuestDefinition quest in _service.Definitions)
+            foreach (QuestDefinition quest in _service.Definitions.OrderBy(quest => quest.MinimumCompletedRuns))
             {
                 if (_hideCompleted && _service.IsCompleted(quest.Id) && !_service.CanClaimReward(quest.Id))
                     continue;
@@ -180,7 +181,7 @@ namespace Features.Quests.Scripts
                 _detailIcon.color = Color.white;
                 _detailIcon.preserveAspect = true;
             }
-            _detailCondition.text = row.Quest.Description;
+            _detailCondition.text = _service.GetQuestDescription(row.Quest);
             if (unlock != null)
             {
                 string unlockStatus = _service.IsOwned(unlock) ? "Owned"

@@ -199,7 +199,7 @@ namespace Features.Quests.Scripts
             }
             else
             {
-                _requirement.text = quest != null ? quest.Description : "COMPLETE THE REQUIRED QUEST";
+                _requirement.text = quest != null ? _service.GetQuestDescription(quest) : "COMPLETE THE REQUIRED QUEST";
                 _requirement.color = ProgressionMenuUi.White;
                 int progress = quest != null ? Mathf.Clamp(_service.GetProgress(quest), 0, quest.Target) : 0;
                 int target = quest != null ? quest.Target : 1;

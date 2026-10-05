@@ -23,181 +23,265 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 980aeba49e0142978750e2ecf19f569c, type: 2}
   _quests:
   - _id: run_kills_150
-    _title: CROWD CONTROL
-    _description: Defeat 150 enemies in one run.
+    _title: FIRST VICTORY
+    _description: Defeat a boss in an eligible run.
     _category: 0
-    _metric: 2
-    _target: 150
-    _silverReward: 2
+    _metric: 5
+    _target: 1
+    _silverReward: 3
+    _minimumCompletedRuns: 3
+    _requiredQuestIds:
+    - weapon_5
+    - level_5
   - _id: rooms_3
-    _title: ROOM TO GROW
-    _description: Clear 3 combat rooms in one run.
+    _title: DUKE'S SUCCESSOR
+    _description: Defeat 2 bosses as DUKE across eligible runs.
     _category: 0
-    _metric: 4
-    _target: 3
-    _silverReward: 2
+    _metric: 5
+    _target: 2
+    _silverReward: 4
+    _minimumCompletedRuns: 8
+    _requiredQuestIds:
+    - aura_close_kills_50
+    - armor_scroll_3
+    _requiredUnlockIds:
+    - character_duke
+    _characterId: duke
   - _id: weapon_5
     _title: FAVORITE WEAPON
-    _description: Raise any weapon to level 5 in one run.
+    _description: Raise any weapon to level 6 in one run.
     _category: 1
     _metric: 10
+    _target: 6
+    _silverReward: 2
+    _minimumCompletedRuns: 2
+  - _id: aura_close_kills_50
+    _title: DUKE'S ARSENAL
+    _description: Raise Bullet Explosion to level 5 as DUKE in one run.
+    _category: 1
+    _metric: 26
     _target: 5
     _silverReward: 2
-  - _id: aura_close_kills_50
-    _title: DANGER ZONE
-    _description: Defeat 50 enemies within 10 meters of your character in one run.
-    _category: 1
-    _metric: 22
-    _target: 50
-    _silverReward: 2
+    _minimumCompletedRuns: 5
+    _requiredUnlockIds:
+    - character_duke
+    _characterId: duke
+    _ability: {fileID: 11400000, guid: c4e9a1b2d3f54768a9b0c1d2e3f40516, type: 2}
   - _id: level_5
     _title: GETTING STARTED
-    _description: Reach character level 5 in one run.
+    _description: Reach character level 7 in one run.
     _category: 2
     _metric: 1
-    _target: 5
+    _target: 7
     _silverReward: 1
+    _minimumCompletedRuns: 1
   - _id: combat_120
     _title: WARMING UP
-    _description: Spend 120 seconds in active combat in one run.
+    _description: Spend 180 seconds in active combat in one run.
     _category: 2
     _metric: 0
-    _target: 120
+    _target: 180
     _silverReward: 1
+    _minimumCompletedRuns: 2
   - _id: chests_1
     _title: WHAT'S INSIDE?
-    _description: Open a relic chest.
+    _description: Open 3 relic chests across eligible runs.
     _category: 2
     _metric: 6
-    _target: 1
+    _target: 3
     _silverReward: 1
+    _minimumCompletedRuns: 2
   - _id: run_kills_50
-    _title: FIRST FIFTY
-    _description: Defeat 50 enemies in one run.
+    _title: FIRST STEPS
+    _description: Defeat 75 enemies in one run.
     _category: 3
     _metric: 2
-    _target: 50
+    _target: 75
     _silverReward: 1
   - _id: run_gold_100
     _title: POCKET MONEY
-    _description: Collect 100 gold in one run. Spent gold still counts.
+    _description: Collect 150 gold in one run. Spent gold still counts.
     _category: 3
     _metric: 8
-    _target: 100
+    _target: 150
     _silverReward: 1
+    _minimumCompletedRuns: 1
   - _id: combat_distance_500
     _title: KEEP ROLLING
-    _description: "Travel 500 meters during active combat in one run. Pauses and room transitions do not count."
+    _description: Travel 1500 meters during active combat in one run.
     _category: 3
     _metric: 17
-    _target: 500
+    _target: 1500
     _silverReward: 3
     _legacyQuestIds:
     - two_weapons_3
+    _minimumCompletedRuns: 3
+    _requiredUnlockIds:
+    - scroll_movement_speed
   - _id: low_health_room
-    _title: ON THE EDGE
-    _description: "Clear a combat room that you entered with 25% health or less."
+    _title: POCKET PATROL
+    _description: Clear 24 combat rooms as MR POCKET across eligible runs.
     _category: 3
-    _metric: 23
-    _target: 1
+    _metric: 25
+    _target: 24
     _silverReward: 3
     _legacyQuestIds:
     - bosses_1
+    _minimumCompletedRuns: 9
+    _requiredUnlockIds:
+    - character_mr_pocket
+    _characterId: mr-pocket
   - _id: armor_scroll_3
     _title: THICK SKIN
-    _description: "Raise the Armor Scroll to level 3 in one run."
+    _description: Raise the Armor Scroll to level 5 in one run.
     _category: 3
     _metric: 14
-    _target: 3
+    _target: 5
     _silverReward: 1
     _legacyQuestIds:
     - critical_25
+    _minimumCompletedRuns: 3
+    _requiredUnlockIds:
+    - scroll_max_hp
   - _id: chests_8
     _title: A TASTE FOR POWER
-    _description: "Open 8 relic chests across all runs."
+    _description: Defeat 2 bosses across eligible runs.
     _category: 3
-    _metric: 6
-    _target: 8
-    _silverReward: 2
+    _metric: 5
+    _target: 2
+    _silverReward: 4
     _legacyQuestIds:
     - combat_300
+    _minimumCompletedRuns: 10
+    _requiredQuestIds:
+    - scroll_5
+    - armor_scroll_3
+    - gold_held_150
   - _id: scroll_5
-    _title: WELL READ
-    _description: Raise any scroll to level 5 in one run.
+    _title: FEED THE FLAMES
+    _description: Raise Fire Trail to level 5 in one run.
     _category: 2
-    _metric: 11
+    _metric: 26
     _target: 5
     _silverReward: 2
+    _minimumCompletedRuns: 4
+    _requiredUnlockIds:
+    - weapon_fire_field
+    _ability: {fileID: 11400000, guid: b1437a0766b54e539c397110b4f0eee4, type: 2}
   - _id: rooms_1
     _title: MAKE SOME ROOM
-    _description: Clear one combat room in a run.
+    _description: Clear 3 combat rooms in one run.
     _category: 2
     _metric: 4
-    _target: 1
+    _target: 3
     _silverReward: 1
   - _id: total_gold_500
     _title: SAVINGS PLAN
-    _description: Collect 500 gold across all runs. Spent gold still counts.
+    _description: Collect 2000 gold across eligible runs. Spent gold still counts.
     _category: 2
     _metric: 9
-    _target: 500
+    _target: 2000
     _silverReward: 2
+    _minimumCompletedRuns: 3
+    _requiredUnlockIds:
+    - relic_golden_sneakers
   - _id: total_kills_500
-    _title: PERSISTENCE
-    _description: Defeat 500 enemies across all runs.
+    _title: ARMORED RESPONSE
+    _description: Raise the Armor Scroll to level 7 in one run.
     _category: 2
-    _metric: 3
-    _target: 500
+    _metric: 26
+    _target: 7
     _silverReward: 2
+    _minimumCompletedRuns: 6
+    _requiredUnlockIds:
+    - relic_spiky_shield
+    _ability: {fileID: 11400000, guid: 37418b6c1b116494ba2a48031aea056c, type: 2}
   - _id: level_10
-    _title: GROWING STRONGER
-    _description: Reach character level 10 in one run.
+    _title: HEALTHY BUILD
+    _description: Raise the Max HP Scroll to level 5 in one run.
     _category: 2
-    _metric: 1
-    _target: 10
+    _metric: 26
+    _target: 5
     _silverReward: 2
+    _minimumCompletedRuns: 5
+    _requiredQuestIds:
+    - armor_scroll_3
+    _requiredUnlockIds:
+    - scroll_max_hp
+    _ability: {fileID: 11400000, guid: a5a42258e2b9bbf4cb667fb8d3c8e0ce, type: 2}
   - _id: projectile_targets_3
-    _title: THREE IN ONE
-    _description: "Damage 3 different enemies with one projectile. Piercing shots and boomerang chains count."
+    _title: RETURN ON INVESTMENT
+    _description: Raise Rabbitarang to level 6 in one run.
     _category: 3
-    _metric: 15
-    _target: 3
+    _metric: 26
+    _target: 6
     _silverReward: 1
+    _minimumCompletedRuns: 3
+    _requiredQuestIds:
+    - weapon_5
+    _ability: {fileID: 11400000, guid: d1f61c5394e93294ab79fe9496bb9e40, type: 2}
   - _id: moving_room
     _title: GO WITH THE FLOW
-    _description: "Clear a combat room without standing still for more than 2 consecutive seconds. Pauses do not count."
+    _description: Raise the Movement Speed Scroll to level 5 in one run.
     _category: 3
-    _metric: 16
-    _target: 1
+    _metric: 26
+    _target: 5
     _silverReward: 1
+    _minimumCompletedRuns: 4
+    _requiredUnlockIds:
+    - scroll_movement_speed
+    _ability: {fileID: 11400000, guid: 462b7ad34b074bb4ca80394d65b7b175, type: 2}
   - _id: run_hits_300
     _title: MORE IS MORE
-    _description: "Land 300 damaging hits in one run."
+    _description: Raise the Attack Speed Scroll to level 6 in one run.
     _category: 3
-    _metric: 18
-    _target: 300
+    _metric: 26
+    _target: 6
     _silverReward: 2
+    _minimumCompletedRuns: 6
+    _requiredQuestIds:
+    - projectile_targets_3
+    _requiredUnlockIds:
+    - scroll_duration
+    _ability: {fileID: 11400000, guid: 7d0b6dcb26964644286f4227dc98466f, type: 2}
   - _id: gold_held_150
     _title: MONEY TALKS
-    _description: "Hold 150 gold at the same time in a run. Gold already spent does not count."
+    _description: Raise the Gain Gold Scroll to level 5 in one run.
     _category: 3
-    _metric: 19
-    _target: 150
+    _metric: 26
+    _target: 5
     _silverReward: 2
+    _minimumCompletedRuns: 7
+    _requiredUnlockIds:
+    - scroll_gain_gold
+    _ability: {fileID: 11400000, guid: fd6d760a234612f47b6d236f3a6867cb, type: 2}
   - _id: burst_kills_3
-    _title: CHAIN REACTION
-    _description: "Defeat 3 enemies within 2 seconds of active combat in the same room."
+    _title: EXPLOSIVE BUILD
+    _description: Raise Bullet Explosion to level 7 as DUKE in one run.
     _category: 3
-    _metric: 20
-    _target: 3
-    _silverReward: 2
+    _metric: 26
+    _target: 7
+    _silverReward: 3
+    _minimumCompletedRuns: 9
+    _requiredQuestIds:
+    - run_hits_300
+    _requiredUnlockIds:
+    - character_duke
+    _characterId: duke
+    _ability: {fileID: 11400000, guid: c4e9a1b2d3f54768a9b0c1d2e3f40516, type: 2}
   - _id: hit_damage_75
-    _title: ONE BIG HIT
-    _description: "Deal 75 damage in one hit. Critical hits and overkill count."
+    _title: POCKET CHAMPION
+    _description: Defeat a boss as MR POCKET in an eligible run.
     _category: 3
-    _metric: 21
-    _target: 75
-    _silverReward: 2
+    _metric: 5
+    _target: 1
+    _silverReward: 4
+    _minimumCompletedRuns: 11
+    _requiredQuestIds:
+    - chests_8
+    _requiredUnlockIds:
+    - character_mr_pocket
+    _characterId: mr-pocket
   _unlocks:
   - _id: character_rabbit
     _category: 0

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Features.Enemies.Scripts;
 using Features.Enemies.Scripts.Level.Scripts;
 using Features.Relics.Scripts;
@@ -24,6 +25,8 @@ namespace Features.Quests.Scripts
         private readonly IRoomTransitionService _roomTransition;
         private readonly RunRestartService _runRestart;
         private readonly RelicQuestRunProgress _relicProgress;
+        private readonly CharacterConfiguration _characterConfiguration;
+        private readonly HashSet<DefaultEnemiesRoomData> _completedRooms = new();
 
         private bool _isRunActive;
         private bool _isSilverBankingActive;
@@ -42,7 +45,8 @@ namespace Features.Quests.Scripts
             EnemyRoomObserver roomObserver, IRogueLikeRuntimeDataService runtimeData,
             ICharacterProvider characterProvider, ICharacterLevelService characterLevel,
             CharacterWallet wallet, UpgradeBuildService build, ITimeScaleService timeScale,
-            IRoomTransitionService roomTransition, RunRestartService runRestart)
+            IRoomTransitionService roomTransition, RunRestartService runRestart,
+            CharacterConfiguration characterConfiguration)
         {
             _quests = quests;
             _events = events;
@@ -56,6 +60,7 @@ namespace Features.Quests.Scripts
             _timeScale = timeScale;
             _roomTransition = roomTransition;
             _runRestart = runRestart;
+            _characterConfiguration = characterConfiguration;
             _relicProgress = new RelicQuestRunProgress(quests);
 
             _enemies.EnemyDefeated += HandleEnemyDefeated;
@@ -80,12 +85,14 @@ namespace Features.Quests.Scripts
             _recordedCombatSeconds = 0;
             _runKills = 0;
             _runRooms = 0;
+            _completedRooms.Clear();
             _runRelics = 0;
             _runGold = 0;
             _previousGold = _wallet.Gold.Count;
             _previousSilver = _wallet.Silver.Count;
             _isSilverBankingActive = true;
             _isRunActive = true;
+            _quests.BeginRun(_characterConfiguration.GetConfiguredSelectedCharacter().Id);
             _relicProgress.BeginRun(_runtimeData.CurrentRoomData, _characterProvider.CharacterFacade);
             _quests.RecordBest(QuestMetric.GoldHeld, _wallet.Gold.Count);
 
@@ -97,6 +104,7 @@ namespace Features.Quests.Scripts
         {
             HandleSilverChanged(_wallet.Silver.Count);
             _isRunActive = false;
+            _quests.EndRun(_runRooms > 0);
             _quests.Flush();
         }
 
@@ -195,11 +203,12 @@ namespace Features.Quests.Scripts
 
         private void HandleRoomCompleted(DefaultEnemiesRoomData room)
         {
-            if (CanTrack() == false)
+            if (CanTrack() == false || !_completedRooms.Add(room))
                 return;
 
             _runRooms++;
             _quests.RecordBest(QuestMetric.RunRoomsCleared, _runRooms);
+            _quests.AddProgress(QuestMetric.TotalRoomsCleared, 1);
             // A split boss can emit several kill events; clearing its room is one victory.
             if (room is BossRoomData)
                 _quests.AddProgress(QuestMetric.TotalBossKills, 1);
@@ -269,6 +278,7 @@ namespace Features.Quests.Scripts
             int armorScrollLevel = 0;
             foreach (UpgradeBuildEntry entry in _build.SelectedUpgrades)
             {
+                _quests.RecordAbilityLevel(entry.Ability.Id, entry.Level);
                 if (entry.Ability.Id == AbilityName.ArmorScroll)
                     armorScrollLevel = Math.Max(armorScrollLevel, entry.Level);
                 if (entry.Ability is CharacterActiveAbility)

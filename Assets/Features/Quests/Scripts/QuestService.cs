@@ -13,12 +13,15 @@ namespace Features.Quests.Scripts
         private const float SaveInterval = 10f;
         private readonly PlayerWallet _wallet;
         private readonly Dictionary<QuestMetric, int> _progress = new();
+        private readonly Dictionary<string, int> _questProgress = new();
+        private readonly HashSet<string> _activeQuests = new();
         private readonly HashSet<string> _completed = new();
         private readonly HashSet<string> _purchased = new();
         private readonly HashSet<string> _claimedRewards = new();
         private readonly HashSet<string> _viewedUnlocks = new();
         private bool _dirty;
         private bool _updatingWallet;
+        private bool _isRunActive;
         private float _saveTimer;
 
         public event Action Changed;
@@ -31,6 +34,7 @@ namespace Features.Quests.Scripts
             ? Configuration.Unlocks : Array.Empty<UnlockDefinition>();
         public int TotalCount => Definitions.Count;
         public int Silver => _wallet.Silver.Count;
+        public int CompletedRuns => GetMetric(QuestMetric.TotalRunsCompleted);
 
         public bool HasClaimableRewards
         {
@@ -79,9 +83,33 @@ namespace Features.Quests.Scripts
             _wallet.Silver.CountChanged += HandleSilverChanged;
             Application.quitting += Flush;
             Application.focusChanged += HandleFocusChanged;
-            // Stable metric totals remain useful when the editable quest catalog changes.
-            foreach (QuestMetric metric in Enum.GetValues(typeof(QuestMetric)))
-                CompleteEligibleQuests(metric);
+            CompleteEligibleQuests();
+            Flush();
+        }
+
+        public void BeginRun(string characterId)
+        {
+            if (_isRunActive)
+                return;
+
+            _isRunActive = true;
+            _activeQuests.Clear();
+            // Snapshot eligibility: later steps start in a new run, never midway through this one.
+            foreach (QuestDefinition quest in Definitions)
+                if (!IsCompleted(quest.Id) && ArePrerequisitesMet(quest) &&
+                    (string.IsNullOrWhiteSpace(quest.CharacterId) || quest.CharacterId == characterId))
+                    _activeQuests.Add(quest.Id);
+        }
+
+        public void EndRun(bool clearedCombatRoom)
+        {
+            if (!_isRunActive)
+                return;
+
+            if (clearedCombatRoom)
+                AddProgress(QuestMetric.TotalRunsCompleted, 1);
+            _isRunActive = false;
+            _activeQuests.Clear();
             Flush();
         }
 
@@ -128,6 +156,44 @@ namespace Features.Quests.Scripts
                 if (quest.Id == questId)
                     return quest;
             return null;
+        }
+
+        public UnlockDefinition GetUnlock(string unlockId)
+        {
+            foreach (UnlockDefinition unlock in Unlocks)
+                if (unlock.Id == unlockId)
+                    return unlock;
+            return null;
+        }
+
+        public string GetQuestDescription(QuestDefinition quest)
+        {
+            if (quest == null)
+                return string.Empty;
+            if (IsCompleted(quest.Id))
+                return quest.Description;
+
+            var requirements = new List<string>();
+            if (CompletedRuns < quest.MinimumCompletedRuns)
+                requirements.Add($"Finish {quest.MinimumCompletedRuns} runs ({CompletedRuns}/{quest.MinimumCompletedRuns})");
+            foreach (string questId in quest.RequiredQuestIds)
+                if (!IsCompleted(questId))
+                    requirements.Add($"Complete {GetQuest(questId)?.Title ?? questId}");
+            foreach (string unlockId in quest.RequiredUnlockIds)
+            {
+                UnlockDefinition unlock = GetUnlock(unlockId);
+                if (!IsOwned(unlock))
+                    requirements.Add($"Own {unlock?.DisplayName ?? unlockId}");
+            }
+
+            if (requirements.Count > 0)
+            {
+                string remaining = requirements.Count > 1 ? $" (+{requirements.Count - 1} more)" : string.Empty;
+                return $"{quest.Description}\nNext: {requirements[0]}{remaining}.";
+            }
+            return quest.HasPrerequisites
+                ? $"{quest.Description}\nStarts next eligible run."
+                : quest.Description;
         }
 
         public UnlockDefinition GetUnlockForQuest(string questId)
@@ -236,24 +302,48 @@ namespace Features.Quests.Scripts
 
         // For single-run goals this is the best result ever reached, not a sum of runs.
         public int GetProgress(QuestDefinition quest) =>
-            IsCompleted(quest.Id) ? quest.Target : Math.Min(quest.Target, GetMetric(quest.Metric));
+            IsCompleted(quest.Id) ? quest.Target : Math.Min(quest.Target, GetQuestProgress(quest.Id));
 
         public void RecordBest(QuestMetric metric, int value)
         {
-            if (value <= GetMetric(metric))
+            if (!_isRunActive || value <= 0)
                 return;
 
-            _progress[metric] = value;
-            RecordChange(metric);
+            bool changed = value > GetMetric(metric);
+            if (changed)
+                _progress[metric] = value;
+            // A new eligible quest still needs this run's result even when the lifetime best is higher.
+            foreach (QuestDefinition quest in Definitions)
+                if (quest.Metric == metric && _activeQuests.Contains(quest.Id))
+                    changed |= SetQuestProgress(quest, value);
+            if (changed)
+                RecordChange();
         }
 
         public void AddProgress(QuestMetric metric, int amount)
         {
-            if (amount <= 0)
+            if (!_isRunActive || amount <= 0)
                 return;
 
             _progress[metric] = (int)Math.Min(int.MaxValue, (long)GetMetric(metric) + amount);
-            RecordChange(metric);
+            foreach (QuestDefinition quest in Definitions)
+                if (quest.Metric == metric && _activeQuests.Contains(quest.Id))
+                    SetQuestProgress(quest, (int)Math.Min(int.MaxValue, (long)GetQuestProgress(quest.Id) + amount));
+            RecordChange();
+        }
+
+        public void RecordAbilityLevel(AbilityName ability, int level)
+        {
+            if (!_isRunActive || level <= 0)
+                return;
+
+            bool changed = false;
+            foreach (QuestDefinition quest in Definitions)
+                if (quest.Metric == QuestMetric.SpecificAbilityLevel && quest.Ability != null &&
+                    quest.Ability.AbilityName == ability && _activeQuests.Contains(quest.Id))
+                    changed |= SetQuestProgress(quest, level);
+            if (changed)
+                RecordChange();
         }
 
         public void Tick()
@@ -271,9 +361,11 @@ namespace Features.Quests.Scripts
             if (!_dirty)
                 return;
 
-            var data = new QuestSaveData { Version = 3, Silver = _wallet.Silver.Count };
+            var data = new QuestSaveData { Version = 4, Silver = _wallet.Silver.Count };
             foreach (var entry in _progress)
                 data.Progress[entry.Key.ToString()] = entry.Value;
+            foreach (var entry in _questProgress)
+                data.QuestProgress[entry.Key] = entry.Value;
             data.CompletedIds.AddRange(_completed);
             data.PurchasedIds.AddRange(_purchased);
             data.ClaimedRewardIds.AddRange(_claimedRewards);
@@ -322,20 +414,45 @@ namespace Features.Quests.Scripts
         private int GetMetric(QuestMetric metric) =>
             _progress.TryGetValue(metric, out int value) ? value : 0;
 
-        private void RecordChange(QuestMetric metric)
+        private int GetQuestProgress(string questId) =>
+            _questProgress.TryGetValue(questId, out int value) ? value : 0;
+
+        private bool SetQuestProgress(QuestDefinition quest, int value)
+        {
+            value = Math.Min(quest.Target, value);
+            if (value <= GetQuestProgress(quest.Id) || IsCompleted(quest.Id))
+                return false;
+            _questProgress[quest.Id] = value;
+            return true;
+        }
+
+        private bool ArePrerequisitesMet(QuestDefinition quest)
+        {
+            if (CompletedRuns < quest.MinimumCompletedRuns)
+                return false;
+            foreach (string questId in quest.RequiredQuestIds)
+                if (!IsCompleted(questId))
+                    return false;
+            foreach (string unlockId in quest.RequiredUnlockIds)
+                if (!IsOwned(GetUnlock(unlockId)))
+                    return false;
+            return true;
+        }
+
+        private void RecordChange()
         {
             _dirty = true;
-            if (CompleteEligibleQuests(metric))
+            if (CompleteEligibleQuests())
                 Flush();
             Changed?.Invoke();
         }
 
-        private bool CompleteEligibleQuests(QuestMetric metric)
+        private bool CompleteEligibleQuests()
         {
             bool completedAny = false;
             foreach (QuestDefinition quest in Definitions)
             {
-                if (quest.Metric != metric || IsCompleted(quest.Id) || GetMetric(metric) < quest.Target)
+                if (IsCompleted(quest.Id) || GetQuestProgress(quest.Id) < quest.Target || !ArePrerequisitesMet(quest))
                     continue;
 
                 // Completion unlocks the content; silver is credited only when the reward is claimed.
@@ -394,6 +511,21 @@ namespace Features.Quests.Scripts
                         if (Enum.TryParse(entry.Key, out QuestMetric metric) && Enum.IsDefined(typeof(QuestMetric), metric))
                             _progress[metric] = Math.Max(0, entry.Value);
 
+                if (data.Version >= 4 && data.QuestProgress != null)
+                {
+                    foreach (var entry in data.QuestProgress)
+                        if (GetQuest(entry.Key) != null)
+                            _questProgress[entry.Key] = Math.Max(0, entry.Value);
+                }
+                else
+                {
+                    // Old global totals cannot satisfy steps that were never eligible in that save.
+                    foreach (QuestDefinition quest in Definitions)
+                        if (!quest.HasPrerequisites)
+                            _questProgress[quest.Id] = Math.Min(quest.Target, GetMetric(quest.Metric));
+                    _dirty = true;
+                }
+
                 if (data.CompletedIds != null)
                     foreach (string id in data.CompletedIds)
                         if (!string.IsNullOrWhiteSpace(id))
@@ -436,6 +568,7 @@ namespace Features.Quests.Scripts
             // Missing Version fields must retain the legacy automatic-reward behavior on migration.
             public int Version = 2;
             public Dictionary<string, int> Progress = new();
+            public Dictionary<string, int> QuestProgress = new();
             public List<string> CompletedIds = new();
             public List<string> PurchasedIds = new();
             public List<string> ClaimedRewardIds = new();
