@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Features.Enemies.Scripts.Level.Scripts;
 using Features.Relics.Scripts;
+using Features.Sounds;
 using UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -28,6 +29,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
     private readonly RelicManager _relicManager;
     private readonly PausePanel _pausePanelPrefab;
     private readonly DiContainer _container;
+    private readonly ISoundsService _sounds;
 
     private PausePanel _panel;
 
@@ -50,7 +52,8 @@ public sealed class PauseMenuController : ITickable, IDisposable
         UpgradeBuildService upgradeBuildService,
         RelicManager relicManager,
         PausePanel pausePanelPrefab,
-        DiContainer container)
+        DiContainer container,
+        ISoundsService sounds)
     {
         _panelsProvider = panelsProvider;
         _pauseService = pauseService;
@@ -67,6 +70,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
             ? pausePanelPrefab
             : throw new ArgumentNullException(nameof(pausePanelPrefab));
         _container = container;
+        _sounds = sounds;
     }
 
     public void Tick()
@@ -141,6 +145,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
         RefreshRelics();
         RefreshStats();
 
+        _sounds.Play(SoundId.UiOpen);
         _isOpen = true;
         _settingsOpen = false;
         _panel.SetDescription("GAME PAUSED");
@@ -177,6 +182,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
         if (!_isOpen || _isRestarting || _runRestartService.IsRestarting)
             return;
 
+        _sounds.Play(SoundId.UiClose);
         _isOpen = false;
         _settingsOpen = false;
         _panel.CanvasGroup.interactable = false;
@@ -202,6 +208,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
         if (!_isOpen || _isRestarting || _runRestartService.IsRestarting)
             return;
 
+        _sounds.Play(SoundId.UiOpen);
         _settingsOpen = true;
         _panel.ShowSettings();
         Select(_panel.SettingsBackButton);
@@ -212,6 +219,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
         if (!_isOpen)
             return;
 
+        _sounds.Play(SoundId.UiBack);
         _settingsOpen = false;
         _panel.ShowMainButtons();
         Select(_panel.ResumeButton);
@@ -224,10 +232,12 @@ public sealed class PauseMenuController : ITickable, IDisposable
 
         if (_roomTransitionService.IsPlaying)
         {
+            _sounds.Play(SoundId.UiError);
             _panel.SetDescription("WAIT FOR TRANSITION");
             return;
         }
 
+        _sounds.Play(SoundId.UiStartClick);
         RestartRun().Forget();
     }
 
@@ -259,6 +269,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
                     _ownsPause = true;
                 }
 
+                _sounds.Play(SoundId.UiError);
                 _isOpen = true;
                 _panel.SetDescription("RESTART FAILED");
                 _panel.SetMainButtonsInteractable(true);
@@ -278,10 +289,12 @@ public sealed class PauseMenuController : ITickable, IDisposable
 
         if (_roomTransitionService.IsPlaying)
         {
+            _sounds.Play(SoundId.UiError);
             _panel.SetDescription("WAIT FOR TRANSITION");
             return;
         }
 
+        _sounds.Play(SoundId.UiBack);
         ExitToCharacterSelection().Forget();
     }
 
@@ -314,6 +327,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
                     _ownsPause = true;
                 }
 
+                _sounds.Play(SoundId.UiError);
                 _isOpen = true;
                 _panel.SetDescription("EXIT FAILED");
                 _panel.SetMainButtonsInteractable(true);

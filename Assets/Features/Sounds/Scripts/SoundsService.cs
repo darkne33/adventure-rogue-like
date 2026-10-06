@@ -22,6 +22,8 @@ namespace Features.Sounds
         private AudioSource _musicSource;
         private float _currentMusicVolume = 1f;
         private bool _initialized;
+        private float _nextUiHoverTime;
+        private float _nextUiAdjustTime;
 
         [Inject]
         private void Construct(SoundsCatalog catalog, ISoundSettingsStorage settingsStorage)
@@ -42,9 +44,30 @@ namespace Features.Sounds
             _initialized = true;
         }
 
+        // Called after the UI catalog and its clips finish loading during bootstrap.
+        public void SetUiSounds(SoundsCatalog catalog)
+        {
+            EnsureInitialized();
+
+            if (catalog == null)
+                throw new System.ArgumentNullException(nameof(catalog));
+
+            foreach (SoundDefinition sound in catalog.Sounds)
+            {
+                if (sound == null || sound.Id == SoundId.None)
+                    continue;
+
+                _sounds[sound.Id] = sound;
+                _reportedInvalidSounds.Remove(sound.Id);
+            }
+        }
+
         public void Play(SoundId soundId)
         {
             EnsureInitialized();
+
+            if (!AllowUiFeedback(soundId))
+                return;
 
             if (!TryGetSound(soundId, out SoundDefinition sound))
                 return;
@@ -128,6 +151,33 @@ namespace Features.Sounds
             SaveSettings();
         }
 
+        private bool AllowUiFeedback(SoundId soundId)
+        {
+            float now = Time.unscaledTime;
+            if (soundId == SoundId.UiHover)
+            {
+                if (now < _nextUiHoverTime)
+                    return false;
+                _nextUiHoverTime = now + 0.06f;
+            }
+            else if (soundId == SoundId.UiAdjust)
+            {
+                if (now < _nextUiAdjustTime)
+                    return false;
+                _nextUiAdjustTime = now + 0.08f;
+            }
+            else if (soundId == SoundId.UiClick || soundId == SoundId.UiSelect ||
+                     soundId == SoundId.UiStartClick || soundId == SoundId.UiBack ||
+                     soundId == SoundId.UiOpen || soundId == SoundId.UiClose ||
+                     soundId == SoundId.UiError || soundId == SoundId.UiConfirm)
+            {
+                // Suppress focus changes caused by the same click or by opening a window.
+                _nextUiHoverTime = now + 0.1f;
+            }
+
+            return true;
+        }
+
         private void BuildSoundsLookup()
         {
             _sounds.Clear();
@@ -186,13 +236,18 @@ namespace Features.Sounds
             return false;
         }
 
-        private void PlaySfx(SoundDefinition sound)
+        public void PlaySfx(AudioClip clip, float volume = 1f)
         {
-            if (_settings.SfxMuted || _settings.SfxVolume <= 0f)
+            EnsureInitialized();
+
+            if (clip == null || _settings.SfxMuted || _settings.SfxVolume <= 0f)
                 return;
 
-            _sfxSource.PlayOneShot(sound.Clip, sound.Volume);
+            _sfxSource.PlayOneShot(clip, Mathf.Clamp01(volume));
         }
+
+        private void PlaySfx(SoundDefinition sound) =>
+            PlaySfx(sound.Clip, sound.Volume);
 
         private void PlayMusic(SoundDefinition sound)
         {

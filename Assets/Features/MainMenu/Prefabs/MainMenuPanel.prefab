@@ -501,6 +501,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43831bf1d91d49b29705a9e8b8fa0e36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.PanelAnimationsMonoComponent
+  _playUiSounds: 1
   _panelAnimation:
     rid: 4520945813614493918
   _canvasGroup: {fileID: 2818669777859599108}
@@ -648,6 +649,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5148812109941874415}
     m_Modifications:
+    - target: {fileID: 9173951224674432501, guid: 4f9a2e37c6d84b90a125f7e8c3d6412b, type: 3}
+      propertyPath: _sound
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: 4f9a2e37c6d84b90a125f7e8c3d6412b, type: 3}
       propertyPath: m_Name
       value: PlayButton
@@ -761,6 +766,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5148812109941874415}
     m_Modifications:
+    - target: {fileID: 9173951224674432501, guid: 4f9a2e37c6d84b90a125f7e8c3d6412b, type: 3}
+      propertyPath: _sound
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: 4f9a2e37c6d84b90a125f7e8c3d6412b, type: 3}
       propertyPath: m_Name
       value: QuestsButton
@@ -833,6 +842,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5148812109941874415}
     m_Modifications:
+    - target: {fileID: 9173951224674432501, guid: 4f9a2e37c6d84b90a125f7e8c3d6412b, type: 3}
+      propertyPath: _sound
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: 4f9a2e37c6d84b90a125f7e8c3d6412b, type: 3}
       propertyPath: m_Name
       value: UnlocksButton

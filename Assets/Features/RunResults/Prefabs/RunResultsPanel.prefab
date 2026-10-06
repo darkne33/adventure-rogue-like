@@ -5030,6 +5030,7 @@ GameObject:
   - component: {fileID: 104602}
   - component: {fileID: 104603}
   - component: {fileID: 104604}
+  - component: {fileID: 700000001}
   m_Layer: 5
   m_Name: Scrollbar
   m_TagString: Untagged
@@ -5676,7 +5677,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 132d0cdf19664d458212f987e449724d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Sounds.UiButtonClickSoundController
-  _sound: 1
+  _sound: 0
+  _hoverSound: 6
+  _valueSound: 11
 --- !u!114 &105205
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5984,7 +5987,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 132d0cdf19664d458212f987e449724d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Sounds.UiButtonClickSoundController
-  _sound: 1
+  _sound: 0
+  _hoverSound: 6
+  _valueSound: 11
 --- !u!114 &105405
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6201,3 +6206,18 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &700000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 104600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 132d0cdf19664d458212f987e449724d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Sounds.UiButtonClickSoundController
+  _sound: 0
+  _hoverSound: 6
+  _valueSound: 11

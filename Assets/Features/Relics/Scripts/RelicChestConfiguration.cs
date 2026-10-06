@@ -8,6 +8,7 @@ namespace Features.Relics.Scripts
     {
         [field: SerializeField] public GameObject ChestPrefab { get; private set; }
         [field: SerializeField] public GameObject RelicPickupPrefab { get; private set; }
+        [field: SerializeField] public GameObject OnlyRelicPickupPrefab { get; private set; }
         [field: SerializeField, Min(0)] public int MinChestsPerLevel { get; private set; } = 1;
         [field: FormerlySerializedAs("<ChestsPerLevel>k__BackingField")]
         [field: SerializeField, Min(0)] public int MaxChestsPerLevel { get; private set; } = 2;

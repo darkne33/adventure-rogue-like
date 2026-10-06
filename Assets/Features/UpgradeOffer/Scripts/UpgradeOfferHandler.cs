@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Cysharp.Threading.Tasks;
+using Features.Sounds;
 using UI;
 using UnityEngine;
 
@@ -17,6 +18,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
     private readonly IPauseService _pauseService;
     private readonly ICharacterLevelService _characterLevelService;
     private readonly UpgradeBuildService _upgradeBuildService;
+    private readonly ISoundsService _sounds;
 
     private readonly List<UpgradeOfferItemView> _upgradeItems = new();
     private readonly List<UpgradeOffer> _currentOffers = new();
@@ -36,7 +38,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         IUpgradeOfferItemFactory upgradeOfferItemFactory, UpgradeOfferConfiguration upgradeOfferConfiguration,
         IPanelService panelService, CharacterStats characterStats, ICharacterProvider characterProvider,
         IPauseService pauseService, ICharacterLevelService characterLevelService,
-        UpgradeBuildService upgradeBuildService)
+        UpgradeBuildService upgradeBuildService, ISoundsService sounds)
     {
         _upgradeOfferGenerator = upgradeOfferGenerator;
         _upgradeOfferItemFactory = upgradeOfferItemFactory;
@@ -47,6 +49,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         _pauseService = pauseService;
         _characterLevelService = characterLevelService;
         _upgradeBuildService = upgradeBuildService;
+        _sounds = sounds;
 
         _characterLevelService.OnLevelUp += OnLevelUp;
     }
@@ -62,6 +65,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         if (_isOpen == false || _isClosing)
             return;
 
+        _sounds.Play(SoundId.UiAdjust);
         RecordRejectedCurrentOffers();
         DestroyViews();
         GenerateUpgrades(UpgradesRoot, false);
@@ -73,6 +77,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         if (_isOpen == false || _isClosing)
             return;
 
+        _sounds.Play(SoundId.UiBack);
         RecordRejectedCurrentOffers();
         _isClosing = true;
         CloseCurrentOffer().Forget();
@@ -80,8 +85,11 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
 
     public void ApplyUpgradeOffer(UpgradeOffer upgradeOffer)
     {
+        if (!_isOpen || _isClosing)
+            return;
         if (_upgradeBuildService.CanSelect(upgradeOffer.Ability) == false)
         {
+            _sounds.Play(SoundId.UiError);
             RefreshItems();
             return;
         }
@@ -92,7 +100,9 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
             upgradeOffer.PrimaryUpgrade, upgradeOffer.SecondaryUpgrade);
         _upgradeBuildService.RecordAppliedSelection(upgradeOffer.Ability);
         UpgradeOfferPanel.SetMoreUpgradeConditionVisible(_upgradeBuildService.HasAdditionalUpgradeOffer == false);
-        SkipUpgrades();
+        _sounds.Play(SoundId.UiConfirm);
+        _isClosing = true;
+        CloseCurrentOffer().Forget();
     }
 
     public void Dispose()

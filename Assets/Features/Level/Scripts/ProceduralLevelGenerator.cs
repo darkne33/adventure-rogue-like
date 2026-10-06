@@ -24,20 +24,23 @@ public static class ProceduralLevelGenerator
         int bossDepth = settings.GetMainPathCombatRoomCount(combatRooms);
         // Roll content once. Retrying geometry must not favour floors with fewer rewards.
         int rewardRooms = settings.RollRewardRoomCount();
+        int onlyRelicRooms = settings.OnlyRelicRoomCount;
         bool hasShop = settings.RollShop();
-        var templates = new Templates(catalog, levelIndex, rewardRooms > 0, hasShop);
+        var templates = new Templates(catalog, levelIndex, rewardRooms > 0,
+            onlyRelicRooms > 0, hasShop);
 
         for (int attempt = 0; attempt < settings.GenerationAttempts; attempt++)
         {
             var layout = new Layout(settings, templates, bossDepth);
-            if (!layout.TryBuild(combatRooms - bossDepth, rewardRooms, hasShop))
+            if (!layout.TryBuild(combatRooms - bossDepth, rewardRooms, onlyRelicRooms, hasShop))
                 continue;
             return layout.CreateNodes(catalog.EnemySettings);
         }
 
         throw new InvalidOperationException(
             $"Cannot generate floor {levelIndex + 1} after {settings.GenerationAttempts} attempts " +
-            $"({combatRooms} combat, {rewardRooms} reward, {(hasShop ? 1 : 0)} shop rooms). " +
+            $"({combatRooms} combat, {rewardRooms} chest reward, {onlyRelicRooms} relic, " +
+            $"{(hasShop ? 1 : 0)} shop rooms). " +
             "Check the catalog's door compatibility, grid radius and branch constraints.");
     }
 
@@ -46,7 +49,8 @@ public static class ProceduralLevelGenerator
         private readonly Dictionary<RoomType, List<Room>> _pools = new();
         private readonly Dictionary<(RoomType, RoomConnectionMask, RoomDirection?), List<Room>> _compatible = new();
 
-        public Templates(LevelRoomCatalog catalog, int levelIndex, bool needsRewards, bool needsShop)
+        public Templates(LevelRoomCatalog catalog, int levelIndex, bool needsRewards,
+            bool needsRelics, bool needsShop)
         {
             AddPool(RoomType.Start, new[] { catalog.StartRoom });
             AddPool(RoomType.Enemy, catalog.SmallEnemyRooms);
@@ -54,6 +58,8 @@ public static class ProceduralLevelGenerator
             AddPool(RoomType.Boss, new[] { catalog.GetBossRoom(levelIndex) });
             if (needsRewards)
                 AddPool(RoomType.Reward, catalog.RewardRooms);
+            if (needsRelics)
+                AddPool(RoomType.OnlyRelic, catalog.OnlyRelicRooms);
             if (needsShop)
                 AddPool(RoomType.Shop, catalog.ShopRooms);
 
@@ -82,6 +88,8 @@ public static class ProceduralLevelGenerator
                 if (type == RoomType.Enemy &&
                     (room.RoomData is not DefaultEnemiesRoomData || room.RoomData is BossRoomData))
                     throw new InvalidOperationException($"{room.name} must be an ordinary combat room.");
+                if (type == RoomType.OnlyRelic && room.RoomData is not OnlyRelicRoomData)
+                    throw new InvalidOperationException($"{room.name} must contain OnlyRelicRoomData.");
                 if (!pool.Contains(room))
                     pool.Add(room);
             }
@@ -125,7 +133,7 @@ public static class ProceduralLevelGenerator
             _occupied.Add(Vector2Int.zero);
         }
 
-        public bool TryBuild(int sideCombatRooms, int rewardRooms, bool hasShop)
+        public bool TryBuild(int sideCombatRooms, int rewardRooms, int onlyRelicRooms, bool hasShop)
         {
             // A self-avoiding route may turn in any of the four directions.
             // Side branches are subsequently restricted to keep the boss a farthest leaf.
@@ -155,6 +163,9 @@ public static class ProceduralLevelGenerator
             // Prefer rewards at the ends of optional combat branches.
             for (int i = 0; i < rewardRooms; i++)
                 if (!TryAddBranch(RoomType.Reward))
+                    return false;
+            for (int i = 0; i < onlyRelicRooms; i++)
+                if (!TryAddBranch(RoomType.OnlyRelic))
                     return false;
             return !hasShop || TryAddBranch(RoomType.Shop);
         }
@@ -186,7 +197,7 @@ public static class ProceduralLevelGenerator
                 {
                     if (!CanPlace(parent, direction, type))
                         continue;
-                    int priority = type == RoomType.Reward
+                    int priority = type is RoomType.Reward or RoomType.OnlyRelic
                         ? (parent.ConnectionCount == 1 ? 2 : 0) + (!parent.OnMainPath ? 1 : 0)
                         : 0;
                     candidates.Add(new Attachment(parent, direction, priority));
@@ -252,7 +263,7 @@ public static class ProceduralLevelGenerator
                 room.Connections |= direction.ToConnectionMask();
                 _reservedExit = room.Position + direction.ToGridOffset();
             }
-            if (type is RoomType.Reward or RoomType.Shop)
+            if (type is RoomType.Reward or RoomType.OnlyRelic or RoomType.Shop)
                 parent.HasSpecialChild = true;
             _rooms.Add(room);
             _occupied.Add(room.Position);

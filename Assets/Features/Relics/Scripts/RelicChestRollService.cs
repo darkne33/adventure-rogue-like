@@ -31,6 +31,21 @@ namespace Features.Relics.Scripts
             if (_lastInteractionFrame == Time.frameCount || configuration == null)
                 return false;
 
+            if (TryReserveReward(availableRelics, activeRelics, configuration, out rollPlan) == false)
+                return false;
+
+            _lastInteractionFrame = Time.frameCount;
+            return true;
+        }
+
+        internal bool TryReserveReward(IReadOnlyList<RelicDefinition> availableRelics,
+            IReadOnlyCollection<RelicRuntimeState> activeRelics,
+            RelicChestConfiguration configuration, out RelicChestRollPlan rollPlan)
+        {
+            rollPlan = null;
+            if (configuration == null)
+                return false;
+
             List<RelicDefinition> reservableRelics = availableRelics?
                 .Where(relic => CanReserve(relic, activeRelics))
                 .ToList();
@@ -40,7 +55,6 @@ namespace Features.Relics.Scripts
 
             _reservedRewards.TryGetValue(reward, out int reservedCount);
             _reservedRewards[reward] = reservedCount + 1;
-            _lastInteractionFrame = Time.frameCount;
             rollPlan = new RelicChestRollPlan(reservableRelics, reward);
             return true;
         }

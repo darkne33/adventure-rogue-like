@@ -54,7 +54,7 @@ public sealed class RoomDoor : MonoBehaviour
             ? nextRoomEntryDoor
             : throw new ArgumentNullException(nameof(nextRoomEntryDoor));
         _isLevelExit = false;
-        _doorType = nextRoom.RoomData is RewardRoomData or ShopRoomData
+        _doorType = nextRoom.RoomData is RewardRoomData or OnlyRelicRoomData or ShopRoomData
             ? DoorType.Reward
             : DoorType.Enemy;
 

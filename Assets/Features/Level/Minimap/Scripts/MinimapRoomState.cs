@@ -12,5 +12,6 @@ public enum MinimapRoomKind
     Start,
     Exit,
     Shop,
-    Boss
+    Boss,
+    OnlyRelic
 }

@@ -2,6 +2,7 @@ using System;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Features.Quests.Scripts;
+using Features.Sounds;
 using UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -22,6 +23,7 @@ namespace Features.RunResults.Scripts
         private readonly QuestRunTracker _questRunTracker;
         private readonly RunResultsPanel _prefab;
         private readonly DiContainer _container;
+        private readonly ISoundsService _sounds;
 
         private RunResultsPanel _panel;
         private string _sceneName;
@@ -33,7 +35,7 @@ namespace Features.RunResults.Scripts
         public RunResultsController(IPanelsProvider panelsProvider, IPauseService pauseService,
             ITimeScaleService timeScale, ICursorService cursorService, RunRestartService runRestart,
             RunResultsTracker tracker, QuestRunTracker questRunTracker,
-            RunResultsPanel prefab, DiContainer container)
+            RunResultsPanel prefab, DiContainer container, ISoundsService sounds)
         {
             _panelsProvider = panelsProvider;
             _pauseService = pauseService;
@@ -44,6 +46,7 @@ namespace Features.RunResults.Scripts
             _questRunTracker = questRunTracker;
             _prefab = prefab != null ? prefab : throw new ArgumentNullException(nameof(prefab));
             _container = container;
+            _sounds = sounds;
         }
 
         public void Show(string sceneName)
@@ -57,6 +60,7 @@ namespace Features.RunResults.Scripts
             _sceneName = sceneName;
             _panel.SetResults(_tracker.CaptureResults());
             _questRunTracker.EndRun();
+            _sounds.Play(SoundId.UiOpen);
             _isOpen = true;
             _ownsPause = !_timeScale.IsPaused;
             _pauseService.HandlePause();
@@ -124,6 +128,7 @@ namespace Features.RunResults.Scripts
             if (_disposed || !_isOpen || _isLeaving || _runRestart.IsRestarting)
                 return;
 
+            _sounds.Play(retry ? SoundId.UiStartClick : SoundId.UiBack);
             _isLeaving = true;
             _panel.SetButtonsInteractable(false);
             _panel.SetStatus(retry ? "RESTARTING RUN..." : "RETURNING TO MAIN MENU...");
@@ -166,6 +171,7 @@ namespace Features.RunResults.Scripts
 
         private void RestoreAfterFailure(bool retry)
         {
+            _sounds.Play(SoundId.UiError);
             _pauseService.HandlePause();
             _ownsPause = true;
             _cursorService.ShowUiCursor();

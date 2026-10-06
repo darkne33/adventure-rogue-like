@@ -24,6 +24,8 @@ public sealed class ProceduralLevelSettings
     [Header("Optional Rooms")]
     [Tooltip("Relative weights for exactly 0, 1, 2 or 3 reward rooms (X, Y, Z, W).")]
     [SerializeField] private Vector4 _rewardRoomCountWeights = Vector4.one;
+    [Tooltip("Separate relic rooms added to every floor, in addition to chest reward rooms.")]
+    [SerializeField, Min(0)] private int _onlyRelicRoomCount = 1;
     [SerializeField, Range(0f, 100f)] private float _shopChancePercent = 50f;
 
     [Header("Existing Additional Stat Growth")]
@@ -32,6 +34,7 @@ public sealed class ProceduralLevelSettings
     [SerializeField, Min(0f)] private float _healthGrowthPerLevel = 0.15f;
     [SerializeField, Min(0f)] private float _damageGrowthPerLevel = 0.05f;
 
+    public int OnlyRelicRoomCount => Mathf.Max(0, _onlyRelicRoomCount);
     public int MaximumBranchCombatRooms => Mathf.Clamp(_maximumBranchCombatRooms, 1, 3);
     public int FirstBranchMaximumDepth => Mathf.Clamp(_firstBranchMaximumDepth, 1, 3);
     public int GridRadius => Mathf.Clamp(_gridRadius, 4, 12);

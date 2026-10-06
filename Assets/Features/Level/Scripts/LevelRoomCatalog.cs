@@ -10,6 +10,7 @@ public sealed class LevelRoomCatalog : ScriptableObject
     [SerializeField] private Room[] _mediumEnemyRooms = Array.Empty<Room>();
     [SerializeField] private EnemyRoomSettings _enemySettings = new();
     [SerializeField] private Room[] _rewardRooms = Array.Empty<Room>();
+    [SerializeField] private Room[] _onlyRelicRooms = Array.Empty<Room>();
     [SerializeField] private Room[] _shopRooms = Array.Empty<Room>();
     [Tooltip("Boss room prefabs in order. After the last entry the cycle starts again.")]
     [SerializeField] private Room[] _bossCycle = Array.Empty<Room>();
@@ -19,6 +20,7 @@ public sealed class LevelRoomCatalog : ScriptableObject
     public IReadOnlyList<Room> MediumEnemyRooms => _mediumEnemyRooms;
     public EnemyRoomSettings EnemySettings => _enemySettings;
     public IReadOnlyList<Room> RewardRooms => _rewardRooms;
+    public IReadOnlyList<Room> OnlyRelicRooms => _onlyRelicRooms;
     public IReadOnlyList<Room> ShopRooms => _shopRooms;
 
     public Room GetBossRoom(int levelIndex)

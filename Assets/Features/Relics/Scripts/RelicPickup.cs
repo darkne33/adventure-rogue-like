@@ -17,8 +17,13 @@ namespace Features.Relics.Scripts
         [Inject] private ICameraService _cameraService;
         [Inject] private CharacterStats _characterStats;
         [Inject] private ITimeScaleService _timeScaleService;
+        [Inject] private IRogueLikeRuntimeDataService _runtimeDataService;
 
         [SerializeField] private ParticleSystem[] _treasureCircleRaysParticles;
+        [SerializeField] private bool _autoCollectOnApproach;
+        [SerializeField] private bool _levitate;
+        [SerializeField, Min(0f)] private float _levitationHeight = 0.25f;
+        [SerializeField, Min(0.1f)] private float _levitationHalfPeriod = 1f;
 
         private InputSystem_Actions _inputActions;
 
@@ -31,6 +36,10 @@ namespace Features.Relics.Scripts
         private Room _room;
         private SpriteRenderer _spriteRenderer;
         private Action _collectedCallback;
+        private Action _destroyedCallback;
+        private Tween _levitationTween;
+        private Vector3 _levitationOrigin;
+        private bool _hasLevitationOrigin;
         private bool _isPicked;
 
         private void Awake() =>
@@ -38,13 +47,21 @@ namespace Features.Relics.Scripts
 
         public void Construct(RelicDefinition relic, RelicChestConfiguration configuration,
             RelicManager relicManager, RelicEventBus eventBus, ICharacterProvider characterProvider,
-            RoomData roomData, Room room, bool collectImmediately = false, Action collectedCallback = null)
+            RoomData roomData, Room room, bool collectImmediately = false,
+            Action collectedCallback = null, Action destroyedCallback = null)
         {
+            _destroyedCallback = destroyedCallback;
             Initialize(relic, configuration, relicManager, eventBus, characterProvider, roomData, room,
                 collectedCallback);
 
             if (collectImmediately)
                 AutoCollect().Forget();
+            else if (_levitate)
+            {
+                _levitationOrigin = transform.position;
+                _hasLevitationOrigin = true;
+                AnimateLevitation();
+            }
             else
                 AnimateDrop();
         }
@@ -102,15 +119,22 @@ namespace Features.Relics.Scripts
         {
             _inputActions ??= new InputSystem_Actions();
             _inputActions.Player.Interact.Enable();
+            if (_hasLevitationOrigin && !_isPicked)
+                AnimateLevitation();
         }
 
-        private void OnDisable() =>
+        private void OnDisable()
+        {
             _inputActions?.Player.Interact.Disable();
+            StopLevitation();
+        }
 
         private void OnDestroy()
         {
             _inputActions?.Dispose();
             _inputActions = null;
+            _destroyedCallback?.Invoke();
+            _destroyedCallback = null;
         }
 
         private void Update()
@@ -120,8 +144,22 @@ namespace Features.Relics.Scripts
                 return;
 
             Transform character = _characterProvider.CharacterFacade.transform;
-            if (Vector3.Distance(transform.position, character.position) > GetPickupDistance())
+            Vector3 offset = (_autoCollectOnApproach ? _levitationOrigin : transform.position) -
+                             character.position;
+            if (_autoCollectOnApproach)
+            {
+                if (!ReferenceEquals(_runtimeDataService.CurrentRoomData, _roomData))
+                    return;
+                offset.y = 0f;
+            }
+            if (offset.sqrMagnitude > GetPickupDistance() * GetPickupDistance())
                 return;
+
+            if (_autoCollectOnApproach)
+            {
+                AutoCollect().Forget();
+                return;
+            }
 
             if (_inputActions != null && _inputActions.Player.Interact.WasPressedThisFrame())
                 PickUp().Forget();
@@ -154,6 +192,23 @@ namespace Features.Relics.Scripts
             _ = transform.DOPunchScale(Vector3.one * 0.25f, 0.5f, 4, 0.6f).SetLink(gameObject);
         }
 
+        private void AnimateLevitation()
+        {
+            StopLevitation();
+            transform.position = _levitationOrigin;
+            _levitationTween = transform.DOMoveY(_levitationOrigin.y + _levitationHeight,
+                    _levitationHalfPeriod)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo)
+                .SetLink(gameObject);
+        }
+
+        private void StopLevitation()
+        {
+            _levitationTween?.Kill();
+            _levitationTween = null;
+        }
+
         private async UniTaskVoid PickUp()
         {
             if (_isPicked)
@@ -169,6 +224,7 @@ namespace Features.Relics.Scripts
                 return;
 
             _isPicked = true;
+            StopLevitation();
             await FlyToCharacter();
             await OfferAndDestroy();
         }
@@ -238,6 +294,8 @@ namespace Features.Relics.Scripts
             if (TryConsumePickup() == false)
             {
                 _isPicked = false;
+                if (_hasLevitationOrigin)
+                    AnimateLevitation();
                 return false;
             }
 

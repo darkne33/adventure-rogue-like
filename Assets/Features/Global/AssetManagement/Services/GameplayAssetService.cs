@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using Features.Quests.Scripts;
 using Features.Relics.Scripts;
 using Features.RunResults.Scripts;
+using Features.Sounds;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Configs;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Factories;
 using UnityEngine;
@@ -26,6 +27,7 @@ namespace Core
         public RelicChestConfiguration RelicChest { get; private set; }
         public Shader ProximityFadeShader { get; private set; }
         public RunResultsPanel RunResults { get; private set; }
+        public SoundsCatalog UiSounds { get; private set; }
 
         public GameplayAssetService(IAddressableLoadService assets) => _assets = assets;
 
@@ -56,6 +58,8 @@ namespace Core
                     "Assets/Features/Character/Shaders/ProximityFadeLit.shader", token);
                 RunResults = await LoadPrefab<RunResultsPanel>(
                     "Assets/Features/RunResults/Prefabs/RunResultsPanel.prefab", token);
+                UiSounds = await Load<SoundsCatalog>(
+                    "Assets/Features/Sounds/Configs/UiSoundsCatalog.asset", token);
                 _initialized = true;
             }
             catch
@@ -87,6 +91,7 @@ namespace Core
             RelicChest = null;
             ProximityFadeShader = null;
             RunResults = null;
+            UiSounds = null;
             _initialized = false;
         }
 

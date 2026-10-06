@@ -1304,6 +1304,7 @@ GameObject:
   - component: {fileID: 2254534169464291837}
   - component: {fileID: 5493535338423970564}
   - component: {fileID: 1584338677158900042}
+  - component: {fileID: 700000001}
   - component: {fileID: 6650352416296440847}
   m_Layer: 5
   m_Name: SkipRelicButton
@@ -1588,6 +1589,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1897904999093028132}
   - component: {fileID: 51682479989003166}
+  - component: {fileID: 700000002}
   m_Layer: 5
   m_Name: Goal
   m_TagString: Untagged
@@ -7898,6 +7900,7 @@ GameObject:
   - component: {fileID: 6203887401056997182}
   - component: {fileID: 5558268534129456296}
   - component: {fileID: 8402053972707969472}
+  - component: {fileID: 700000003}
   - component: {fileID: 4650751597340359991}
   m_Layer: 5
   m_Name: TakeRelicButton
@@ -14960,6 +14963,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43831bf1d91d49b29705a9e8b8fa0e36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.PanelAnimationsMonoComponent
+  _playUiSounds: 1
   _panelAnimation:
     rid: 3123737239936041546
   _canvasGroup: {fileID: 1868420373316889247}
@@ -15779,3 +15783,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61eac577908202e469653ab8a209953a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MinimapView
+--- !u!114 &700000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2715828670693870833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 132d0cdf19664d458212f987e449724d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Sounds.UiButtonClickSoundController
+  _sound: 7
+  _hoverSound: 6
+  _valueSound: 11
+--- !u!114 &700000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2874958261759547166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 132d0cdf19664d458212f987e449724d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Sounds.UiButtonClickSoundController
+  _sound: 1
+  _hoverSound: 6
+  _valueSound: 11
+--- !u!114 &700000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4265665045838066068}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 132d0cdf19664d458212f987e449724d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Sounds.UiButtonClickSoundController
+  _sound: 12
+  _hoverSound: 6
+  _valueSound: 11

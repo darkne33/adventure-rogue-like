@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Features.Sounds;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -28,6 +29,9 @@ namespace Features.Quests.Scripts
         [SerializeField] private GameObject _detailReceived;
         [SerializeField] private UnityEngine.UI.Button _claimButton;
         [SerializeField] private QuestRowView _rowPrefab;
+
+        [Inject] private DiContainer _container;
+        [Inject] private ISoundsService _sounds;
 
         private readonly List<QuestRowView> _rows = new();
         private QuestService _service;
@@ -120,7 +124,8 @@ namespace Features.Quests.Scripts
             {
                 if (_hideCompleted && _service.IsCompleted(quest.Id) && !_service.CanClaimReward(quest.Id))
                     continue;
-                QuestRowView row = Instantiate(_rowPrefab, _scroll.content, false);
+                QuestRowView row = _container.InstantiatePrefabForComponent<QuestRowView>(
+                    _rowPrefab, _scroll.content);
                 row.Bind(quest, _service, _rows.Count, _getPortrait, _portraitMaterial);
                 row.Selected += SelectQuest;
                 row.gameObject.SetActive(true);
@@ -222,11 +227,13 @@ namespace Features.Quests.Scripts
         private void ClaimSelectedReward()
         {
             if (_selected != null)
-                _service.TryClaimReward(_selected.Id);
+                _sounds.Play(_service.TryClaimReward(_selected.Id)
+                    ? SoundId.UiConfirm : SoundId.UiError);
         }
 
         private void ToggleHideCompleted()
         {
+            _sounds.Play(SoundId.UiAdjust);
             _hideCompleted = !_hideCompleted;
             _resetScroll = true;
             Refresh();

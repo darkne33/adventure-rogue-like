@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using NaughtyAttributes;
+using Features.Sounds;
+using Zenject;
 using UnityEngine;
 
 namespace UI
@@ -12,9 +14,14 @@ namespace UI
         [SerializeReference, SubclassSelector] public IPanelAnimation _panelAnimation;
 
         [SerializeField, ReadOnly] private CanvasGroup _canvasGroup;
+        [SerializeField] private bool _playUiSounds;
+
+        [Inject] private ISoundsService _soundsService;
+        private bool _isShown;
 
         public virtual async UniTask Show()
         {
+            PlayVisibilitySound(true);
             IsPlaying = true;
             SetInputState(true);
             await _panelAnimation.Show();
@@ -23,12 +30,14 @@ namespace UI
 
         public void ForceShow()
         {
+            PlayVisibilitySound(true);
             SetInputState(true);
             _panelAnimation.ForceShow();
         }
 
         public virtual async UniTask Hide()
         {
+            PlayVisibilitySound(false);
             IsPlaying = true;
             await _panelAnimation.Hide();
             SetInputState(false);
@@ -37,8 +46,19 @@ namespace UI
 
         public virtual void ForceHide()
         {
+            PlayVisibilitySound(false);
             SetInputState(false);
             _panelAnimation.ForceHide();
+        }
+
+        private void PlayVisibilitySound(bool shown)
+        {
+            if (_isShown == shown)
+                return;
+
+            _isShown = shown;
+            if (_playUiSounds)
+                _soundsService?.Play(shown ? SoundId.UiOpen : SoundId.UiClose);
         }
 
         public void SetInputState(bool interactable)

@@ -157,9 +157,15 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
 
     private void RequestPlay()
     {
-        if (_playRequested || !_characterConfiguration.SelectedCharacter.IsConfigured ||
-            !_questService.IsCharacterOwned(_characterConfiguration.SelectedCharacter.Id))
+        if (_playRequested)
             return;
+
+        if (!_characterConfiguration.SelectedCharacter.IsConfigured ||
+            !_questService.IsCharacterOwned(_characterConfiguration.SelectedCharacter.Id))
+        {
+            _soundsService.Play(SoundId.UiError);
+            return;
+        }
 
         _soundsService.Play(SoundId.UiStartClick);
         _playRequested = true;
@@ -173,6 +179,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen)
             return;
 
+        _soundsService.Play(SoundId.UiOpen);
         _isCharacterSelectionOpen = true;
         Panel.SetButtonsInteractable(false);
         Panel.SetHomeVisible(false);
@@ -187,6 +194,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen || _questsView == null)
             return;
 
+        _soundsService.Play(SoundId.UiOpen);
         _isQuestsOpen = true;
         Panel.SetButtonsInteractable(false);
         Panel.SetHomeVisible(false);
@@ -203,7 +211,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         _questsView.Hide();
         Panel.SetHomeVisible(true);
         EnableInput();
-        _soundsService.Play(SoundId.UiSelect);
+        _soundsService.Play(SoundId.UiBack);
         if (EventSystem.current != null)
             EventSystem.current.SetSelectedGameObject(Panel.QuestsButton.gameObject);
     }
@@ -213,6 +221,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen || _unlocksView == null)
             return;
 
+        _soundsService.Play(SoundId.UiOpen);
         _isUnlocksOpen = true;
         Panel.SetButtonsInteractable(false);
         Panel.SetHomeVisible(false);
@@ -230,7 +239,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         _characterSelectionView.RefreshOwnership();
         Panel.SetHomeVisible(true);
         EnableInput();
-        _soundsService.Play(SoundId.UiSelect);
+        _soundsService.Play(SoundId.UiBack);
         if (EventSystem.current != null)
             EventSystem.current.SetSelectedGameObject(Panel.UnlocksButton.gameObject);
     }
@@ -259,6 +268,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         if (_playRequested || !_isCharacterSelectionOpen)
             return;
 
+        _soundsService.Play(SoundId.UiBack);
         _isCharacterSelectionOpen = false;
         _characterSelectionView.Hide(keepPreview: true);
         Panel.SetHomeVisible(true);

@@ -392,6 +392,11 @@ public class LevelView : MonoBehaviour
                     $"{roomNode.RoomPrefab.name} must contain StartRoomData.");
             case RoomType.Reward:
                 return;
+            case RoomType.OnlyRelic:
+                if (roomData is not OnlyRelicRoomData relicRoomData || relicRoomData.RelicSpawnPoint == null)
+                    throw new InvalidOperationException(
+                        $"{roomNode.RoomPrefab.name} must contain OnlyRelicRoomData with a relic spawn point.");
+                return;
             case RoomType.Shop:
                 return;
             case RoomType.Boss:
@@ -430,6 +435,11 @@ public class LevelView : MonoBehaviour
                 ValidateKeyRoomSpawnPoint(roomNode.Room.name, enemiesRoomData);
                 return;
             case (RoomType.Reward, RewardRoomData):
+                return;
+            case (RoomType.OnlyRelic, OnlyRelicRoomData relicRoomData):
+                if (relicRoomData.RelicSpawnPoint == null)
+                    throw new InvalidOperationException(
+                        $"{roomNode.Room.name} does not have a relic spawn point.");
                 return;
             case (RoomType.Shop, ShopRoomData):
                 return;
@@ -582,13 +592,13 @@ public class LevelView : MonoBehaviour
         if (IsConnectionBlocked(roomNode, direction, nodesByPosition))
             return false;
 
-        if (roomNode.Type == RoomType.Reward &&
+        if ((roomNode.Type is RoomType.Reward or RoomType.OnlyRelic) &&
             direction != GetRewardEntranceDirection(roomNode, nodesByPosition))
             return false;
 
         return !nodesByPosition.TryGetValue(roomNode.GridPosition + direction.ToGridOffset(),
                    out LevelRoomNode neighbour) ||
-               neighbour.Type != RoomType.Reward ||
+               neighbour.Type is not (RoomType.Reward or RoomType.OnlyRelic) ||
                direction.Opposite() == GetRewardEntranceDirection(neighbour, nodesByPosition);
     }
 
@@ -601,7 +611,7 @@ public class LevelView : MonoBehaviour
         {
             if (nodesByPosition.TryGetValue(roomNode.GridPosition + direction.ToGridOffset(),
                     out LevelRoomNode neighbour) &&
-                neighbour.Type != RoomType.Reward &&
+                neighbour.Type is not (RoomType.Reward or RoomType.OnlyRelic) &&
                 !IsConnectionBlocked(roomNode, direction, nodesByPosition))
                 return direction;
         }
@@ -1092,6 +1102,9 @@ public class LevelView : MonoBehaviour
                 case RewardRoomData rewardRoomData:
                     rewardRoomData.ResetProgress();
                     break;
+                case OnlyRelicRoomData relicRoomData:
+                    relicRoomData.ResetProgress();
+                    break;
             }
         }
     }
@@ -1199,6 +1212,7 @@ public class LevelView : MonoBehaviour
                     RoomType.Start => Color.cyan,
                     RoomType.Exit => Color.green,
                     RoomType.Reward => Color.yellow,
+                    RoomType.OnlyRelic => new Color(1f, 0.75f, 0.1f, 1f),
                     RoomType.Shop => Color.magenta,
                     RoomType.Boss => new Color(0.85f, 0.2f, 0.2f, 1f),
                     _ => Color.white
@@ -1261,7 +1275,8 @@ public enum RoomType
     Enemy,
     Reward,
     Shop,
-    Boss = 5
+    Boss = 5,
+    OnlyRelic = 6
 }
 
 [Serializable]

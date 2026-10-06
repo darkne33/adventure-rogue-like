@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Features.Sounds;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -30,6 +31,9 @@ namespace Features.Quests.Scripts
         [SerializeField] private CategoryTab[] _tabs = Array.Empty<CategoryTab>();
         [SerializeField] private Color _activeTabColor = new(0.11f, 0.13f, 0.11f, 0.85f);
         [SerializeField] private Color _inactiveTabColor = new(0.11f, 0.13f, 0.11f, 0.3f);
+
+        [Inject] private DiContainer _container;
+        [Inject] private ISoundsService _sounds;
 
         private readonly List<UnlockCellView> _cells = new();
         private QuestService _service;
@@ -136,7 +140,8 @@ namespace Features.Quests.Scripts
                 unlocks = unlocks.OrderBy(unlock => unlock.Relic != null ? (int)unlock.Relic.Rarity : int.MaxValue);
             foreach (UnlockDefinition unlock in unlocks)
             {
-                UnlockCellView cell = Instantiate(_cellPrefab, _scroll.content, false);
+                UnlockCellView cell = _container.InstantiatePrefabForComponent<UnlockCellView>(
+                    _cellPrefab, _scroll.content);
                 cell.Bind(unlock, () => SelectUnlock(cell));
                 cell.gameObject.SetActive(true);
                 _cells.Add(cell);
@@ -239,11 +244,14 @@ namespace Features.Quests.Scripts
 
         private void PurchaseSelected()
         {
-            if (_selected == null || !_service.CanPurchase(_selected))
+            if (_selected == null)
                 return;
-            _service.TryPurchase(_selected.Id);
-            if (!_service.IsOwned(_selected))
+            if (!_service.CanPurchase(_selected) || !_service.TryPurchase(_selected.Id))
+            {
+                _sounds.Play(SoundId.UiError);
                 return;
+            }
+            _sounds.Play(SoundId.UiConfirm);
             foreach (UnlockCellView cell in _cells)
             {
                 if (cell.Unlock != _selected)
@@ -280,6 +288,8 @@ namespace Features.Quests.Scripts
         private void SelectCategory(int index)
         {
             int categoryIndex = (index + _tabs.Length) % _tabs.Length;
+            if (categoryIndex != _categoryIndex)
+                _sounds.Play(SoundId.UiSelect);
             _categoryIndex = categoryIndex;
             _selected = null;
             _scroll.StopMovement();

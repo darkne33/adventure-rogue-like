@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Features.Sounds
 {
     public interface ISoundsService
@@ -8,7 +10,9 @@ namespace Features.Sounds
         bool MusicMuted { get; }
         SoundId CurrentMusic { get; }
 
+        void SetUiSounds(SoundsCatalog catalog);
         void Play(SoundId soundId);
+        void PlaySfx(AudioClip clip, float volume = 1f);
         void StopAllSfx();
         void StopMusic();
         void SetSfxVolume(float volume);

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 100002}
   - component: {fileID: 100003}
   - component: {fileID: 100004}
+  - component: {fileID: 700000001}
   - component: {fileID: 100005}
   - component: {fileID: 114100}
   - component: {fileID: 8200000}
@@ -1203,3 +1204,18 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 100001, guid: 4d19f80493d24b61aeb0f7651856ce2b, type: 3}
   m_PrefabInstance: {fileID: 9800500}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &700000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 132d0cdf19664d458212f987e449724d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Sounds.UiButtonClickSoundController
+  _sound: 3
+  _hoverSound: 6
+  _valueSound: 11

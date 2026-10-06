@@ -29,13 +29,14 @@ namespace Features.Relics.Scripts
         private readonly RelicManager _relicManager;
         private readonly RelicEventBus _eventBus;
         private readonly DiContainer _container;
+        private readonly OnlyRelicRoomSpawner _onlyRelicRoomSpawner;
         private readonly List<RelicChest> _activeChests = new();
 
         public IReadOnlyList<RelicChest> ActiveChests => _activeChests;
 
         public RelicChestSpawner(ICharacterProvider characterProvider, RelicChestConfiguration configuration,
             LevelsConfiguration levelsConfiguration, RelicPool relicPool, RelicManager relicManager,
-            RelicEventBus eventBus, DiContainer container)
+            RelicEventBus eventBus, DiContainer container, OnlyRelicRoomSpawner onlyRelicRoomSpawner)
         {
             _characterProvider = characterProvider;
             _configuration = configuration;
@@ -44,10 +45,12 @@ namespace Features.Relics.Scripts
             _relicManager = relicManager;
             _eventBus = eventBus;
             _container = container;
+            _onlyRelicRoomSpawner = onlyRelicRoomSpawner;
         }
 
         public void SpawnForLevel(LevelView level)
         {
+            _onlyRelicRoomSpawner.SetLevel(level);
             _activeChests.Clear();
             _eventBus.PublishChestsCleared();
 

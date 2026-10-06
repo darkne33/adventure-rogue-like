@@ -3,6 +3,7 @@ using Core.Services;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
 using Features.Quests.Scripts;
+using Features.Sounds;
 using Package.Logging.CustomPackages.Package.Logging.Runtime.Scripts.Core;
 using UI;
 using Zenject;
@@ -13,6 +14,7 @@ namespace Core
     {
         [Inject] private IGameAddressableService _gameAddressableService;
         [Inject] private GameplayAssetService _gameplayAssets;
+        [Inject] private ISoundsService _soundsService;
         [Inject] private QuestService _quests;
         [Inject] private QuestCompletionNotificationController _questNotifications;
         [Inject] private ICameraService _cameraService;
@@ -31,6 +33,7 @@ namespace Core
 
                 await _gameAddressableService.InitializeAddressables();
                 await _gameplayAssets.Initialize(cts);
+                _soundsService.SetUiSounds(_gameplayAssets.UiSounds);
                 _quests.Initialize(_gameplayAssets.Progression);
                 _questNotifications.Initialize(_gameplayAssets.QuestNotification);
                 await _cameraService.Initialize(cts);
