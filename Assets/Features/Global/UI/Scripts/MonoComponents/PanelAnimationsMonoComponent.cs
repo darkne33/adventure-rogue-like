@@ -57,8 +57,8 @@ namespace UI
                 return;
 
             _isShown = shown;
-            if (_playUiSounds)
-                _soundsService?.Play(shown ? SoundId.UiOpen : SoundId.UiClose);
+            if (_playUiSounds && !shown)
+                _soundsService?.Play(SoundId.UiClose);
         }
 
         public void SetInputState(bool interactable)

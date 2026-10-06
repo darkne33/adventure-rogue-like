@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Features.Enemies.Scripts;
+using Features.Relics.Scripts;
 using UnityEngine;
 using Zenject;
 
@@ -13,6 +14,7 @@ public sealed class MinimapController : IDisposable, ITickable
     private readonly IEnemiesProvider _enemiesProvider;
     private readonly GoldDropper _goldDropper;
     private readonly MinimapChestMarkerController _chestMarkerController;
+    private readonly RelicEventBus _relicEventBus;
     private readonly Dictionary<RoomData, MinimapRoomIcon> _icons = new();
     private readonly Dictionary<Room, MinimapRoomIcon> _iconsByRoom = new();
     private readonly Dictionary<RoomData, Room> _roomViews = new();
@@ -34,7 +36,7 @@ public sealed class MinimapController : IDisposable, ITickable
     public MinimapController(IRogueLikeRuntimeDataService runtimeDataService,
         MinimapElementFactory elementFactory, ICharacterProvider characterProvider,
         IEnemiesProvider enemiesProvider, GoldDropper goldDropper,
-        MinimapChestMarkerController chestMarkerController)
+        MinimapChestMarkerController chestMarkerController, RelicEventBus relicEventBus)
     {
         _runtimeDataService = runtimeDataService;
         _elementFactory = elementFactory;
@@ -42,7 +44,9 @@ public sealed class MinimapController : IDisposable, ITickable
         _enemiesProvider = enemiesProvider;
         _goldDropper = goldDropper;
         _chestMarkerController = chestMarkerController;
+        _relicEventBus = relicEventBus;
         _runtimeDataService.RoomChanged += HandleRoomChanged;
+        _relicEventBus.RelicOffered += HandleRelicOffered;
     }
 
     public void Attach(MinimapView view)
@@ -76,6 +80,7 @@ public sealed class MinimapController : IDisposable, ITickable
     public void Dispose()
     {
         _runtimeDataService.RoomChanged -= HandleRoomChanged;
+        _relicEventBus.RelicOffered -= HandleRelicOffered;
     }
 
     public void Tick()
@@ -289,6 +294,8 @@ public sealed class MinimapController : IDisposable, ITickable
         _chestMarkerController.SetCurrentRoom(currentRoomView);
     }
 
+    private void HandleRelicOffered(RelicDefinition relic) => UpdateStates();
+
     private void UpdateStates()
     {
         if (_view == null)
@@ -312,7 +319,8 @@ public sealed class MinimapController : IDisposable, ITickable
             entry.Value.SetState(state);
             if (TryGetDirectionToCurrentRoom(entry.Key, out RoomDirection entranceDirection))
                 entry.Value.SetRoomMarkerDirection(entranceDirection);
-            entry.Value.SetRoomKindMarkerVisible(isRoomVisible);
+            entry.Value.SetRoomKindMarkerVisible(
+                isRoomVisible && entry.Key is not OnlyRelicRoomData { IsCompleted: true });
             entry.Value.SetCombatRoomMarkerVisible(
                 isRoomVisible &&
                 state == MinimapRoomState.Available &&

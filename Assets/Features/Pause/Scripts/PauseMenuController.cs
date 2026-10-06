@@ -145,7 +145,6 @@ public sealed class PauseMenuController : ITickable, IDisposable
         RefreshRelics();
         RefreshStats();
 
-        _sounds.Play(SoundId.UiOpen);
         _isOpen = true;
         _settingsOpen = false;
         _panel.SetDescription("GAME PAUSED");
@@ -208,7 +207,6 @@ public sealed class PauseMenuController : ITickable, IDisposable
         if (!_isOpen || _isRestarting || _runRestartService.IsRestarting)
             return;
 
-        _sounds.Play(SoundId.UiOpen);
         _settingsOpen = true;
         _panel.ShowSettings();
         Select(_panel.SettingsBackButton);

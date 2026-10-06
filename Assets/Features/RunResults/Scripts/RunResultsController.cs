@@ -60,7 +60,6 @@ namespace Features.RunResults.Scripts
             _sceneName = sceneName;
             _panel.SetResults(_tracker.CaptureResults());
             _questRunTracker.EndRun();
-            _sounds.Play(SoundId.UiOpen);
             _isOpen = true;
             _ownsPause = !_timeScale.IsPaused;
             _pauseService.HandlePause();

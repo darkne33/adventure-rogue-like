@@ -308,6 +308,9 @@ namespace Features.Relics.Scripts
                 .SetEase(Ease.InBack)
                 .ToUniTask(cancellationToken: this.GetCancellationTokenOnDestroy());
 
+            if (_roomData is OnlyRelicRoomData)
+                NotifyCollected();
+
             _eventBus.PublishRelicOffered(_relic);
             Destroy(gameObject);
             return true;
@@ -318,10 +321,17 @@ namespace Features.Relics.Scripts
             if (_relicManager.CanAddRelic(_relic) == false)
                 return false;
 
+            if (_roomData is not OnlyRelicRoomData)
+                NotifyCollected();
+
+            return true;
+        }
+
+        private void NotifyCollected()
+        {
             _collectedCallback?.Invoke();
             _collectedCallback = null;
             _eventBus.PublishChestCollected(_roomData, _room);
-            return true;
         }
 
         private float GetPickupDistance()

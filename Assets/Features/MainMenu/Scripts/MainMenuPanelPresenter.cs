@@ -179,7 +179,6 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen)
             return;
 
-        _soundsService.Play(SoundId.UiOpen);
         _isCharacterSelectionOpen = true;
         Panel.SetButtonsInteractable(false);
         Panel.SetHomeVisible(false);
@@ -194,7 +193,6 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen || _questsView == null)
             return;
 
-        _soundsService.Play(SoundId.UiOpen);
         _isQuestsOpen = true;
         Panel.SetButtonsInteractable(false);
         Panel.SetHomeVisible(false);
@@ -221,7 +219,6 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen || _unlocksView == null)
             return;
 
-        _soundsService.Play(SoundId.UiOpen);
         _isUnlocksOpen = true;
         Panel.SetButtonsInteractable(false);
         Panel.SetHomeVisible(false);
