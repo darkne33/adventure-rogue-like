@@ -29,10 +29,13 @@ namespace Features.Enemies.Scripts.Level.Scripts
             _relicEventBus = relicEventBus;
         }
 
-        public void Transit(Room nextRoom, RoomDoor entryDoor)
+        public void Transit(Room nextRoom, RoomDoor entryDoor) =>
+            TransitAsync(nextRoom, entryDoor).Forget();
+
+        public UniTask TransitAsync(Room nextRoom, RoomDoor entryDoor)
         {
             if (_isTransitioning || _roomTransitionService.IsPlaying)
-                return;
+                return UniTask.CompletedTask;
 
             if (nextRoom == null)
                 throw new System.ArgumentNullException(nameof(nextRoom));
@@ -56,10 +59,10 @@ namespace Features.Enemies.Scripts.Level.Scripts
                 throw new System.InvalidOperationException("Character is not available for room transition.");
 
             _isTransitioning = true;
-            TransitAsync(nextRoom, roomData, entryDoor).Forget();
+            return TransitInternalAsync(nextRoom, roomData, entryDoor);
         }
 
-        private async UniTask TransitAsync(Room nextRoom, RoomData roomData, RoomDoor entryDoor)
+        private async UniTask TransitInternalAsync(Room nextRoom, RoomData roomData, RoomDoor entryDoor)
         {
             CharacterFacade character = _characterProvider.CharacterFacade;
 
@@ -166,5 +169,6 @@ namespace Features.Enemies.Scripts.Level.Scripts
     public interface ITransitToRoomService
     {
         void Transit(Room nextRoom, RoomDoor entryDoor);
+        UniTask TransitAsync(Room nextRoom, RoomDoor entryDoor);
     }
 }

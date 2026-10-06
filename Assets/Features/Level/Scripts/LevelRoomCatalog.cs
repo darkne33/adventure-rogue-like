@@ -22,6 +22,7 @@ public sealed class LevelRoomCatalog : ScriptableObject
     public IReadOnlyList<Room> RewardRooms => _rewardRooms;
     public IReadOnlyList<Room> OnlyRelicRooms => _onlyRelicRooms;
     public IReadOnlyList<Room> ShopRooms => _shopRooms;
+    public IReadOnlyList<Room> BossCycle => _bossCycle;
 
     public Room GetBossRoom(int levelIndex)
     {

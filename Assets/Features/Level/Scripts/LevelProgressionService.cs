@@ -76,6 +76,20 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         _rewardBagSpawner.RewardCollected -= HandleRewardBagCollected;
     }
 
+    public UniTask TransitToLevel(int levelIndex)
+    {
+        if (_isTransitioning || _roomTransitionService.IsPlaying)
+            throw new InvalidOperationException("A level transition is already in progress.");
+
+        if (_isRunCompleted)
+            throw new InvalidOperationException("The current run has already ended.");
+
+        if (!_levelsConfiguration.HasLevel(levelIndex))
+            throw new ArgumentOutOfRangeException(nameof(levelIndex));
+
+        return TransitToNextLevelAsync(levelIndex);
+    }
+
     private void HandleRoomCompleted(DefaultEnemiesRoomData roomData)
     {
         int nextLevelIndex = _runtimeDataService.CurrentIndexLevel + 1;

@@ -36,6 +36,10 @@ Bullet Explosion and Punch are their characters' signature weapons. They become 
 - Completion, purchases and collected silver save immediately. Unfinished progress also saves periodically and at run/lifecycle boundaries.
 - `QuestService` is the ownership authority for character selection, upgrade offers and relic pools. A completed quest alone does not bypass the purchase requirement. The old relic-specific `UnlockQuestId` / `UnlockCost` fields are not the demo's purchase configuration.
 
+## Editor shortcut
+
+Use `Tools > Little Rush > Progression > Complete All Quests and Unlock All` to mark every configured quest completed and grant ownership of every unlock without spending silver. The command immediately saves through `QuestService` using the existing PlayerPrefs payload. Outside Play Mode it loads the configuration through `AssetDatabase` and updates the editor's saved progression; in Play Mode it updates the initialized project service and refreshes bound UI through `Changed`. Quest silver rewards retain their CLAIM status, and bulk completion does not queue completion notifications. This shortcut is editor-only.
+
 ## Quest conditions and unlock prices
 
 Targets, stage gates, quest silver rewards and purchase prices are editable in the configuration. Quest silver is claimed after completion; the purchase price is the separate amount spent to own the unlocked content. Purchase prices, starting content and all current quest/purchase IDs remain stable. Existing special-performance conditions have been replaced with ordinary build, room and boss goals; this catalog does not require low-health starts, uninterrupted movement, timed kill chains or restricted runs.

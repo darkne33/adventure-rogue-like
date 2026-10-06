@@ -243,6 +243,35 @@ namespace Features.Quests.Scripts
             return false;
         }
 
+#if UNITY_EDITOR
+        public void CompleteAllQuestsAndUnlockAllForEditor()
+        {
+            if (Configuration == null)
+                throw new InvalidOperationException("Quest service must be initialized before completing progression.");
+
+            foreach (QuestDefinition quest in Definitions)
+            {
+                if (quest == null || string.IsNullOrWhiteSpace(quest.Id))
+                    continue;
+
+                if (GetQuestProgress(quest.Id) != quest.Target)
+                {
+                    _questProgress[quest.Id] = quest.Target;
+                    _dirty = true;
+                }
+                _dirty |= _completed.Add(quest.Id);
+            }
+
+            foreach (UnlockDefinition unlock in Unlocks)
+                if (unlock != null && !string.IsNullOrWhiteSpace(unlock.Id))
+                    _dirty |= _purchased.Add(unlock.Id);
+
+            // Keep normal CLAIM rewards and wallet balances; avoid queuing every completion notification.
+            Flush();
+            Changed?.Invoke();
+        }
+#endif
+
         public bool IsCharacterOwned(string characterId)
         {
             if (string.IsNullOrWhiteSpace(characterId))

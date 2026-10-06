@@ -1,6 +1,7 @@
 using System;
 using Core;
 using Cysharp.Threading.Tasks;
+using Features.Bosses.Scripts;
 using Features.Enemies.Scripts;
 using Features.Enemies.Scripts.Level.Scripts;
 using Features.Relics.Scripts;
@@ -24,6 +25,8 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
     private const string AddGoldCommand = "debug.gold";
     private const string SpawnEnemyCommand = "debug.enemy.spawn";
     private const string PrintEnemyTypesCommand = "debug.enemies";
+    private const string UltyCommand = "ulty";
+    private const int UltyLevelCount = 10;
 
     private readonly ICharacterLevelService _characterLevelService;
     private readonly CharacterExpConfig _characterExpConfig;
@@ -41,8 +44,12 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
     private readonly CharacterWallet _characterWallet;
     private readonly EnemySpawner _enemySpawner;
     private readonly ICharacterProvider _characterProvider;
+    private readonly LevelsConfiguration _levelsConfiguration;
+    private readonly LevelProgressionService _levelProgressionService;
+    private readonly ITransitToRoomService _transitToRoomService;
 
     private bool _commandsRegistered;
+    private bool _isUltyRunning;
 
     public GameDebugService(ICharacterLevelService characterLevelService,
         CharacterExpConfig characterExpConfig, IEnemiesProvider enemiesProvider,
@@ -52,7 +59,9 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         IRoomTransitionService roomTransitionService, IPauseService pauseService,
         ITimeScaleService timeScaleService, RunRestartService runRestartService,
         RelicManager relicManager, RelicPool relicPool, CharacterWallet characterWallet,
-        EnemySpawner enemySpawner, ICharacterProvider characterProvider)
+        EnemySpawner enemySpawner, ICharacterProvider characterProvider,
+        LevelsConfiguration levelsConfiguration, LevelProgressionService levelProgressionService,
+        ITransitToRoomService transitToRoomService)
     {
         _characterLevelService = characterLevelService;
         _characterExpConfig = characterExpConfig;
@@ -70,6 +79,9 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         _characterWallet = characterWallet;
         _enemySpawner = enemySpawner;
         _characterProvider = characterProvider;
+        _levelsConfiguration = levelsConfiguration;
+        _levelProgressionService = levelProgressionService;
+        _transitToRoomService = transitToRoomService;
     }
 
     public void Initialize()
@@ -104,6 +116,8 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
             SpawnEnemies, "type", "count");
         DebugLogConsole.AddCommand(PrintEnemyTypesCommand,
             "Lists enemy types available for debug.enemy.spawn", PrintEnemyTypes);
+        DebugLogConsole.AddCommand(UltyCommand,
+            "Grants 10 levels with upgrade choices and teleports to the mushroom boss room", Ulty);
 
         _commandsRegistered = true;
     }
@@ -136,6 +150,7 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         DebugLogConsole.RemoveCommand(AddGoldCommand);
         DebugLogConsole.RemoveCommand(SpawnEnemyCommand);
         DebugLogConsole.RemoveCommand(PrintEnemyTypesCommand);
+        DebugLogConsole.RemoveCommand(UltyCommand);
         _commandsRegistered = false;
     }
 
@@ -163,6 +178,111 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         _characterLevelService.AddExp(requiredExperience);
 
         return $"Level: {previousLevel} -> {_characterLevelService.GetLevel}.";
+    }
+
+    private string Ulty()
+    {
+        if (_isUltyRunning)
+            return "Ulty is already in progress.";
+
+        if (_runRestartService.IsRestarting)
+            return "Game restart is in progress.";
+
+        if (_timeScaleService.IsPaused)
+            return "Resume the game before running ulty.";
+
+        if (_roomTransitionService.IsPlaying)
+            return "Wait until the room transition is complete.";
+
+        if (_characterProvider.CharacterFacade == null ||
+            _sceneService.GameSceneComponentsService?.CurrentLevel == null ||
+            _gameModeService.Get<RogueLikeStateMachine>() == null)
+            return "An active run and a living character are required for ulty.";
+
+        var bossCycle = _levelsConfiguration.RoomCatalog?.BossCycle;
+        if (bossCycle == null || bossCycle.Count == 0)
+            return "The boss room cycle is not configured.";
+
+        int currentLevelIndex = _runtimeDataService.CurrentIndexLevel;
+        for (int offset = 0; offset < bossCycle.Count; offset++)
+        {
+            long candidateLevelIndex = (long)currentLevelIndex + offset;
+            if (candidateLevelIndex > int.MaxValue)
+                break;
+
+            Room roomPrefab = bossCycle[(int)(candidateLevelIndex % bossCycle.Count)];
+            if (roomPrefab?.RoomData is not BossRoomData ||
+                roomPrefab.GetComponentInChildren<BossSpawnPoint>(true)?.BossPrefab is not MushroomBossFacade)
+                continue;
+
+            _isUltyRunning = true;
+            UltyAsync((int)candidateLevelIndex).Forget();
+            return "Ulty scheduled: mushroom boss room and 10 levels with upgrade choices.";
+        }
+
+        return "No mushroom boss room is configured in the boss cycle.";
+    }
+
+    private async UniTask UltyAsync(int levelIndex)
+    {
+        CharacterFacade character = _characterProvider.CharacterFacade;
+        var cancellationToken = character.GetCancellationTokenOnDestroy();
+
+        try
+        {
+            if (levelIndex != _runtimeDataService.CurrentIndexLevel)
+                await _levelProgressionService.TransitToLevel(levelIndex);
+
+            cancellationToken.ThrowIfCancellationRequested();
+            LevelView level = _sceneService.GameSceneComponentsService.CurrentLevel;
+            Room bossRoom = null;
+            foreach (LevelRoomNode node in level.Rooms)
+            {
+                Room room = node?.Room;
+                if (room?.RoomData is BossRoomData &&
+                    room.GetComponentInChildren<BossSpawnPoint>(true)?.BossPrefab is MushroomBossFacade)
+                {
+                    bossRoom = room;
+                    break;
+                }
+            }
+
+            if (bossRoom == null)
+                throw new InvalidOperationException("The current level does not contain a mushroom boss room.");
+
+            var bossRoomData = (BossRoomData)bossRoom.RoomData;
+            RoomDoor entryDoor = Array.Find(bossRoomData.RoomDoors,
+                door => door != null && door.HasRoomDestination);
+            if (entryDoor == null)
+                throw new InvalidOperationException("The mushroom boss room has no entrance door.");
+
+            _enemiesProvider.ClearEnemies();
+            bossRoomData.ResetProgress();
+            await _transitToRoomService.TransitAsync(bossRoom, entryDoor);
+
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!ReferenceEquals(_runtimeDataService.CurrentRoomData, bossRoomData))
+                throw new InvalidOperationException("The mushroom boss room transition did not complete.");
+
+            int previousLevel = _characterLevelService.GetLevel;
+            for (int i = 0; i < UltyLevelCount &&
+                 _characterLevelService.GetLevel < _characterExpConfig.MaxLevel; i++)
+                AddLevel();
+
+            Debug.Log($"Ulty completed. Level: {previousLevel} -> {_characterLevelService.GetLevel}. " +
+                      "Choose the queued upgrades before fighting the mushroom boss.");
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception);
+        }
+        finally
+        {
+            _isUltyRunning = false;
+        }
     }
 
     private string CompleteRoom()
