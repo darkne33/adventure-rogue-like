@@ -15,12 +15,21 @@ MonoBehaviour:
   <EnemyRank>k__BackingField: 0
   <MaxHealth>k__BackingField: 20
   <Damage>k__BackingField: 7
-  <DamageRange>k__BackingField: 10
+  <DamageRange>k__BackingField: 16
   <DamageCooldown>k__BackingField: 5
+  <InitialAttackCooldown>k__BackingField: 0
+  <RandomInitialAttackDelayMax>k__BackingField: 0
   <AttackPreparationDuration>k__BackingField: 0.8
   <EnemyDamageType>k__BackingField: 6
   <JumpConfiguration>k__BackingField: {fileID: 11400000, guid: b85969380ab34adeb9a5c835cda030e9, type: 2}
+  <ExplosionPrefab>k__BackingField: {fileID: 0}
+  <ExplosionOffset>k__BackingField: {x: 0, y: 0.5, z: 0}
+  <AreaDamageRadius>k__BackingField: 2
+  <DamagesEnemiesOnExplosion>k__BackingField: 0
+  <ExplodesOnDeath>k__BackingField: 0
+  <ExplosionEffectLifetime>k__BackingField: 3
   <MovementPauseAfterAttack>k__BackingField: 1.25
+  <BulletConfiguration>k__BackingField: {fileID: 0}
   <EnemyAnimationType>k__BackingField: 1
   <EnemyMovementType>k__BackingField: 0
   <Exp>k__BackingField: 1
@@ -30,8 +39,14 @@ MonoBehaviour:
   <DashRotationSpeed>k__BackingField: 720
   <DashKnockbackForce>k__BackingField: 10
   <DashKnockbackUpwardForce>k__BackingField: 10
-  <DistanceToStop>k__BackingField: 0
   <Speed>k__BackingField: 8.6
   <RotationSpeed>k__BackingField: 360
   <Acceleration>k__BackingField: 12
-  <AggroRange>k__BackingField: 20
+  <DistanceToStop>k__BackingField: 0
+  <CloseFollowDistance>k__BackingField: 0
+  <ResumeChaseDistance>k__BackingField: 0
+  <RangeChaseMinimumDistance>k__BackingField: 6
+  <RangeChaseMaximumDistance>k__BackingField: 9
+  <RangeChaseRepositionAngle>k__BackingField: 60
+  <AggroRange>k__BackingField: 40
+  <AggroReactionDuration>k__BackingField: 0.65
