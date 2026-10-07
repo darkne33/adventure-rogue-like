@@ -29,6 +29,8 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     [SerializeField, Min(0f)] private float _spawnBatchDelay = 1f;
     [SerializeField, Min(1)] private int _firstEliteRoom = 4;
     [SerializeField, Min(1)] private int _eliteRoomInterval = 3;
+    [Tooltip("First one-based level where combat rooms spawn only existing elite variants.")]
+    [SerializeField, Min(1)] private int _eliteOnlyStartLevel = 5;
     [Header("Room Enemy Mix")]
     [Tooltip("Maximum distinct enemy types selected once for the entire room, across all waves.")]
     [SerializeField, Range(1, 5)] private int _maximumEnemyTypesPerRoom = 3;
@@ -36,7 +38,7 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     [SerializeField, Range(0f, 100f)] private float _singleEnemyTypeRoomChancePercent = 20f;
     [SerializeField] private EnemySpawnRule[] _enemyRules =
     {
-        new(EnemyType.Dummy, 1, 50f, 0),
+        new(EnemyType.Dummy, 1, 50f, 0, lastNormalLevel: 2),
         new(EnemyType.Skeleton_Head, 2, 14f, 4),
         new(EnemyType.Bomb, 4, 20f, 8),
         new(EnemyType.Ghost, 6, 18f, 8),
@@ -48,6 +50,8 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     public int MaxAliveEnemies => Mathf.Max(1, _maxAliveEnemies);
     public int SpawnBatchSize => Mathf.Max(1, _spawnBatchSize);
     public float SpawnBatchDelay => Mathf.Max(0f, _spawnBatchDelay);
+    public bool UsesOnlyElites(int levelIndex) =>
+        levelIndex >= Mathf.Max(1, _eliteOnlyStartLevel) - 1;
     public int GetStartEnemyCount(int roomIndex) =>
         Mathf.Min(MaxAliveEnemies, GetCount(_startingEnemies, roomIndex, 3));
     public int GetAllEnemyCount(int roomIndex) =>
@@ -133,14 +137,19 @@ public sealed class EnemySpawnRule
 {
     public EnemyType EnemyType;
     [Min(1)] public int FirstRoom = 1;
+    [Tooltip("Last one-based level for this type in the normal enemy pool, inclusive. " +
+             "Zero means unlimited. Elite-only levels ignore this limit.")]
+    [Min(0)] public int LastNormalLevel;
     [Min(0f)] public float Weight = 1f;
     [Tooltip("Maximum alive at once; zero means unlimited.")]
     [Min(0)] public int MaxAlive;
 
-    public EnemySpawnRule(EnemyType enemyType, int firstRoom, float weight, int maxAlive)
+    public EnemySpawnRule(EnemyType enemyType, int firstRoom, float weight, int maxAlive,
+        int lastNormalLevel = 0)
     {
         EnemyType = enemyType;
         FirstRoom = firstRoom;
+        LastNormalLevel = lastNormalLevel;
         Weight = weight;
         MaxAlive = maxAlive;
     }

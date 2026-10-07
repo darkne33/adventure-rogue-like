@@ -26,30 +26,37 @@ MonoBehaviour:
   _spawnBatchDelay: 1
   _firstEliteRoom: 4
   _eliteRoomInterval: 3
+  _eliteOnlyStartLevel: 5
   _maximumEnemyTypesPerRoom: 3
   _singleEnemyTypeRoomChancePercent: 20
   _enemyRules:
   - EnemyType: 2
     FirstRoom: 1
+    LastNormalLevel: 2
     Weight: 50
     MaxAlive: 0
   - EnemyType: 3
     FirstRoom: 2
+    LastNormalLevel: 0
     Weight: 14
     MaxAlive: 4
   - EnemyType: 5
     FirstRoom: 4
+    LastNormalLevel: 0
     Weight: 20
     MaxAlive: 6
   - EnemyType: 4
     FirstRoom: 6
+    LastNormalLevel: 0
     Weight: 18
     MaxAlive: 6
   - EnemyType: 6
     FirstRoom: 8
+    LastNormalLevel: 0
     Weight: 5
     MaxAlive: 4
   - EnemyType: 1
     FirstRoom: 10
+    LastNormalLevel: 0
     Weight: 8
     MaxAlive: 4

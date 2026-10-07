@@ -339,6 +339,7 @@ public class EnemySpawner
         int batchSize = _roomBalance.SpawnBatchSize;
         var reusableSpawnPositions = new Dictionary<EnemySpawnVolume, Vector3>();
         var pendingEnemySpawns = new List<PendingEnemySpawn>();
+        bool eliteOnly = _roomBalance.UsesOnlyElites(_rogueLikeRuntimeDataService.CurrentIndexLevel);
         for (int i = 0; i < enemyTypes.Count; i++)
         {
             if (spawnImmediately == false && i > 0 && i % batchSize == 0)
@@ -352,8 +353,10 @@ public class EnemySpawner
 
             var enemyType = enemyTypes[i];
             bool allowElite = _elitesSpawnedInCurrentRoom < _roomBalance.GetEliteLimit(_roomProgressIndex);
-            GameObject enemy = levelSettings.EnemyFactoryConfiguration.GetEnemyByType(
-                enemyType, _roomProgressIndex, allowElite, forceElite: _elitesSpawnedInCurrentRoom == 0);
+            GameObject enemy = eliteOnly
+                ? levelSettings.EnemyFactoryConfiguration.GetEliteEnemyByType(enemyType)
+                : levelSettings.EnemyFactoryConfiguration.GetEnemyByType(
+                    enemyType, _roomProgressIndex, allowElite, forceElite: _elitesSpawnedInCurrentRoom == 0);
             if (enemy.GetComponent<EnemyFacade>().Configuration.EnemyRank == EnemyRank.Elite ||
                 enemy.GetComponent<BombEnemySplitOnDeath>() != null)
                 _elitesSpawnedInCurrentRoom++;
@@ -473,11 +476,15 @@ public class EnemySpawner
         _roomEnemyRules.Clear();
         var availableRules = new List<EnemySpawnRule>();
         var availableTypes = new HashSet<EnemyType>();
+        int levelIndex = _rogueLikeRuntimeDataService.CurrentIndexLevel;
+        bool eliteOnly = _roomBalance.UsesOnlyElites(levelIndex);
         foreach (EnemySpawnRule rule in _roomBalance.EnemyRules)
         {
             if (rule == null || rule.Weight <= 0f || rule.FirstRoom > _roomProgressIndex + 1 ||
+                (!eliteOnly && rule.LastNormalLevel > 0 && levelIndex >= rule.LastNormalLevel) ||
                 System.Array.IndexOf(configuration.EnemyTypes, rule.EnemyType) < 0 ||
-                !factory.EnemyPrefabs.Exists(prefab => prefab.EnemyType == rule.EnemyType) ||
+                !factory.EnemyPrefabs.Exists(prefab => prefab.EnemyType == rule.EnemyType &&
+                    (!eliteOnly || prefab.HasElitePrefab)) ||
                 !availableTypes.Add(rule.EnemyType))
                 continue;
 

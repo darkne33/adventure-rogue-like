@@ -14,6 +14,15 @@ public class EnemyFactoryConfiguration : ScriptableObject
         bool allowElite = true, bool forceElite = false) =>
         EnemyPrefabs.First(x => x.EnemyType == enemyType)
             .GetRandomPrefab(roomProgressIndex, allowElite, forceElite);
+
+    public GameObject GetEliteEnemyByType(EnemyType enemyType)
+    {
+        EnemyPrefabData prefabData = EnemyPrefabs.First(x => x.EnemyType == enemyType);
+        if (!prefabData.HasElitePrefab)
+            throw new InvalidOperationException($"Enemy type {enemyType} does not have an elite prefab.");
+
+        return prefabData.ElitePrefabContainer.Get();
+    }
 }
 
 [Serializable]

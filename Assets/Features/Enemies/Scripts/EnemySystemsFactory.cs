@@ -59,7 +59,9 @@ namespace Features.Enemies.Scripts
                 ? areaDamageSystem.DetonateOnDeath
                 : null;
             BombEnemySplitOnDeath splitOnDeath = facade.GetComponent<BombEnemySplitOnDeath>();
-            if (splitOnDeath != null)
+            if (splitOnDeath != null &&
+                !_levelsConfiguration.EnemyRoomScalingConfiguration.UsesOnlyElites(
+                    _runtimeDataService.CurrentIndexLevel))
                 deathEffect += splitOnDeath.SpawnNormalBombs;
 
             var deathSystem = new EnemyDeathSystem(_enemiesProvider, facade, configuration, _characterStats,
