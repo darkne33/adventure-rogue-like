@@ -56,6 +56,7 @@ public class BossRoomData : DefaultEnemiesRoomData
 [Serializable]
 public class RewardRoomData : RoomData
 {
+    [field: SerializeField, Min(1)] public int KeyPrice { get; private set; } = 1;
     [field: SerializeField, Min(1)] public int MinChests { get; private set; } = 1;
     [field: SerializeField, Min(1)] public int MaxChests { get; private set; } = 2;
     [field: SerializeField]
@@ -64,6 +65,10 @@ public class RewardRoomData : RoomData
         Array.Empty<RewardChestSpawnPoints>();
 
     public bool IsCompleted { get; private set; }
+    public bool IsUnlocked { get; private set; }
+
+    public void Unlock() =>
+        IsUnlocked = true;
 
     public int GetChestCount()
     {
@@ -89,8 +94,11 @@ public class RewardRoomData : RoomData
     public void MarkCompleted() =>
         IsCompleted = true;
 
-    public void ResetProgress() =>
+    public void ResetProgress()
+    {
         IsCompleted = false;
+        IsUnlocked = false;
+    }
 }
 
 [Serializable]

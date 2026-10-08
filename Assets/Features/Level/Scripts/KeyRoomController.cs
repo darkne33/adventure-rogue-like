@@ -69,6 +69,13 @@ public sealed class KeyRoomController : MonoBehaviour
     private void Update()
     {
         bool canInteract = CanInteract();
+        if (canInteract)
+        {
+            int keyPrice = Mathf.Max(1, _keyPrice);
+            _interactionView.SetKeyPrice(keyPrice,
+                _characterWallet != null && _characterWallet.Keys.Count >= keyPrice);
+        }
+
         _interactionView.SetAvailable(canInteract);
 
         if (canInteract && _inputActions != null &&

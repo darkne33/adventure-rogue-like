@@ -44,9 +44,9 @@ public sealed class ProceduralLevelSettings
             types.Add(RoomType.Blood);
 
         // The fortune-wheel room corresponds to an Arcade, the chest room to a Vault.
-        // A Vault replaces the Arcade; they never both appear on the same floor.
+        // Roll Vaults regardless of coins. A Vault replaces the Arcade; they never both appear.
         bool secondFloorOfChapter = levelIndex < 8 && (levelIndex & 1) == 1;
-        if (secondFloorOfChapter && coins >= 5)
+        if (secondFloorOfChapter)
         {
             bool vault = UnityEngine.Random.Range(0, 10) == 0;
             if (!vault && keys >= 2)

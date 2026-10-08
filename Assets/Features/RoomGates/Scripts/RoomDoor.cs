@@ -1,5 +1,6 @@
 using System;
 using Features.Enemies.Scripts.Level.Scripts;
+using Features.Relics.Scripts;
 using UnityEngine;
 using Zenject;
 
@@ -11,15 +12,23 @@ public sealed class RoomDoor : MonoBehaviour
     private RoomDoor _nextRoomEntryDoor;
     private bool _isLevelExit;
     private int _roomRotationQuarterTurns;
+    private Room _ownerRoom;
+    private InputSystem_Actions _inputActions;
 
     [SerializeField] private DoorAnimator _doorAnimator;
     [SerializeField] private Color _outlineColor = Color.yellow;
     [SerializeField] private RoomDirection _direction;
     [SerializeField] private Room _nextRoom;
+    [SerializeField] private RelicChestInteractionView _interactionView = new();
+    [SerializeField] private Transform _interactionPoint;
+    [SerializeField, Min(0f)] private float _interactDistance = 4f;
 
     [Inject] private ITransitToRoomService _transitToRoomService;
     [Inject] private ILevelProgressionService _levelProgressionService;
     [Inject] private IRogueLikeRuntimeDataService _runtimeDataService;
+    [Inject] private ICharacterProvider _characterProvider;
+    [Inject] private ITimeScaleService _timeScaleService;
+    [Inject] private CharacterWallet _characterWallet;
 
     public RoomDirection AuthoredDirection => _direction;
     public RoomDirection Direction => _direction.RotateClockwise(_roomRotationQuarterTurns);
@@ -30,6 +39,46 @@ public sealed class RoomDoor : MonoBehaviour
     public bool HasRoomDestination => _nextRoom != null;
 
     private bool HasDestination => HasRoomDestination || _isLevelExit;
+    private bool RequiresKey => _nextRoom?.RoomData is RewardRoomData { IsUnlocked: false };
+
+    private void Awake()
+    {
+        _ownerRoom = GetComponentInParent<Room>();
+        _inputActions = new InputSystem_Actions();
+        _interactionView ??= new RelicChestInteractionView();
+        _interactionView.Initialize(gameObject);
+    }
+
+    private void OnEnable()
+    {
+        _inputActions ??= new InputSystem_Actions();
+        _inputActions.Player.Interact.Enable();
+    }
+
+    private void OnDisable()
+    {
+        _inputActions?.Player.Interact.Disable();
+        _interactionView?.SetAvailable(false, true);
+    }
+
+    private void Update()
+    {
+        bool canInteract = CanInteract();
+        if (canInteract && _nextRoom.RoomData is RewardRoomData rewardRoomData)
+        {
+            int keyPrice = Mathf.Max(1, rewardRoomData.KeyPrice);
+            _interactionView.SetKeyPrice(keyPrice,
+                _characterWallet != null && _characterWallet.Keys.Count >= keyPrice);
+        }
+
+        _interactionView.SetAvailable(canInteract);
+
+        if (canInteract && _inputActions != null &&
+            _inputActions.Player.Interact.WasPressedThisFrame())
+        {
+            TryUnlock();
+        }
+    }
 
     private void Start()
     {
@@ -44,6 +93,9 @@ public sealed class RoomDoor : MonoBehaviour
     {
         if (_runtimeDataService != null)
             _runtimeDataService.RoomChanged -= OnRoomChanged;
+
+        _inputActions?.Dispose();
+        _inputActions = null;
     }
 
     public void Configure(Room nextRoom, RoomDoor nextRoomEntryDoor)
@@ -126,16 +178,60 @@ public sealed class RoomDoor : MonoBehaviour
 
         gameObject.SetActive(true);
 
+        RefreshDoorVisual();
+        RefreshOutline();
+    }
+
+    private void OnRoomChanged(RoomData previousRoom, RoomData currentRoom)
+    {
         if (_isOpen)
-            _doorAnimator.Open(_doorType);
-        else
-            _doorAnimator.Close(_doorType);
+            RefreshDoorVisual();
 
         RefreshOutline();
     }
 
-    private void OnRoomChanged(RoomData previousRoom, RoomData currentRoom) =>
+    private void RefreshDoorVisual()
+    {
+        if (_isOpen && !RequiresKey)
+            _doorAnimator.Open(_doorType);
+        else
+            _doorAnimator.Close(_doorType);
+    }
+
+    private bool CanInteract()
+    {
+        if (!_isOpen || !RequiresKey || _ownerRoom == null ||
+            _runtimeDataService?.CurrentRoomData != _ownerRoom.RoomData ||
+            _timeScaleService == null || _timeScaleService.IsPaused ||
+            _characterProvider?.CharacterFacade == null)
+        {
+            return false;
+        }
+
+        Vector3 interactionPosition = _interactionPoint != null
+            ? _interactionPoint.position
+            : transform.position;
+        Vector3 offset = interactionPosition - _characterProvider.CharacterFacade.transform.position;
+        offset.y = 0f;
+        float interactDistance = Mathf.Max(0f, _interactDistance);
+        return offset.sqrMagnitude <= interactDistance * interactDistance;
+    }
+
+    private void TryUnlock()
+    {
+        if (!CanInteract() || _nextRoom.RoomData is not RewardRoomData rewardRoomData)
+            return;
+
+        int keyPrice = Mathf.Max(1, rewardRoomData.KeyPrice);
+        if (_characterWallet == null || _characterWallet.Keys.Count < keyPrice)
+            return;
+
+        _characterWallet.Keys.Remove(keyPrice);
+        rewardRoomData.Unlock();
+        _interactionView.SetAvailable(false);
+        RefreshDoorVisual();
         RefreshOutline();
+    }
 
     private void RefreshOutline()
     {
@@ -153,7 +249,7 @@ public sealed class RoomDoor : MonoBehaviour
 
     private void TryTransit(Collider other)
     {
-        if (!_isOpen)
+        if (!_isOpen || RequiresKey)
             return;
 
         CharacterFacade characterFacade = other.GetComponentInParent<CharacterFacade>();

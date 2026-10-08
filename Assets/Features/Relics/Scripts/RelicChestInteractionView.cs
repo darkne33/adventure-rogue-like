@@ -10,17 +10,20 @@ namespace Features.Relics.Scripts
         [SerializeField] private Outline _outline;
         [SerializeField] private CanvasGroup _promptCanvasGroup;
         [SerializeField] private Transform _promptTransform;
+        [SerializeField] private UnityEngine.UI.Text _keyPriceText;
         [SerializeField, Min(0f)] private float _showDuration = 0.14f;
         [SerializeField, Min(0f)] private float _hideDuration = 0.12f;
 
         private GameObject _owner;
         private bool _isAvailable;
+        private int _displayedKeyPrice = -1;
         private Vector3 _visibleScale = Vector3.one;
         private Vector3 _hiddenScale = Vector3.one * 0.82f;
 
         public void Initialize(GameObject owner)
         {
             _owner = owner;
+            _displayedKeyPrice = -1;
 
             if (_promptTransform != null)
             {
@@ -29,6 +32,20 @@ namespace Features.Relics.Scripts
             }
 
             SetAvailable(false, true);
+        }
+
+        public void SetKeyPrice(int keyPrice, bool canAfford)
+        {
+            if (_keyPriceText == null)
+                return;
+
+            if (_displayedKeyPrice != keyPrice)
+            {
+                _displayedKeyPrice = keyPrice;
+                _keyPriceText.text = $"{keyPrice} KEY";
+            }
+
+            _keyPriceText.color = canAfford ? Color.white : Color.red;
         }
 
         public void SetAvailable(bool isAvailable, bool instantly = false)
