@@ -308,7 +308,7 @@ namespace Features.Relics.Scripts
                 .SetEase(Ease.InBack)
                 .ToUniTask(cancellationToken: this.GetCancellationTokenOnDestroy());
 
-            if (_roomData is OnlyRelicRoomData)
+            if (_roomData is OnlyRelicRoomData or BloodRoomData)
                 NotifyCollected();
 
             _eventBus.PublishRelicOffered(_relic);
@@ -321,7 +321,7 @@ namespace Features.Relics.Scripts
             if (_relicManager.CanAddRelic(_relic) == false)
                 return false;
 
-            if (_roomData is not OnlyRelicRoomData)
+            if (_roomData is not (OnlyRelicRoomData or BloodRoomData))
                 NotifyCollected();
 
             return true;

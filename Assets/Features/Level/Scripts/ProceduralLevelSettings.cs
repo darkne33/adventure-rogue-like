@@ -1,32 +1,13 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
 public sealed class ProceduralLevelSettings
 {
-    [Header("Floor Size")]
-    [Tooltip("Total combat rooms on the first floor, including its boss.")]
-    [SerializeField, Min(4)] private int _initialCombatRooms = 8;
-    [SerializeField, Min(4)] private int _maximumCombatRooms = 14;
-    [SerializeField, Min(1)] private int _levelsPerAdditionalRoom = 2;
-
     [Header("Layout")]
-    [Tooltip("Share of combat rooms on the route to the boss, including the boss.")]
-    [SerializeField, Range(0.5f, 0.85f)] private float _mainPathCombatFraction = 0.7f;
-    [Tooltip("Maximum number of consecutive side-branch combat rooms.")]
-    [SerializeField, Range(1, 3)] private int _maximumBranchCombatRooms = 2;
-    [Tooltip("The first combat branch must start within this many fights from the start.")]
-    [SerializeField, Range(1, 3)] private int _firstBranchMaximumDepth = 2;
-    [Tooltip("Room coordinates range from minus this value to plus this value.")]
-    [SerializeField, Range(4, 12)] private int _gridRadius = 6;
-    [SerializeField, Range(1, 512)] private int _generationAttempts = 128;
-
-    [Header("Optional Rooms")]
-    [Tooltip("Relative weights for exactly 0, 1, 2 or 3 reward rooms (X, Y, Z, W).")]
-    [SerializeField] private Vector4 _rewardRoomCountWeights = Vector4.one;
-    [Tooltip("Separate relic rooms added to every floor, in addition to chest reward rooms.")]
-    [SerializeField, Min(0)] private int _onlyRelicRoomCount = 1;
-    [SerializeField, Range(0f, 100f)] private float _shopChancePercent = 50f;
+    [Tooltip("Maximum attempts to find a connected floor with enough dead ends and compatible prefabs.")]
+    [SerializeField, Range(1, 8192)] private int _generationAttempts = 2048;
 
     [Header("Existing Additional Stat Growth")]
     [Tooltip("One-based floor number at which additional health/damage growth starts.")]
@@ -34,49 +15,48 @@ public sealed class ProceduralLevelSettings
     [SerializeField, Min(0f)] private float _healthGrowthPerLevel = 0.15f;
     [SerializeField, Min(0f)] private float _damageGrowthPerLevel = 0.05f;
 
-    public int OnlyRelicRoomCount => Mathf.Max(0, _onlyRelicRoomCount);
-    public int MaximumBranchCombatRooms => Mathf.Clamp(_maximumBranchCombatRooms, 1, 3);
-    public int FirstBranchMaximumDepth => Mathf.Clamp(_firstBranchMaximumDepth, 1, 3);
-    public int GridRadius => Mathf.Clamp(_gridRadius, 4, 12);
-    public int GenerationAttempts => Mathf.Clamp(_generationAttempts, 1, 512);
+    public int GridRadius => 6;
+    public int GenerationAttempts => Mathf.Clamp(_generationAttempts, 1, 8192);
 
-    public int GetCombatRoomCount(int levelIndex)
+    public int RollRoomCount(int levelIndex)
     {
-        int initial = Mathf.Max(4, _initialCombatRooms);
-        int maximum = Mathf.Max(initial, _maximumCombatRooms);
-        int growth = Mathf.Max(0, levelIndex) / Mathf.Max(1, _levelsPerAdditionalRoom);
-        return initial + Mathf.Min(maximum - initial, growth);
+        if (levelIndex < 0)
+            throw new ArgumentOutOfRangeException(nameof(levelIndex));
+
+        // Rebirth normal floor: min(20, random(0, 1) + 5 + floor(depth * 10 / 3)).
+        // This counts the whole floor plan, including rooms later assigned special types.
+        long depth = (long)levelIndex + 1;
+        return (int)Math.Min(20L, UnityEngine.Random.Range(0, 2) + 5L + depth * 10L / 3L);
     }
 
-    public int GetMainPathCombatRoomCount(int combatRooms) =>
-        Mathf.Clamp(Mathf.RoundToInt(combatRooms * Mathf.Clamp(_mainPathCombatFraction, 0.5f, 0.85f)),
-            3, combatRooms - 1);
+    public int GetMinimumDeadEnds(int levelIndex) => levelIndex == 0 ? 5 : 6;
 
-    public int RollRewardRoomCount()
+    public List<RoomType> RollSpecialRooms(int levelIndex, int coins, int keys)
     {
-        float total = 0f;
-        for (int i = 0; i < 4; i++)
-            total += Mathf.Max(0f, _rewardRoomCountWeights[i]);
-        if (total <= 0f)
-            return 0;
+        var types = new List<RoomType>();
 
-        float roll = UnityEngine.Random.value * total;
-        int lastAllowedCount = 0;
-        for (int i = 0; i < 4; i++)
+        // Our standalone relic room corresponds to Rebirth's Treasure Room.
+        if (levelIndex < 6)
+            types.Add(RoomType.OnlyRelic);
+
+        // Base Curse Room roll, through chapter 5. This game has no Devil Room visit state.
+        if (levelIndex < 9 && UnityEngine.Random.Range(0, 2) == 0)
+            types.Add(RoomType.Blood);
+
+        // The fortune-wheel room corresponds to an Arcade, the chest room to a Vault.
+        // A Vault replaces the Arcade; they never both appear on the same floor.
+        bool secondFloorOfChapter = levelIndex < 8 && (levelIndex & 1) == 1;
+        if (secondFloorOfChapter && coins >= 5)
         {
-            float weight = Mathf.Max(0f, _rewardRoomCountWeights[i]);
-            if (weight <= 0f)
-                continue;
-            lastAllowedCount = i;
-            if (roll < weight)
-                return i;
-            roll -= weight;
+            bool vault = UnityEngine.Random.Range(0, 10) == 0;
+            if (!vault && keys >= 2)
+                vault = UnityEngine.Random.Range(0, 3) == 0;
+            if (vault || coins >= 10)
+                types.Add(vault ? RoomType.Reward : RoomType.Shop);
         }
-        return lastAllowedCount;
-    }
 
-    public bool RollShop() => _shopChancePercent >= 100f ||
-        (_shopChancePercent > 0f && UnityEngine.Random.value < _shopChancePercent / 100f);
+        return types;
+    }
 
     public int GetStatGrowthStep(int levelIndex) =>
         Mathf.Max(0, levelIndex - Mathf.Max(1, _statGrowthStartLevel) + 2);

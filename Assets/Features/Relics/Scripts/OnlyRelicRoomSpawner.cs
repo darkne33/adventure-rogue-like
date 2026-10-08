@@ -61,13 +61,21 @@ namespace Features.Relics.Scripts
                 roomEvent.RoomData is not OnlyRelicRoomData { IsCompleted: false } roomData)
                 return;
 
-            if (roomData.RelicSpawnPoint == null || _configuration.OnlyRelicPickupPrefab == null)
+            if (TrySpawnAt(room, roomData.RelicSpawnPoint, roomData.MarkCompleted))
+                _spawnedRooms.Add(room);
+        }
+
+        public bool TrySpawnAt(Room room, Transform spawnPoint, Action collectedCallback)
+        {
+            if (room == null)
+                throw new ArgumentNullException(nameof(room));
+            if (spawnPoint == null || _configuration.OnlyRelicPickupPrefab == null)
                 throw new InvalidOperationException($"{room.name} is missing relic pickup references.");
 
             List<RelicDefinition> available = _relicPool.GetAvailable(_relicManager.ActiveRelics).ToList();
             if (!_rollService.TryReserveReward(available, _relicManager.ActiveRelics,
                     _configuration, out RelicChestRollPlan rollPlan))
-                return;
+                return false;
 
             bool released = false;
             void ReleaseReward()
@@ -82,19 +90,19 @@ namespace Features.Relics.Scripts
             try
             {
                 pickup = _container.InstantiatePrefabForComponent<RelicPickup>(
-                    _configuration.OnlyRelicPickupPrefab, roomData.RelicSpawnPoint.position,
-                    roomData.RelicSpawnPoint.rotation, room.transform);
+                    _configuration.OnlyRelicPickupPrefab, spawnPoint.position,
+                    spawnPoint.rotation, room.transform);
                 RelicPickup spawnedPickup = pickup;
                 pickup.Construct(rollPlan.Reward, _configuration, _relicManager, _eventBus,
-                    _characterProvider, roomData, room,
-                    collectedCallback: roomData.MarkCompleted,
+                    _characterProvider, room.RoomData, room,
+                    collectedCallback: collectedCallback,
                     destroyedCallback: () =>
                     {
                         ReleaseReward();
                         _releaseByPickup.Remove(spawnedPickup);
                     });
                 _releaseByPickup.Add(pickup, ReleaseReward);
-                _spawnedRooms.Add(room);
+                return true;
             }
             catch
             {

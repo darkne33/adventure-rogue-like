@@ -25,17 +25,7 @@ MonoBehaviour:
     <LevelView>k__BackingField: {fileID: 5716263380797961638, guid: f64c5404253446bd855ec4d5c2284ddd, type: 3}
   _roomCatalog: {fileID: 11400000, guid: d0519b813c1d4d97ba7f2fd79aa0fdac, type: 2}
   _proceduralLevels:
-    _initialCombatRooms: 8
-    _maximumCombatRooms: 14
-    _levelsPerAdditionalRoom: 2
-    _mainPathCombatFraction: 0.7
-    _maximumBranchCombatRooms: 2
-    _firstBranchMaximumDepth: 2
-    _gridRadius: 6
-    _generationAttempts: 128
-    _rewardRoomCountWeights: {x: 1, y: 1, z: 1, w: 1}
-    _onlyRelicRoomCount: 1
-    _shopChancePercent: 50
+    _generationAttempts: 2048
     _statGrowthStartLevel: 4
     _healthGrowthPerLevel: 0.15
     _damageGrowthPerLevel: 0.05

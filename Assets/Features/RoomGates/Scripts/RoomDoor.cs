@@ -24,7 +24,8 @@ public sealed class RoomDoor : MonoBehaviour
     public RoomDirection AuthoredDirection => _direction;
     public RoomDirection Direction => _direction.RotateClockwise(_roomRotationQuarterTurns);
     public Room NextRoom => _nextRoom;
-    public bool IsRewardGate => _doorType == DoorType.Reward;
+    public bool IsRewardGate =>
+        _nextRoom != null && _nextRoom.RoomData is RewardRoomData or OnlyRelicRoomData or ShopRoomData or BloodRoomData;
     public bool HasConfiguredVisuals => _doorAnimator != null && _doorAnimator.IsConfigured;
     public bool HasRoomDestination => _nextRoom != null;
 
@@ -54,9 +55,10 @@ public sealed class RoomDoor : MonoBehaviour
             ? nextRoomEntryDoor
             : throw new ArgumentNullException(nameof(nextRoomEntryDoor));
         _isLevelExit = false;
-        _doorType = nextRoom.RoomData is RewardRoomData or OnlyRelicRoomData or ShopRoomData
-            ? DoorType.Reward
-            : DoorType.Enemy;
+        DoorType destinationType = GetDoorType(nextRoom.RoomData);
+        _doorType = destinationType != DoorType.Enemy
+            ? destinationType
+            : GetDoorType(GetComponentInParent<Room>()?.RoomData);
 
         Close();
     }
@@ -75,7 +77,7 @@ public sealed class RoomDoor : MonoBehaviour
         _nextRoom = null;
         _nextRoomEntryDoor = null;
         _isLevelExit = true;
-        _doorType = DoorType.Enemy;
+        _doorType = GetDoorType(GetComponentInParent<Room>()?.RoomData);
 
         Close();
     }
@@ -86,6 +88,16 @@ public sealed class RoomDoor : MonoBehaviour
         _doorAnimator.Hide();
         gameObject.SetActive(false);
     }
+
+    private static DoorType GetDoorType(RoomData roomData) => roomData switch
+    {
+        OnlyRelicRoomData => DoorType.Item,
+        RewardRoomData => DoorType.Reward,
+        ShopRoomData => DoorType.Shop,
+        BossRoomData => DoorType.Boss,
+        BloodRoomData => DoorType.Blood,
+        _ => DoorType.Enemy
+    };
 
     public void Close() =>
         SetOpenState(isOpen: false);

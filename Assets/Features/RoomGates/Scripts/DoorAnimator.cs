@@ -3,6 +3,10 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class DoorAnimator : MonoBehaviour
 {
+    private const int RequiredTypes = (1 << (int)DoorType.Enemy) | (1 << (int)DoorType.Reward) |
+                                      (1 << (int)DoorType.Item) | (1 << (int)DoorType.Shop) |
+                                      (1 << (int)DoorType.Boss) | (1 << (int)DoorType.Blood);
+
     [SerializeField] private DoorView[] _doors;
 
     public bool IsConfigured
@@ -12,21 +16,17 @@ public sealed class DoorAnimator : MonoBehaviour
             if (_doors == null || _doors.Length == 0)
                 return false;
 
-            bool hasEnemyDoor = false;
-            bool hasRewardDoor = false;
+            int configuredTypes = 0;
 
             foreach (DoorView door in _doors)
             {
                 if (door == null || !door.IsConfigured)
                     return false;
 
-                if (door.Type == DoorType.Enemy)
-                    hasEnemyDoor = true;
-                else if (door.Type == DoorType.Reward)
-                    hasRewardDoor = true;
+                configuredTypes |= 1 << (int)door.Type;
             }
 
-            return hasEnemyDoor && hasRewardDoor;
+            return (configuredTypes & RequiredTypes) == RequiredTypes;
         }
     }
 
@@ -69,6 +69,6 @@ public sealed class DoorAnimator : MonoBehaviour
     {
         if (!IsConfigured)
             throw new MissingReferenceException(
-                $"{name} must contain configured Enemy and Reward DoorView references.");
+                $"{name} must contain configured Enemy, Treasure, Item, Shop, Boss and Blood DoorView references.");
     }
 }

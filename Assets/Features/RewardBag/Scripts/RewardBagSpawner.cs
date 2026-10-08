@@ -45,8 +45,25 @@ namespace Features.RewardBag
                 return false;
 
             Vector3 groundPoint = GetGroundPoint(room);
+            return SpawnBag(room, groundPoint, Quaternion.identity, level,
+                roomData is BossRoomData, () => RewardCollected?.Invoke(roomData));
+        }
+
+        public bool TrySpawnAt(Room room, Transform spawnPoint, LevelView level, Action collectedCallback)
+        {
+            if (_rewardBagPrefab == null || room == null || spawnPoint == null || level == null ||
+                _characterProvider?.CharacterFacade == null)
+                return false;
+
+            return SpawnBag(room, spawnPoint.position, spawnPoint.rotation, level,
+                false, collectedCallback);
+        }
+
+        private bool SpawnBag(Room room, Vector3 groundPoint, Quaternion rotation, LevelView level,
+            bool dropGuaranteedHeart, Action collectedCallback)
+        {
             GameObject bagObject = _container.InstantiatePrefab(_rewardBagPrefab,
-                groundPoint + Vector3.up * 0.5f, Quaternion.identity, room.transform);
+                groundPoint + Vector3.up * 0.5f, rotation, room.transform);
             RewardBag rewardBag = bagObject.GetComponent<RewardBag>();
             if (rewardBag == null)
             {
@@ -56,8 +73,7 @@ namespace Features.RewardBag
 
             AlignBottomToGround(bagObject, groundPoint.y);
             rewardBag.Construct(_characterProvider, _characterWallet, level,
-                level.RegisterRewardBagForGuaranteedKey(), roomData is BossRoomData,
-                () => RewardCollected?.Invoke(roomData));
+                level.RegisterRewardBagForGuaranteedKey(), dropGuaranteedHeart, collectedCallback);
             return true;
         }
 

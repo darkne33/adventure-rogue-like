@@ -10,7 +10,8 @@ public static class ProceduralLevelGenerator
         RoomDirection.Up, RoomDirection.Down, RoomDirection.Left, RoomDirection.Right
     };
 
-    public static LevelRoomNode[] Generate(LevelsConfiguration configuration, int levelIndex)
+    public static LevelRoomNode[] Generate(LevelsConfiguration configuration, int levelIndex,
+        int coins = 0, int keys = 0)
     {
         if (configuration == null)
             throw new ArgumentNullException(nameof(configuration));
@@ -20,28 +21,22 @@ public static class ProceduralLevelGenerator
             throw new InvalidOperationException("The room catalog must contain spawnable enemy types.");
 
         ProceduralLevelSettings settings = configuration.ProceduralLevels;
-        int combatRooms = settings.GetCombatRoomCount(levelIndex);
-        int bossDepth = settings.GetMainPathCombatRoomCount(combatRooms);
-        // Roll content once. Retrying geometry must not favour floors with fewer rewards.
-        int rewardRooms = settings.RollRewardRoomCount();
-        int onlyRelicRooms = settings.OnlyRelicRoomCount;
-        bool hasShop = settings.RollShop();
-        var templates = new Templates(catalog, levelIndex, rewardRooms > 0,
-            onlyRelicRooms > 0, hasShop);
+        // Roll content once. Geometry retries must not change floor size or room chances.
+        int roomCount = settings.RollRoomCount(levelIndex);
+        List<RoomType> specialRooms = settings.RollSpecialRooms(levelIndex, coins, keys);
+        var templates = new Templates(catalog, levelIndex, specialRooms);
 
         for (int attempt = 0; attempt < settings.GenerationAttempts; attempt++)
         {
-            var layout = new Layout(settings, templates, bossDepth);
-            if (!layout.TryBuild(combatRooms - bossDepth, rewardRooms, onlyRelicRooms, hasShop))
-                continue;
-            return layout.CreateNodes(catalog.EnemySettings);
+            var layout = new Layout(settings, templates);
+            if (layout.TryBuild(roomCount, settings.GetMinimumDeadEnds(levelIndex), specialRooms))
+                return layout.CreateNodes(catalog.EnemySettings);
         }
 
         throw new InvalidOperationException(
             $"Cannot generate floor {levelIndex + 1} after {settings.GenerationAttempts} attempts " +
-            $"({combatRooms} combat, {rewardRooms} chest reward, {onlyRelicRooms} relic, " +
-            $"{(hasShop ? 1 : 0)} shop rooms). " +
-            "Check the catalog's door compatibility, grid radius and branch constraints.");
+            $"({roomCount} total rooms, special rooms: {string.Join(", ", specialRooms)}). " +
+            "Check the catalog's door compatibility and available dead ends.");
     }
 
     private sealed class Templates
@@ -49,19 +44,24 @@ public static class ProceduralLevelGenerator
         private readonly Dictionary<RoomType, List<Room>> _pools = new();
         private readonly Dictionary<(RoomType, RoomConnectionMask, RoomDirection?), List<Room>> _compatible = new();
 
-        public Templates(LevelRoomCatalog catalog, int levelIndex, bool needsRewards,
-            bool needsRelics, bool needsShop)
+        public Templates(LevelRoomCatalog catalog, int levelIndex, IReadOnlyList<RoomType> specialRooms)
         {
             AddPool(RoomType.Start, new[] { catalog.StartRoom });
             AddPool(RoomType.Enemy, catalog.SmallEnemyRooms);
             AddPool(RoomType.Enemy, catalog.MediumEnemyRooms);
             AddPool(RoomType.Boss, new[] { catalog.GetBossRoom(levelIndex) });
-            if (needsRewards)
-                AddPool(RoomType.Reward, catalog.RewardRooms);
-            if (needsRelics)
-                AddPool(RoomType.OnlyRelic, catalog.OnlyRelicRooms);
-            if (needsShop)
-                AddPool(RoomType.Shop, catalog.ShopRooms);
+            foreach (RoomType type in specialRooms)
+            {
+                IReadOnlyList<Room> rooms = type switch
+                {
+                    RoomType.Reward => catalog.RewardRooms,
+                    RoomType.OnlyRelic => catalog.OnlyRelicRooms,
+                    RoomType.Blood => catalog.BloodRooms,
+                    RoomType.Shop => catalog.ShopRooms,
+                    _ => throw new InvalidOperationException($"Unsupported special room type: {type}.")
+                };
+                AddPool(type, rooms);
+            }
 
             foreach (KeyValuePair<RoomType, List<Room>> pool in _pools)
                 if (pool.Value.Count == 0)
@@ -83,13 +83,19 @@ public static class ProceduralLevelGenerator
                     throw new InvalidOperationException($"The {type} room catalog contains a missing prefab.");
                 if (room.transform.parent != null)
                     throw new InvalidOperationException($"{room.name} must be a standalone room prefab.");
-                if (type == RoomType.Start && room.RoomData is not StartRoomData)
-                    throw new InvalidOperationException($"{room.name} must contain StartRoomData.");
-                if (type == RoomType.Enemy &&
-                    (room.RoomData is not DefaultEnemiesRoomData || room.RoomData is BossRoomData))
-                    throw new InvalidOperationException($"{room.name} must be an ordinary combat room.");
-                if (type == RoomType.OnlyRelic && room.RoomData is not OnlyRelicRoomData)
-                    throw new InvalidOperationException($"{room.name} must contain OnlyRelicRoomData.");
+                bool matches = type switch
+                {
+                    RoomType.Start => room.RoomData is StartRoomData,
+                    RoomType.Enemy => room.RoomData is DefaultEnemiesRoomData and not BossRoomData,
+                    RoomType.Boss => room.RoomData is BossRoomData,
+                    RoomType.Reward => room.RoomData is RewardRoomData,
+                    RoomType.OnlyRelic => room.RoomData is OnlyRelicRoomData,
+                    RoomType.Blood => room.RoomData is BloodRoomData,
+                    RoomType.Shop => room.RoomData is ShopRoomData,
+                    _ => false
+                };
+                if (!matches)
+                    throw new InvalidOperationException($"{room.name} has invalid data for a {type} room.");
                 if (!pool.Contains(room))
                     pool.Add(room);
             }
@@ -119,154 +125,123 @@ public static class ProceduralLevelGenerator
     {
         private readonly ProceduralLevelSettings _settings;
         private readonly Templates _templates;
-        private readonly int _bossDepth;
         private readonly List<LayoutRoom> _rooms = new();
         private readonly HashSet<Vector2Int> _occupied = new();
-        private Vector2Int? _reservedExit;
 
-        public Layout(ProceduralLevelSettings settings, Templates templates, int bossDepth)
+        public Layout(ProceduralLevelSettings settings, Templates templates)
         {
             _settings = settings;
             _templates = templates;
-            _bossDepth = bossDepth;
-            _rooms.Add(new LayoutRoom(Vector2Int.zero, RoomType.Start, 0, 0, true));
+            _rooms.Add(new LayoutRoom(Vector2Int.zero, RoomType.Start, 0));
             _occupied.Add(Vector2Int.zero);
         }
 
-        public bool TryBuild(int sideCombatRooms, int rewardRooms, int onlyRelicRooms, bool hasShop)
+        public bool TryBuild(int roomCount, int minimumDeadEnds, IReadOnlyList<RoomType> specialRooms)
         {
-            // A self-avoiding route may turn in any of the four directions.
-            // Side branches are subsequently restricted to keep the boss a farthest leaf.
-            for (int depth = 1; depth <= _bossDepth; depth++)
+            // The growing list is a breadth-first queue. A candidate cell has one
+            // occupied neighbour and a 50% admission roll, so corridors form a tree.
+            for (int index = 0; index < _rooms.Count && _rooms.Count < roomCount; index++)
             {
-                LayoutRoom parent = _rooms[_rooms.Count - 1];
-                RoomType type = depth == _bossDepth ? RoomType.Boss : RoomType.Enemy;
-                var options = new List<RoomDirection>(Directions);
-                Shuffle(options);
-                bool added = false;
-                foreach (RoomDirection direction in options)
-                {
-                    if (!CanPlace(parent, direction, type))
-                        continue;
-                    Add(parent, direction, type, onMainPath: true);
-                    added = true;
-                    break;
-                }
-                if (!added)
-                    return false;
+                Grow(_rooms[index], roomCount);
+                if (roomCount > 16 && index % 4 == 0 && _rooms.Count < roomCount)
+                    Grow(_rooms[0], roomCount);
             }
+            if (_rooms.Count != roomCount)
+                return false;
 
-            for (int i = 0; i < sideCombatRooms; i++)
-                if (!TryAddBranch(RoomType.Enemy, requireEarlyFork: i == 0))
-                    return false;
+            var deadEnds = _rooms.FindAll(room => room.Type != RoomType.Start && room.ConnectionCount == 1);
+            if (deadEnds.Count < minimumDeadEnds)
+                return false;
+            Shuffle(deadEnds);
+            deadEnds.Sort((left, right) => right.Depth.CompareTo(left.Depth));
 
-            // Prefer rewards at the ends of optional combat branches.
-            for (int i = 0; i < rewardRooms; i++)
-                if (!TryAddBranch(RoomType.Reward))
+            if (!AssignBoss(deadEnds))
+                return false;
+
+            // Convert existing dead ends instead of adding compulsory extra branches.
+            // The supported special types follow Rebirth's placement order.
+            foreach (RoomType type in specialRooms)
+            {
+                if (deadEnds.Count == 0)
+                    break;
+                LayoutRoom room = deadEnds[0];
+                if (_templates.Get(type, room.Connections).Count == 0)
                     return false;
-            for (int i = 0; i < onlyRelicRooms; i++)
-                if (!TryAddBranch(RoomType.OnlyRelic))
-                    return false;
-            return !hasShop || TryAddBranch(RoomType.Shop);
+                room.Type = type;
+                deadEnds.RemoveAt(0);
+            }
+            return true;
         }
 
-        private bool TryAddBranch(RoomType type, bool requireEarlyFork = false)
+        private void Grow(LayoutRoom parent, int roomCount)
         {
-            var candidates = new List<Attachment>();
-            foreach (LayoutRoom parent in _rooms)
+            foreach (RoomDirection direction in Directions)
             {
-                if (parent.Type != RoomType.Enemy || parent.ConnectionCount >= 3)
+                if (_rooms.Count >= roomCount)
+                    return;
+                Vector2Int position = parent.Position + direction.ToGridOffset();
+                if (Mathf.Abs(position.x) > _settings.GridRadius ||
+                    Mathf.Abs(position.y) > _settings.GridRadius || _occupied.Contains(position))
                     continue;
-                if (type == RoomType.Enemy)
-                {
-                    if (parent.Depth + 1 >= _bossDepth ||
-                        parent.BranchDepth >= _settings.MaximumBranchCombatRooms)
-                        continue;
-                    if (!parent.OnMainPath && parent.ConnectionCount != 1)
-                        continue;
-                    if (requireEarlyFork &&
-                        (!parent.OnMainPath || parent.Depth > _settings.FirstBranchMaximumDepth))
-                        continue;
-                }
-                else if (parent.Depth + 1 > _bossDepth || parent.HasSpecialChild)
-                {
-                    continue;
-                }
 
-                foreach (RoomDirection direction in Directions)
+                int neighbors = 0;
+                foreach (RoomDirection neighborDirection in Directions)
+                    if (_occupied.Contains(position + neighborDirection.ToGridOffset()))
+                        neighbors++;
+                if (neighbors != 1)
+                    continue;
+
+                RoomConnectionMask parentConnections = parent.Connections | direction.ToConnectionMask();
+                RoomConnectionMask childConnections = direction.Opposite().ToConnectionMask();
+                if (_templates.Get(parent.Type, parentConnections).Count == 0 ||
+                    _templates.Get(RoomType.Enemy, childConnections).Count == 0 || Random.value >= 0.5f)
+                    continue;
+
+                parent.Connections = parentConnections;
+                _rooms.Add(new LayoutRoom(position, RoomType.Enemy, parent.Depth + 1)
                 {
-                    if (!CanPlace(parent, direction, type))
-                        continue;
-                    int priority = type is RoomType.Reward or RoomType.OnlyRelic
-                        ? (parent.ConnectionCount == 1 ? 2 : 0) + (!parent.OnMainPath ? 1 : 0)
-                        : 0;
-                    candidates.Add(new Attachment(parent, direction, priority));
-                }
+                    Connections = childConnections
+                });
+                _occupied.Add(position);
             }
+        }
 
-            if (candidates.Count == 0)
+        private bool AssignBoss(List<LayoutRoom> deadEnds)
+        {
+            int maximumDepth = deadEnds[0].Depth;
+            if (maximumDepth < 2)
                 return false;
-            Shuffle(candidates);
-            int bestPriority = 0;
-            foreach (Attachment candidate in candidates)
-                bestPriority = Math.Max(bestPriority, candidate.Priority);
-            foreach (Attachment candidate in candidates)
+
+            // Boss prefabs need both an entrance and their authored floor-exit door.
+            // Try all equally distant leaves before discarding the geometry.
+            for (int index = 0; index < deadEnds.Count; index++)
             {
-                if (candidate.Priority != bestPriority)
+                LayoutRoom room = deadEnds[index];
+                if (room.Depth != maximumDepth)
+                    break;
+                RoomDirection entrance = GetEntranceDirection(room);
+                RoomDirection exit = entrance.Opposite();
+                if (_occupied.Contains(room.Position + exit.ToGridOffset()))
                     continue;
-                Add(candidate.Parent, candidate.Direction, type, onMainPath: false);
+                RoomConnectionMask connections = room.Connections | exit.ToConnectionMask();
+                if (_templates.Get(RoomType.Boss, connections, exit).Count == 0)
+                    continue;
+
+                room.Type = RoomType.Boss;
+                room.ExitDirection = exit;
+                room.Connections = connections;
+                deadEnds.RemoveAt(index);
                 return true;
             }
             return false;
         }
 
-        private bool CanPlace(LayoutRoom parent, RoomDirection direction, RoomType type)
+        private static RoomDirection GetEntranceDirection(LayoutRoom room)
         {
-            Vector2Int position = parent.Position + direction.ToGridOffset();
-            if (Mathf.Abs(position.x) > _settings.GridRadius ||
-                Mathf.Abs(position.y) > _settings.GridRadius ||
-                _occupied.Contains(position) || position == _reservedExit)
-                return false;
-
-            // Leave air between unrelated corridors; grid adjacency cannot create shortcuts.
-            foreach (RoomDirection neighborDirection in Directions)
-            {
-                Vector2Int neighbor = position + neighborDirection.ToGridOffset();
-                if (neighbor != parent.Position && _occupied.Contains(neighbor))
-                    return false;
-            }
-
-            RoomConnectionMask childConnections = direction.Opposite().ToConnectionMask();
-            RoomDirection? bossExit = null;
-            if (type == RoomType.Boss)
-            {
-                Vector2Int exitPosition = position + direction.ToGridOffset();
-                if (_occupied.Contains(exitPosition))
-                    return false;
-                bossExit = direction;
-                childConnections |= direction.ToConnectionMask();
-            }
-
-            return _templates.Get(parent.Type, parent.Connections | direction.ToConnectionMask()).Count > 0 &&
-                   _templates.Get(type, childConnections, bossExit).Count > 0;
-        }
-
-        private void Add(LayoutRoom parent, RoomDirection direction, RoomType type, bool onMainPath)
-        {
-            var room = new LayoutRoom(parent.Position + direction.ToGridOffset(), type,
-                parent.Depth + 1, onMainPath ? 0 : parent.BranchDepth + 1, onMainPath);
-            parent.Connections |= direction.ToConnectionMask();
-            room.Connections = direction.Opposite().ToConnectionMask();
-            if (type == RoomType.Boss)
-            {
-                room.ExitDirection = direction;
-                room.Connections |= direction.ToConnectionMask();
-                _reservedExit = room.Position + direction.ToGridOffset();
-            }
-            if (type is RoomType.Reward or RoomType.OnlyRelic or RoomType.Shop)
-                parent.HasSpecialChild = true;
-            _rooms.Add(room);
-            _occupied.Add(room.Position);
+            foreach (RoomDirection direction in Directions)
+                if ((room.Connections & direction.ToConnectionMask()) != RoomConnectionMask.None)
+                    return direction;
+            throw new InvalidOperationException("A dead-end room must have one entrance.");
         }
 
         public LevelRoomNode[] CreateNodes(EnemyRoomSettings enemySettings)
@@ -295,30 +270,13 @@ public static class ProceduralLevelGenerator
         }
     }
 
-    private readonly struct Attachment
-    {
-        public readonly LayoutRoom Parent;
-        public readonly RoomDirection Direction;
-        public readonly int Priority;
-
-        public Attachment(LayoutRoom parent, RoomDirection direction, int priority)
-        {
-            Parent = parent;
-            Direction = direction;
-            Priority = priority;
-        }
-    }
-
     private sealed class LayoutRoom
     {
         public readonly Vector2Int Position;
-        public readonly RoomType Type;
         public readonly int Depth;
-        public readonly int BranchDepth;
-        public readonly bool OnMainPath;
+        public RoomType Type;
         public RoomConnectionMask Connections;
         public RoomDirection ExitDirection;
-        public bool HasSpecialChild;
 
         public int ConnectionCount
         {
@@ -332,13 +290,11 @@ public static class ProceduralLevelGenerator
             }
         }
 
-        public LayoutRoom(Vector2Int position, RoomType type, int depth, int branchDepth, bool onMainPath)
+        public LayoutRoom(Vector2Int position, RoomType type, int depth)
         {
             Position = position;
             Type = type;
             Depth = depth;
-            BranchDepth = branchDepth;
-            OnMainPath = onMainPath;
         }
     }
 

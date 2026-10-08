@@ -222,6 +222,21 @@ public class CharacterFacade : MonoBehaviour
         return true;
     }
 
+    public bool ReceiveDirectDamage(int damage, string damageType)
+    {
+        if (_healthSystem.IsDead || damage <= 0)
+            return false;
+
+        int appliedDamage = _healthSystem.GetDamage(damage);
+        if (appliedDamage <= 0)
+            return false;
+
+        PlayDamageFeedback(appliedDamage);
+        _damageEffectSystem.DealDamage();
+        _relicEventBus?.PublishDamageTaken(new RelicDamageTakenEvent(this, null, appliedDamage, damageType));
+        return true;
+    }
+
     private void PlayDamageFeedback(int damage)
     {
         if (damage <= 0)

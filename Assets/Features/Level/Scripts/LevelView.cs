@@ -399,6 +399,11 @@ public class LevelView : MonoBehaviour
                 return;
             case RoomType.Shop:
                 return;
+            case RoomType.Blood:
+                if (roomData is not BloodRoomData bloodRoomData || bloodRoomData.RewardSpawnPoint == null)
+                    throw new InvalidOperationException(
+                        $"{roomNode.RoomPrefab.name} must contain BloodRoomData with a reward spawn point.");
+                return;
             case RoomType.Boss:
                 if (roomData is not BossRoomData bossRoomData)
                     throw new InvalidOperationException(
@@ -442,6 +447,11 @@ public class LevelView : MonoBehaviour
                         $"{roomNode.Room.name} does not have a relic spawn point.");
                 return;
             case (RoomType.Shop, ShopRoomData):
+                return;
+            case (RoomType.Blood, BloodRoomData bloodRoomData):
+                if (bloodRoomData.RewardSpawnPoint == null)
+                    throw new InvalidOperationException(
+                        $"{roomNode.Room.name} does not have a reward spawn point.");
                 return;
             case (RoomType.Boss, BossRoomData bossRoomData):
                 ValidateBossRoom(roomNode.Room, bossRoomData);
@@ -523,7 +533,7 @@ public class LevelView : MonoBehaviour
                     throw new InvalidOperationException($"{room.name} contains a missing door.");
                 if (!roomDoor.HasConfiguredVisuals)
                     throw new InvalidOperationException(
-                        $"{roomDoor.name} must contain assigned EnemyDoor and RewardDoor roots and two door leaves for each variant.");
+                        $"{roomDoor.name} must contain configured door views with two leaves for every room type.");
                 if (!directions.Add(roomDoor.Direction))
                     throw new InvalidOperationException(
                         $"{room.name} contains duplicate {roomDoor.Direction} doors.");
@@ -592,13 +602,13 @@ public class LevelView : MonoBehaviour
         if (IsConnectionBlocked(roomNode, direction, nodesByPosition))
             return false;
 
-        if ((roomNode.Type is RoomType.Reward or RoomType.OnlyRelic) &&
+        if ((roomNode.Type is RoomType.Reward or RoomType.OnlyRelic or RoomType.Blood) &&
             direction != GetRewardEntranceDirection(roomNode, nodesByPosition))
             return false;
 
         return !nodesByPosition.TryGetValue(roomNode.GridPosition + direction.ToGridOffset(),
                    out LevelRoomNode neighbour) ||
-               neighbour.Type is not (RoomType.Reward or RoomType.OnlyRelic) ||
+               neighbour.Type is not (RoomType.Reward or RoomType.OnlyRelic or RoomType.Blood) ||
                direction.Opposite() == GetRewardEntranceDirection(neighbour, nodesByPosition);
     }
 
@@ -611,7 +621,7 @@ public class LevelView : MonoBehaviour
         {
             if (nodesByPosition.TryGetValue(roomNode.GridPosition + direction.ToGridOffset(),
                     out LevelRoomNode neighbour) &&
-                neighbour.Type is not (RoomType.Reward or RoomType.OnlyRelic) &&
+                neighbour.Type is not (RoomType.Reward or RoomType.OnlyRelic or RoomType.Blood) &&
                 !IsConnectionBlocked(roomNode, direction, nodesByPosition))
                 return direction;
         }
@@ -1105,6 +1115,9 @@ public class LevelView : MonoBehaviour
                 case OnlyRelicRoomData relicRoomData:
                     relicRoomData.ResetProgress();
                     break;
+                case BloodRoomData bloodRoomData:
+                    bloodRoomData.ResetProgress();
+                    break;
             }
         }
     }
@@ -1213,6 +1226,7 @@ public class LevelView : MonoBehaviour
                     RoomType.Exit => Color.green,
                     RoomType.Reward => Color.yellow,
                     RoomType.OnlyRelic => new Color(1f, 0.75f, 0.1f, 1f),
+                    RoomType.Blood => new Color(0.65f, 0.05f, 0.1f, 1f),
                     RoomType.Shop => Color.magenta,
                     RoomType.Boss => new Color(0.85f, 0.2f, 0.2f, 1f),
                     _ => Color.white
@@ -1276,7 +1290,8 @@ public enum RoomType
     Reward,
     Shop,
     Boss = 5,
-    OnlyRelic = 6
+    OnlyRelic = 6,
+    Blood = 7
 }
 
 [Serializable]

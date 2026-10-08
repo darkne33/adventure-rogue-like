@@ -6,6 +6,7 @@ public sealed class DoorView : MonoBehaviour
     [SerializeField] private DoorType _type;
     [SerializeField] private GameObject _leftLeaf;
     [SerializeField] private GameObject _rightLeaf;
+    [SerializeField] private GameObject[] _closedParts = System.Array.Empty<GameObject>();
     [SerializeField] private Outline _outline;
 
     public DoorType Type => _type;
@@ -17,6 +18,9 @@ public sealed class DoorView : MonoBehaviour
         gameObject.SetActive(true);
         _leftLeaf.SetActive(!isOpen);
         _rightLeaf.SetActive(!isOpen);
+        foreach (GameObject part in _closedParts)
+            if (part != null)
+                part.SetActive(!isOpen);
     }
 
     public void Hide()

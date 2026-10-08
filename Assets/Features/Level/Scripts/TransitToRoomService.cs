@@ -7,6 +7,8 @@ namespace Features.Enemies.Scripts.Level.Scripts
 {
     public class TransitToRoomService : ITransitToRoomService
     {
+        private const int BloodRoomTransitionDamage = 5;
+
         private readonly IRogueLikeRuntimeDataService _runtimeDataService;
         private readonly ICharacterProvider _characterProvider;
         private readonly IGameModeService _gameModeService;
@@ -50,6 +52,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
             if (roomData is not DefaultEnemiesRoomData &&
                 roomData is not RewardRoomData &&
                 roomData is not OnlyRelicRoomData &&
+                roomData is not BloodRoomData &&
                 roomData is not ShopRoomData &&
                 roomData is not StartRoomData)
                 throw new System.InvalidOperationException(
@@ -68,6 +71,20 @@ namespace Features.Enemies.Scripts.Level.Scripts
 
             try
             {
+                RoomData previousRoom = _runtimeDataService.CurrentRoomData;
+                if (previousRoom != roomData)
+                {
+                    // Play the hit at the doorway, before the transition covers the character.
+                    if (previousRoom is BloodRoomData)
+                        character.ReceiveDirectDamage(BloodRoomTransitionDamage, "BloodRoom");
+
+                    if (roomData is BloodRoomData)
+                        character.ReceiveDirectDamage(BloodRoomTransitionDamage, "BloodRoom");
+                }
+
+                if (character.HealthSystem.IsDead)
+                    return;
+
                 character.SetTransitionPaused(true);
                 await _roomTransitionService.Play(
                     async () =>
@@ -104,7 +121,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
                             rewardRoomData.MarkCompleted();
                         }
 
-                        if (roomData is RewardRoomData or OnlyRelicRoomData or ShopRoomData or StartRoomData)
+                        if (roomData is RewardRoomData or OnlyRelicRoomData or BloodRoomData or ShopRoomData or StartRoomData)
                             OpenRoomDoors(roomData);
 
                     },
