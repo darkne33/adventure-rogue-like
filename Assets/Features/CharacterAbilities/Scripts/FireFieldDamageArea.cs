@@ -81,7 +81,7 @@ public sealed class FireFieldDamageArea : MonoBehaviour
             if (enemy == null || enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
                 continue;
 
-            Vector3 offset = enemy.transform.position - fieldPosition;
+            Vector3 offset = enemy.AreaDamageBounds.ClosestPoint(fieldPosition) - fieldPosition;
             if (Mathf.Abs(offset.y) > _height)
                 continue;
 

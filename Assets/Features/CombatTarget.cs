@@ -11,6 +11,7 @@ public abstract class CombatTarget : MonoBehaviour
     public abstract Renderer[] MeshRenderers { get; }
     public abstract EnemyRank Rank { get; }
     public abstract float RelicTimeScale { get; }
+    public virtual Bounds AreaDamageBounds => new(transform.position, Vector3.zero);
     public bool IsDead => HealthSystem?.IsDead == true;
     public virtual EnemyType SpawnType { get; internal set; }
 

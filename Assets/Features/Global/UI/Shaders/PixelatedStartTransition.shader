@@ -104,7 +104,7 @@ Shader "UI/LittleRush/PixelatedStartTransition"
                 blockCenter.y = 1.0 - blockCenter.y;
                 #endif
                 fixed4 color = tex2D(_MainTex, saturate(blockCenter));
-                color.rgb *= input.color.rgb * (1.0 - smoothstep(0.15, 1.0, progress));
+                color.rgb *= input.color.rgb * (1.0 - smoothstep(0.0, 1.0, progress));
                 // A captured frame must fully cover the live scene throughout the effect.
                 color.a = input.color.a;
 

@@ -118,11 +118,10 @@ namespace Features.Enemies.Scripts
 
         private void PlayWhiteHitFlash(float duration)
         {
-            if (_whiteHitMaterials.Length == 0)
+            if (_whiteHitMaterials.Length == 0 || _whiteHitTweener != null)
                 return;
 
-            _whiteHitTweener?.Kill();
-            // Reach white on the impact frame, including during rapid repeated hits.
+            // Start a new flash only after the previous flash has finished.
             SetWhiteHitPower(1f);
             _whiteHitTweener = DOTween.To(
                     () => _whiteHitPower,

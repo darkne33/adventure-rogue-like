@@ -63,6 +63,9 @@ public class EnemyConfiguration : ScriptableObject
     [field: SerializeField] public Features.Enemies.Scripts.EnemyBulletConfiguration BulletConfiguration { get; private set; }
     [field: SerializeField] public EnemyAnimationType EnemyAnimationType { get; private set; }
     [field: SerializeField] public EnemyMovementType EnemyMovementType { get; private set; }
+    [field: Tooltip("Each spawn has a 50% chance to use the Head enemy's skirmisher movement " +
+                    "instead of Enemy Movement Type. Attacks remain unchanged.")]
+    [field: SerializeField] public bool RandomizeSkirmisherOnSpawn { get; private set; }
     [field: SerializeField] public int Exp { get; private set; }
 
     [field: Header("Dash Settings")]

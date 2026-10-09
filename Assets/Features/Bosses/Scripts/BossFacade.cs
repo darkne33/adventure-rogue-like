@@ -14,6 +14,11 @@ namespace Features.Bosses.Scripts
         public override DealDamageEffectSystem EffectsSystem => _effectsSystem;
         public override Rigidbody Rigidbody => _rigidbody;
         public Collider Collider => _collider;
+        // Area effects can overlap the boss's body while its root is outside their range.
+        public override Bounds AreaDamageBounds =>
+            _collider != null && _collider.enabled && _collider.gameObject.activeInHierarchy
+                ? _collider.bounds
+                : base.AreaDamageBounds;
         public override Renderer[] MeshRenderers => _meshRenderers;
         public override EnemyRank Rank => EnemyRank.Boss;
         public IBossAnimationSystem AnimationSystem => _animationSystem;

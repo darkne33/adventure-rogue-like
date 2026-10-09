@@ -113,8 +113,16 @@ namespace Features.Enemies.Scripts
             };
 
         private IEnemyMovementSystem CreateMovementSystem(EnemyConfiguration configuration, EnemyFacade facade,
-            CharacterFacade character, NavMeshAgent navMeshAgent, IEnemyAnimationSystem animationSystem) =>
-            configuration.EnemyMovementType switch
+            CharacterFacade character, NavMeshAgent navMeshAgent, IEnemyAnimationSystem animationSystem)
+        {
+            // Roll once while constructing this spawn's movement system.
+            if (configuration.RandomizeSkirmisherOnSpawn && UnityEngine.Random.Range(0, 2) == 1)
+            {
+                return new EnemyAttackRangeSkirmisherMovementSystem(
+                    facade, character, configuration, navMeshAgent, animationSystem, _enemiesProvider);
+            }
+
+            return configuration.EnemyMovementType switch
             {
                 EnemyMovementType.Chase => new EnemyChaseMovementSystem(
                     facade, character, configuration, navMeshAgent, animationSystem),
@@ -131,6 +139,7 @@ namespace Features.Enemies.Scripts
                 _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyMovementType),
                     configuration.EnemyMovementType, "Enemy movement type is not supported.")
             };
+        }
 
         private void ConfigureRoomStats(EnemyFacade facade)
         {

@@ -92,7 +92,7 @@ public sealed class AuraDamageArea : MonoBehaviour
             if (enemy == null || !enemy.gameObject.activeInHierarchy || enemy.IsDead)
                 continue;
 
-            Vector3 offset = enemy.transform.position - center;
+            Vector3 offset = enemy.AreaDamageBounds.ClosestPoint(center) - center;
             if (Mathf.Abs(offset.y) > height)
                 continue;
 
