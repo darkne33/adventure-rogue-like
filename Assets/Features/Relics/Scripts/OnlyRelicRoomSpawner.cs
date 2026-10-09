@@ -90,7 +90,7 @@ namespace Features.Relics.Scripts
             try
             {
                 pickup = _container.InstantiatePrefabForComponent<RelicPickup>(
-                    _configuration.OnlyRelicPickupPrefab, spawnPoint.position,
+                    _configuration.OnlyRelicPickupPrefab, spawnPoint.position + Vector3.up,
                     spawnPoint.rotation, room.transform);
                 RelicPickup spawnedPickup = pickup;
                 pickup.Construct(rollPlan.Reward, _configuration, _relicManager, _eventBus,

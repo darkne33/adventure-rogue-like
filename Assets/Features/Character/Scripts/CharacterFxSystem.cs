@@ -10,6 +10,7 @@ public class CharacterFxSystem : MonoBehaviour
     [SerializeField] private ParticleSystem _jumpFx;
     [SerializeField] private ParticleSystem _dashFx;
     [SerializeField] private ParticleSystem _completedJumpFx;
+    [SerializeField] private ParticleSystem _shootFx;
     [SerializeField] private AudioClip[] _stepSounds = System.Array.Empty<AudioClip>();
     [SerializeField] private AudioClip _jumpSound;
 
@@ -31,6 +32,15 @@ public class CharacterFxSystem : MonoBehaviour
 
     public void ActivateDash() =>
         _dashFx.Play(true);
+
+    public void ActivateShoot()
+    {
+        if (_shootFx == null)
+            return;
+
+        _shootFx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        _shootFx.Play(true);
+    }
 
     public void ActivateStep()
     {

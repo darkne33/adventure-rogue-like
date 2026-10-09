@@ -20,6 +20,7 @@ namespace Features.Relics.Scripts
         [Inject] private IRogueLikeRuntimeDataService _runtimeDataService;
 
         [SerializeField] private ParticleSystem[] _treasureCircleRaysParticles;
+        [SerializeField] private Transform _lootRayRoot;
         [SerializeField] private bool _autoCollectOnApproach;
         [SerializeField] private bool _levitate;
         [SerializeField, Min(0f)] private float _levitationHeight = 0.25f;
@@ -39,6 +40,7 @@ namespace Features.Relics.Scripts
         private Action _destroyedCallback;
         private Tween _levitationTween;
         private Vector3 _levitationOrigin;
+        private Vector3 _lootRayPosition;
         private bool _hasLevitationOrigin;
         private bool _isPicked;
 
@@ -81,6 +83,13 @@ namespace Features.Relics.Scripts
 
             SetVisual(relic);
             transform.localScale = Vector3.one * 1.15f;
+
+            if (_lootRayRoot != null)
+            {
+                _lootRayPosition = _lootRayRoot.position;
+                _lootRayRoot.SetPositionAndRotation(_lootRayPosition, Quaternion.identity);
+                _lootRayRoot.gameObject.SetActive(true);
+            }
         }
 
         public void SetVisual(RelicDefinition relic)
@@ -173,12 +182,15 @@ namespace Features.Relics.Scripts
                     ? Camera.main.transform
                     : null;
 
-            if (cameraTransform == null)
-                return;
+            if (cameraTransform != null)
+            {
+                Vector3 direction = transform.position - cameraTransform.position;
+                if (direction.sqrMagnitude > 0.001f)
+                    transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+            }
 
-            Vector3 direction = transform.position - cameraTransform.position;
-            if (direction.sqrMagnitude > 0.001f)
-                transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+            if (_lootRayRoot != null && _lootRayRoot.gameObject.activeSelf)
+                _lootRayRoot.SetPositionAndRotation(_lootRayPosition, Quaternion.identity);
         }
 
         private void AnimateDrop()
@@ -215,6 +227,7 @@ namespace Features.Relics.Scripts
                 return;
 
             _isPicked = true;
+            _lootRayRoot?.gameObject.SetActive(false);
             await OfferAndDestroy();
         }
 
@@ -224,6 +237,7 @@ namespace Features.Relics.Scripts
                 return;
 
             _isPicked = true;
+            _lootRayRoot?.gameObject.SetActive(false);
             StopLevitation();
             await FlyToCharacter();
             await OfferAndDestroy();
@@ -240,6 +254,8 @@ namespace Features.Relics.Scripts
             Initialize(relic, configuration, relicManager, eventBus, characterProvider, roomData,
                 room, collectedCallback);
             _isPicked = true;
+
+            _lootRayRoot?.gameObject.SetActive(false);
 
             await FlyToCharacter();
             return await OfferAndDestroy();
@@ -296,6 +312,7 @@ namespace Features.Relics.Scripts
                 _isPicked = false;
                 if (_hasLevitationOrigin)
                     AnimateLevitation();
+                _lootRayRoot?.gameObject.SetActive(true);
                 return false;
             }
 

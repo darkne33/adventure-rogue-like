@@ -110,6 +110,9 @@ public sealed class BulletExplosionAbility : SingleShootAbility
         PlayerCollisionDetector collisionDetector, CombatTarget targetEnemy, Vector3 spawnPosition,
         Vector3 targetPosition, Vector3 shootDirection, int projectileDamage)
     {
+        if (character.CharacterModel.TryGetComponent(out CharacterFxSystem fxSystem))
+            fxSystem.ActivateShoot();
+
         if (TryStartRelicProjectile(character, shootObj, collisionDetector, shootDirection,
                 _travelDistance, projectileDamage))
             return;
