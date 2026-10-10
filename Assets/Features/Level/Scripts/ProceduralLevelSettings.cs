@@ -43,17 +43,24 @@ public sealed class ProceduralLevelSettings
         if (levelIndex < 9 && UnityEngine.Random.Range(0, 2) == 0)
             types.Add(RoomType.Blood);
 
-        // The fortune-wheel room corresponds to an Arcade, the chest room to a Vault.
-        // Roll Vaults regardless of coins. A Vault replaces the Arcade; they never both appear.
+        // Guarantee a chest room on floors 2, 4, 6 and 8 regardless of the player's wallet.
         bool secondFloorOfChapter = levelIndex < 8 && (levelIndex & 1) == 1;
-        if (secondFloorOfChapter)
+        bool chestRoom = secondFloorOfChapter;
+
+        // Odd floors starting from 3 have a 10% chance, or 40% with at least two keys.
+        if (levelIndex >= 2 && (levelIndex & 1) == 0)
         {
-            bool vault = UnityEngine.Random.Range(0, 10) == 0;
-            if (!vault && keys >= 2)
-                vault = UnityEngine.Random.Range(0, 3) == 0;
-            if (vault || coins >= 10)
-                types.Add(vault ? RoomType.Reward : RoomType.Shop);
+            chestRoom = UnityEngine.Random.Range(0, 10) == 0;
+            if (!chestRoom && keys >= 2)
+                chestRoom = UnityEngine.Random.Range(0, 3) == 0;
         }
+
+        if (chestRoom)
+            types.Add(RoomType.Reward);
+
+        // The fortune-wheel room can appear alongside a chest room.
+        if (secondFloorOfChapter && coins >= 10)
+            types.Add(RoomType.Shop);
 
         return types;
     }
