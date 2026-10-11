@@ -8,5 +8,7 @@
     Bomb = 5,
     Chan = 6,
     WoodGuardBoss = 7,
-    MushroomBoss = 8
+    MushroomBoss = 8,
+    Stone_Spikes = 9,
+    OgreBoss = 10
 }

@@ -95,7 +95,7 @@ namespace Features.Relics.Scripts
                 float radiusSquared = patch.Effect.Radius * patch.Effect.Radius;
                 foreach (CombatTarget target in _enemiesProvider.ActiveEnemies.ToArray())
                 {
-                    if (target == null || target.IsDead)
+                    if (target == null || !target.CanBeAttacked || target.IsDead)
                         continue;
                     Vector3 delta = target.transform.position - patch.Position;
                     if (Mathf.Abs(delta.y) > 1.5f)

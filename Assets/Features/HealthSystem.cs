@@ -14,14 +14,16 @@ public class HealthSystem
     private readonly IHealthView[] _characterHealthViews;
     private readonly IDamageView[] _damageViews;
     private readonly IDeathSystem _deathSystem;
+    private readonly bool _isInvulnerable;
 
     public HealthSystem(float startHealth, IHealthView[] characterHealthViews, IDeathSystem deathSystem,
-        IDamageView[] damageViews = null)
+        IDamageView[] damageViews = null, bool isInvulnerable = false)
     {
         _startHealth = startHealth;
         _characterHealthViews = characterHealthViews;
         _deathSystem = deathSystem;
         _damageViews = damageViews;
+        _isInvulnerable = isInvulnerable;
     }
 
     public void Initialize()
@@ -35,7 +37,7 @@ public class HealthSystem
 
     public int GetDamage(int damage, bool isCritical = false, UnityEngine.Color? damageColor = null)
     {
-        if (_isDead || damage <= 0)
+        if (_isInvulnerable || _isDead || damage <= 0)
             return 0;
 
         int appliedDamage = (int)Math.Ceiling(Math.Min(_currentHealth, damage));

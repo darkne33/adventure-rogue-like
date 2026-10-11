@@ -52,7 +52,7 @@ public class PlayerCollisionDetector : MonoBehaviour
 
     public bool Ignores(Collider other) =>
         other == null || other.transform == transform || other.transform.IsChildOf(transform) ||
-        IsIgnored(other.transform) || IsOtherPlayerProjectile(other);
+        IsIgnored(other.transform) || IsOtherPlayerProjectile(other) || IsUnattackableTarget(other);
 
     public void ResetHit() =>
         _isHit = false;
@@ -80,6 +80,12 @@ public class PlayerCollisionDetector : MonoBehaviour
     {
         PlayerCollisionDetector otherDetector = other.GetComponentInParent<PlayerCollisionDetector>();
         return otherDetector != null && otherDetector != this;
+    }
+
+    private static bool IsUnattackableTarget(Collider other)
+    {
+        CombatTarget target = other.GetComponentInParent<CombatTarget>();
+        return target != null && !target.CanBeAttacked;
     }
 
     private bool IsIgnored(Transform other)

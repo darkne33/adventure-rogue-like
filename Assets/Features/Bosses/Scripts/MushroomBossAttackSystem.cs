@@ -176,7 +176,8 @@ namespace Features.Bosses.Scripts
                     float progress = elapsed / duration;
                     if (!headAttack)
                     {
-                        float flight = Mathf.InverseLerp(takeoff, impact, progress);
+                        float flight = Mathf.Clamp01(Mathf.InverseLerp(takeoff, impact, progress) *
+                            Mathf.Max(0.01f, jump.MovementSpeedMultiplier));
                         Vector3 position = Vector3.Lerp(start, destination, flight);
                         // The clip supplies the vertical jump. Move the root only over the floor.
                         position.y = flight >= 1f ? destination.y : start.y;

@@ -287,7 +287,8 @@ public sealed class PunchAbility : CharacterActiveAbility
 
         foreach (CombatTarget enemy in _enemiesProvider.ActiveEnemies)
         {
-            if (enemy == null || enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
+            if (enemy == null || !enemy.CanBeAttacked ||
+                enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
                 continue;
 
             Vector3 targetPosition;
@@ -478,7 +479,8 @@ public sealed class PunchAbility : CharacterActiveAbility
                 continue;
 
             CombatTarget enemy = hitCollider.GetComponentInParent<CombatTarget>();
-            if (enemy == null || enemy.IsDead || enemy.gameObject.activeInHierarchy == false)
+            if (enemy == null || !enemy.CanBeAttacked || enemy.IsDead ||
+                enemy.gameObject.activeInHierarchy == false)
                 continue;
 
             Vector3 closestPoint = hitCollider.ClosestPoint(punchPosition);
@@ -545,7 +547,7 @@ public sealed class PunchAbility : CharacterActiveAbility
 
     private void ApplyDamage(CharacterFacade character, CombatTarget enemy, int baseDamage, Vector3 hitPosition)
     {
-        if (character == null || enemy == null || enemy.IsDead || baseDamage <= 0)
+        if (character == null || enemy == null || !enemy.CanBeAttacked || enemy.IsDead || baseDamage <= 0)
             return;
 
         CharacterDamageResult damageResult = _damageCalculator.Calculate(GetRolledDamage(baseDamage));

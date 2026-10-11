@@ -12,6 +12,8 @@ public class EnemyConfiguration : ScriptableObject
 {
     [field: Header("Identity Settings")]
     [field: SerializeField] public EnemyRank EnemyRank { get; private set; } = EnemyRank.Normal;
+    [field: Tooltip("Invulnerable hazard: excluded from player attacks and room completion.")]
+    [field: SerializeField] public bool IsHazard { get; private set; }
 
     [field: Header("Health Settings")]
     [field: Min(1)]
@@ -99,6 +101,17 @@ public class EnemyConfiguration : ScriptableObject
     [field: SerializeField] public float Speed { get; private set; }
     [field: SerializeField] public float RotationSpeed { get; private set; }
     [field: SerializeField] public float Acceleration { get; private set; }
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Ricochet)]
+    [field: Tooltip("Solid environment layers from which the moving block reflects.")]
+    [field: SerializeField] public LayerMask RicochetWallLayers { get; private set; } =
+        (1 << 0) | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 11) | (1 << 14);
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Ricochet)]
+    [field: Tooltip("Minimum and maximum seconds between alternating 90-degree turns.")]
+    [field: SerializeField] public Vector2 RicochetTurnInterval { get; private set; } = new(3f, 5f);
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Ricochet)]
+    [field: Tooltip("Seconds to complete a smooth 90-degree turn.")]
+    [field: Min(0.01f)]
+    [field: SerializeField] public float RicochetTurnDuration { get; private set; } = 0.35f;
     [field: NaughtyAttributes.ShowIf(nameof(UsesDistanceToStop))]
     [field: Min(0f)]
     [field: SerializeField] public float DistanceToStop { get; private set; }
@@ -152,7 +165,9 @@ public class EnemyConfiguration : ScriptableObject
         instance.MaxHealth = scaling.GetMaxHealth(instance.MaxHealth, roomIndex,
             proceduralSettings, generatedLevelNumber);
         instance.Damage = scaling.GetDamage(instance.Damage, roomIndex);
-        instance.Speed *= scaling.GetSpeedMultiplier(roomIndex);
+        // Ricochet hazards keep their configured speed throughout the run.
+        if (instance.EnemyDamageType != EnemyDamageType.Ricochet)
+            instance.Speed *= scaling.GetSpeedMultiplier(roomIndex);
         instance.DamageCooldown *= scaling.GetAttackCooldownMultiplier(roomIndex);
         if (proceduralSettings != null && generatedLevelNumber > 0)
         {

@@ -247,7 +247,7 @@ public sealed class FireFieldAbility : CharacterActiveAbility
 
     private void ApplyDamage(CharacterFacade character, CombatTarget enemy)
     {
-        if (character == null || enemy == null || enemy.IsDead)
+        if (character == null || enemy == null || !enemy.CanBeAttacked || enemy.IsDead)
             return;
 
         Vector3 hitPosition = enemy.transform.position;

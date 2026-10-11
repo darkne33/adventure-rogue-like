@@ -476,6 +476,7 @@ public class EnemySpawner
         _roomEnemyRules.Clear();
         var availableRules = new List<EnemySpawnRule>();
         var availableTypes = new HashSet<EnemyType>();
+        var hazardTypes = new HashSet<EnemyType>();
         int levelIndex = _rogueLikeRuntimeDataService.CurrentIndexLevel;
         bool eliteOnly = _roomBalance.UsesOnlyElites(levelIndex);
         foreach (EnemySpawnRule rule in _roomBalance.EnemyRules)
@@ -489,31 +490,49 @@ public class EnemySpawner
                 continue;
 
             availableRules.Add(rule);
+            EnemyFacade prefabFacade = factory.EnemyPrefabs
+                .Find(prefab => prefab.EnemyType == rule.EnemyType)
+                .NormalPrefabContainer.Get().GetComponent<EnemyFacade>();
+            if (prefabFacade != null && !prefabFacade.CountsForRoomCompletion)
+                hazardTypes.Add(rule.EnemyType);
         }
 
         if (availableRules.Count == 0)
             throw new System.InvalidOperationException("No enemies are unlocked for this combat room.");
 
+        if (!availableRules.Exists(rule => !hazardTypes.Contains(rule.EnemyType)))
+            throw new System.InvalidOperationException("No combat enemies are unlocked for this combat room.");
+
         // Pick a weighted subset without replacement once per room. Unlocking a type
         // makes it eligible; neither it nor Dummy is mandatory in every encounter.
         int typeCount = _roomBalance.RollEnemyTypeCount(availableRules.Count, _roomProgressIndex);
+        bool hasCombatEnemy = false;
         for (int i = 0; i < typeCount; i++)
         {
+            // A room must include killable enemies; hazards alone cannot advance its waves.
+            bool requireCombatEnemy = !hasCombatEnemy && i == typeCount - 1;
             float totalWeight = 0f;
             foreach (EnemySpawnRule rule in availableRules)
+            {
+                if (requireCombatEnemy && hazardTypes.Contains(rule.EnemyType))
+                    continue;
                 totalWeight += _roomBalance.GetWeight(rule, _roomProgressIndex);
+            }
 
             float roll = Random.value * totalWeight;
-            int selectedIndex = availableRules.Count - 1;
+            int selectedIndex = -1;
             for (int j = 0; j < availableRules.Count; j++)
             {
+                if (requireCombatEnemy && hazardTypes.Contains(availableRules[j].EnemyType))
+                    continue;
+                selectedIndex = j;
                 roll -= _roomBalance.GetWeight(availableRules[j], _roomProgressIndex);
                 if (roll > 0f)
                     continue;
-                selectedIndex = j;
                 break;
             }
 
+            hasCombatEnemy |= !hazardTypes.Contains(availableRules[selectedIndex].EnemyType);
             _roomEnemyRules.Add(availableRules[selectedIndex]);
             availableRules.RemoveAt(selectedIndex);
         }

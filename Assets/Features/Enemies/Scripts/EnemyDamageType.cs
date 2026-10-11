@@ -7,4 +7,5 @@
     RangeDirection = 4,
     RangeBullet = 5,
     Jump = 6,
+    Ricochet = 7,
 }

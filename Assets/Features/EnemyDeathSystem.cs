@@ -61,7 +61,7 @@ public class EnemyDeathSystem : IDeathSystem
             _enemyFacade.EnemyCollisionDetector.enabled = false;
 
         Rigidbody rigidbody = _enemyFacade.Rigidbody;
-        if (rigidbody != null)
+        if (rigidbody != null && rigidbody.isKinematic == false)
         {
             rigidbody.linearVelocity = Vector3.zero;
             rigidbody.angularVelocity = Vector3.zero;

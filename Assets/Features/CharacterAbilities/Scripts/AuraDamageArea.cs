@@ -89,7 +89,7 @@ public sealed class AuraDamageArea : MonoBehaviour
         for (int index = 0; index < activeEnemies.Count; index++)
         {
             CombatTarget enemy = activeEnemies[index];
-            if (enemy == null || !enemy.gameObject.activeInHierarchy || enemy.IsDead)
+            if (enemy == null || !enemy.CanBeAttacked || !enemy.gameObject.activeInHierarchy || enemy.IsDead)
                 continue;
 
             Vector3 offset = enemy.AreaDamageBounds.ClosestPoint(center) - center;
@@ -107,7 +107,7 @@ public sealed class AuraDamageArea : MonoBehaviour
                 break;
 
             CombatTarget enemy = _enemiesInRange[index];
-            if (enemy != null && enemy.gameObject.activeInHierarchy && !enemy.IsDead)
+            if (enemy != null && enemy.CanBeAttacked && enemy.gameObject.activeInHierarchy && !enemy.IsDead)
                 _damageEnemy(_owner, enemy);
         }
 

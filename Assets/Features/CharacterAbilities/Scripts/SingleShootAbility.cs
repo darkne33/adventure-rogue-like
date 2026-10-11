@@ -111,7 +111,10 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     protected override bool IsReady(CharacterFacade character) =>
         _isLaunchingProjectiles == false &&
-        base.IsReady(character);
+        character != null &&
+        base.IsReady(character) &&
+        _enemiesProvider.GetClosestEnemyByCharacter(character.transform, AutoTargetingDistance)
+            is { CanBeAttacked: true };
 
     protected override void OnUse(CharacterFacade character)
     {
@@ -153,7 +156,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     protected void ApplyDamage(CharacterFacade character, CombatTarget enemyFacade, int baseDamage,
         float projectileTravelDistance = -1f, PlayerCollisionDetector projectile = null)
     {
-        if (baseDamage <= 0)
+        if (enemyFacade == null || !enemyFacade.CanBeAttacked || enemyFacade.IsDead || baseDamage <= 0)
             return;
 
         CharacterDamageResult damageResult = _damageCalculator.Calculate(GetRolledDamage(baseDamage));
@@ -274,7 +277,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         CombatTarget targetEnemy = _enemiesProvider.GetClosestEnemyByCharacter(character.transform,
             AutoTargetingDistance);
 
-        if (targetEnemy == null)
+        if (targetEnemy == null || !targetEnemy.CanBeAttacked || targetEnemy.IsDead)
             return;
 
         Vector3 targetPosition = targetEnemy.GetNextProjectileTarget().position;

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 899ec8a9cc4f4db5a9175f6241dad499, type: 3}
+  m_Name: EnemyConfiguration_Stone_Spikes
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyConfiguration
+  <EnemyRank>k__BackingField: 0
+  <IsHazard>k__BackingField: 1
+  <MaxHealth>k__BackingField: 40
+  <Damage>k__BackingField: 4
+  <DamageRange>k__BackingField: 0
+  <DamageCooldown>k__BackingField: 1
+  <InitialAttackCooldown>k__BackingField: 0
+  <RandomInitialAttackDelayMax>k__BackingField: 0
+  <AttackPreparationDuration>k__BackingField: 0
+  <EnemyDamageType>k__BackingField: 7
+  <MovementPauseAfterAttack>k__BackingField: 0
+  <EnemyAnimationType>k__BackingField: 6
+  <EnemyMovementType>k__BackingField: 5
+  <RandomizeSkirmisherOnSpawn>k__BackingField: 0
+  <Exp>k__BackingField: 0
+  <Speed>k__BackingField: 14
+  <RotationSpeed>k__BackingField: 0
+  <Acceleration>k__BackingField: 0
+  <RicochetWallLayers>k__BackingField:
+    serializedVersion: 2
+    m_Bits: 18881
+  <RicochetTurnInterval>k__BackingField: {x: 3, y: 5}
+  <RicochetTurnDuration>k__BackingField: 0.35
+  <DistanceToStop>k__BackingField: 0
+  <AggroRange>k__BackingField: 100
+  <AggroReactionDuration>k__BackingField: 0

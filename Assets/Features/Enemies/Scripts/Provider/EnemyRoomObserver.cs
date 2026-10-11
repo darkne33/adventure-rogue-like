@@ -24,7 +24,8 @@ namespace Features.Enemies.Scripts
             if (enemies == null)
                 throw new ArgumentNullException(nameof(enemies));
 
-            if (enemies.Count == 0 && !_isEnemySpawningActive)
+            if (!enemies.Exists(enemy => enemy != null && enemy.CountsForRoomCompletion) &&
+                !_isEnemySpawningActive)
                 CompleteCurrentRoom();
         }
 

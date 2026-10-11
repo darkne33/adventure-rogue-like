@@ -247,7 +247,7 @@ public sealed class EarthRockAbility : CharacterActiveAbility
         if (slot.Stone != stone)
             return;
 
-        if (enemy == null || enemy.IsDead)
+        if (enemy == null || !enemy.CanBeAttacked || enemy.IsDead)
         {
             collisionDetector.ResetHit();
             return;
@@ -270,7 +270,7 @@ public sealed class EarthRockAbility : CharacterActiveAbility
 
     private void ApplyDamage(CharacterFacade character, CombatTarget enemy)
     {
-        if (character == null || enemy == null || enemy.IsDead)
+        if (character == null || enemy == null || !enemy.CanBeAttacked || enemy.IsDead)
             return;
 
         Vector3 hitPosition = enemy.transform.position;

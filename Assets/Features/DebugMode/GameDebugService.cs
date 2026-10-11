@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Core;
 using Cysharp.Threading.Tasks;
 using Features.Bosses.Scripts;
@@ -25,6 +26,7 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
     private const string AddGoldCommand = "debug.gold";
     private const string SpawnEnemyCommand = "debug.enemy.spawn";
     private const string PrintEnemyTypesCommand = "debug.enemies";
+    private const string TeleportBossCommand = "debug.boss";
     private const string UltyCommand = "ulty";
     private const int UltyLevelCount = 10;
 
@@ -50,6 +52,7 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
 
     private bool _commandsRegistered;
     private bool _isUltyRunning;
+    private bool _isBossTeleportRunning;
 
     public GameDebugService(ICharacterLevelService characterLevelService,
         CharacterExpConfig characterExpConfig, IEnemiesProvider enemiesProvider,
@@ -116,6 +119,8 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
             SpawnEnemies, "type", "count");
         DebugLogConsole.AddCommand(PrintEnemyTypesCommand,
             "Lists enemy types available for debug.enemy.spawn", PrintEnemyTypes);
+        DebugLogConsole.AddCommand<string, string>(TeleportBossCommand,
+            "Teleports to a boss room: woodguard, mushroom or org (ogre)", TeleportToBoss, "name");
         DebugLogConsole.AddCommand(UltyCommand,
             "Grants 10 levels with upgrade choices and teleports to the mushroom boss room", Ulty);
 
@@ -150,6 +155,7 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         DebugLogConsole.RemoveCommand(AddGoldCommand);
         DebugLogConsole.RemoveCommand(SpawnEnemyCommand);
         DebugLogConsole.RemoveCommand(PrintEnemyTypesCommand);
+        DebugLogConsole.RemoveCommand(TeleportBossCommand);
         DebugLogConsole.RemoveCommand(UltyCommand);
         _commandsRegistered = false;
     }
@@ -182,6 +188,9 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
 
     private string Ulty()
     {
+        if (_isBossTeleportRunning)
+            return "A boss teleport is already in progress.";
+
         if (_isUltyRunning)
             return "Ulty is already in progress.";
 
@@ -230,39 +239,7 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
 
         try
         {
-            if (levelIndex != _runtimeDataService.CurrentIndexLevel)
-                await _levelProgressionService.TransitToLevel(levelIndex);
-
-            cancellationToken.ThrowIfCancellationRequested();
-            LevelView level = _sceneService.GameSceneComponentsService.CurrentLevel;
-            Room bossRoom = null;
-            foreach (LevelRoomNode node in level.Rooms)
-            {
-                Room room = node?.Room;
-                if (room?.RoomData is BossRoomData &&
-                    room.GetComponentInChildren<BossSpawnPoint>(true)?.BossPrefab is MushroomBossFacade)
-                {
-                    bossRoom = room;
-                    break;
-                }
-            }
-
-            if (bossRoom == null)
-                throw new InvalidOperationException("The current level does not contain a mushroom boss room.");
-
-            var bossRoomData = (BossRoomData)bossRoom.RoomData;
-            RoomDoor entryDoor = Array.Find(bossRoomData.RoomDoors,
-                door => door != null && door.HasRoomDestination);
-            if (entryDoor == null)
-                throw new InvalidOperationException("The mushroom boss room has no entrance door.");
-
-            _enemiesProvider.ClearEnemies();
-            bossRoomData.ResetProgress();
-            await _transitToRoomService.TransitAsync(bossRoom, entryDoor);
-
-            cancellationToken.ThrowIfCancellationRequested();
-            if (!ReferenceEquals(_runtimeDataService.CurrentRoomData, bossRoomData))
-                throw new InvalidOperationException("The mushroom boss room transition did not complete.");
+            await TeleportToBossRoomAsync(levelIndex, typeof(MushroomBossFacade), "Mushroom", cancellationToken);
 
             int previousLevel = _characterLevelService.GetLevel;
             for (int i = 0; i < UltyLevelCount &&
@@ -284,6 +261,113 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
             _isUltyRunning = false;
         }
     }
+
+    private string TeleportToBoss(string name)
+    {
+        Type bossType = name?.Trim().ToLowerInvariant() switch
+        {
+            "woodguard" => typeof(WoodGuardBossFacade),
+            "mushroom" => typeof(MushroomBossFacade),
+            "org" or "ogre" => typeof(OgreBossFacade),
+            _ => null
+        };
+        if (bossType == null)
+            return $"Usage: {TeleportBossCommand} <woodguard|mushroom|org>. 'ogre' also selects ORG.";
+
+        if (_isBossTeleportRunning || _isUltyRunning)
+            return "A boss teleport or ulty is already in progress.";
+        if (_runRestartService.IsRestarting)
+            return "Game restart is in progress.";
+        if (_timeScaleService.IsPaused)
+            return "Resume the game before teleporting to a boss.";
+        if (_roomTransitionService.IsPlaying)
+            return "Wait until the room transition is complete.";
+
+        CharacterFacade character = _characterProvider.CharacterFacade;
+        if (character?.HealthSystem == null || character.HealthSystem.IsDead ||
+            _sceneService.GameSceneComponentsService?.CurrentLevel == null ||
+            _gameModeService.Get<RogueLikeStateMachine>() == null)
+            return "An active run and a living character are required to teleport to a boss.";
+
+        var bossCycle = _levelsConfiguration.RoomCatalog?.BossCycle;
+        if (bossCycle == null || bossCycle.Count == 0)
+            return "The boss room cycle is not configured.";
+
+        string bossName = bossType == typeof(WoodGuardBossFacade) ? "WoodGuard" :
+            bossType == typeof(MushroomBossFacade) ? "Mushroom" : "ORG";
+        for (int levelIndex = 0; levelIndex < bossCycle.Count; levelIndex++)
+        {
+            if (!ContainsBoss(bossCycle[levelIndex], bossType))
+                continue;
+            _isBossTeleportRunning = true;
+            TeleportToBossAsync(levelIndex, bossType, bossName,
+                character.GetCancellationTokenOnDestroy()).Forget();
+            return $"Teleport to {bossName} scheduled (level {levelIndex + 1}).";
+        }
+
+        return $"No {bossName} room is configured in the boss cycle.";
+    }
+
+    private async UniTask TeleportToBossAsync(int levelIndex, Type bossType, string bossName,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await TeleportToBossRoomAsync(levelIndex, bossType, bossName, cancellationToken);
+            Debug.Log($"Teleported to {bossName} on level {levelIndex + 1}.");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception);
+        }
+        finally
+        {
+            _isBossTeleportRunning = false;
+        }
+    }
+
+    private async UniTask TeleportToBossRoomAsync(int levelIndex, Type bossType, string bossName,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (levelIndex != _runtimeDataService.CurrentIndexLevel)
+            await _levelProgressionService.TransitToLevel(levelIndex);
+
+        cancellationToken.ThrowIfCancellationRequested();
+        LevelView level = _sceneService.GameSceneComponentsService.CurrentLevel;
+        Room bossRoom = null;
+        foreach (LevelRoomNode node in level.Rooms)
+        {
+            if (ContainsBoss(node?.Room, bossType))
+            {
+                bossRoom = node.Room;
+                break;
+            }
+        }
+        if (bossRoom == null)
+            throw new InvalidOperationException($"The current level does not contain a {bossName} room.");
+
+        var roomData = (BossRoomData)bossRoom.RoomData;
+        RoomDoor entryDoor = roomData.RoomDoors == null ? null : Array.Find(roomData.RoomDoors,
+            door => door != null && door.HasRoomDestination);
+        if (entryDoor == null)
+            throw new InvalidOperationException($"The {bossName} room has no entrance door.");
+
+        _enemiesProvider.ClearEnemies();
+        roomData.ResetProgress();
+        await _transitToRoomService.TransitAsync(bossRoom, entryDoor);
+
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!ReferenceEquals(_runtimeDataService.CurrentRoomData, roomData))
+            throw new InvalidOperationException($"The {bossName} room transition did not complete.");
+    }
+
+    private static bool ContainsBoss(Room room, Type bossType) =>
+        room?.RoomData is BossRoomData &&
+        bossType.IsInstanceOfType(room.GetComponentInChildren<BossSpawnPoint>(true)?.BossPrefab);
 
     private string CompleteRoom()
     {

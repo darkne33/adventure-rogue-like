@@ -216,7 +216,7 @@ public class CharacterFacade : MonoBehaviour
         _relicEventBus?.PublishDamageTaken(new RelicDamageTakenEvent(this, source, appliedDamage, "Enemy"));
 
         int thornsDamage = Mathf.Max(0, Mathf.RoundToInt(_characterStats.ThornsDamage));
-        if (source != null && thornsDamage > 0)
+        if (source != null && source.CanBeAttacked && thornsDamage > 0)
             source.HealthSystem.GetDamage(thornsDamage);
 
         return true;

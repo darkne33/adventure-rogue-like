@@ -7,7 +7,7 @@ namespace Features.Enemies.Scripts
 {
     public class EnemiesProvider : IEnemiesProvider
     {
-        public int Count => _enemies.Count;
+        public int Count => _enemies.Count(enemy => enemy != null && enemy.CountsForRoomCompletion);
         public int AliveCount
         {
             get
@@ -49,14 +49,14 @@ namespace Features.Enemies.Scripts
                 if (enemyFacade != null && enemyFacade.IsDead)
                     EnemyDefeated?.Invoke(enemyFacade);
 
-                EnemyRemoved?.Invoke(_enemies.Count);
+                EnemyRemoved?.Invoke(Count);
                 _enemyRoomObserver.Observe(_enemies);
             }
         }
 
         public int DefeatAllEnemies()
         {
-            CombatTarget[] enemies = _enemies.Where(enemy => enemy != null).ToArray();
+            CombatTarget[] enemies = _enemies.Where(enemy => enemy != null && enemy.CanBeAttacked).ToArray();
             _isBatchChange = true;
 
             try
@@ -95,7 +95,8 @@ namespace Features.Enemies.Scripts
 
             foreach (CombatTarget enemy in _enemies)
             {
-                if (enemy == null || enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
+                if (enemy == null || !enemy.CanBeAttacked ||
+                    enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
                     continue;
 
                 float sqrDistance = (enemy.transform.position - characterPosition).sqrMagnitude;

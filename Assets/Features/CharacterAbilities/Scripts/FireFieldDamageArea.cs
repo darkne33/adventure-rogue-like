@@ -78,7 +78,7 @@ public sealed class FireFieldDamageArea : MonoBehaviour
         for (int index = 0; index < activeEnemies.Count; index++)
         {
             CombatTarget enemy = activeEnemies[index];
-            if (enemy == null || enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
+            if (enemy == null || !enemy.CanBeAttacked || enemy.gameObject.activeInHierarchy == false || enemy.IsDead)
                 continue;
 
             Vector3 offset = enemy.AreaDamageBounds.ClosestPoint(fieldPosition) - fieldPosition;
@@ -92,7 +92,7 @@ public sealed class FireFieldDamageArea : MonoBehaviour
 
         foreach (CombatTarget enemy in _enemiesInRange)
         {
-            if (enemy != null && enemy.IsDead == false)
+            if (enemy != null && enemy.CanBeAttacked && enemy.IsDead == false)
                 _damageEnemy(enemy);
         }
     }

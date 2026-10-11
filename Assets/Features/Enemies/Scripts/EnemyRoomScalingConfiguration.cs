@@ -43,7 +43,8 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
         new(EnemyType.Bomb, 4, 20f, 8),
         new(EnemyType.Ghost, 6, 18f, 8),
         new(EnemyType.Chan, 8, 5f, 2),
-        new(EnemyType.Bun, 10, 5f, 2)
+        new(EnemyType.Bun, 10, 5f, 2),
+        new(EnemyType.Stone_Spikes, 8, 8f, 3)
     };
 
     public EnemySpawnRule[] EnemyRules => _enemyRules;

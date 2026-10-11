@@ -89,7 +89,7 @@ namespace Features.Relics.Scripts
 
                 foreach (CombatTarget target in _enemiesProvider.ActiveEnemies.ToArray())
                 {
-                    if (target == null || target.IsDead ||
+                    if (target == null || !target.CanBeAttacked || target.IsDead ||
                         DistanceToSegmentSquared(RelicCombatService.GetTargetPosition(target), previous, position) >
                         (contactRadius + 0.4f) * (contactRadius + 0.4f))
                         continue;

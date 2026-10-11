@@ -135,7 +135,7 @@ namespace Features.Relics.Scripts
                 CombatTarget target = collider.GetComponentInParent<CombatTarget>();
                 if (target != null)
                 {
-                    if (target.IsDead || _legTargets.Contains(target) ||
+                    if (!target.CanBeAttacked || target.IsDead || _legTargets.Contains(target) ||
                         _nextHits.TryGetValue(target, out float readyAt) && Time.time < readyAt)
                         continue;
                 }
@@ -184,7 +184,7 @@ namespace Features.Relics.Scripts
             float best = _nativeBounceRadius * _nativeBounceRadius;
             foreach (CombatTarget candidate in _enemies.ActiveEnemies)
             {
-                if (candidate == null || candidate.IsDead || _nativeTargets.Contains(candidate))
+                if (candidate == null || !candidate.CanBeAttacked || candidate.IsDead || _nativeTargets.Contains(candidate))
                     continue;
                 float distance = (TargetPosition(candidate) - _projectile.transform.position).sqrMagnitude;
                 if (distance >= best)

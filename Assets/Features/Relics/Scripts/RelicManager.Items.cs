@@ -514,7 +514,7 @@ namespace Features.Relics.Scripts
             RelicEffectDefinition effect, RelicHitEvent hitEvent)
         {
             CombatTarget target = hitEvent.Target;
-            if (target == null || target.IsDead)
+            if (target == null || !target.CanBeAttacked || target.IsDead)
                 return;
 
             _activeVenomBladePoisons.TryGetValue(target, out int activeStacks);
@@ -536,7 +536,7 @@ namespace Features.Relics.Scripts
                     bool cancelled = await UniTask.Delay(TimeSpan.FromSeconds(1f),
                             cancellationToken: poisonCancellation.Token)
                         .SuppressCancellationThrow();
-                    if (cancelled || target == null || target.IsDead)
+                    if (cancelled || target == null || !target.CanBeAttacked || target.IsDead)
                         return;
 
                     int appliedDamage = target.HealthSystem.GetDamage(tickDamage, damageColor: VenomBladeDamageColor);
@@ -583,7 +583,7 @@ namespace Features.Relics.Scripts
             RelicEffectDefinition effect, RelicHitEvent hitEvent)
         {
             CombatTarget target = hitEvent.Target;
-            if (target == null || target.IsDead)
+            if (target == null || !target.CanBeAttacked || target.IsDead)
                 return;
 
             int ticks = Mathf.Max(1, Mathf.RoundToInt(effect.Duration));
@@ -595,7 +595,7 @@ namespace Features.Relics.Scripts
                 bool cancelled = await UniTask.Delay(TimeSpan.FromSeconds(1f),
                         cancellationToken: target.GetCancellationTokenOnDestroy())
                     .SuppressCancellationThrow();
-                if (cancelled || target == null || target.IsDead)
+                if (cancelled || target == null || !target.CanBeAttacked || target.IsDead)
                     return;
 
                 int tickDamage = totalBurnDamage / ticks + (index < totalBurnDamage % ticks ? 1 : 0);
@@ -641,7 +641,7 @@ namespace Features.Relics.Scripts
         {
             float radiusSquared = radius * radius;
             CombatTarget[] targets = UnityEngine.Object.FindObjectsByType<CombatTarget>(FindObjectsSortMode.None)
-                .Where(enemy => enemy != null && enemy != excludedTarget && enemy.IsDead == false &&
+                .Where(enemy => enemy != null && enemy.CanBeAttacked && enemy != excludedTarget && enemy.IsDead == false &&
                                 (enemy.transform.position - center).sqrMagnitude <= radiusSquared)
                 .OrderBy(enemy => (enemy.transform.position - center).sqrMagnitude)
                 .Take(Mathf.Max(1, targetCount))

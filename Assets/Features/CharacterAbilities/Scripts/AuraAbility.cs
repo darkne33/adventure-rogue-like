@@ -173,7 +173,7 @@ public sealed class AuraAbility : CharacterActiveAbility
     private void ApplyDamage(CharacterFacade character, CombatTarget enemy)
     {
         if (character == null || character.HealthSystem.IsDead || enemy == null ||
-            !enemy.gameObject.activeInHierarchy || enemy.IsDead)
+            !enemy.CanBeAttacked || !enemy.gameObject.activeInHierarchy || enemy.IsDead)
             return;
 
         Vector3 hitPosition = enemy.transform.position;

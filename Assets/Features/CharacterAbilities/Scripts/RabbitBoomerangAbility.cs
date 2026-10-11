@@ -206,7 +206,7 @@ public class RabbitBoomerangAbility : SingleShootAbility
 
         foreach (CombatTarget enemy in EnemiesProvider.ActiveEnemies)
         {
-            if (enemy == null || hitEnemies.Contains(enemy) || enemy.HealthSystem.IsDead)
+            if (enemy == null || !enemy.CanBeAttacked || hitEnemies.Contains(enemy) || enemy.HealthSystem.IsDead)
                 continue;
 
             float sqrDistance = (GetEnemyTargetPosition(enemy) - projectilePosition).sqrMagnitude;

@@ -30,6 +30,9 @@ namespace Features.Relics.Scripts
         public void DealPeriodicDamage(CharacterFacade character, CombatTarget target, float baseDamage,
             float travelDistance, string sourceId)
         {
+            if (target == null || !target.CanBeAttacked || target.IsDead)
+                return;
+
             float multiplier = (1f + Mathf.Max(-90f, _stats.DamageInPercent) * 0.01f) *
                                _stats.RelicDamageMultiplier;
             int damage = Mathf.Max(1, Mathf.RoundToInt(baseDamage * multiplier));
@@ -43,6 +46,9 @@ namespace Features.Relics.Scripts
 
         public void DealDirectHit(CharacterFacade character, CombatTarget target, int baseDamage, string sourceId)
         {
+            if (target == null || !target.CanBeAttacked || target.IsDead)
+                return;
+
             CharacterDamageResult roll = _calculator.Calculate(baseDamage);
             int damage = _modifyDamage(roll.Damage, target, -1f, true);
             int applied = target.HealthSystem.GetDamage(damage, roll.IsCritical);

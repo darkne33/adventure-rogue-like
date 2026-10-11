@@ -22,7 +22,7 @@ namespace Features.Enemies.Scripts
         public bool IsAggro { get; private set; }
         public bool IsRelicStunned => _isRelicStunned;
         public bool CanAttack => _movementSystem?.CanAttack != false && _isRelicStunned == false;
-        public override float RelicTimeScale => _isRelicStunned
+        public override float RelicTimeScale => !CanBeAttacked ? 1f : _isRelicStunned
             ? 0f
             : Mathf.Clamp(_persistentRelicSlow * _temporaryRelicSlow, 0.05f, 1f);
 
@@ -30,10 +30,16 @@ namespace Features.Enemies.Scripts
             ? _runtimeConfiguration : _enemyConfiguration;
         public override EnemyRank Rank => Configuration != null ? Configuration.EnemyRank : EnemyRank.Normal;
         public override Renderer[] MeshRenderers => _meshRenderers;
+        // The source asset must keep hazards excluded even when a room has an older settings copy.
+        public override bool CanBeAttacked => _enemyConfiguration?.IsHazard != true &&
+                                             _runtimeConfiguration?.IsHazard != true;
+        public override bool CountsForRoomCompletion => CanBeAttacked;
         public Transform AttackTelegraphTransform => GetAttackTelegraphTransform();
+        public Transform MovementVisual => _movementVisual;
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
         [SerializeField] private Renderer[] _meshRenderers;
+        [SerializeField] private Transform _movementVisual;
         private EnemyConfiguration _runtimeConfiguration;
 
         internal void ConfigureForRoom(EnemyHealthScalingConfiguration scaling, int roomIndex,
@@ -89,7 +95,16 @@ namespace Features.Enemies.Scripts
             if (TryRecoverFromFall())
                 return;
 
-            _movementSystem.Tick();
+            if (_movementSystem is not EnemyRicochetAttackSystem)
+                _movementSystem.Tick();
+        }
+
+        private void Update()
+        {
+            // The NavMesh-driven hazard moves once per rendered frame, including
+            // during time-slow effects. Other enemies retain their physics tick.
+            if (_movementSystem is EnemyRicochetAttackSystem)
+                _movementSystem.Tick();
         }
 
         private bool TryRecoverFromFall()
@@ -191,6 +206,9 @@ namespace Features.Enemies.Scripts
 
         public override void SetPersistentRelicSlow(float multiplier)
         {
+            if (!CanBeAttacked)
+                return;
+
             multiplier = Mathf.Clamp(multiplier, 0.05f, 1f);
             if (Mathf.Approximately(_persistentRelicSlow, multiplier))
                 return;
@@ -201,6 +219,9 @@ namespace Features.Enemies.Scripts
 
         public override void ApplyRelicSlow(float multiplier, float duration)
         {
+            if (!CanBeAttacked)
+                return;
+
             _temporaryRelicSlow = Mathf.Min(_temporaryRelicSlow, Mathf.Clamp(multiplier, 0.05f, 1f));
             _temporaryRelicSlowUntil = Mathf.Max(_temporaryRelicSlowUntil,
                 Time.time + Mathf.Max(0.05f, duration));
@@ -209,6 +230,9 @@ namespace Features.Enemies.Scripts
 
         public override void ApplyRelicStun(float duration)
         {
+            if (!CanBeAttacked)
+                return;
+
             if (_isRelicStunned == false)
             {
                 _wasStoppedBeforeRelicStun = IsStopped;
@@ -219,7 +243,7 @@ namespace Features.Enemies.Scripts
             _isRelicStunned = true;
             SetStop(true);
 
-            if (_rigidbody != null)
+            if (_rigidbody != null && _rigidbody.isKinematic == false)
             {
                 Vector3 velocity = _rigidbody.linearVelocity;
                 velocity.x = 0f;
@@ -308,8 +332,11 @@ namespace Features.Enemies.Scripts
                 return;
             Vector3 visualPosition = transform.position;
             _navMeshAgent.speed = Configuration.Speed;
-            _navMeshAgent.angularSpeed = Configuration.RotationSpeed;
-            _navMeshAgent.acceleration = Configuration.Acceleration;
+            if (Configuration.EnemyDamageType != EnemyDamageType.Ricochet)
+            {
+                _navMeshAgent.angularSpeed = Configuration.RotationSpeed;
+                _navMeshAgent.acceleration = Configuration.Acceleration;
+            }
             _navMeshAgent.updatePosition = false;
 
             if (_navMeshAgent.Warp(navMeshPosition) == false)

@@ -42,13 +42,14 @@ namespace Features.Enemies.Scripts
                 facade.gameObject.AddComponent<EnemyAggroIndicatorView>();
 
             IEnemyAnimationSystem animationSystem = CreateAnimationSystem(configuration, animator);
-            IEnemyMovementSystem movementSystem = configuration.EnemyDamageType is EnemyDamageType.Dash or EnemyDamageType.Jump
+            IEnemyMovementSystem movementSystem = configuration.EnemyDamageType is
+                EnemyDamageType.Dash or EnemyDamageType.Jump or EnemyDamageType.Ricochet
                 ? null
                 : CreateMovementSystem(configuration, facade, character, navMeshAgent, animationSystem);
             float attackPreparationDuration = configuration.AttackPreparationDuration;
             IEnemyDamageSystem damageSystem = CreateDamageSystem(configuration, facade, character,
                 facade.GetComponent<EnemyDashView>(), facade.GetComponent<EnemyRangedAttackView>(),
-                attackPreparationDuration);
+                navMeshAgent, attackPreparationDuration);
             if (damageSystem is IEnemyMovementSystem attackMovementSystem)
                 movementSystem = attackMovementSystem;
 
@@ -68,7 +69,8 @@ namespace Features.Enemies.Scripts
                 character, effectsSystem, deathEffect, _goldDropper, _expDropper);
             var healthSystem = new HealthSystem(configuration.MaxHealth,
                 new IHealthView[] { facade.GetComponent<EnemyHealthView>() }, deathSystem,
-                new IDamageView[] { facade.GetComponent<EnemyDamageNumberView>() });
+                new IDamageView[] { facade.GetComponent<EnemyDamageNumberView>() },
+                isInvulnerable: configuration.IsHazard);
 
             facade.Construct(rigidbody, navMeshAgent, collisionDetector, animationSystem, movementSystem,
                 damageSystem, healthSystem, effectsSystem, aggroIndicatorView);
@@ -90,7 +92,7 @@ namespace Features.Enemies.Scripts
 
         private IEnemyDamageSystem CreateDamageSystem(EnemyConfiguration configuration, EnemyFacade facade,
             CharacterFacade character, EnemyDashView dashView, EnemyRangedAttackView rangedAttackView,
-            float attackPreparationDuration) =>
+            NavMeshAgent navMeshAgent, float attackPreparationDuration) =>
             configuration.EnemyDamageType switch
             {
                 EnemyDamageType.Melee => new EnemyDamageMeleeSystem(
@@ -99,6 +101,8 @@ namespace Features.Enemies.Scripts
                     character, configuration, facade, dashView, attackPreparationDuration, _enemiesProvider),
                 EnemyDamageType.Jump => new EnemyJumpAttackSystem(
                     facade, character, configuration, _enemiesProvider),
+                EnemyDamageType.Ricochet => new EnemyRicochetAttackSystem(
+                    facade, character, configuration, navMeshAgent),
                 EnemyDamageType.RangeArea => new EnemyDamageAreaSystem(
                     character, configuration, facade,
                     _enemiesProvider,

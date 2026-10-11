@@ -419,7 +419,7 @@ namespace Features.Relics.Scripts
         private async UniTaskVoid ApplyHexDamage(RelicEffectDefinition effect, RelicHitEvent hitEvent)
         {
             CombatTarget target = hitEvent.Target;
-            if (target == null)
+            if (target == null || !target.CanBeAttacked)
                 return;
 
             int ticks = Mathf.Max(1, Mathf.CeilToInt(effect.Duration));
@@ -430,7 +430,7 @@ namespace Features.Relics.Scripts
                 await UniTask.Delay(TimeSpan.FromSeconds(tickDelay),
                     cancellationToken: target.GetCancellationTokenOnDestroy());
 
-                if (target == null || target.HealthSystem.IsDead)
+                if (target == null || !target.CanBeAttacked || target.HealthSystem.IsDead)
                     return;
 
                 float value = IsEliteOrBoss(target) && effect.BossValue > 0f
@@ -551,7 +551,7 @@ namespace Features.Relics.Scripts
             CombatTarget[] enemies = UnityEngine.Object.FindObjectsByType<CombatTarget>(FindObjectsSortMode.None);
             foreach (CombatTarget enemy in enemies)
             {
-                if (enemy == null || enemy.HealthSystem.IsDead)
+                if (enemy == null || !enemy.CanBeAttacked || enemy.HealthSystem.IsDead)
                     continue;
 
                 if ((enemy.transform.position - center).sqrMagnitude > radius * radius)

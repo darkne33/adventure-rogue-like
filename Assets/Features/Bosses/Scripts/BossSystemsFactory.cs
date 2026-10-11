@@ -37,6 +37,8 @@ namespace Features.Bosses.Scripts
                 throw new InvalidOperationException($"BossConfig is missing on {facade.name}.");
             if (facade is MushroomBossFacade mushroomBoss && mushroomBoss.MovementConfiguration == null)
                 throw new InvalidOperationException($"MushroomBossConfiguration is missing on {facade.name}.");
+            if (facade is OgreBossFacade ogreBoss && ogreBoss.MovementConfiguration == null)
+                throw new InvalidOperationException($"OgreBossConfiguration is missing on {facade.name}.");
 
             CharacterFacade character = _characterProvider.CharacterFacade;
             if (character == null)
@@ -64,9 +66,12 @@ namespace Features.Bosses.Scripts
                 maxHealth = _levelsConfiguration.ProceduralLevels.ScaleHealth(maxHealth, generatedLevelNumber);
             var healthSystem = new HealthSystem(maxHealth,
                 facade.GetComponents<IHealthView>(), deathSystem, facade.GetComponents<IDamageView>());
-            BossAttackSystem attackSystem = facade is MushroomBossFacade mushroom
-                ? new MushroomBossAttackSystem(mushroom, character)
-                : new BossAttackSystem(facade, character);
+            BossAttackSystem attackSystem = facade switch
+            {
+                MushroomBossFacade mushroom => new MushroomBossAttackSystem(mushroom, character),
+                OgreBossFacade ogre => new OgreBossAttackSystem(ogre, character),
+                _ => new BossAttackSystem(facade, character)
+            };
             var combatSystem = new BossCombatSystem(facade, attackSystem, animationSystem);
 
             facade.Construct(rigidbody, meshRenderers, healthSystem, animationSystem,
@@ -80,6 +85,7 @@ namespace Features.Bosses.Scripts
                     woodGuard.Animator, woodGuard.AttackClip, woodGuard.Config.AnimationSpeedBlendDuration),
                 MushroomBossFacade mushroom => new MushroomBossAnimation(
                     mushroom.Animator, mushroom.JumpClip, mushroom.HeadClip),
+                OgreBossFacade ogre => new OgreBossAnimation(ogre.Animator, ogre.AttackClip),
                 _ => throw new ArgumentOutOfRangeException(nameof(facade), facade.GetType(),
                     "Boss animation type is not supported.")
             };
