@@ -81,7 +81,7 @@ namespace Features.Quests.Scripts
             _service.Changed += Refresh;
             gameObject.SetActive(true);
             transform.SetAsLastSibling();
-            Refresh();
+            Refresh(false);
         }
 
         public void Hide()
@@ -92,16 +92,18 @@ namespace Features.Quests.Scripts
             gameObject.SetActive(false);
         }
 
-        private void Refresh()
+        private void Refresh() => Refresh(true);
+
+        private void Refresh(bool playSelectionSound)
         {
             _total.text = $"Completed: {_service.CompletedCount} / {_service.TotalCount}";
             float fraction = _service.TotalCount > 0 ? (float)_service.CompletedCount / _service.TotalCount : 0f;
             _totalProgressFill.anchorMax = new Vector2(Mathf.Clamp01(fraction), 1f);
             _hideCompletedCheck.SetIsOnWithoutNotify(_hideCompleted);
-            RebuildRows();
+            RebuildRows(playSelectionSound);
         }
 
-        private void RebuildRows()
+        private void RebuildRows(bool playSelectionSound)
         {
             string previousId = _selected?.Id;
             GameObject focused = EventSystem.current != null
@@ -140,7 +142,7 @@ namespace Features.Quests.Scripts
             {
                 selected ??= _rows[0];
                 if (focusRow)
-                    ProgressionMenuUi.Focus(selected.Button);
+                    ProgressionMenuUi.Focus(selected.Button, playSelectionSound);
                 SelectQuest(selected);
             }
             else
@@ -157,7 +159,7 @@ namespace Features.Quests.Scripts
                 _detailSilver.text = string.Empty;
                 _claimButton.gameObject.SetActive(false);
                 if (focusRow)
-                    ProgressionMenuUi.Focus(_hideCompletedButton);
+                    ProgressionMenuUi.Focus(_hideCompletedButton, playSelectionSound);
             }
             Canvas.ForceUpdateCanvases();
             position.y = Mathf.Clamp(position.y, 0f,

@@ -22,6 +22,7 @@ namespace Features.Sounds
         private UnityEngine.UI.Scrollbar _scrollbar;
         private bool _pointerHeld;
         private bool _buttonListenerAdded;
+        private bool _suppressSelectionSound;
 
         [Inject]
         private void Construct(ISoundsService soundsService) =>
@@ -71,8 +72,34 @@ namespace Features.Sounds
 
         public void OnSelect(BaseEventData eventData)
         {
-            if (CanInteract())
+            if (!_suppressSelectionSound && CanInteract())
                 _soundsService?.Play(_hoverSound);
+        }
+
+        public static void Select(UnityEngine.UI.Selectable selectable, bool playSelectionSound = true)
+        {
+            EventSystem eventSystem = EventSystem.current;
+            if (eventSystem == null || selectable == null)
+                return;
+
+            UiButtonClickSoundController soundController = !playSelectionSound
+                ? selectable.GetComponent<UiButtonClickSoundController>() : null;
+            if (soundController == null)
+            {
+                eventSystem.SetSelectedGameObject(selectable.gameObject);
+                return;
+            }
+
+            bool wasSuppressed = soundController._suppressSelectionSound;
+            soundController._suppressSelectionSound = true;
+            try
+            {
+                eventSystem.SetSelectedGameObject(selectable.gameObject);
+            }
+            finally
+            {
+                soundController._suppressSelectionSound = wasSuppressed;
+            }
         }
 
         public void OnPointerDown(PointerEventData eventData)

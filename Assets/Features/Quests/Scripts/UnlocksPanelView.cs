@@ -90,7 +90,7 @@ namespace Features.Quests.Scripts
             ResizeGrid();
             _scroll.StopMovement();
             _scroll.verticalNormalizedPosition = 1f;
-            FocusSelectedUnlock();
+            FocusSelectedUnlock(false);
         }
 
         public void Hide()
@@ -299,18 +299,18 @@ namespace Features.Quests.Scripts
             ProgressionMenuUi.Focus(_tabs[_categoryIndex].Button);
         }
 
-        private void FocusSelectedUnlock()
+        private void FocusSelectedUnlock(bool playSelectionSound = true)
         {
             foreach (UnlockCellView cell in _cells)
             {
                 if (cell.Unlock != _selected)
                     continue;
                 _lastFocusedObject = cell.Button.gameObject;
-                ProgressionMenuUi.Focus(cell.Button);
+                ProgressionMenuUi.Focus(cell.Button, playSelectionSound);
                 return;
             }
             _lastFocusedObject = _tabs[_categoryIndex].Button.gameObject;
-            ProgressionMenuUi.Focus(_tabs[_categoryIndex].Button);
+            ProgressionMenuUi.Focus(_tabs[_categoryIndex].Button, playSelectionSound);
         }
 
         private void ResizeGrid()

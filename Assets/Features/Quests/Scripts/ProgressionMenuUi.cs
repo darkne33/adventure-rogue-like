@@ -1,6 +1,6 @@
 using System;
+using Features.Sounds;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace Features.Quests.Scripts
 {
@@ -50,11 +50,8 @@ namespace Features.Quests.Scripts
             };
         }
 
-        public static void Focus(UnityEngine.UI.Selectable selectable)
-        {
-            if (EventSystem.current != null && selectable != null)
-                EventSystem.current.SetSelectedGameObject(selectable.gameObject);
-        }
+        public static void Focus(UnityEngine.UI.Selectable selectable, bool playSelectionSound = true) =>
+            UiButtonClickSoundController.Select(selectable, playSelectionSound);
 
         public static void EnsureVisible(UnityEngine.UI.ScrollRect scroll, RectTransform item)
         {

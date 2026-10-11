@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Features.Relics.Scripts;
+using Features.Sounds;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -140,7 +141,7 @@ public sealed class CharacterSelectionView : MonoBehaviour
         SetSelectedIndex(selectedIndex);
         _isPreviewVisible = showPreview;
         SetInteractable(true);
-        FocusStart();
+        FocusStart(false);
     }
 
     public void Hide(bool keepPreview = false)
@@ -386,15 +387,15 @@ public sealed class CharacterSelectionView : MonoBehaviour
         SelectionRequested?.Invoke(wrappedIndex, direction < 0 ? -1 : 1);
     }
 
-    private void FocusStart()
+    private void FocusStart(bool playSelectionSound = true)
     {
         if (EventSystem.current == null)
             return;
 
         if (_startButton != null && _startButton.interactable)
-            EventSystem.current.SetSelectedGameObject(_startButton.gameObject);
+            UiButtonClickSoundController.Select(_startButton, playSelectionSound);
         else if (_backButton != null && _backButton.interactable)
-            EventSystem.current.SetSelectedGameObject(_backButton.gameObject);
+            UiButtonClickSoundController.Select(_backButton, playSelectionSound);
     }
 
     private void FocusBack()
