@@ -87,6 +87,8 @@ namespace Features.Relics.Scripts
             if (_lootRayRoot != null)
             {
                 _lootRayPosition = _lootRayRoot.position;
+                if (_roomData is OnlyRelicRoomData relicRoomData)
+                    _lootRayPosition -= transform.position - relicRoomData.RelicSpawnPoint.position;
                 _lootRayRoot.SetPositionAndRotation(_lootRayPosition, Quaternion.identity);
                 _lootRayRoot.gameObject.SetActive(true);
             }
