@@ -7,15 +7,13 @@ namespace Features.Relics.Scripts
     public sealed class BloodRoomSpawner : IDisposable
     {
         private readonly RelicChestSpawner _chestSpawner;
-        private readonly OnlyRelicRoomSpawner _relicSpawner;
         private readonly RewardBagSpawner _bagSpawner;
         private readonly RelicEventBus _eventBus;
 
-        public BloodRoomSpawner(RelicChestSpawner chestSpawner, OnlyRelicRoomSpawner relicSpawner,
-            RewardBagSpawner bagSpawner, RelicEventBus eventBus)
+        public BloodRoomSpawner(RelicChestSpawner chestSpawner, RewardBagSpawner bagSpawner,
+            RelicEventBus eventBus)
         {
             _chestSpawner = chestSpawner;
-            _relicSpawner = relicSpawner;
             _bagSpawner = bagSpawner;
             _eventBus = eventBus;
             _eventBus.RoomStarted += HandleRoomStarted;
@@ -35,29 +33,48 @@ namespace Features.Relics.Scripts
                 return;
 
             Room room = roomEvent.Room;
-            Transform spawnPoint = roomData.RewardSpawnPoint;
-            if (spawnPoint == null)
-                throw new InvalidOperationException($"{room.name} is missing its Blood reward spawn point.");
+            BloodRoomReward reward = roomData.GetReward();
+            if ((reward & BloodRoomReward.Bag) != 0)
+                SpawnReward(room, roomData, BloodRoomReward.Bag);
+            if ((reward & BloodRoomReward.Chest) != 0)
+                SpawnReward(room, roomData, BloodRoomReward.Chest);
+        }
 
-            bool spawned = roomData.GetReward() switch
+        private void SpawnReward(Room room, BloodRoomData roomData, BloodRoomReward reward)
+        {
+            if (roomData.HasSpawned(reward))
+                return;
+
+            Transform spawnPoint = roomData.GetReward() == BloodRoomReward.BagAndChest
+                ? reward switch
+                {
+                    BloodRoomReward.Bag => roomData.BagSpawnPoint,
+                    BloodRoomReward.Chest => roomData.ChestSpawnPoint,
+                    _ => throw new InvalidOperationException("Unknown Blood room reward.")
+                }
+                : roomData.RewardSpawnPoint;
+            if (spawnPoint == null)
+                throw new InvalidOperationException($"{room.name} is missing its Blood {reward} spawn point.");
+
+            bool spawned = reward switch
             {
                 BloodRoomReward.Bag => _bagSpawner.TrySpawnAt(room, spawnPoint,
-                    room.GetComponentInParent<LevelView>(), roomData.MarkCompleted),
+                    room.GetComponentInParent<LevelView>(),
+                    () => roomData.MarkRewardCollected(BloodRoomReward.Bag)),
                 BloodRoomReward.Chest => _chestSpawner.TrySpawnAt(room, spawnPoint, out _),
-                BloodRoomReward.Relic => _relicSpawner.TrySpawnAt(room, spawnPoint, roomData.MarkCompleted),
                 _ => throw new InvalidOperationException("Unknown Blood room reward.")
             };
 
             if (spawned)
-                roomData.MarkRewardSpawned();
+                roomData.MarkRewardSpawned(reward);
             else
-                Debug.LogWarning($"Could not spawn {roomData.GetReward()} reward in {room.name}.");
+                Debug.LogWarning($"Could not spawn {reward} reward in {room.name}.");
         }
 
         private static void HandleChestCollected(RoomData roomData, Room room)
         {
             if (roomData is BloodRoomData bloodRoomData)
-                bloodRoomData.MarkCompleted();
+                bloodRoomData.MarkRewardCollected(BloodRoomReward.Chest);
         }
     }
 }

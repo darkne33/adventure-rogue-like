@@ -400,9 +400,10 @@ public class LevelView : MonoBehaviour
             case RoomType.Shop:
                 return;
             case RoomType.Blood:
-                if (roomData is not BloodRoomData bloodRoomData || bloodRoomData.RewardSpawnPoint == null)
+                if (roomData is not BloodRoomData bloodRoomData || bloodRoomData.RewardSpawnPoint == null ||
+                    bloodRoomData.BagSpawnPoint == null || bloodRoomData.ChestSpawnPoint == null)
                     throw new InvalidOperationException(
-                        $"{roomNode.RoomPrefab.name} must contain BloodRoomData with a reward spawn point.");
+                        $"{roomNode.RoomPrefab.name} must contain BloodRoomData with single, bag and chest reward spawn points.");
                 return;
             case RoomType.Boss:
                 if (roomData is not BossRoomData bossRoomData)
@@ -449,9 +450,10 @@ public class LevelView : MonoBehaviour
             case (RoomType.Shop, ShopRoomData):
                 return;
             case (RoomType.Blood, BloodRoomData bloodRoomData):
-                if (bloodRoomData.RewardSpawnPoint == null)
+                if (bloodRoomData.RewardSpawnPoint == null || bloodRoomData.BagSpawnPoint == null ||
+                    bloodRoomData.ChestSpawnPoint == null)
                     throw new InvalidOperationException(
-                        $"{roomNode.Room.name} does not have a reward spawn point.");
+                        $"{roomNode.Room.name} does not have single, bag and chest reward spawn points.");
                 return;
             case (RoomType.Boss, BossRoomData bossRoomData):
                 ValidateBossRoom(roomNode.Room, bossRoomData);
