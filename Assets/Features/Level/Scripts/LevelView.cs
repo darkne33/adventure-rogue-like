@@ -62,7 +62,7 @@ public class LevelView : MonoBehaviour
         _isInitialized = false;
     }
 
-    public void Initialize(DiContainer container, bool hasNextLevel,
+    public void Initialize(DiContainer container,
         EnemyRoomScalingConfiguration roomBalance = null, int combatProgressOffset = 0)
     {
         if (_isInitialized)
@@ -80,13 +80,13 @@ public class LevelView : MonoBehaviour
         Dictionary<Vector2Int, Room> roomsByPosition = ValidateAndBuildRoomMap();
         ValidateKeyRoomConfiguration(useRuntimeRooms: true);
         ValidateRoomDoors(roomsByPosition.Values);
-        ValidateRequiredDoors(roomsByPosition, hasNextLevel);
+        ValidateRequiredDoors(roomsByPosition);
         ValidateConnectivity(roomsByPosition);
         ResetDoors(roomsByPosition.Values);
         ConnectAdjacentRooms(roomsByPosition);
         ConfigureStartPointRotation();
         _combatDepths = BuildCombatDepths();
-        ConfigureLevelExit(hasNextLevel);
+        ConfigureLevelExit();
         ResetKeyRoomSpawnState();
         ResetKeyRewardState();
 
@@ -544,11 +544,8 @@ public class LevelView : MonoBehaviour
     }
 
     private void ValidateRequiredDoors(
-        IReadOnlyDictionary<Vector2Int, Room> roomsByPosition, bool hasNextLevel)
+        IReadOnlyDictionary<Vector2Int, Room> roomsByPosition)
     {
-        if (!hasNextLevel)
-            return;
-
         LevelRoomNode exitNode = GetExitRoomNode();
         Room exitRoom = roomsByPosition[exitNode.GridPosition];
         if (!HasDoor(exitRoom, exitNode.LevelExitDirection))
@@ -812,11 +809,8 @@ public class LevelView : MonoBehaviour
         }
     }
 
-    private void ConfigureLevelExit(bool hasNextLevel)
+    private void ConfigureLevelExit()
     {
-        if (!hasNextLevel)
-            return;
-
         LevelRoomNode roomNode = GetExitRoomNode();
         RoomDoor exitDoor = GetRequiredDoor(roomNode.Room, roomNode.LevelExitDirection);
         if (exitDoor.HasRoomDestination)

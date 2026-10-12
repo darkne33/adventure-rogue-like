@@ -698,7 +698,7 @@ namespace Features.FortuneWheel
             {
                 case FortuneWheelRewardType.Heart:
                     _heartDropper?.DropHeart(GetRewardSpawnPosition(),
-                        collectWhenHealthFull: true, additionalDropHeight: 0.5f);
+                        additionalDropHeight: 0.5f);
                     return;
                 case FortuneWheelRewardType.Key:
                     if (TryDropCurrencyReward(_keyDropPrefab,

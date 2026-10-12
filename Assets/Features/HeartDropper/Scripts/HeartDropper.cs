@@ -13,10 +13,12 @@ public sealed class HeartDropper
     private readonly DiContainer _container;
     private readonly LevelsConfiguration _levelsConfiguration;
     private readonly RelicEventBus _relicEventBus;
+    private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
 
     public HeartDropper(HeartDropperConfiguration configuration, ICameraService cameraService,
         ICharacterProvider characterProvider, CharacterStats characterStats, DiContainer container,
-        LevelsConfiguration levelsConfiguration, RelicEventBus relicEventBus)
+        LevelsConfiguration levelsConfiguration, RelicEventBus relicEventBus,
+        ISceneService<RogueLikeSceneProvider> sceneService)
     {
         _configuration = configuration;
         _cameraService = cameraService;
@@ -25,10 +27,11 @@ public sealed class HeartDropper
         _container = container;
         _levelsConfiguration = levelsConfiguration;
         _relicEventBus = relicEventBus;
+        _sceneService = sceneService;
     }
 
     public bool DropHeart(Vector3 position, Action collectedCallback = null,
-        bool collectWhenHealthFull = false, float additionalDropHeight = 0f)
+        float additionalDropHeight = 0f)
     {
         if (_configuration == null || _configuration.HeartPrefab == null)
             return false;
@@ -36,8 +39,9 @@ public sealed class HeartDropper
         Vector3 landPosition = GetGroundedPosition(position + GetScatterOffset());
         float dropHeight = _configuration.DropHeight + Mathf.Max(0f, additionalDropHeight);
         Vector3 spawnPosition = position + Vector3.up * dropHeight;
+        LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
         GameObject heartObject = _container.InstantiatePrefab(_configuration.HeartPrefab, spawnPosition,
-            Quaternion.identity, null);
+            Quaternion.identity, currentLevel != null ? currentLevel.transform : null);
 
         HeartPickup heartPickup = heartObject.GetComponent<HeartPickup>();
         if (heartPickup == null)
@@ -45,7 +49,7 @@ public sealed class HeartDropper
 
         heartPickup.Construct(_configuration, _characterProvider, _characterStats, _relicEventBus,
             _cameraService.MainCamera != null ? _cameraService.MainCamera.transform : null, landPosition,
-            collectedCallback, collectWhenHealthFull);
+            collectedCallback);
         return true;
     }
 

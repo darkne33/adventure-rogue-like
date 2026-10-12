@@ -29,7 +29,7 @@ public class LevelFactory : ILevelFactory
         {
             levelView.name = $"Level_{levelNumber + 1}";
             levelView.Configure(rooms, _levelsConfiguration.RoomCatalog);
-            levelView.Initialize(_container, _levelsConfiguration.HasLevel(levelNumber + 1),
+            levelView.Initialize(_container,
                 _levelsConfiguration.EnemyRoomScalingConfiguration, _runtimeData.VisitedCombatRoomsCount);
             _remainingBossRooms.RemoveAt(_remainingBossRooms.Count - 1);
             return levelView;

@@ -129,6 +129,7 @@ public sealed class MinimapController : IDisposable, ITickable
                     RoomType.Shop => MinimapRoomKind.Shop,
                     RoomType.Boss => MinimapRoomKind.Boss,
                     RoomType.OnlyRelic => MinimapRoomKind.OnlyRelic,
+                    RoomType.Blood => MinimapRoomKind.Blood,
                     _ => MinimapRoomKind.Normal
                 },
                 node.Type is RoomType.Exit or RoomType.Boss ? node.LevelExitDirection : null))

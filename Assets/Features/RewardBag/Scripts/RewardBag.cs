@@ -183,7 +183,7 @@ namespace Features.RewardBag
             if (rewardType == RewardType.Heart)
             {
                 if (_heartDropper == null ||
-                    _heartDropper.DropHeart(transform.position, collectedCallback, true,
+                    _heartDropper.DropHeart(transform.position, collectedCallback,
                         _rewardExtraDropHeight) == false)
                     collectedCallback?.Invoke();
 

@@ -26,7 +26,6 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
 
     private bool _isTransitioning;
     private bool _isRunCompleted;
-    private DefaultEnemiesRoomData _pendingFinalRewardRoom;
 
     public LevelProgressionService(LevelsConfiguration levelsConfiguration, ILevelFactory levelFactory,
         IRogueLikeRuntimeDataService runtimeDataService, ISceneService<RogueLikeSceneProvider> sceneService,
@@ -52,7 +51,6 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
         _enemySpawner = enemySpawner;
 
         _enemyRoomObserver.RoomCompleted += HandleRoomCompleted;
-        _rewardBagSpawner.RewardCollected += HandleRewardBagCollected;
     }
 
     public void TransitToNextLevel()
@@ -73,7 +71,6 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
     public void Dispose()
     {
         _enemyRoomObserver.RoomCompleted -= HandleRoomCompleted;
-        _rewardBagSpawner.RewardCollected -= HandleRewardBagCollected;
     }
 
     public UniTask TransitToLevel(int levelIndex)
@@ -92,36 +89,12 @@ public sealed class LevelProgressionService : ILevelProgressionService, IDisposa
 
     private void HandleRoomCompleted(DefaultEnemiesRoomData roomData)
     {
-        int nextLevelIndex = _runtimeDataService.CurrentIndexLevel + 1;
         LevelView currentLevel = _sceneService.GameSceneComponentsService?.CurrentLevel;
 
         if (currentLevel == null)
             return;
 
-        bool rewardBagSpawned = _rewardBagSpawner.TrySpawn(roomData, currentLevel);
-        bool isFinalExitRoom = _levelsConfiguration.HasLevel(nextLevelIndex) == false &&
-                               currentLevel.IsExitRoom(roomData);
-        if (isFinalExitRoom == false)
-            return;
-
-        if (rewardBagSpawned)
-        {
-            _pendingFinalRewardRoom = roomData;
-            return;
-        }
-
-        CompleteRunAsync().Forget();
-    }
-
-    private void HandleRewardBagCollected(DefaultEnemiesRoomData roomData)
-    {
-        if (_pendingFinalRewardRoom == null ||
-            ReferenceEquals(_pendingFinalRewardRoom, roomData) == false)
-            return;
-
-        _pendingFinalRewardRoom = null;
-        if (_isRunCompleted == false)
-            CompleteRunAsync().Forget();
+        _rewardBagSpawner.TrySpawn(roomData, currentLevel);
     }
 
     private async UniTask CompleteRunAsync()

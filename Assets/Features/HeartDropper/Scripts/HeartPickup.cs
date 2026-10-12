@@ -13,12 +13,11 @@ public sealed class HeartPickup : MonoBehaviour
     private Action _collectedCallback;
     private Vector3 _startScale;
     private bool _canAttract;
-    private bool _collectWhenHealthFull;
     private bool _isCollecting;
 
     public void Construct(HeartDropperConfiguration configuration, ICharacterProvider characterProvider,
         CharacterStats characterStats, RelicEventBus relicEventBus, Transform cameraTransform,
-        Vector3 landPosition, Action collectedCallback = null, bool collectWhenHealthFull = false)
+        Vector3 landPosition, Action collectedCallback = null)
     {
         _configuration = configuration;
         _characterProvider = characterProvider;
@@ -26,7 +25,6 @@ public sealed class HeartPickup : MonoBehaviour
         _relicEventBus = relicEventBus;
         _cameraTransform = cameraTransform;
         _collectedCallback = collectedCallback;
-        _collectWhenHealthFull = collectWhenHealthFull;
         _startScale = transform.localScale;
 
         name = "HeartPickup";
@@ -40,7 +38,7 @@ public sealed class HeartPickup : MonoBehaviour
 
         CharacterFacade character = _characterProvider?.CharacterFacade;
         if (character == null || character.HealthSystem == null ||
-            _collectWhenHealthFull == false && IsHealthFull(character.HealthSystem))
+            IsHealthFull(character.HealthSystem))
             return;
 
         Vector3 targetPosition = character.transform.position +
@@ -114,7 +112,7 @@ public sealed class HeartPickup : MonoBehaviour
         float healAmount = character.HealthSystem.MaxHealth *
                            Mathf.Clamp01(_configuration.HealPercentage);
         float restoredHealth = character.HealthSystem.IncreaseCurrentHealth(healAmount);
-        if (restoredHealth <= 0f && _collectWhenHealthFull == false)
+        if (restoredHealth <= 0f)
         {
             _isCollecting = false;
             transform.localScale = _startScale;
@@ -146,5 +144,5 @@ public sealed class HeartPickup : MonoBehaviour
     }
 
     private static bool IsHealthFull(HealthSystem healthSystem) =>
-        healthSystem.CurrentHealth >= healthSystem.MaxHealth - 0.001f;
+        healthSystem.CurrentHealth >= healthSystem.MaxHealth;
 }

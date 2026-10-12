@@ -13,5 +13,6 @@ public enum MinimapRoomKind
     Exit,
     Shop,
     Boss,
-    OnlyRelic
+    OnlyRelic,
+    Blood
 }
