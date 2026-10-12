@@ -13,7 +13,7 @@ public sealed class LevelRoomCatalog : ScriptableObject
     [SerializeField] private Room[] _onlyRelicRooms = Array.Empty<Room>();
     [SerializeField] private Room[] _bloodRooms = Array.Empty<Room>();
     [SerializeField] private Room[] _shopRooms = Array.Empty<Room>();
-    [Tooltip("Boss room prefabs in order. After the last entry the cycle starts again.")]
+    [Tooltip("Boss room prefabs shuffled each cycle. Every boss appears once before the next cycle.")]
     [SerializeField] private Room[] _bossCycle = Array.Empty<Room>();
 
     public Room StartRoom => _startRoom;
@@ -26,15 +26,4 @@ public sealed class LevelRoomCatalog : ScriptableObject
     public IReadOnlyList<Room> ShopRooms => _shopRooms;
     public IReadOnlyList<Room> BossCycle => _bossCycle;
 
-    public Room GetBossRoom(int levelIndex)
-    {
-        if (levelIndex < 0)
-            throw new ArgumentOutOfRangeException(nameof(levelIndex));
-        if (_bossCycle == null || _bossCycle.Length == 0)
-            throw new InvalidOperationException($"{name} must contain a boss cycle.");
-        Room room = _bossCycle[levelIndex % _bossCycle.Length];
-        if (room == null || room.RoomData is not BossRoomData)
-            throw new InvalidOperationException($"{name} contains an invalid boss room in its cycle.");
-        return room;
-    }
 }

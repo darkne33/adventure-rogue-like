@@ -10,7 +10,7 @@ public static class ProceduralLevelGenerator
         RoomDirection.Up, RoomDirection.Down, RoomDirection.Left, RoomDirection.Right
     };
 
-    public static LevelRoomNode[] Generate(LevelsConfiguration configuration, int levelIndex,
+    public static LevelRoomNode[] Generate(LevelsConfiguration configuration, int levelIndex, Room bossRoom,
         int coins = 0, int keys = 0)
     {
         if (configuration == null)
@@ -24,7 +24,7 @@ public static class ProceduralLevelGenerator
         // Roll content once. Geometry retries must not change floor size or room chances.
         int roomCount = settings.RollRoomCount(levelIndex);
         List<RoomType> specialRooms = settings.RollSpecialRooms(levelIndex, coins, keys);
-        var templates = new Templates(catalog, levelIndex, specialRooms);
+        var templates = new Templates(catalog, bossRoom, specialRooms);
 
         for (int attempt = 0; attempt < settings.GenerationAttempts; attempt++)
         {
@@ -44,12 +44,12 @@ public static class ProceduralLevelGenerator
         private readonly Dictionary<RoomType, List<Room>> _pools = new();
         private readonly Dictionary<(RoomType, RoomConnectionMask, RoomDirection?), List<Room>> _compatible = new();
 
-        public Templates(LevelRoomCatalog catalog, int levelIndex, IReadOnlyList<RoomType> specialRooms)
+        public Templates(LevelRoomCatalog catalog, Room bossRoom, IReadOnlyList<RoomType> specialRooms)
         {
             AddPool(RoomType.Start, new[] { catalog.StartRoom });
             AddPool(RoomType.Enemy, catalog.SmallEnemyRooms);
             AddPool(RoomType.Enemy, catalog.MediumEnemyRooms);
-            AddPool(RoomType.Boss, new[] { catalog.GetBossRoom(levelIndex) });
+            AddPool(RoomType.Boss, new[] { bossRoom });
             foreach (RoomType type in specialRooms)
             {
                 IReadOnlyList<Room> rooms = type switch

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
@@ -7,6 +8,7 @@ public class LevelFactory : ILevelFactory
     private readonly IRogueLikeRuntimeDataService _runtimeData;
     private readonly CharacterWallet _characterWallet;
     private readonly DiContainer _container;
+    private readonly List<Room> _remainingBossRooms = new();
 
     public LevelFactory(LevelsConfiguration levelsConfiguration, DiContainer container,
         IRogueLikeRuntimeDataService runtimeData, CharacterWallet characterWallet)
@@ -21,7 +23,7 @@ public class LevelFactory : ILevelFactory
     {
         LevelSettings levelSettings = _levelsConfiguration.GetLevel(levelNumber);
         LevelRoomNode[] rooms = ProceduralLevelGenerator.Generate(_levelsConfiguration, levelNumber,
-            _characterWallet.Gold.Count, _characterWallet.Keys.Count);
+            GetNextBossRoom(), _characterWallet.Gold.Count, _characterWallet.Keys.Count);
         LevelView levelView = _container.InstantiatePrefabForComponent<LevelView>(levelSettings.LevelView, parent);
         try
         {
@@ -29,6 +31,7 @@ public class LevelFactory : ILevelFactory
             levelView.Configure(rooms, _levelsConfiguration.RoomCatalog);
             levelView.Initialize(_container, _levelsConfiguration.HasLevel(levelNumber + 1),
                 _levelsConfiguration.EnemyRoomScalingConfiguration, _runtimeData.VisitedCombatRoomsCount);
+            _remainingBossRooms.RemoveAt(_remainingBossRooms.Count - 1);
             return levelView;
         }
         catch
@@ -37,5 +40,34 @@ public class LevelFactory : ILevelFactory
             Object.Destroy(levelView.gameObject);
             throw;
         }
+    }
+
+    private Room GetNextBossRoom()
+    {
+        if (_remainingBossRooms.Count == 0)
+        {
+            IReadOnlyList<Room> bossRooms = _levelsConfiguration.RoomCatalog.BossCycle;
+            if (bossRooms == null || bossRooms.Count == 0)
+                throw new System.InvalidOperationException("The room catalog must contain a boss cycle.");
+
+            var cycle = new List<Room>(bossRooms.Count);
+            foreach (Room room in bossRooms)
+            {
+                if (room == null || room.RoomData is not BossRoomData)
+                    throw new System.InvalidOperationException(
+                        "The room catalog contains an invalid boss room in its cycle.");
+                if (!cycle.Contains(room))
+                    cycle.Add(room);
+            }
+
+            for (int index = cycle.Count - 1; index > 0; index--)
+            {
+                int other = Random.Range(0, index + 1);
+                (cycle[index], cycle[other]) = (cycle[other], cycle[index]);
+            }
+            _remainingBossRooms.AddRange(cycle);
+        }
+
+        return _remainingBossRooms[_remainingBossRooms.Count - 1];
     }
 }
