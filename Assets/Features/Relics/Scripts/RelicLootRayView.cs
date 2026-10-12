@@ -45,6 +45,8 @@ namespace Features.Relics.Scripts
                 if (!_hasLootRayPosition)
                 {
                     _lootRayPosition = _lootRayRoot.position;
+                    if (_pickup.RoomData is OnlyRelicRoomData relicRoomData)
+                        _lootRayPosition -= _pickup.transform.position - relicRoomData.RelicSpawnPoint.position;
                     _hasLootRayPosition = true;
                 }
 
