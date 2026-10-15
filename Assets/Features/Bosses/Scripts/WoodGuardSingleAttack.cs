@@ -116,6 +116,7 @@ namespace Features.Bosses.Scripts
                                     surfacePosition + Vector3.down * undergroundDepth,
                                     rotation * geometry.RootRotation);
                                 roots.EnableObstacle();
+                                _boss.PlayCombatSound(Features.Sounds.SoundId.BossRoots);
                                 ApplyHit(center, geometry.Radius, rotation * Vector3.forward);
                                 if (!CanContinue() || cancellationToken.IsCancellationRequested)
                                     return;

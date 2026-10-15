@@ -113,6 +113,7 @@ Edit these assets directly in Prefab Mode:
 - `Assets/Features/Quests/Prefabs/QuestsPanel.prefab` — full window, header, Hide completed button, scroll viewport, completion summary, footer and CLAIM button.
 - `Assets/Features/Quests/Prefabs/QuestRow.prefab` — checkbox, condition, progress, single or paired reward icons, claimable-reward marker and selection corners.
 - `Assets/Features/Quests/Prefabs/UnlocksPanel.prefab` — full window, four tabs, grid, currency and purchase details.
+- `Assets/Features/Quests/Prefabs/UnlockReveal.prefab` — modal purchase reveal with a dark backdrop, gold title and rotating rays, large item/character icon, name, description and CONTINUE button. Its layout and animation settings are editable in the prefab.
 - `Assets/Features/Quests/Prefabs/UnlockCell.prefab` — item icon, price, new-unlock marker and selection corners. State colors are serialized on its view component.
 - `Assets/Features/Quests/Prefabs/ProgressionAlertYellow.prefab` — yellow pixel exclamation mark for main-menu buttons and UNLOCKS category tabs.
 - `Assets/Features/Quests/Prefabs/ProgressionAlertBlue.prefab` — blue pixel exclamation mark for individual unlocks and claimable quest rewards.
@@ -122,6 +123,8 @@ Both alert prefabs use a non-interactive Unity UI Image with the `Sprites/Progre
 Quest and unlock detail text shows the next unmet run, quest or purchase prerequisite and the number of additional prerequisites still needed. Compact rows keep the main condition; once prerequisites are met, the selected detail panel explains that progress starts in the next eligible run. The existing detail labels use prefab-authored TMP auto-sizing to fit the longer requirement text without creating new UI objects.
 
 `MainMenuPanel.prefab` references the two window prefabs. The view scripts instantiate the assigned window and row/cell prefabs and bind data; they do not construct UI hierarchies or add UI components at runtime. The iron frame textures already included in the project are arranged as editable RawImage edge/corner pieces, so their original SpriteImporter settings remain unchanged.
+
+Every successful purchase in UNLOCKS opens the purchase reveal, including zero-cost purchases. Failed purchases do not open it. `UnlocksPanel.prefab` references the reveal prefab, so the existing Addressables-loaded main menu includes it and its serialized dependencies in the same loading lifetime. Character reveals reuse the menu's prepared portrait and portrait material. The existing purchase confirmation sound plays once; closing uses the existing UI close sound. The underlying unlock window cannot receive clicks, navigation or tab shortcuts while the reveal is visible. Appearance and closing use unscaled DOTween animations; a short input delay prevents the purchase press from immediately dismissing the reveal. CONTINUE/Submit or Escape/B closes the reveal and restores focus to the purchased cell. Hiding the unlock window stops and hides the reveal as well.
 
 The former QUESTS `SilverBalance` belongs to `MainMenuPanel.prefab` and appears at the top left, mirrored from its original top-right position. It stays visible over QUESTS and UNLOCKS, updates when `QuestService.Changed` fires, hides during character selection, and reappears when returning to the main menu.
 

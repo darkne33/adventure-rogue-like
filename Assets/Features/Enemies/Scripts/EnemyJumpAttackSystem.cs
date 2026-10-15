@@ -157,6 +157,7 @@ namespace Features.Enemies.Scripts
                     if (!airborne && progress >= takeoff)
                     {
                         airborne = true;
+                        _enemy.PlayAttackSound();
                         SetFlightColliders();
                         _enemy.AnimationSystem.AttackAnimation();
                     }
@@ -175,6 +176,7 @@ namespace Features.Enemies.Scripts
                         indicator = null;
                         _enemy.AnimationSystem.IdleAnimation();
                         SpawnEffect(ground);
+                        _enemy.PlayCombatSound(Features.Sounds.SoundId.EnemyLand);
                         ApplyHit(ground, direction);
                     }
                 }

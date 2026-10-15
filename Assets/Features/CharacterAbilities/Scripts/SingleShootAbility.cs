@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
+using Features.Sounds;
 using UnityEngine;
 
 public abstract class SingleShootAbility : CharacterActiveAbility
@@ -21,6 +22,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     private float _additionalProjectileCount;
     private bool _isLaunchingProjectiles;
     private int _projectileLaunchSequence;
+    private CharacterFacade _projectileOwner;
 
     protected ShootableAbilityConfiguration AbilityConfig { get; private set; }
     protected IEnemiesProvider EnemiesProvider => _enemiesProvider;
@@ -223,6 +225,17 @@ public abstract class SingleShootAbility : CharacterActiveAbility
             return;
 
         Vector3 effectPosition = shootObj.transform.position;
+        if (_projectileOwner != null && !_projectileOwner.IsTransitionPaused &&
+            !_projectileOwner.HealthSystem.IsDead)
+        {
+            Sounds.Play(Id switch
+            {
+                AbilityName.FireBall => SoundId.FireballImpact,
+                AbilityName.RabbitBoomerang => SoundId.BoomerangImpact,
+                AbilityName.BulletExplosion => SoundId.BulletImpact,
+                _ => SoundId.None
+            });
+        }
         Object.Destroy(shootObj);
         SpawnEffect(AbilityConfig.ExplosionPrefab, effectPosition);
         SpawnEffect(AbilityConfig.MuzzlePrefab, effectPosition);
@@ -299,6 +312,14 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         }
 
         playerCollisionDetector.Initialize(character.transform);
+        _projectileOwner = character;
+        Sounds.Play(Id switch
+        {
+            AbilityName.FireBall => SoundId.FireballShot,
+            AbilityName.RabbitBoomerang => SoundId.BoomerangShot,
+            AbilityName.BulletExplosion => SoundId.BulletShot,
+            _ => SoundId.None
+        });
         int projectileDamage = GetProjectileDamage(projectileIndex, projectileCount);
         OnProjectileCreated(character, shootObj, playerCollisionDetector, targetEnemy, spawnPosition,
             targetPosition, shootDirection, projectileDamage);

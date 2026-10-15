@@ -7,6 +7,9 @@ namespace Features.Bosses.Scripts
     {
         [field: SerializeField] public BossFacade BossPrefab { get; private set; }
         [field: SerializeField]
+        [field: Tooltip("Presentation prefab with an idle Animator and no combat components.")]
+        public GameObject MenuPreviewPrefab { get; private set; }
+        [field: SerializeField]
         [field: Tooltip("Door on the boss side of the room. The room rotates to put this door opposite the entrance.")]
         public RoomDoor BossDoor { get; private set; }
         [SerializeField] private bool _showAttackPreview = true;

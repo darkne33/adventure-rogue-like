@@ -11,7 +11,10 @@ namespace Features.Sounds
         SoundId CurrentMusic { get; }
 
         void SetUiSounds(SoundsCatalog catalog);
+        void SetGameplaySounds(SoundsCatalog catalog);
         void Play(SoundId soundId);
+        void PlayLoop(SoundId soundId, Transform owner);
+        void StopGameplayLoops();
         void PlaySfx(AudioClip clip, float volume = 1f);
         void StopAllSfx();
         void StopMusic();

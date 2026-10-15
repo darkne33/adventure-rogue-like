@@ -34,6 +34,7 @@ namespace Core
                 await _gameAddressableService.InitializeAddressables();
                 await _gameplayAssets.Initialize(cts);
                 _soundsService.SetUiSounds(_gameplayAssets.UiSounds);
+                _soundsService.SetGameplaySounds(_gameplayAssets.GameplaySounds);
                 _quests.Initialize(_gameplayAssets.Progression);
                 _questNotifications.Initialize(_gameplayAssets.QuestNotification);
                 await _cameraService.Initialize(cts);

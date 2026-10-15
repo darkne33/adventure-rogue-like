@@ -68,6 +68,7 @@ namespace Features.Enemies.Scripts
                 if (!HasValidParticipants || _enemyFacade.IsDead || _enemyFacade.CanAttack == false)
                     return;
 
+                _enemyFacade.PlayAttackSound();
                 if (CanHitCharacter(enemyTransform, attackDirection) &&
                     _characterFacade.ReceiveDamage(_enemyConfiguration.Damage, _enemyFacade))
                 {

@@ -1,6 +1,7 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using Features.Sounds;
 
 namespace Features.Enemies.Scripts
 {
@@ -16,6 +17,9 @@ namespace Features.Enemies.Scripts
         private int _damage;
         private bool _isLaunched;
         private bool _isResolved;
+        private ISoundsService _sounds;
+        private SoundId _impactSound;
+        private bool _impactSoundPlayed;
 
         protected bool IsResolved => _isResolved;
         protected virtual bool ResolvesDirectHits => true;
@@ -30,6 +34,12 @@ namespace Features.Enemies.Scripts
 
             _target = target;
             _source = source;
+            _sounds = source != null ? source.Sounds : null;
+            _impactSound = source != null && source.Configuration.EnemyDamageType == EnemyDamageType.RangeDirection
+                ? SoundId.EnemyNukeImpact
+                : source != null && source.SpawnType == EnemyType.Ghost
+                    ? SoundId.EnemyGhostImpact : SoundId.EnemyLavaImpact;
+            _impactSoundPlayed = false;
             _damage = damage;
             _isLaunched = true;
             _isResolved = false;
@@ -78,6 +88,8 @@ namespace Features.Enemies.Scripts
 
             _isResolved = true;
             _isLaunched = false;
+
+            PlayImpactSound();
 
             if (_target == null)
                 return;
@@ -133,7 +145,16 @@ namespace Features.Enemies.Scripts
 
             _isResolved = true;
             _isLaunched = false;
+            PlayImpactSound();
             Destroy(gameObject);
+        }
+
+        private void PlayImpactSound()
+        {
+            if (_impactSoundPlayed)
+                return;
+            _impactSoundPlayed = true;
+            _sounds?.Play(_impactSound);
         }
 
         private void CancelCurrentFlight()

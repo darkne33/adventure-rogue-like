@@ -168,6 +168,7 @@ namespace Features.Enemies.Scripts
 
         private void SpawnProjectiles(CancellationToken cancellationToken)
         {
+            _enemyFacade.PlayAttackSound();
             Vector3 startPosition = _enemyFacade.TargetToShootDamage != null
                 ? _enemyFacade.TargetToShootDamage.position
                 : _enemyFacade.transform.position + Vector3.up;

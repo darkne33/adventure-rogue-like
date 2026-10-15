@@ -28,6 +28,7 @@ namespace Core
         public Shader ProximityFadeShader { get; private set; }
         public RunResultsPanel RunResults { get; private set; }
         public SoundsCatalog UiSounds { get; private set; }
+        public SoundsCatalog GameplaySounds { get; private set; }
 
         public GameplayAssetService(IAddressableLoadService assets) => _assets = assets;
 
@@ -60,6 +61,8 @@ namespace Core
                     "Assets/Features/RunResults/Prefabs/RunResultsPanel.prefab", token);
                 UiSounds = await Load<SoundsCatalog>(
                     "Assets/Features/Sounds/Configs/UiSoundsCatalog.asset", token);
+                GameplaySounds = await Load<SoundsCatalog>(
+                    "Assets/Features/Sounds/Configs/RetroArsenalSoundsCatalog.asset", token);
                 _initialized = true;
             }
             catch
@@ -92,6 +95,7 @@ namespace Core
             ProximityFadeShader = null;
             RunResults = null;
             UiSounds = null;
+            GameplaySounds = null;
             _initialized = false;
         }
 

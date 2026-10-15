@@ -28,6 +28,8 @@ namespace Features.Quests.Scripts
         [SerializeField] private RectTransform _progressBarRoot;
         [SerializeField] private UnityEngine.UI.Image _progressBarFill;
         [SerializeField] private UnlockCellView _cellPrefab;
+        [SerializeField] private UnlockRevealView _revealPrefab;
+        [SerializeField] private CanvasGroup _contentGroup;
         [SerializeField] private CategoryTab[] _tabs = Array.Empty<CategoryTab>();
         [SerializeField] private Color _activeTabColor = new(0.11f, 0.13f, 0.11f, 0.85f);
         [SerializeField] private Color _inactiveTabColor = new(0.11f, 0.13f, 0.11f, 0.3f);
@@ -45,6 +47,7 @@ namespace Features.Quests.Scripts
         private int _builtCategoryIndex = -1;
         private float _gridWidth;
         private bool _isOpen;
+        private UnlockRevealView _reveal;
 
         public event Action BackRequested;
 
@@ -62,6 +65,9 @@ namespace Features.Quests.Scripts
             _service = service;
             _getPortrait = getPortrait;
             _portraitMaterial = portraitMaterial;
+            _reveal = _container.InstantiatePrefabForComponent<UnlockRevealView>(_revealPrefab, transform);
+            _reveal.HideImmediate();
+            _reveal.Dismissed += OnRevealDismissed;
             _closeButton.onClick.AddListener(RequestBack);
             _purchaseButton.onClick.AddListener(PurchaseSelected);
             for (int i = 0; i < _tabs.Length; i++)
@@ -96,6 +102,8 @@ namespace Features.Quests.Scripts
         public void Hide()
         {
             _service.Changed -= Refresh;
+            _reveal.HideImmediate();
+            SetContentInteractable(true);
             _isOpen = false;
             _lastFocusedObject = null;
             gameObject.SetActive(false);
@@ -263,21 +271,34 @@ namespace Features.Quests.Scripts
 
         private void PurchaseSelected()
         {
-            if (_selected == null)
+            if (_selected == null || _reveal.IsVisible)
                 return;
-            if (!_service.CanPurchase(_selected) || !_service.TryPurchase(_selected.Id))
+            UnlockDefinition purchased = _selected;
+            if (!_service.CanPurchase(purchased) || !_service.TryPurchase(purchased.Id))
             {
                 _sounds.Play(SoundId.UiError);
                 return;
             }
             _sounds.Play(SoundId.UiConfirm);
-            foreach (UnlockCellView cell in _cells)
-            {
-                if (cell.Unlock != _selected)
-                    continue;
-                ProgressionMenuUi.Focus(cell.Button);
-                break;
-            }
+            _scroll.StopMovement();
+            SetContentInteractable(false);
+            ApplyIcon(_reveal.Icon, purchased, true);
+            _reveal.Show(purchased);
+        }
+
+        private void OnRevealDismissed()
+        {
+            SetContentInteractable(true);
+            if (!_isOpen)
+                return;
+            _sounds.Play(SoundId.UiClose);
+            FocusSelectedUnlock(false);
+        }
+
+        private void SetContentInteractable(bool interactable)
+        {
+            _contentGroup.interactable = interactable;
+            _contentGroup.blocksRaycasts = interactable;
         }
 
         private void RefreshNavigation()
@@ -346,9 +367,16 @@ namespace Features.Quests.Scripts
         {
             if (!_isOpen)
                 return;
-            ResizeGrid();
             Keyboard keyboard = Keyboard.current;
             Gamepad gamepad = Gamepad.current;
+            if (_reveal.IsVisible)
+            {
+                if ((keyboard != null && keyboard.escapeKey.wasPressedThisFrame) ||
+                    (gamepad != null && gamepad.buttonEast.wasPressedThisFrame))
+                    _reveal.Dismiss();
+                return;
+            }
+            ResizeGrid();
             if ((keyboard != null && keyboard.escapeKey.wasPressedThisFrame) ||
                 (gamepad != null && gamepad.buttonEast.wasPressedThisFrame))
             {
@@ -378,12 +406,19 @@ namespace Features.Quests.Scripts
 
         private void RequestBack()
         {
+            if (_reveal.IsVisible)
+            {
+                _reveal.Dismiss();
+                return;
+            }
             if (_isOpen)
                 BackRequested?.Invoke();
         }
 
         private void OnDestroy()
         {
+            if (_reveal != null)
+                _reveal.Dismissed -= OnRevealDismissed;
             if (_service != null)
                 _service.Changed -= Refresh;
             if (_closeButton != null)

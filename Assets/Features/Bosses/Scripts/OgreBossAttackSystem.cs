@@ -133,6 +133,7 @@ namespace Features.Bosses.Scripts
                             GameObject effect = Object.Instantiate(attack.EffectPrefab, effectPoint, Quaternion.identity);
                             Object.Destroy(effect, Mathf.Max(0.1f, attack.EffectLifetime));
                         }
+                        _boss.PlayCombatSound(Features.Sounds.SoundId.BossSlam);
                         ApplyHit(impactPoint, attack, direction);
                     }
                 }

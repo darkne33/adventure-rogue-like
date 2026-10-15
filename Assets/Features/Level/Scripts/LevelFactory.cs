@@ -42,7 +42,8 @@ public class LevelFactory : ILevelFactory
         }
     }
 
-    private Room GetNextBossRoom()
+    // Previewing the next boss reserves the same room until a level initializes successfully.
+    public Room GetNextBossRoom()
     {
         if (_remainingBossRooms.Count == 0)
         {

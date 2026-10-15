@@ -109,6 +109,8 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
     public UniTask WaitForPlay(CancellationToken cancellationToken) =>
         UniTask.WaitUntil(() => _playRequested, cancellationToken: cancellationToken);
 
+    public void ShowBossPreview(Room bossRoom) => Panel.Room.ShowBossPreview(bossRoom);
+
     public override UniTask OnClosed()
     {
         _questService.Changed -= RefreshProgression;

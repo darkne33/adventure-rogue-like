@@ -110,6 +110,7 @@ namespace Features.Enemies.Scripts
                 // Spend the rest of this frame's distance after reflecting, without
                 // waiting for another frame or slowing down at the boundary.
                 SetHeading(_heading + 2);
+                _enemy.PlayCombatSound(Features.Sounds.SoundId.HazardBounce);
             }
 
             UpdateVisualRotation();

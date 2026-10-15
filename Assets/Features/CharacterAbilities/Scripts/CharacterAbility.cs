@@ -1,8 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Features.Sounds;
+using Zenject;
 
 public abstract class CharacterAbility
 {
+    [Inject] protected ISoundsService Sounds { get; private set; }
     private static readonly AbilityUpgradeType[] DefaultUpgradeTypes = { AbilityUpgradeType.Default };
 
     private readonly Stack<AppliedAbilityUpgrade> _appliedUpgrades = new();

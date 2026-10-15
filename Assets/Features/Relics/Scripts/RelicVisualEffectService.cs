@@ -4,6 +4,7 @@ using Core;
 using Core.Services;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using Features.Sounds;
 
 namespace Features.Relics.Scripts
 {
@@ -20,10 +21,12 @@ namespace Features.Relics.Scripts
     public sealed class RelicVisualEffectService : IRelicVisualEffectService
     {
         private readonly IEffectsService _effectsService;
+        private readonly ISoundsService _sounds;
 
-        public RelicVisualEffectService(IEffectsService effectsService)
+        public RelicVisualEffectService(IEffectsService effectsService, ISoundsService sounds)
         {
             _effectsService = effectsService;
+            _sounds = sounds;
         }
 
         public EffectPlayer BeginPersistent(EffectName effectName, Vector3 position, float scale = 1f)
@@ -35,6 +38,8 @@ namespace Features.Relics.Scripts
             effect.transform.SetPositionAndRotation(position, Quaternion.identity);
             effect.transform.localScale = Vector3.one * scale;
             effect.PlayWithoutRelease();
+            if (effectName == EffectName.RelicAquariusTrail)
+                _sounds.Play(SoundId.RelicWater);
             return effect;
         }
 
@@ -66,6 +71,7 @@ namespace Features.Relics.Scripts
                 try
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: token);
+                    _sounds.Play(SoundId.RelicExplosion);
                     onDetonate?.Invoke(configuredEffect.transform.position);
                 }
                 finally
@@ -77,6 +83,7 @@ namespace Features.Relics.Scripts
             }
 
             await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: token);
+            _sounds.Play(SoundId.RelicExplosion);
             onDetonate?.Invoke(position);
         }
 
@@ -90,6 +97,14 @@ namespace Features.Relics.Scripts
             effect.transform.position = position;
             effect.transform.rotation = Quaternion.identity;
             effect.transform.localScale = Vector3.one * scale;
+            _sounds.Play(effectName switch
+            {
+                EffectName.RelicMeteorImpact => SoundId.RelicMeteor,
+                EffectName.RelicExplosivoExplosion => SoundId.RelicExplosion,
+                EffectName.RelicRicochet => SoundId.BoomerangImpact,
+                EffectName.RelicSacrificialDagger => SoundId.RelicDagger,
+                _ => SoundId.None
+            });
             await effect.PlayAsync(token);
             return true;
         }

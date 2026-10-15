@@ -115,6 +115,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.BindInterfacesAndSelfTo<RoomCompletionTimeSlowEffect>().AsSingle().NonLazy();
         Container.BindInterfacesAndSelfTo<RoomLeaderboardReporter>().AsSingle().NonLazy();
         Container.BindInterfacesAndSelfTo<QuestRunTracker>().AsSingle().NonLazy();
+        Container.BindInterfacesAndSelfTo<Features.Sounds.CombatSoundsController>().AsSingle().NonLazy();
     }
 
     private void BindCharacterWallet() =>

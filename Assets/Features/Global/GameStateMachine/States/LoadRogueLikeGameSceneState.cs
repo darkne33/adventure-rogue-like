@@ -18,6 +18,8 @@ namespace Core
         [Inject] private ICursorService _cursorService;
         [Inject] private DiContainer _container;
 
+        private ILevelFactory _levelFactory;
+
         public override UniTask Enter(CancellationToken cts) => ShowMainMenu(cts);
 
         private async UniTask<RogueLikeStateMachine> LoadGameScene(CancellationToken cancellationToken)
@@ -37,6 +39,7 @@ namespace Core
 
             var sceneContext = gameSceneComponentsProvider
                 .GetSceneContext();
+            _levelFactory = sceneContext.Container.Resolve<ILevelFactory>();
             gameModeService.Add<RogueLikeStateMachine>(sceneContext.Container);
             var rogueLikeStateMachine = gameModeService.Get<RogueLikeStateMachine>();
 
@@ -67,6 +70,8 @@ namespace Core
                             .OpenPanelWithPresenterHidden<MainMenuPanelPresenter>(PanelName.MainMenuPanel);
                         isPanelOpen = true;
                         cancellationToken.ThrowIfCancellationRequested();
+                        // Temporarily disable the boss preview in the main menu.
+                        // presenter.ShowBossPreview(_levelFactory.GetNextBossRoom());
                     },
                     () =>
                     {

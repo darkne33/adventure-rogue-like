@@ -103,6 +103,8 @@ MonoBehaviour:
   _progressBarRoot: {fileID: 100503}
   _progressBarFill: {fileID: 100509}
   _cellPrefab: {fileID: 114100, guid: 3cc5322dc50e4ab2bb7b51534c9d1210, type: 3}
+  _revealPrefab: {fileID: 100005, guid: 46c3f8a5bc4b43bda7141d2f1e8fab90, type: 3}
+  _contentGroup: {fileID: 760000001}
   _tabs:
   - Category: 0
     Button: {fileID: 100107}
@@ -133,6 +135,7 @@ GameObject:
   - component: {fileID: 100005}
   - component: {fileID: 100006}
   - component: {fileID: 100007}
+  - component: {fileID: 760000001}
   m_Layer: 5
   m_Name: Window
   m_TagString: Untagged
@@ -4941,3 +4944,15 @@ MonoBehaviour:
   _sound: 0
   _hoverSound: 6
   _valueSound: 11
+--- !u!225 &760000001
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100004}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0

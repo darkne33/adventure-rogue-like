@@ -13,6 +13,7 @@ public class CharacterDeathSystem : IDeathSystem
 
     public void HandleDeath()
     {
+        _characterFacade.PlayCombatSound(Features.Sounds.SoundId.PlayerDeath);
         string sceneName = _characterFacade.gameObject.scene.name;
         _runResultsController.Show(sceneName);
         _characterFacade.DisableAfterDeath();

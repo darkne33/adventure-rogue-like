@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
+using Features.Sounds;
 using UnityEngine;
 
 public sealed class EarthRockAbility : CharacterActiveAbility
@@ -209,6 +210,7 @@ public sealed class EarthRockAbility : CharacterActiveAbility
         }
 
         slot.Stone = stone;
+        Sounds.Play(SoundId.StoneSpawn);
         slot.RespawnRemaining = 0f;
         collisionDetector.Initialize(character.transform);
         collisionDetector.OnHit = enemy =>

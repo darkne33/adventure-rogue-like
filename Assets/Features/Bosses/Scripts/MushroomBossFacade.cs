@@ -91,6 +91,7 @@ namespace Features.Bosses.Scripts
 
         private void BeginSplit()
         {
+            PlayCombatSound(Features.Sounds.SoundId.MushroomSplit);
             _hasSplit = true;
             if (_movementConfiguration.SplitPrefab == null)
             {

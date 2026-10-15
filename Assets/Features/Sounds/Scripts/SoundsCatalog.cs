@@ -7,8 +7,10 @@ namespace Features.Sounds
     public sealed class SoundsCatalog : ScriptableObject
     {
         public IReadOnlyList<SoundDefinition> Sounds => _sounds;
+        public SoundLoopEmitter LoopPrefab => _loopPrefab;
 
         [SerializeField] private List<SoundDefinition> _sounds = new();
+        [SerializeField] private SoundLoopEmitter _loopPrefab;
 
         private void OnValidate()
         {

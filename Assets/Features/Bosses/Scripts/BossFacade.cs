@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using Features.Enemies.Scripts;
 using UnityEngine;
 using Zenject;
+using Features.Sounds;
 
 namespace Features.Bosses.Scripts
 {
@@ -43,6 +44,9 @@ namespace Features.Bosses.Scripts
 
         [Inject] private IBossSystemsFactory _systemsFactory;
         [Inject] private ICharacterProvider _characterProvider;
+        [Inject] private ISoundsService _sounds;
+
+        public void PlayCombatSound(SoundId sound) => _sounds.Play(sound);
 
         private Rigidbody _rigidbody;
         private Mesh _spawnColliderMesh;

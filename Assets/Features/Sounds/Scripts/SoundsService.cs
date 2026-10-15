@@ -14,6 +14,10 @@ namespace Features.Sounds
 
         private readonly Dictionary<SoundId, SoundDefinition> _sounds = new();
         private readonly HashSet<SoundId> _reportedInvalidSounds = new();
+        private readonly Dictionary<SoundId, float> _nextPlayTimes = new();
+        private readonly Dictionary<SoundId, int> _lastVariants = new();
+        private readonly List<SoundLoopEmitter> _loops = new();
+        private SoundLoopEmitter _loopPrefab;
 
         private SoundsCatalog _catalog;
         private ISoundSettingsStorage _settingsStorage;
@@ -47,6 +51,18 @@ namespace Features.Sounds
         // Called after the UI catalog and its clips finish loading during bootstrap.
         public void SetUiSounds(SoundsCatalog catalog)
         {
+            MergeSounds(catalog);
+        }
+
+        public void SetGameplaySounds(SoundsCatalog catalog)
+        {
+            StopGameplayLoops();
+            MergeSounds(catalog);
+            _loopPrefab = catalog.LoopPrefab;
+        }
+
+        private void MergeSounds(SoundsCatalog catalog)
+        {
             EnsureInitialized();
 
             if (catalog == null)
@@ -59,6 +75,8 @@ namespace Features.Sounds
 
                 _sounds[sound.Id] = sound;
                 _reportedInvalidSounds.Remove(sound.Id);
+                _nextPlayTimes.Remove(sound.Id);
+                _lastVariants.Remove(sound.Id);
             }
         }
 
@@ -70,6 +88,9 @@ namespace Features.Sounds
                 return;
 
             if (!TryGetSound(soundId, out SoundDefinition sound))
+                return;
+
+            if (sound.Channel == SoundChannel.Sfx && (sound.Loop || !AllowPlayback(sound)))
                 return;
 
             switch (sound.Channel)
@@ -90,6 +111,77 @@ namespace Features.Sounds
         {
             EnsureInitialized();
             _sfxSource.Stop();
+            StopGameplayLoops();
+        }
+
+        public void PlayLoop(SoundId soundId, Transform owner)
+        {
+            EnsureInitialized();
+            if (owner == null || _loopPrefab == null ||
+                !TryGetSound(soundId, out SoundDefinition sound) || !sound.Loop)
+                return;
+
+            int instances = 0;
+            for (int i = _loops.Count - 1; i >= 0; i--)
+            {
+                SoundLoopEmitter loop = _loops[i];
+                if (loop == null)
+                {
+                    _loops.RemoveAt(i);
+                    continue;
+                }
+                if (loop.Sound != soundId)
+                    continue;
+                if (loop.transform.parent == owner)
+                    return;
+                instances++;
+            }
+            if (instances >= sound.MaxLoopInstances)
+                return;
+
+            SoundLoopEmitter emitter = Instantiate(_loopPrefab, owner, false);
+            emitter.Initialize(this, sound, GetClip(sound));
+            _loops.Add(emitter);
+        }
+
+        public void StopGameplayLoops()
+        {
+            foreach (SoundLoopEmitter loop in _loops)
+            {
+                if (loop != null)
+                {
+                    loop.Stop();
+                    Destroy(loop.gameObject);
+                }
+            }
+            _loops.Clear();
+            _nextPlayTimes.Clear();
+        }
+
+        private bool AllowPlayback(SoundDefinition sound)
+        {
+            if (_settings.SfxMuted || _settings.SfxVolume <= 0f)
+                return false;
+            float now = Time.unscaledTime;
+            if (_nextPlayTimes.TryGetValue(sound.Id, out float nextTime) && now < nextTime)
+                return false;
+            if (sound.MinimumInterval > 0f)
+                _nextPlayTimes[sound.Id] = now + sound.MinimumInterval;
+            return true;
+        }
+
+        private AudioClip GetClip(SoundDefinition sound)
+        {
+            AudioClip[] variants = sound.Variants;
+            if (variants == null || variants.Length == 0)
+                return sound.Clip;
+
+            int count = variants.Length + 1;
+            int index = Random.Range(0, count);
+            if (_lastVariants.TryGetValue(sound.Id, out int previous) && index == previous)
+                index = (index + Random.Range(1, count)) % count;
+            _lastVariants[sound.Id] = index;
+            return index == 0 || variants[index - 1] == null ? sound.Clip : variants[index - 1];
         }
 
         public void StopMusic()
@@ -247,7 +339,7 @@ namespace Features.Sounds
         }
 
         private void PlaySfx(SoundDefinition sound) =>
-            PlaySfx(sound.Clip, sound.Volume);
+            PlaySfx(GetClip(sound), sound.Volume);
 
         private void PlayMusic(SoundDefinition sound)
         {

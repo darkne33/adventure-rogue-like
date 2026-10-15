@@ -260,6 +260,7 @@ public sealed class PunchAbility : CharacterActiveAbility
         GetPunchPose(character, preferredEnemy, punchIndex, globalPunchIndex, idleAngleOffset,
             simultaneousIndex, simultaneousAttackCount, out Vector3 punchPosition,
             out Quaternion punchRotation);
+        Sounds.Play(Features.Sounds.SoundId.PunchSwing);
         SpawnPunchEffect(punchPosition, punchRotation);
 
         if (preferredEnemy is BossFacade && preferredEnemy is not MushroomBossFacade)

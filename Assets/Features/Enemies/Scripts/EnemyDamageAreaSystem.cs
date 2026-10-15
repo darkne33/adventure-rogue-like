@@ -161,6 +161,7 @@ namespace Features.Enemies.Scripts
             _hasDetonated = true;
             Vector3 explosionPosition = GetExplosionPosition();
 
+            _enemyFacade.PlayAttackSound();
             SpawnExplosion(explosionPosition);
 
             if (IsCharacterInsideDamageRadius(explosionPosition))

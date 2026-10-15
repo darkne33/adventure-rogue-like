@@ -239,7 +239,8 @@ public sealed class MinimapController : IDisposable, ITickable
         for (int index = 0; index < enemies.Count; index++)
         {
             CombatTarget enemy = enemies[index];
-            if (enemy == null || enemy.gameObject.activeInHierarchy == false)
+            if (enemy == null || enemy.gameObject.activeInHierarchy == false ||
+                enemy.SpawnType == EnemyType.Stone_Spikes)
                 continue;
 
             Vector3 localPosition =

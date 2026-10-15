@@ -174,6 +174,7 @@ namespace Features.Enemies.Scripts
                 if (CanContinueAttack == false)
                     return;
 
+                _enemyFacade.PlayAttackSound();
                 BeginDash();
                 await UniTask.WaitUntil(() => _state == State.Finished || CanContinueAttack == false,
                     cancellationToken: cancellationToken);

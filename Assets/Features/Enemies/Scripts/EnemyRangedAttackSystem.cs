@@ -155,6 +155,7 @@ namespace Features.Enemies.Scripts
 
         private void SpawnProjectile(CancellationToken cancellationToken)
         {
+            _enemyFacade.PlayAttackSound();
             Transform spawnPoint = _attackView.ProjectileSpawnPoint;
             Vector3 startPosition = spawnPoint.position;
             Vector3 targetPosition = _characterFacade.transform.position + _attackView.TargetOffset;

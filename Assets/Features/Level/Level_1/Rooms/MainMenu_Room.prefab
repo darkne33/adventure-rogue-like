@@ -4278,6 +4278,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 7929252481209465747}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+--- !u!1 &7401000000000000040
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7401000000000000041}
+  m_Layer: 0
+  m_Name: BossPresentationPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7401000000000000041
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7401000000000000040}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: -29.01, y: 0.5, z: 80.88}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7929252481209465747}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1 &7876279223001462767
 GameObject:
   m_ObjectHideFlags: 0
@@ -9440,6 +9471,7 @@ Transform:
   - {fileID: 7401000000000000011}
   - {fileID: 7401000000000000021}
   - {fileID: 7401000000000000031}
+  - {fileID: 7401000000000000041}
   - {fileID: 5278496365004161987}
   - {fileID: 9159642368431853672}
   - {fileID: 3436155875049686028}
@@ -9494,6 +9526,7 @@ MonoBehaviour:
   _menuCameraPoint: {fileID: 7401000000000000011}
   _characterCameraPoint: {fileID: 7401000000000000021}
   _characterSpawnPoint: {fileID: 7401000000000000031}
+  _bossSpawnPoint: {fileID: 7401000000000000041}
   _transitionDuration: 1
   _fieldOfView: 40
   _menuSwayAngles: {x: 0.45, y: 0.7, z: 0.15}

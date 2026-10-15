@@ -1,5 +1,6 @@
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
+using Features.Sounds;
 using UnityEngine;
 
 public sealed class FireFieldAbility : CharacterActiveAbility
@@ -219,6 +220,8 @@ public sealed class FireFieldAbility : CharacterActiveAbility
         }
 
         float duration = _configuration.FieldDuration * AbilityDurationMultiplier;
+        Sounds.Play(SoundId.FireFieldStart);
+        Sounds.PlayLoop(SoundId.FireFieldLoop, fieldObject.transform);
         damageArea.Initialize(_enemiesProvider, _damageRadius, _configuration.DamageHeight,
             _configuration.DamageTickInterval, duration, enemy => ApplyDamage(character, enemy),
             _characterStats);

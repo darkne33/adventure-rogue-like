@@ -198,6 +198,7 @@ namespace Features.Bosses.Scripts
                             ? headEffectPoint
                             : _boss.LandingEffectOrigin.position;
                         SpawnEffect(attack.EffectPrefab, effectPoint, attack.EffectLifetime);
+                        _boss.PlayCombatSound(Features.Sounds.SoundId.BossSlam);
                         ApplyHit(impactPoint, radius, attack, direction);
                         if (!CanContinue() || cancellationToken.IsCancellationRequested)
                             return;

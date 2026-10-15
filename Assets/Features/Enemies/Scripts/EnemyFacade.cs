@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AI;
 using Zenject;
+using Features.Sounds;
 
 namespace Features.Enemies.Scripts
 {
@@ -40,6 +41,26 @@ namespace Features.Enemies.Scripts
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
         [SerializeField] private Renderer[] _meshRenderers;
         [SerializeField] private Transform _movementVisual;
+        [Inject] private ISoundsService _sounds;
+        public ISoundsService Sounds => _sounds;
+
+        public void PlayCombatSound(SoundId sound) => _sounds.Play(sound);
+
+        public void PlayAttackSound()
+        {
+            SoundId sound = Configuration.EnemyDamageType switch
+            {
+                EnemyDamageType.Melee => SoundId.EnemyMelee,
+                EnemyDamageType.Dash => SoundId.EnemyDash,
+                EnemyDamageType.RangeArea => SoundId.EnemyExplosion,
+                EnemyDamageType.RangeBullet when SpawnType == EnemyType.Ghost => SoundId.EnemyGhostShot,
+                EnemyDamageType.RangeBullet => SoundId.EnemyLavaShot,
+                EnemyDamageType.RangeDirection => SoundId.EnemyNukeShot,
+                EnemyDamageType.Jump => SoundId.EnemyTakeoff,
+                _ => SoundId.None
+            };
+            _sounds.Play(sound);
+        }
         private EnemyConfiguration _runtimeConfiguration;
 
         internal void ConfigureForRoom(EnemyHealthScalingConfiguration scaling, int roomIndex,
@@ -235,6 +256,7 @@ namespace Features.Enemies.Scripts
 
             if (_isRelicStunned == false)
             {
+                _sounds.Play(SoundId.EnemyStun);
                 _wasStoppedBeforeRelicStun = IsStopped;
                 _releaseStopAfterRelicStun = false;
             }

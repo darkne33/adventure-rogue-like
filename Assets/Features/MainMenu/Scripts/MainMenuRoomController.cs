@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Features.Bosses.Scripts;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
@@ -15,6 +16,7 @@ public sealed class MainMenuRoomController : MonoBehaviour
     [SerializeField] private Transform _menuCameraPoint;
     [SerializeField] private Transform _characterCameraPoint;
     [SerializeField] private Transform _characterSpawnPoint;
+    [SerializeField] private Transform _bossSpawnPoint;
     [SerializeField, Min(0.01f)] private float _transitionDuration = 1f;
     [SerializeField, Range(10f, 90f)] private float _fieldOfView = 40f;
 
@@ -33,6 +35,7 @@ public sealed class MainMenuRoomController : MonoBehaviour
     [SerializeField, Min(0.01f)] private float _blurTransitionDistance = 18f;
 
     private GameObject _worldRoot;
+    private GameObject _bossPreview;
     private Camera _camera;
     private UnityEngine.UI.RawImage _background;
     private RenderTexture _renderTexture;
@@ -43,6 +46,29 @@ public sealed class MainMenuRoomController : MonoBehaviour
     private float _menuSwayTime;
 
     public Transform CharacterSpawnPoint => _characterSpawnPoint;
+
+    public void ShowBossPreview(Room bossRoom)
+    {
+        if (bossRoom == null)
+            throw new InvalidOperationException("The next boss room is not assigned.");
+
+        BossSpawnPoint spawnPoint = bossRoom.GetComponentInChildren<BossSpawnPoint>(true);
+        if (spawnPoint == null)
+            throw new InvalidOperationException($"Boss room '{bossRoom.name}' requires a boss spawn point.");
+        if (spawnPoint.MenuPreviewPrefab == null)
+            throw new InvalidOperationException(
+                $"Boss room '{bossRoom.name}' has a missing or unresolved menu preview prefab reference.");
+        if (_bossSpawnPoint == null)
+            throw new InvalidOperationException("MainMenu_Room requires a boss presentation point.");
+
+        if (_bossPreview != null)
+        {
+            _bossPreview.SetActive(false);
+            Destroy(_bossPreview);
+        }
+
+        _bossPreview = Instantiate(spawnPoint.MenuPreviewPrefab, _bossSpawnPoint, false);
+    }
 
     public static MainMenuRoomController CreateInstance(MainMenuRoomController prefab,
         RectTransform menuRoot)

@@ -37,6 +37,9 @@ public class CharacterFacade : MonoBehaviour
     [Inject] private AllAbilitiesConfiguration _abilitiesConfiguration;
     [InjectOptional] private RelicManager _relicManager;
     [InjectOptional] private RelicEventBus _relicEventBus;
+    [Inject] private Features.Sounds.ISoundsService _sounds;
+
+    public void PlayCombatSound(Features.Sounds.SoundId sound) => _sounds.Play(sound);
 
     // Normals must point upward: slopes below 90 degrees, with a small floating-point tolerance.
     private const float MinGroundNormalY = 0.00001f;
@@ -176,7 +179,10 @@ public class CharacterFacade : MonoBehaviour
 
         float evasionChance = Mathf.Clamp(_characterStats.Evasion, 0f, 100f) * 0.01f;
         if (Random.value < evasionChance)
+        {
+            _sounds.Play(Features.Sounds.SoundId.PlayerDodge);
             return false;
+        }
 
         if (_relicManager != null && _relicManager.TryBlockIncomingDamage(this))
             return false;
@@ -189,7 +195,11 @@ public class CharacterFacade : MonoBehaviour
         if (reducedDamage <= 0)
             return false;
 
+        float shieldBeforeDamage = _shieldSystem.CurrentShield;
         int absorbedDamage = _shieldSystem.AbsorbDamage(reducedDamage);
+        if (absorbedDamage > 0)
+            _sounds.Play(_shieldSystem.CurrentShield <= 0f && shieldBeforeDamage > 0f
+                ? Features.Sounds.SoundId.PlayerShieldBreak : Features.Sounds.SoundId.PlayerBlock);
         int healthDamage = reducedDamage - absorbedDamage;
 
         float healthBeforeDamage = _healthSystem.CurrentHealth;
@@ -205,6 +215,8 @@ public class CharacterFacade : MonoBehaviour
         }
 
         int appliedHealthDamage = healthDamage > 0 ? _healthSystem.GetDamage(healthDamage) : 0;
+        if (appliedHealthDamage > 0 && !_healthSystem.IsDead)
+            _sounds.Play(Features.Sounds.SoundId.PlayerHit);
         int appliedDamage = absorbedDamage + appliedHealthDamage;
 
         if (appliedDamage <= 0)
@@ -231,6 +243,8 @@ public class CharacterFacade : MonoBehaviour
         if (appliedDamage <= 0)
             return false;
 
+        if (!_healthSystem.IsDead)
+            _sounds.Play(Features.Sounds.SoundId.PlayerHit);
         PlayDamageFeedback(appliedDamage);
         _damageEffectSystem.DealDamage();
         _relicEventBus?.PublishDamageTaken(new RelicDamageTakenEvent(this, null, appliedDamage, damageType));

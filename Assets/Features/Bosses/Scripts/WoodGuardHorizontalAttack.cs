@@ -195,6 +195,7 @@ namespace Features.Bosses.Scripts
                 piece.Roots = Object.Instantiate(prefab, piece.SurfacePosition + Vector3.down * undergroundDepth,
                     rotation * geometry.RootRotation);
                 piece.Roots.EnableObstacle();
+                _boss.PlayCombatSound(Features.Sounds.SoundId.BossRoots);
                 if (!line.HasHitCharacter)
                     line.HasHitCharacter = ApplyHit(piece, rotation, geometry.Size);
             }
