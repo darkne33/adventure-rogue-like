@@ -201,7 +201,7 @@ namespace Features.Quests.Scripts
             if (string.IsNullOrWhiteSpace(questId))
                 yield break;
             foreach (UnlockDefinition unlock in Unlocks)
-                if (unlock.RequiredQuestId == questId)
+                if (unlock.RequiredQuestId == questId && !unlock.IsGrantedWithUnlock)
                     yield return unlock;
         }
 
