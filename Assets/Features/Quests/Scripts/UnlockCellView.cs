@@ -32,12 +32,12 @@ namespace Features.Quests.Scripts
             _button.onClick.AddListener(Select);
         }
 
-        public void RefreshState(bool owned, bool requirementMet, bool isNew)
+        public void RefreshState(bool owned, bool requirementMet, bool isNew, bool showPrice = true)
         {
             _background.color = owned ? _ownedColor : _lockedColor;
             if (!owned && requirementMet)
                 _icon.color = _purchaseIconColor;
-            _priceRoot.gameObject.SetActive(!owned && requirementMet);
+            _priceRoot.gameObject.SetActive(!owned && requirementMet && showPrice);
             _alert.gameObject.SetActive(isNew);
         }
 

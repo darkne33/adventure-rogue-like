@@ -116,11 +116,15 @@ namespace Features.Quests.Scripts
             string reward = quest.SilverReward > 0
                 ? $"+{quest.SilverReward} silver - claim in QUESTS"
                 : string.Empty;
-            if (unlock != null && !_quests.IsOwned(unlock))
+            foreach (UnlockDefinition rewardUnlock in _quests.GetUnlocksForQuest(quest.Id))
             {
+                if (_quests.IsOwned(rewardUnlock))
+                    continue;
                 if (reward.Length > 0)
                     reward += "\n";
-                reward += $"{unlock.DisplayName} - buy in UNLOCKS";
+                reward += rewardUnlock.IsGrantedWithUnlock
+                    ? $"{rewardUnlock.DisplayName} - included with character"
+                    : $"{rewardUnlock.DisplayName} - buy in UNLOCKS";
             }
 
             _view.SetContent(quest.Title, quest.Description, reward, icon);

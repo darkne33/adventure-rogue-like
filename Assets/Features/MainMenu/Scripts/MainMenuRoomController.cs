@@ -18,6 +18,11 @@ public sealed class MainMenuRoomController : MonoBehaviour
     [SerializeField, Min(0.01f)] private float _transitionDuration = 1f;
     [SerializeField, Range(10f, 90f)] private float _fieldOfView = 40f;
 
+    [Header("Menu camera sway")]
+    [SerializeField] private Vector3 _menuSwayAngles = new(0.45f, 0.7f, 0.15f);
+    [SerializeField, Min(0.01f)] private float _menuSwayPeriod = 8f;
+    [SerializeField, Min(0.01f)] private float _menuSwayFadeDuration = 0.5f;
+
     [Header("Environment")]
     [SerializeField] private Material _skyboxMaterial;
     [SerializeField] private VolumeProfile _postProcessProfile;
@@ -34,6 +39,8 @@ public sealed class MainMenuRoomController : MonoBehaviour
     private CancellationTokenSource _transitionCancellation;
     private VolumeProfile _runtimeBlurProfile;
     private DepthOfField _depthOfField;
+    private bool _isMenuSwayActive = true;
+    private float _menuSwayTime;
 
     public Transform CharacterSpawnPoint => _characterSpawnPoint;
 
@@ -177,6 +184,7 @@ public sealed class MainMenuRoomController : MonoBehaviour
     private async UniTask MoveCameraAsync(Transform target, CancellationToken cancellationToken)
     {
         CancelCameraTransition();
+        _isMenuSwayActive = false;
         using var transition = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken, destroyCancellationToken);
         _transitionCancellation = transition;
@@ -199,6 +207,9 @@ public sealed class MainMenuRoomController : MonoBehaviour
                     Vector3.Lerp(startPosition, targetPosition, progress),
                     Quaternion.Slerp(startRotation, targetRotation, progress));
             }
+
+            _menuSwayTime = 0f;
+            _isMenuSwayActive = target == _menuCameraPoint;
         }
         finally
         {
@@ -238,7 +249,26 @@ public sealed class MainMenuRoomController : MonoBehaviour
         if (_camera != null && _background != null)
             ResizeRenderTexture();
 
+        UpdateMenuCameraSway();
         UpdateBlurFocus();
+    }
+
+    private void UpdateMenuCameraSway()
+    {
+        if (!_isMenuSwayActive || _camera == null)
+            return;
+
+        _menuSwayTime += Time.unscaledDeltaTime;
+        float phase = _menuSwayTime * (2f * Mathf.PI / Mathf.Max(0.01f, _menuSwayPeriod));
+        float fade = Mathf.SmoothStep(0f, 1f,
+            Mathf.Clamp01(_menuSwayTime / Mathf.Max(0.01f, _menuSwayFadeDuration)));
+        Vector3 angles = new Vector3(
+            Mathf.Sin(phase) * _menuSwayAngles.x,
+            Mathf.Sin(phase * 0.73f) * _menuSwayAngles.y,
+            Mathf.Sin(phase * 0.51f) * _menuSwayAngles.z) * fade;
+
+        _camera.transform.SetPositionAndRotation(_menuCameraPoint.position,
+            _menuCameraPoint.rotation * Quaternion.Euler(angles));
     }
 
     private void ResizeRenderTexture()

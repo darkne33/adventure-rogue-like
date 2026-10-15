@@ -196,13 +196,19 @@ namespace Features.Quests.Scripts
                 : quest.Description;
         }
 
-        public UnlockDefinition GetUnlockForQuest(string questId)
+        public IEnumerable<UnlockDefinition> GetUnlocksForQuest(string questId)
         {
             if (string.IsNullOrWhiteSpace(questId))
-                return null;
+                yield break;
             foreach (UnlockDefinition unlock in Unlocks)
                 if (unlock.RequiredQuestId == questId)
-                    return unlock;
+                    yield return unlock;
+        }
+
+        public UnlockDefinition GetUnlockForQuest(string questId)
+        {
+            foreach (UnlockDefinition unlock in GetUnlocksForQuest(questId))
+                return unlock;
             return null;
         }
 
@@ -215,7 +221,7 @@ namespace Features.Quests.Scripts
 
         public bool CanPurchase(UnlockDefinition unlock) => unlock != null &&
             !string.IsNullOrWhiteSpace(unlock.Id) && !IsOwned(unlock) &&
-            IsRequirementMet(unlock) && Silver >= unlock.SilverCost;
+            !unlock.IsGrantedWithUnlock && IsRequirementMet(unlock) && Silver >= unlock.SilverCost;
 
         public bool TryPurchase(string unlockId)
         {
@@ -226,6 +232,10 @@ namespace Features.Quests.Scripts
 
                 // Ownership and payment are one save snapshot, including a zero-cost purchase.
                 _purchased.Add(unlock.Id);
+                // Grant companion rewards only on a new purchase, never while restoring older ownership.
+                foreach (UnlockDefinition reward in Unlocks)
+                    if (reward.IsGrantedWithUnlock && reward.GrantedWithUnlockId == unlock.Id)
+                        _purchased.Add(reward.Id);
                 _dirty = true;
                 _updatingWallet = true;
                 try

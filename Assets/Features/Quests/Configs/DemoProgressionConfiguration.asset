@@ -349,6 +349,30 @@ MonoBehaviour:
     _unlockedByDefault: 1
     _requiredQuestId: ""
     _silverCost: 0
+  - _id: weapon_bullet_explosion
+    _category: 1
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: c4e9a1b2d3f54768a9b0c1d2e3f40516, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: run_kills_150
+    _grantedWithUnlockId: character_duke
+    _silverCost: 0
+  - _id: weapon_punch
+    _category: 1
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: c6d572dd09cf4608b231c499f7ca00a1, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: rooms_3
+    _grantedWithUnlockId: character_mr_pocket
+    _silverCost: 0
   - _id: weapon_fire_field
     _category: 1
     _characterId: ""

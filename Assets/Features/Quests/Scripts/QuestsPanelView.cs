@@ -23,6 +23,8 @@ namespace Features.Quests.Scripts
         [SerializeField] private Color _detailClaimedColor = new Color32(54, 179, 140, 255);
         [SerializeField] private GameObject _detailIconFrame;
         [SerializeField] private UnityEngine.UI.Image _detailIcon;
+        [SerializeField] private UnityEngine.UI.Image _pairedRewardIcon;
+        [SerializeField] private UnityEngine.UI.Image _additionalRewardIcon;
         [SerializeField] private TMP_Text _detailCondition;
         [SerializeField] private TMP_Text _detailReward;
         [SerializeField] private TMP_Text _detailSilver;
@@ -177,26 +179,13 @@ namespace Features.Quests.Scripts
             bool rewardClaimed = _service.IsRewardClaimed(row.Quest.Id);
             _detailBackground.color = rewardClaimed ? _detailClaimedColor : _detailDefaultColor;
             _detailReceived.SetActive(rewardClaimed);
-            UnlockDefinition unlock = _service.GetUnlockForQuest(row.Quest.Id);
+            UnlockDefinition[] rewards = _service.GetUnlocksForQuest(row.Quest.Id).ToArray();
             _detailIconFrame.SetActive(true);
-            if (unlock != null)
-                _ui.Icon(_detailIcon, unlock, complete);
-            else
-            {
-                _detailIcon.sprite = _service.Configuration.SilverIcon;
-                _detailIcon.material = null;
-                _detailIcon.color = Color.white;
-                _detailIcon.preserveAspect = true;
-            }
+            _ui.RewardIcons(_detailIcon, _pairedRewardIcon, _additionalRewardIcon, rewards, complete);
             _detailCondition.text = _service.GetQuestDescription(row.Quest);
-            if (unlock != null)
-            {
-                string unlockStatus = _service.IsOwned(unlock) ? "Owned"
-                    : complete ? "Buy in UNLOCKS" : RewardCategory(unlock.Category);
-                _detailReward.text = $"{unlockStatus} - {unlock.DisplayName}";
-            }
-            else
-                _detailReward.text = row.Quest.Title;
+            _detailReward.text = rewards.Length > 0
+                ? string.Join("\n", rewards.Select(unlock => RewardLabel(unlock, complete)))
+                : row.Quest.Title;
             _detailSilver.text = row.Quest.SilverReward > 0
                 ? $"+{row.Quest.SilverReward} silver" +
                   (rewardClaimed ? " claimed" : complete ? " - CLAIM" : string.Empty)
@@ -266,6 +255,22 @@ namespace Features.Quests.Scripts
                         focus = row.Button;
                 ProgressionMenuUi.Focus(focus);
             }
+        }
+
+        private string RewardLabel(UnlockDefinition unlock, bool complete)
+        {
+            string status;
+            if (_service.IsOwned(unlock))
+                status = "Owned";
+            else if (unlock.IsGrantedWithUnlock)
+            {
+                UnlockDefinition source = _service.GetUnlock(unlock.GrantedWithUnlockId);
+                status = _service.IsOwned(source) ? "New character unlocks only"
+                    : $"Included with {source?.DisplayName}";
+            }
+            else
+                status = complete ? "Buy in UNLOCKS" : RewardCategory(unlock.Category);
+            return $"{status} - {unlock.DisplayName}";
         }
 
         private static string RewardCategory(ProgressionCategory category) => category switch

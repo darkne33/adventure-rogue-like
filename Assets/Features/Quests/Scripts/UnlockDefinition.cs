@@ -26,6 +26,7 @@ namespace Features.Quests.Scripts
         [SerializeField] private Sprite _icon;
         [SerializeField] private bool _unlockedByDefault;
         [SerializeField] private string _requiredQuestId;
+        [SerializeField] private string _grantedWithUnlockId;
         [SerializeField, Min(0)] private int _silverCost = 1;
 
         public string Id => _id;
@@ -35,6 +36,8 @@ namespace Features.Quests.Scripts
         public RelicDefinition Relic => _relic;
         public bool UnlockedByDefault => _unlockedByDefault;
         public string RequiredQuestId => _requiredQuestId;
+        public string GrantedWithUnlockId => _grantedWithUnlockId;
+        public bool IsGrantedWithUnlock => !string.IsNullOrWhiteSpace(_grantedWithUnlockId);
         public int SilverCost => Mathf.Max(0, _silverCost);
         public string DisplayName => !string.IsNullOrWhiteSpace(_displayName) ? _displayName
             : _ability != null ? _ability.DisplayName : _relic != null ? _relic.DisplayName : _characterId;

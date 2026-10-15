@@ -8,10 +8,10 @@ Edit `Assets/Features/Quests/Configs/DemoProgressionConfiguration.asset` in the 
 
 - **Default Characters / Abilities / Relics** control what is available on a new save, independently of purchases.
 - **Quests** contain a stable ID, title, condition text, category, metric, target and one-time silver reward. `Minimum Completed Runs`, `Required Quest Ids` and `Required Unlock Ids` define progression stages and branches. Optional `Character Id` restricts progress to that character; `Ability` identifies the asset tracked by `SpecificAbilityLevel`. Optional `Legacy Quest Ids` preserve completed requirements and claimed rewards when a condition is replaced.
-- **Unlocks** contain a stable ID, category, character ID or ability/relic reference, required quest ID and silver cost. Optional name, description and icon override the referenced asset. `Unlocked By Default` can make an individual catalog entry immediately owned.
+- **Unlocks** contain a stable ID, category, character ID or ability/relic reference, required quest ID and silver cost. Optional `Granted With Unlock Id` makes an entry a companion reward granted in the same save snapshot when that source unlock is newly purchased; companion rewards cannot be purchased separately. Optional name, description and icon override the referenced asset. `Unlocked By Default` can make an individual catalog entry immediately owned.
 - **Fallback Content Icons** contain currency and fallback portrait references. Character portraits also use the existing character-selection portrait cache. Window appearance is authored in prefabs.
 
-Keep quest and unlock IDs stable: saves refer to these IDs, even when an old numerical ID no longer describes the tuned condition. Turbo Skates retain their catalog entry and quest ID, but are owned from the start; their quest still awards silver. Wallet and Lump of Coal are purchasable for 2 silver each without a quest requirement. Content absent from both the default arrays and the unlock catalog is excluded from normal demo selection and reward pools. The fortune wheel only offers owned relics. It can repeat an eligible owned relic of the required rarity if distinct options run out; if no eligible owned relic exists, the slot shows the existing empty reward. Character-specific starting weapons remain upgradeable after selecting an owned character; character weapon exclusions still apply.
+Keep quest and unlock IDs stable: saves refer to these IDs, even when an old numerical ID no longer describes the tuned condition. Turbo Skates retain their catalog entry and quest ID, but are owned from the start; their quest still awards silver. Wallet and Lump of Coal are purchasable for 2 silver each without a quest requirement. Content absent from both the default arrays and the unlock catalog is excluded from normal demo selection and reward pools. The fortune wheel only offers owned relics. It can repeat an eligible owned relic of the required rarity if distinct options run out; if no eligible owned relic exists, the slot shows the existing empty reward. Character-specific starting weapons remain upgradeable after selecting an owned character. Once granted, Bullet Explosion and Punch can also appear in upgrade offers for every character; other configured character weapon exclusions still apply.
 
 ## Starting content
 
@@ -20,7 +20,7 @@ Keep quest and unlock IDs stable: saves refer to these IDs, even when an old num
 - Scrolls: Damage, Armor, Attack Speed, Crit Damage and Crit Chance.
 - Relics: Hot Dog and Venom Blade (green), Iron Hammer and Cupid's Arrow (blue), Turbo Skates (purple). No legendary relic is unlocked by default. These are five available collection entries, not five items granted to the run inventory.
 
-Bullet Explosion and Punch are their characters' signature weapons. They become available with those characters and are not separate purchases.
+Bullet Explosion and Punch have separate Weapons entries in UNLOCKS and appear alongside DUKE and MR POCKET as two rewards for their respective character quests. Newly purchasing DUKE grants `weapon_bullet_explosion`; newly purchasing MR POCKET grants `weapon_punch`. These weapons become available to all characters without an extra silver payment. Completing the quest alone only enables the character purchase. The character and weapon ownership IDs are saved together. Loading an older save in which a character is already owned does not grant its shared weapon retroactively; that character retains its own starting weapon.
 
 ## Progress, purchases and silver
 
@@ -55,7 +55,7 @@ The pacing target for a new save is an early wave during the first 2–3 runs, t
 | 3 | weapon_5 | Raise any weapon to level 6 in one run. | Fire Trail | 2 | 3 |
 | 3 | combat_120 | Spend 180 seconds in active combat in one run. | Movement Speed Scroll | 1 | 2 |
 | 3 | chests_1 | Open 3 relic chests across eligible runs. | Luck Scroll | 1 | 3 |
-| 4 | run_kills_150 | Complete `weapon_5` and `level_5`, then defeat a boss in an eligible run. | DUKE | 3 | 5 |
+| 4 | run_kills_150 | Complete `weapon_5` and `level_5`, then defeat a boss in an eligible run. | DUKE + Bullet Explosion (shared weapon included) | 3 | 5 |
 | 4 | armor_scroll_3 | Own Max HP Scroll; raise Armor Scroll to level 5 in one run. | Spiky Shield | 1 | 3 |
 | 4 | projectile_targets_3 | Complete `weapon_5`; raise Rabbitarang to level 6 in one run. | Rubber Cement | 1 | 3 |
 | 4 | total_gold_500 | Own Golden Boot; collect 2000 gold across eligible runs, including spent gold. | Gain Gold Scroll | 2 | 3 |
@@ -67,7 +67,7 @@ The pacing target for a new save is an early wave during the first 2–3 runs, t
 | 7 | total_kills_500 | Own Spiky Shield; raise Armor Scroll to level 7 in one run. | Thorns Damage Scroll | 2 | 3 |
 | 7 | run_hits_300 | Complete `projectile_targets_3` and own Duration Scroll; raise Attack Speed Scroll to level 6 in one run. | Soy Milk | 2 | 4 |
 | 8 | gold_held_150 | Own Gain Gold Scroll; raise it to level 5 in one run. | Money = Power | 2 | 4 |
-| 9 | rooms_3 | Complete `aura_close_kills_50` and `armor_scroll_3`, own DUKE; defeat 2 bosses as DUKE across eligible runs. | MR POCKET | 4 | 8 |
+| 9 | rooms_3 | Complete `aura_close_kills_50` and `armor_scroll_3`, own DUKE; defeat 2 bosses as DUKE across eligible runs. | MR POCKET + Punch (shared weapon included) | 4 | 8 |
 | 10 | low_health_room | Own MR POCKET; clear 24 combat rooms as MR POCKET across eligible runs. | Voodoo Doll | 3 | 5 |
 | 10 | burst_kills_3 | Complete `run_hits_300` and own DUKE; raise Bullet Explosion to level 7 as DUKE in one run. | Explosivo | 3 | 5 |
 | 11 | chests_8 | Complete the Fire Trail, Armor and Gain Gold mastery quests (`scroll_5`, `armor_scroll_3`, `gold_held_150`); defeat 2 bosses across eligible runs. | Overpowered Chalice | 4 | 6 |
@@ -111,7 +111,7 @@ Edit `Assets/Features/Quests/Prefabs/QuestCompletionNotification.prefab` to styl
 Edit these assets directly in Prefab Mode:
 
 - `Assets/Features/Quests/Prefabs/QuestsPanel.prefab` — full window, header, Hide completed button, scroll viewport, completion summary, footer and CLAIM button.
-- `Assets/Features/Quests/Prefabs/QuestRow.prefab` — checkbox, condition, progress, reward icon, claimable-reward marker and selection corners.
+- `Assets/Features/Quests/Prefabs/QuestRow.prefab` — checkbox, condition, progress, single or paired reward icons, claimable-reward marker and selection corners.
 - `Assets/Features/Quests/Prefabs/UnlocksPanel.prefab` — full window, four tabs, grid, currency and purchase details.
 - `Assets/Features/Quests/Prefabs/UnlockCell.prefab` — item icon, price, new-unlock marker and selection corners. State colors are serialized on its view component.
 - `Assets/Features/Quests/Prefabs/ProgressionAlertYellow.prefab` — yellow pixel exclamation mark for main-menu buttons and UNLOCKS category tabs.
@@ -127,4 +127,4 @@ The former QUESTS `SilverBalance` belongs to `MainMenuPanel.prefab` and appears 
 
 ## Controls
 
-Mouse clicks select entries and UNLOCKS tabs; the mouse wheel scrolls without changing the selected quest or footer. The quest checkbox is checked only after CLAIM collects its silver reward; its progress bar hides at completion independently of CLAIM. The reward marker stays visible until the additional silver is claimed. Quest details distinguish content available to buy in UNLOCKS, owned content, and silver available to claim or already claimed. Hide completed filters finished quests out of the list while keeping any unclaimed silver rewards visible. Select a completed quest and press CLAIM to collect its silver; the button is also reachable with keyboard/controller navigation. Navigation selects entries and keeps them visible; Escape/B or the close control returns to the main menu. Locked unlock entries show silhouettes; quest-complete entries show their price and a blue marker until first viewed; owned entries show their full-color icon. The detail panel shows the quest requirement, purchase action or owned state.
+Mouse clicks select entries and UNLOCKS tabs; the mouse wheel scrolls without changing the selected quest or footer. The quest checkbox is checked only after CLAIM collects its silver reward; its progress bar hides at completion independently of CLAIM. The reward marker stays visible until the additional silver is claimed. Quest rows and details show both the character and its companion weapon as separate icons; the detail panel and completion notification list both rewards. Quest details distinguish content available to buy in UNLOCKS, companion weapons included with a new character purchase, owned content, and silver available to claim or already claimed. Companion weapon cells have no price or purchase button; their detail panel names the source character. Hide completed filters finished quests out of the list while keeping any unclaimed silver rewards visible. Select a completed quest and press CLAIM to collect its silver; the button is also reachable with keyboard/controller navigation. Navigation selects entries and keeps them visible; Escape/B or the close control returns to the main menu. Locked unlock entries show silhouettes; quest-complete entries show their price and a blue marker until first viewed; owned entries show their full-color icon. The detail panel shows the quest requirement, purchase action or owned state.

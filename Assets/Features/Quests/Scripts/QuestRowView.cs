@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -15,6 +16,8 @@ namespace Features.Quests.Scripts
         [SerializeField] private TMP_Text _progressText;
         [SerializeField] private RectTransform _progressFill;
         [SerializeField] private UnityEngine.UI.Image _rewardIcon;
+        [SerializeField] private UnityEngine.UI.Image _pairedRewardIcon;
+        [SerializeField] private UnityEngine.UI.Image _additionalRewardIcon;
         [SerializeField] private GameObject _rewardAlert;
 
         private bool _appearanceCached;
@@ -54,19 +57,9 @@ namespace Features.Quests.Scripts
             float fraction = quest.Target > 0 ? (float)progress / quest.Target : 0f;
             _progressFill.anchorMax = new Vector2(Mathf.Clamp01(fraction), 1f);
 
-            UnlockDefinition unlock = service.GetUnlockForQuest(quest.Id);
-            if (unlock != null)
-            {
-                ProgressionMenuUi ui = new(service.Configuration, getPortrait, portraitMaterial);
-                ui.Icon(_rewardIcon, unlock, completed);
-            }
-            else
-            {
-                _rewardIcon.sprite = service.Configuration.SilverIcon;
-                _rewardIcon.material = null;
-                _rewardIcon.color = Color.white;
-                _rewardIcon.preserveAspect = true;
-            }
+            UnlockDefinition[] rewards = service.GetUnlocksForQuest(quest.Id).ToArray();
+            ProgressionMenuUi ui = new(service.Configuration, getPortrait, portraitMaterial);
+            ui.RewardIcons(_rewardIcon, _pairedRewardIcon, _additionalRewardIcon, rewards, completed);
         }
 
         public void OnSelect(BaseEventData eventData) => RequestSelection();

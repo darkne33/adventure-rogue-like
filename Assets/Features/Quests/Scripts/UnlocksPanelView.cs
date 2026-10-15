@@ -154,7 +154,8 @@ namespace Features.Quests.Scripts
             bool owned = _service.IsOwned(cell.Unlock);
             bool requirementMet = _service.IsRequirementMet(cell.Unlock);
             ApplyIcon(cell.Icon, cell.Unlock, owned || requirementMet);
-            cell.RefreshState(owned, requirementMet, _service.IsNewUnlock(cell.Unlock));
+            cell.RefreshState(owned, requirementMet, _service.IsNewUnlock(cell.Unlock),
+                !cell.Unlock.IsGrantedWithUnlock);
         }
 
         private void SelectUnlock(UnlockCellView cell)
@@ -182,7 +183,7 @@ namespace Features.Quests.Scripts
             ApplyIcon(_detailIcon, _selected, owned || requirementMet);
             _detailName.text = _selected.DisplayName.ToUpperInvariant();
             _detailDescription.text = _selected.Description;
-            _purchaseButton.gameObject.SetActive(!owned && requirementMet);
+            _purchaseButton.gameObject.SetActive(!owned && requirementMet && !_selected.IsGrantedWithUnlock);
             _purchaseButton.interactable = _service.CanPurchase(_selected);
             _progress.gameObject.SetActive(!owned && !requirementMet);
             _progressBarRoot.gameObject.SetActive(!owned && !requirementMet);
@@ -192,6 +193,24 @@ namespace Features.Quests.Scripts
                 _requirement.color = ProgressionMenuUi.Green;
                 _status.text = "OWNED";
                 _status.color = ProgressionMenuUi.Green;
+            }
+            else if (_selected.IsGrantedWithUnlock)
+            {
+                UnlockDefinition source = _service.GetUnlock(_selected.GrantedWithUnlockId);
+                _requirement.text = _service.IsOwned(source)
+                    ? "NOT GRANTED FOR PREVIOUS CHARACTER UNLOCKS."
+                    : $"INCLUDED WHEN YOU UNLOCK {source?.DisplayName}. AVAILABLE TO ALL CHARACTERS.";
+                _requirement.color = ProgressionMenuUi.White;
+                _status.text = "LOCKED";
+                _status.color = ProgressionMenuUi.Muted;
+                if (!requirementMet)
+                {
+                    int progress = quest != null ? Mathf.Clamp(_service.GetProgress(quest), 0, quest.Target) : 0;
+                    int target = quest != null ? quest.Target : 1;
+                    _progress.text = $"{progress:N0} / {target:N0}";
+                    _progressBarFill.rectTransform.anchorMax = new Vector2(
+                        target > 0 ? Mathf.Clamp01((float)progress / target) : 0f, 1f);
+                }
             }
             else if (requirementMet)
             {

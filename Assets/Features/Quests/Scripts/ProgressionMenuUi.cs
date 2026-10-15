@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Features.Sounds;
 using UnityEngine;
 
@@ -35,6 +36,29 @@ namespace Features.Quests.Scripts
             image.preserveAspect = true;
             image.material = portrait != null && revealed ? _portraitMaterial : null;
             image.color = revealed ? Color.white : Color.black;
+        }
+
+        public void RewardIcons(UnityEngine.UI.Image singleIcon, UnityEngine.UI.Image pairedIcon,
+            UnityEngine.UI.Image additionalIcon, IReadOnlyList<UnlockDefinition> rewards, bool revealed)
+        {
+            bool multiple = rewards.Count > 1;
+            singleIcon.gameObject.SetActive(!multiple);
+            pairedIcon.gameObject.SetActive(multiple);
+            additionalIcon.gameObject.SetActive(multiple);
+            if (multiple)
+            {
+                Icon(pairedIcon, rewards[0], revealed);
+                Icon(additionalIcon, rewards[1], revealed);
+            }
+            else if (rewards.Count > 0)
+                Icon(singleIcon, rewards[0], revealed);
+            else
+            {
+                singleIcon.sprite = Configuration.SilverIcon;
+                singleIcon.material = null;
+                singleIcon.color = Color.white;
+                singleIcon.preserveAspect = true;
+            }
         }
 
         public static void Navigate(UnityEngine.UI.Selectable item, UnityEngine.UI.Selectable up,
