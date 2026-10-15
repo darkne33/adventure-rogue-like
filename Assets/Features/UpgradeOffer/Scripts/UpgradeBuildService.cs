@@ -13,13 +13,19 @@ public sealed class UpgradeBuildService
     private readonly int _maxSlots;
     private readonly int _maxActiveAbilities;
     private readonly int _maxPassiveAbilities;
+    private readonly int _minNormalUpgradesBeforeScrollOnly;
+    private readonly int _maxNormalUpgradesBeforeScrollOnly;
     private int _upgradeRound;
+    private int _nextScrollOnlyUpgradeRound;
 
     public UpgradeBuildService(UpgradeOfferConfiguration configuration)
     {
         _maxSlots = Math.Max(1, configuration.MaxBuildSlots);
         _maxActiveAbilities = Math.Max(1, configuration.MaxActiveAbilities);
         _maxPassiveAbilities = Math.Max(1, configuration.MaxPassiveAbilities);
+        _minNormalUpgradesBeforeScrollOnly = Math.Max(1, configuration.MinNormalUpgradesBeforeScrollOnly);
+        _maxNormalUpgradesBeforeScrollOnly = Math.Max(_minNormalUpgradesBeforeScrollOnly,
+            configuration.MaxNormalUpgradesBeforeScrollOnly);
     }
 
     public event Action Changed;
@@ -29,6 +35,8 @@ public sealed class UpgradeBuildService
     public int MaxActiveAbilities => _maxActiveAbilities;
     public int MaxPassiveAbilities => _maxPassiveAbilities;
     public bool IsFull => _selectedUpgrades.Count >= _maxSlots;
+    public bool IsScrollOnlyUpgradeRound =>
+        _upgradeRound > 0 && _upgradeRound == _nextScrollOnlyUpgradeRound;
     public bool HasAdditionalUpgradeOffer => _selectedUpgrades.Exists(entry =>
         entry.Ability.Id == AbilityName.LuckScroll && entry.Ability.IsAcquired &&
         entry.Level >= RequiredLuckScrollLevel);
@@ -65,8 +73,17 @@ public sealed class UpgradeBuildService
     public bool Contains(CharacterAbility ability) =>
         FindEntry(ability) != null;
 
-    public void BeginUpgradeRound() =>
+    public void BeginUpgradeRound()
+    {
         _upgradeRound++;
+
+        if (_nextScrollOnlyUpgradeRound == 0 || _upgradeRound > _nextScrollOnlyUpgradeRound)
+        {
+            int normalUpgradeCount = UnityEngine.Random.Range(_minNormalUpgradesBeforeScrollOnly,
+                _maxNormalUpgradesBeforeScrollOnly + 1);
+            _nextScrollOnlyUpgradeRound = _upgradeRound + normalUpgradeCount;
+        }
+    }
 
     public bool CanOffer(CharacterAbility ability) =>
         CanSelect(ability) &&
@@ -153,6 +170,7 @@ public sealed class UpgradeBuildService
         _rejectedOfferCounts.Clear();
         _nextOfferRounds.Clear();
         _upgradeRound = 0;
+        _nextScrollOnlyUpgradeRound = 0;
 
         if (_selectedUpgrades.Count == 0)
             return;

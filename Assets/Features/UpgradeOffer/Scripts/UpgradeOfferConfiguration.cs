@@ -9,9 +9,14 @@ public class UpgradeOfferConfiguration : ScriptableObject
     [field: SerializeField, Min(1)] public int MaxBuildSlots { get; private set; } = 5;
     [field: SerializeField, Min(1)] public int MaxActiveAbilities { get; private set; } = 3;
     [field: SerializeField, Min(1)] public int MaxPassiveAbilities { get; private set; } = 3;
+    [field: SerializeField, Min(1)] public int MinNormalUpgradesBeforeScrollOnly { get; private set; } = 3;
+    [field: SerializeField, Min(1)] public int MaxNormalUpgradesBeforeScrollOnly { get; private set; } = 6;
     [field: SerializeField, Range(0f, 100f), Tooltip("Weapon chance for the additional card when no new weapon is available. Does not affect the guaranteed weapon card.")]
     public float ActiveAbilityOfferChance { get; private set; } = 60f;
-    [field: SerializeField, Range(0f, 100f)] public float AdditionalProjectilesUpgradeOfferChance { get; private set; } = 40f;
+    [field: SerializeField, Range(0f, 100f), Tooltip("Base chance before QuantityUpgradeOfferChanceMultiplier is applied.")]
+    public float AdditionalProjectilesUpgradeOfferChance { get; private set; } = 40f;
+    [field: SerializeField, Range(0f, 1f), Tooltip("Chance to retain quantity and aura tick upgrades instead of replacing them with another effect.")]
+    public float QuantityUpgradeOfferChanceMultiplier { get; private set; } = 0.5f;
     [field: SerializeField, Min(0.01f)] public float ProjectileCountIncreaseStep { get; private set; } = 0.25f;
     [field: SerializeField] public UpgradeRarityData[] RarityData { get; private set; } =
     {

@@ -41,8 +41,29 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         List<CharacterAbility> availableAbilities = _abilityChoiceProvider.GetCharacterAbilities().Values
             .Where(ability => _characterConfiguration.SelectedCharacter.IsAvailableInUpgrades(ability.Id))
             .Where(ability => _upgradeBuildService.Contains(ability) || _questService.IsAbilityOwned(ability.Id))
-            .Where(IsAvailableForCurrentBuild)
             .ToList();
+
+        if (_upgradeBuildService.IsScrollOnlyUpgradeRound)
+        {
+            List<CharacterPassiveAbility> scrollAbilities = availableAbilities
+                .OfType<CharacterPassiveAbility>()
+                .Where(_upgradeBuildService.CanSelect)
+                .ToList();
+
+            if (scrollAbilities.Count > 0)
+            {
+                // Keep the usual card count even when the build contains only a few scrolls.
+                while (offers.Count < totalOfferCount)
+                {
+                    offerAbilities.Clear();
+                    AddRandomOffers(scrollAbilities, totalOfferCount - offers.Count, offerAbilities, offers);
+                }
+
+                return offers;
+            }
+        }
+
+        availableAbilities.RemoveAll(ability => IsAvailableForCurrentBuild(ability) == false);
 
         if (_upgradeBuildService.IsFull)
         {
@@ -187,14 +208,54 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         if (includeAdditionalProjectiles)
         {
             AbilityUpgradeType pairedType = upgradeTypes[Random.Range(0, upgradeTypes.Count)];
-            return OrderPair(AbilityUpgradeType.AdditionalProjectiles, pairedType);
+            return ApplyQuantityUpgradeChance(ability, AbilityUpgradeType.AdditionalProjectiles, pairedType);
         }
 
         int primaryIndex = Random.Range(0, upgradeTypes.Count);
         AbilityUpgradeType primaryType = upgradeTypes[primaryIndex];
         upgradeTypes.RemoveAt(primaryIndex);
         AbilityUpgradeType secondaryType = upgradeTypes[Random.Range(0, upgradeTypes.Count)];
+        return ApplyQuantityUpgradeChance(ability, primaryType, secondaryType);
+    }
+
+    private (AbilityUpgradeType Primary, AbilityUpgradeType Secondary) ApplyQuantityUpgradeChance(
+        CharacterActiveAbility ability, AbilityUpgradeType primaryType, AbilityUpgradeType secondaryType)
+    {
+        float retainChance = _upgradeOfferConfiguration.QuantityUpgradeOfferChanceMultiplier * 100f;
+        bool replacePrimary = IsQuantityUpgrade(ability, primaryType) && !RollChance(retainChance);
+        bool replaceSecondary = IsQuantityUpgrade(ability, secondaryType) && !RollChance(retainChance);
+        if (replacePrimary == false && replaceSecondary == false)
+            return OrderPair(primaryType, secondaryType);
+
+        // Replacements cannot introduce another quantity effect, so each one's chance is scaled independently.
+        List<AbilityUpgradeType> replacementTypes = ability.UpgradeTypes
+            .Where(type => type != AbilityUpgradeType.Default &&
+                           type != primaryType && type != secondaryType &&
+                           IsQuantityUpgrade(ability, type) == false)
+            .Distinct()
+            .ToList();
+
+        if (replacePrimary && replacementTypes.Count > 0)
+            primaryType = TakeRandomUpgradeType(replacementTypes);
+        if (replaceSecondary && replacementTypes.Count > 0)
+            secondaryType = TakeRandomUpgradeType(replacementTypes);
+
         return OrderPair(primaryType, secondaryType);
+    }
+
+    private static bool IsQuantityUpgrade(CharacterActiveAbility ability, AbilityUpgradeType type) =>
+        type == AbilityUpgradeType.AdditionalProjectiles ||
+        type == AbilityUpgradeType.Targets ||
+        type == AbilityUpgradeType.PunchSimultaneousAttacks ||
+        type == AbilityUpgradeType.EarthRockStoneCount ||
+        (type == AbilityUpgradeType.Cooldown && ability is AuraAbility);
+
+    private static AbilityUpgradeType TakeRandomUpgradeType(List<AbilityUpgradeType> upgradeTypes)
+    {
+        int index = Random.Range(0, upgradeTypes.Count);
+        AbilityUpgradeType type = upgradeTypes[index];
+        upgradeTypes.RemoveAt(index);
+        return type;
     }
 
     private static (AbilityUpgradeType Primary, AbilityUpgradeType Secondary) OrderPair(
