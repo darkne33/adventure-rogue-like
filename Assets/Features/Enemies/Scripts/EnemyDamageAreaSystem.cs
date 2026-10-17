@@ -232,7 +232,7 @@ namespace Features.Enemies.Scripts
                 if (enemy == null || enemy.IsDead)
                     continue;
 
-                int appliedDamage = enemy.HealthSystem.GetDamage(_enemyConfiguration.Damage);
+                int appliedDamage = enemy.HealthSystem.GetDamage(_enemyConfiguration.EnemyDamage);
                 if (appliedDamage > 0)
                     enemy.EffectsSystem.DealDamage();
             }

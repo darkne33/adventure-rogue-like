@@ -21,7 +21,10 @@ public class EnemyConfiguration : ScriptableObject
 
     [field: Header("Combat Settings")]
     
-    [field: SerializeField] public int Damage { get; private set; }
+    [field: Tooltip("Damage to the character in hearts: 0.5 for ordinary hits, 1 for heavy hits.")]
+    [field: SerializeField, Range(0f, 1f)] public float Damage { get; private set; } = 0.5f;
+    [field: Tooltip("Explosion damage to other enemies, in their existing HP units.")]
+    [field: SerializeField, Min(0)] public int EnemyDamage { get; private set; }
     [field: SerializeField] public float DamageRange { get; private set; }
     [field: SerializeField] public float DamageCooldown { get; private set; }
     [field: Min(0f)]
@@ -164,14 +167,15 @@ public class EnemyConfiguration : ScriptableObject
 
         instance.MaxHealth = scaling.GetMaxHealth(instance.MaxHealth, roomIndex,
             proceduralSettings, generatedLevelNumber);
-        instance.Damage = scaling.GetDamage(instance.Damage, roomIndex);
+        // Character damage stays in half/full hearts; only enemy friendly fire uses stat growth.
+        instance.EnemyDamage = scaling.GetDamage(instance.EnemyDamage, roomIndex);
         // Ricochet hazards keep their configured speed throughout the run.
         if (instance.EnemyDamageType != EnemyDamageType.Ricochet)
             instance.Speed *= scaling.GetSpeedMultiplier(roomIndex);
         instance.DamageCooldown *= scaling.GetAttackCooldownMultiplier(roomIndex);
         if (proceduralSettings != null && generatedLevelNumber > 0)
         {
-            instance.Damage = proceduralSettings.ScaleDamage(instance.Damage, generatedLevelNumber);
+            instance.EnemyDamage = proceduralSettings.ScaleDamage(instance.EnemyDamage, generatedLevelNumber);
         }
         return instance;
     }

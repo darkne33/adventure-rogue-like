@@ -39,6 +39,7 @@ namespace Features.Quests.Scripts
     public sealed class QuestDefinition
     {
         [SerializeField] private string _id;
+        [SerializeField] private bool _disabled;
         [SerializeField] private string _title;
         [SerializeField, TextArea] private string _description;
         [SerializeField] private ProgressionCategory _category;
@@ -53,6 +54,7 @@ namespace Features.Quests.Scripts
         [SerializeField] private AbilityConfiguration _ability;
 
         public string Id => _id;
+        public bool IsDisabled => _disabled;
         public string Title => _title;
         public string Description => _description;
         public ProgressionCategory Category => _category;

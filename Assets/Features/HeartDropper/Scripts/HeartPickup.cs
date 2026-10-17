@@ -109,8 +109,7 @@ public sealed class HeartPickup : MonoBehaviour
             return;
 
         _isCollecting = true;
-        float healAmount = character.HealthSystem.MaxHealth *
-                           Mathf.Clamp01(_configuration.HealPercentage);
+        float healAmount = Mathf.Max(CharacterHealthRules.HalfHeart, _configuration.HealHearts);
         float restoredHealth = character.HealthSystem.IncreaseCurrentHealth(healAmount);
         if (restoredHealth <= 0f)
         {

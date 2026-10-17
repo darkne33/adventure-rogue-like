@@ -43,7 +43,7 @@ public class RogueLikePrepareStatsState : State
         _characterStats.CooldownReduction = settings.CooldownReduction;
         _characterStats.ProjectileCount = settings.ProjectileCount;
         
-        _characterStats.MaxHp = settings.MaxHp;
+        _characterStats.MaxHp = CharacterHealthRules.ClampMaximum(settings.MaxHp);
         _characterStats.RegenHp = settings.RegenHp;
         _characterStats.Shield = settings.Shield;
         _characterStats.Armor = settings.Armor;

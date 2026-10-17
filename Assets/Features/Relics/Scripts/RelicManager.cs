@@ -115,7 +115,8 @@ namespace Features.Relics.Scripts
             if (_stillnessTimer < requiredStillnessTime)
                 return;
 
-            float healed = character.HealthSystem.IncreaseCurrentHealth(stillnessHeal * Time.deltaTime);
+            float healed = character.HealthSystem.IncreaseCurrentHealth(
+                CharacterHealthRules.FromLegacyHealth(stillnessHeal * Time.deltaTime));
             if (healed > 0f)
                 _eventBus.PublishHeal(new RelicHealEvent(character, healed));
         }
@@ -190,7 +191,7 @@ namespace Features.Relics.Scripts
             Changed?.Invoke();
         }
 
-        public bool TryCancelFatalDamage(CharacterFacade victim, int incomingDamage)
+        public bool TryCancelFatalDamage(CharacterFacade victim, float incomingDamage)
         {
             foreach (RelicRuntimeState state in _activeRelics)
             {
@@ -204,7 +205,7 @@ namespace Features.Relics.Scripts
                     continue;
 
                 state.Break();
-                victim.HealthSystem.SetCurrentHealth(1f);
+                victim.HealthSystem.SetCurrentHealth(CharacterHealthRules.HalfHeart);
                 victim.SetTemporaryInvulnerability(FatalInvulnerabilityDuration);
                 SlowTime(TimeSlowDuration).Forget();
                 Changed?.Invoke();
@@ -542,8 +543,12 @@ namespace Features.Relics.Scripts
             if (TryMapStat(effect.StatType, out StatType stat) == false)
                 return;
 
-            _statModifierLayer.AddModifier(GetModifierSourceId(state), stat, value,
-                GetStackingType(effect.StatType, effect.ScalingType));
+            CharacterStatModifierStackingType stackingType = GetStackingType(effect.StatType, effect.ScalingType);
+            if (stackingType == CharacterStatModifierStackingType.Flat &&
+                stat is StatType.MaxHp or StatType.RegenHp)
+                value = CharacterHealthRules.FromLegacyHealth(value);
+
+            _statModifierLayer.AddModifier(GetModifierSourceId(state), stat, value, stackingType);
         }
 
         private void DealAreaDamage(Vector3 center, float radius, int damage, string sourceId)

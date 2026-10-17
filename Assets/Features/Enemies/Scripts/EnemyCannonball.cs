@@ -17,7 +17,7 @@ namespace Features.Enemies.Scripts
         protected override bool ResolvesDirectHits => false;
 
         public void Launch(Vector3 startPosition, Vector3 targetPosition, float flightDuration,
-            float arcHeight, float impactRadius, int damage, EnemyFacade source, CharacterFacade target,
+            float arcHeight, float impactRadius, float damage, EnemyFacade source, CharacterFacade target,
             CancellationToken cancellationToken)
         {
             float safeFlightDuration = Mathf.Max(0.05f, flightDuration);

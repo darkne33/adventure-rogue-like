@@ -16,11 +16,13 @@ public class CharacterSettingsConfiguration : ScriptableObject
     [field: SerializeField] public float ProjectileCount { get; private set; }
 
     [field: Header("Survival")]
-    [field: SerializeField] public int MaxHp { get; private set; } = 54;
+    [field: SerializeField, Range(0.5f, 12f)] public float MaxHp { get; private set; } = 3f;
+    [field: SerializeField, Min(0f)] public float DamageInvulnerabilitySecondsPerHalfHeart { get; private set; } = 1f;
+    [field: SerializeField, Min(0.01f)] public float InvulnerabilityBlinkInterval { get; private set; } = 0.1f;
     [field: SerializeField] public float RegenHp { get; private set; }
     [field: SerializeField, Min(0f)] public float Shield { get; private set; }
     [field: SerializeField, Min(0f)] public float ShieldRegenerationDelay { get; private set; } = 4f;
-    [field: SerializeField, Min(0f)] public float ShieldRegenerationPerSecond { get; private set; } = 1f;
+    [field: SerializeField, Min(0f)] public float ShieldRegenerationPerSecond { get; private set; } = 1f / 15f;
     [field: SerializeField] public float Armor { get; private set; }
     [field: SerializeField] public float Evasion { get; private set; }
 

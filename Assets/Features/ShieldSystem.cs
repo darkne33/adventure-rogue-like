@@ -4,14 +4,14 @@ public sealed class ShieldSystem
 {
     private const float ShieldValueEpsilon = 0.001f;
 
-    public int MaxShield => _maxShield + Mathf.CeilToInt(_temporaryShield);
+    public float MaxShield => _maxShield + _temporaryShield;
     public float CurrentShield => _currentShield + _temporaryShield;
 
     private readonly float _regenerationDelay;
     private readonly float _regenerationPerSecond;
     private readonly IShieldView _shieldView;
 
-    private int _maxShield;
+    private float _maxShield;
     private float _currentShield;
     private float _temporaryShield;
     private float _timeSinceLastDamage;
@@ -32,15 +32,16 @@ public sealed class ShieldSystem
         UpdateView();
     }
 
-    public int AbsorbDamage(int damage)
+    public float AbsorbDamage(float damage)
     {
         if (damage <= 0 || CurrentShield <= 0f)
             return 0;
 
         _timeSinceLastDamage = 0f;
 
-        int availableShield = Mathf.FloorToInt(CurrentShield + ShieldValueEpsilon);
-        int absorbedDamage = Mathf.Min(availableShield, damage);
+        float availableShield = Mathf.Floor((CurrentShield + ShieldValueEpsilon) /
+                                          CharacterHealthRules.HalfHeart) * CharacterHealthRules.HalfHeart;
+        float absorbedDamage = Mathf.Min(availableShield, damage);
         if (absorbedDamage <= 0)
             return 0;
 
@@ -84,11 +85,11 @@ public sealed class ShieldSystem
 
     public void SetMaxShield(float maximumShield, bool restoreIncrease = true)
     {
-        int normalizedMaximumShield = NormalizeMaximumShield(maximumShield);
+        float normalizedMaximumShield = NormalizeMaximumShield(maximumShield);
         if (_maxShield == normalizedMaximumShield)
             return;
 
-        int difference = normalizedMaximumShield - _maxShield;
+        float difference = normalizedMaximumShield - _maxShield;
         _maxShield = normalizedMaximumShield;
 
         if (restoreIncrease && difference > 0)
@@ -98,8 +99,9 @@ public sealed class ShieldSystem
         UpdateView();
     }
 
-    private static int NormalizeMaximumShield(float maximumShield) =>
-        Mathf.Max(0, Mathf.RoundToInt(maximumShield));
+    private static float NormalizeMaximumShield(float maximumShield) =>
+        Mathf.Max(0f, Mathf.Round(maximumShield / CharacterHealthRules.HalfHeart) *
+                      CharacterHealthRules.HalfHeart);
 
     private void UpdateView() =>
         _shieldView?.UpdateShield(CurrentShield, MaxShield);

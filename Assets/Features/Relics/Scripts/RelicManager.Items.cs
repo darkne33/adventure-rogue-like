@@ -86,13 +86,13 @@ namespace Features.Relics.Scripts
             return false;
         }
 
-        public int ModifyIncomingDamage(CharacterFacade victim, int damage)
+        public float ModifyIncomingDamage(CharacterFacade victim, float damage)
         {
             if (victim == null || damage <= 0)
                 return damage;
 
             float flatReduction = 0f;
-            int damageCap = int.MaxValue;
+            float damageCap = float.PositiveInfinity;
 
             foreach (RelicRuntimeState state in _activeRelics)
             {
@@ -105,15 +105,14 @@ namespace Features.Relics.Scripts
                     string effectId = GetSpecialEffectId(effect);
                     if (effectId == RepulsionArmorPlateId)
                     {
-                        flatReduction += Mathf.Max(0f, effect.Value) * state.StackCount;
+                        flatReduction += CharacterHealthRules.FromLegacyHealth(
+                            Mathf.Max(0f, effect.Value) * state.StackCount);
                         continue;
                     }
 
                     if (effectId == WaferId)
                     {
-                        int cap = Mathf.Max(1,
-                            Mathf.CeilToInt(victim.HealthSystem.MaxHealth * Mathf.Clamp01(effect.Value)));
-                        damageCap = Mathf.Min(damageCap, cap);
+                        damageCap = Mathf.Min(damageCap, CharacterHealthRules.HalfHeart);
                         continue;
                     }
 
@@ -124,13 +123,11 @@ namespace Features.Relics.Scripts
                     if (cancerActive <= 0f)
                         continue;
 
-                    int capAfterFirstHit = Mathf.Max(1,
-                        Mathf.CeilToInt(victim.HealthSystem.MaxHealth * Mathf.Clamp01(effect.Value)));
-                    damageCap = Mathf.Min(damageCap, capAfterFirstHit);
+                    damageCap = Mathf.Min(damageCap, CharacterHealthRules.HalfHeart);
                 }
             }
 
-            int reducedDamage = Mathf.Max(1, damage - Mathf.RoundToInt(flatReduction));
+            float reducedDamage = Mathf.Max(CharacterHealthRules.HalfHeart, damage - flatReduction);
             return Mathf.Min(reducedDamage, damageCap);
         }
 
@@ -186,7 +183,8 @@ namespace Features.Relics.Scripts
             if (Time.time - _lastDamageTakenTime < Mathf.Max(0f, effect.Duration))
                 return;
 
-            HealCharacter(character, Mathf.Max(0f, effect.Value) * state.StackCount * Time.deltaTime);
+            HealCharacter(character, CharacterHealthRules.FromLegacyHealth(
+                Mathf.Max(0f, effect.Value) * state.StackCount * Time.deltaTime));
         }
 
         private void TickUnstableTesla(RelicRuntimeState state, RelicEffectDefinition effect,
@@ -399,7 +397,8 @@ namespace Features.Relics.Scripts
                 {
                     if (effectId == HarvestersScytheId)
                     {
-                        HealCharacter(hitEvent.Attacker, effect.Value * state.StackCount);
+                        HealCharacter(hitEvent.Attacker,
+                            CharacterHealthRules.FromLegacyHealth(effect.Value * state.StackCount));
                         return true;
                     }
 
@@ -416,7 +415,8 @@ namespace Features.Relics.Scripts
                 switch (effectId)
                 {
                     case TopazBroochId:
-                        killEvent.Killer?.ShieldSystem.AddTemporaryShield(effect.Value * state.StackCount);
+                        killEvent.Killer?.ShieldSystem.AddTemporaryShield(
+                            CharacterHealthRules.FromLegacyHealth(effect.Value * state.StackCount));
                         return true;
                     case SoulboundCatalystId:
                         killEvent.Killer?.CharacterAbilitySystem.ReduceActiveCooldowns(
@@ -471,8 +471,8 @@ namespace Features.Relics.Scripts
                 return;
 
             float percentHealing = character.HealthSystem.MaxHealth * Mathf.Max(0f, effect.Value);
-            float flatHealing = Mathf.Max(0f, effect.Cap) +
-                                Mathf.Max(0f, effect.Duration) * state.StackCount;
+            float flatHealing = CharacterHealthRules.FromLegacyHealth(Mathf.Max(0f, effect.Cap) +
+                                Mathf.Max(0f, effect.Duration) * state.StackCount);
             HealCharacter(character, Mathf.Max(percentHealing, flatHealing));
         }
 
@@ -494,20 +494,18 @@ namespace Features.Relics.Scripts
         private void ApplyVoodooDollSelfDamage(RelicRuntimeState state, RelicEffectDefinition effect,
             CharacterFacade character)
         {
-            if (character == null || character.HealthSystem.CurrentHealth <= 1f)
+            if (character == null || character.HealthSystem.CurrentHealth <= CharacterHealthRules.HalfHeart)
                 return;
 
             float healthBeforeDamage = character.HealthSystem.CurrentHealth;
-            float selfDamage = Mathf.Max(1f, effect.Value);
-            float healthAfterDamage = Mathf.Max(1f, healthBeforeDamage - selfDamage);
-            int appliedDamage = Mathf.CeilToInt(healthBeforeDamage - healthAfterDamage);
+            float selfDamage = CharacterHealthRules.NormalizeDamage(
+                CharacterHealthRules.FromLegacyHealth(Mathf.Max(1f, effect.Value)));
+            float healthAfterDamage = Mathf.Max(CharacterHealthRules.HalfHeart, healthBeforeDamage - selfDamage);
+            float appliedDamage = healthBeforeDamage - healthAfterDamage;
             if (appliedDamage <= 0)
                 return;
 
-            character.HealthSystem.SetCurrentHealth(healthAfterDamage);
-            character.DamageEffectSystem.DealDamage();
-            _eventBus.PublishDamageTaken(new RelicDamageTakenEvent(character, null,
-                appliedDamage, VoodooDollId));
+            character.ReceiveDirectDamage(appliedDamage, VoodooDollId);
         }
 
         private async UniTaskVoid ApplyVenomBladePoison(RelicRuntimeState state,

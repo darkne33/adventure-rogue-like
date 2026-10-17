@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using Zenject;
@@ -14,7 +15,7 @@ public sealed class CharacterDamageNumberView : MonoBehaviour, IDamageView
 
     private int _spawnIndex;
 
-    public void ShowDamage(int damage, float maximumHealth, bool isCritical, Color? damageColor = null)
+    public void ShowDamage(float damage, float maximumHealth, bool isCritical, Color? damageColor = null)
     {
         if (damage <= 0)
             return;
@@ -41,7 +42,7 @@ public sealed class CharacterDamageNumberView : MonoBehaviour, IDamageView
             return;
         }
 
-        text.text = $"-{damage}";
+        text.text = $"-{damage.ToString("0.#", CultureInfo.InvariantCulture)}";
         if (damageColor.HasValue)
             text.color = damageColor.Value;
         canvasGroup.alpha = 1f;

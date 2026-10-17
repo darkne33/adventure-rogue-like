@@ -1,30 +1,26 @@
 ﻿public class CharacterScrollMaxHpAbility : CharacterPassiveAbility
 {
-    private ScrollAbilityConfiguration _scrollAbilityConfiguration;
+    private readonly System.Collections.Generic.Stack<float> _appliedIncreases = new();
 
     public override void OnUnequip(CharacterStats characterStats)
     {
         base.OnUnequip(characterStats);
-        characterStats.MaxHp -= GetCurrentUpgradeValue(_scrollAbilityConfiguration.DefaultIncreaseStat);
-    }
-
-    public override void Initialize(AbilityConfiguration abilityConfig)
-    {
-        base.Initialize(abilityConfig);
-        
-        _scrollAbilityConfiguration = (ScrollAbilityConfiguration)abilityConfig;
+        if (_appliedIncreases.Count > 0)
+            characterStats.MaxHp = CharacterHealthRules.ClampMaximum(
+                characterStats.MaxHp - _appliedIncreases.Pop());
     }
 
     public override void OnEquip(CharacterStats characterStats)
     {
         base.OnEquip(characterStats);
-        characterStats.MaxHp += GetCurrentUpgradeValue(_scrollAbilityConfiguration.DefaultIncreaseStat);
+        float previousMaximum = characterStats.MaxHp;
+        characterStats.MaxHp = GetStatToIncrease(characterStats, 1f);
+        _appliedIncreases.Push(characterStats.MaxHp - previousMaximum);
     }
 
     public override float GetStatFromIncrease(CharacterStats characterStats) => 
         characterStats.MaxHp;
 
     public override float GetStatToIncrease(CharacterStats characterStats, float upgradeMultiplier) => 
-        GetStatFromIncrease(characterStats) +
-        GetUpgradeValue(_scrollAbilityConfiguration.DefaultIncreaseStat, upgradeMultiplier);
+        CharacterHealthRules.ClampMaximum(GetStatFromIncrease(characterStats) + CharacterHealthRules.HalfHeart);
 }

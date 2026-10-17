@@ -19,6 +19,9 @@ public class CharacterAbilityChoiceProvider : IAbilityChoiceProvider
     {
         foreach (var abilityConfig in _allAbilitiesConfiguration.Abilities)
         {
+            if (abilityConfig.IsDisabled)
+                continue;
+
             switch (abilityConfig.AbilityName)
             {
                 case AbilityName.FireBall:

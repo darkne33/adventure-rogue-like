@@ -7,7 +7,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
 {
     public class TransitToRoomService : ITransitToRoomService
     {
-        private const int BloodRoomTransitionDamage = 5;
+        private const float BloodRoomTransitionDamage = CharacterHealthRules.HalfHeart;
 
         private readonly IRogueLikeRuntimeDataService _runtimeDataService;
         private readonly ICharacterProvider _characterProvider;

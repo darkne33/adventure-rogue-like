@@ -8,7 +8,7 @@ namespace Features.Enemies.Scripts
     public sealed class EnemyBullet : EnemyProjectile
     {
         public void Launch(Vector3 startPosition, Vector3 direction, float speed, float lifetime,
-            int damage, EnemyFacade source, CharacterFacade target, CancellationToken cancellationToken)
+            float damage, EnemyFacade source, CharacterFacade target, CancellationToken cancellationToken)
         {
             Vector3 normalizedDirection = direction.sqrMagnitude > 0.0001f
                 ? direction.normalized

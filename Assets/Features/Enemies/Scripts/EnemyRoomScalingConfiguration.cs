@@ -14,7 +14,7 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     [Tooltip("Maximum living enemies at once, including survivors from earlier waves.")]
     [SerializeField, Min(1)] private int _maxAliveEnemies = 30;
     [Tooltip("Maximum total enemies across all waves for a Small room. Larger groups use Medium rooms.")]
-    [SerializeField, Min(1)] private int _maxEnemiesInSmallRoom = 9;
+    [SerializeField, Min(1)] private int _maxEnemiesInSmallRoom = 7;
     [Header("Combat Waves")]
     [Tooltip("First one-based combat-room visit where rooms can use three waves, regardless of level.")]
     [SerializeField, Min(1)] private int _firstWaveRoom = 5;
@@ -44,7 +44,7 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
         new(EnemyType.Ghost, 6, 18f, 8),
         new(EnemyType.Chan, 8, 5f, 2),
         new(EnemyType.Bun, 10, 5f, 2),
-        new(EnemyType.Stone_Spikes, 8, 8f, 3)
+        new(EnemyType.Stone_Spikes, 8, 8f, 3, maxAliveInSmallRoom: 1)
     };
 
     public EnemySpawnRule[] EnemyRules => _enemyRules;
@@ -59,6 +59,11 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
         Mathf.Max(GetStartEnemyCount(roomIndex), GetCount(_totalEnemies, roomIndex, 3));
     public bool UsesSmallRoom(int roomIndex) =>
         GetAllEnemyCount(roomIndex) <= Mathf.Max(1, _maxEnemiesInSmallRoom);
+
+    public int GetMaxAlive(EnemySpawnRule rule, int roomIndex) =>
+        UsesSmallRoom(roomIndex) && rule.MaxAliveInSmallRoom > 0
+            ? rule.MaxAliveInSmallRoom
+            : rule.MaxAlive;
 
     public int[] CreateWaveEnemyCounts(int roomIndex)
     {
@@ -144,14 +149,17 @@ public sealed class EnemySpawnRule
     [Min(0f)] public float Weight = 1f;
     [Tooltip("Maximum alive at once; zero means unlimited.")]
     [Min(0)] public int MaxAlive;
+    [Tooltip("Maximum alive at once in Small rooms; zero uses MaxAlive.")]
+    [Min(0)] public int MaxAliveInSmallRoom;
 
     public EnemySpawnRule(EnemyType enemyType, int firstRoom, float weight, int maxAlive,
-        int lastNormalLevel = 0)
+        int lastNormalLevel = 0, int maxAliveInSmallRoom = 0)
     {
         EnemyType = enemyType;
         FirstRoom = firstRoom;
         LastNormalLevel = lastNormalLevel;
         Weight = weight;
         MaxAlive = maxAlive;
+        MaxAliveInSmallRoom = maxAliveInSmallRoom;
     }
 }

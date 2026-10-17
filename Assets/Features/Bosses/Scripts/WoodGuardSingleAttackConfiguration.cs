@@ -26,7 +26,8 @@ namespace Features.Bosses.Scripts
         [field: SerializeField, Min(0.01f)] public float SinkDuration { get; private set; } = 0.35f;
 
         [field: Header("One hit when the roots emerge")]
-        [field: SerializeField, Min(0)] public int Damage { get; private set; } = 10;
+        [field: Tooltip("Damage to the character in hearts.")]
+        [field: SerializeField, Range(0f, 1f)] public float Damage { get; private set; } = 1f;
         [field: SerializeField, Min(0f)] public float KnockbackForce { get; private set; } = 10f;
         [field: SerializeField, Min(0f)] public float KnockbackUpwardForce { get; private set; } = 10f;
 

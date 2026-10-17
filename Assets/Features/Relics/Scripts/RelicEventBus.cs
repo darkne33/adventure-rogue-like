@@ -110,10 +110,10 @@ namespace Features.Relics.Scripts
     {
         public CharacterFacade Victim { get; }
         public CombatTarget Attacker { get; }
-        public int Amount { get; }
+        public float Amount { get; }
         public string DamageType { get; }
 
-        public RelicDamageTakenEvent(CharacterFacade victim, CombatTarget attacker, int amount,
+        public RelicDamageTakenEvent(CharacterFacade victim, CombatTarget attacker, float amount,
             string damageType)
         {
             Victim = victim;

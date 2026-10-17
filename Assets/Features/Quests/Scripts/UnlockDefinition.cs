@@ -17,6 +17,7 @@ namespace Features.Quests.Scripts
     public sealed class UnlockDefinition
     {
         [SerializeField] private string _id;
+        [SerializeField] private bool _disabled;
         [SerializeField] private ProgressionCategory _category;
         [SerializeField] private string _characterId;
         [SerializeField] private AbilityConfiguration _ability;
@@ -30,6 +31,7 @@ namespace Features.Quests.Scripts
         [SerializeField, Min(0)] private int _silverCost = 1;
 
         public string Id => _id;
+        public bool IsDisabled => _disabled;
         public ProgressionCategory Category => _category;
         public string CharacterId => _characterId;
         public AbilityConfiguration Ability => _ability;

@@ -567,7 +567,8 @@ public class EnemySpawner
             foreach (EnemySpawnRule rule in _roomEnemyRules)
             {
                 aliveByType.TryGetValue(rule.EnemyType, out int alive);
-                if (rule.MaxAlive > 0 && alive >= rule.MaxAlive ||
+                int maxAlive = _roomBalance.GetMaxAlive(rule, _roomProgressIndex);
+                if (maxAlive > 0 && alive >= maxAlive ||
                     EnemyRoomScalingConfiguration.IsRanged(rule.EnemyType) &&
                     rangedAlive >= _roomBalance.GetRangedLimit(_roomProgressIndex))
                     continue;

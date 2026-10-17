@@ -16,7 +16,9 @@ public class CharacterShieldView : MonoBehaviour, IShieldView
         if (hasShield == false)
             return;
 
-        _shieldText.text = $"{Mathf.FloorToInt(currentShield + 0.001f)}/{Mathf.RoundToInt(maximumShield)}";
+        float availableShield = Mathf.Floor((currentShield + 0.001f) / CharacterHealthRules.HalfHeart) *
+                                CharacterHealthRules.HalfHeart;
+        _shieldText.text = $"{availableShield:0.#}/{maximumShield:0.#}";
         _shieldSlider.maxValue = maximumShield;
         _shieldSlider.value = currentShield;
     }

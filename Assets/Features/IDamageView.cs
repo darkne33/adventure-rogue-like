@@ -1,4 +1,4 @@
 public interface IDamageView
 {
-    void ShowDamage(int damage, float maximumHealth, bool isCritical, UnityEngine.Color? damageColor = null);
+    void ShowDamage(float damage, float maximumHealth, bool isCritical, UnityEngine.Color? damageColor = null);
 }

@@ -379,10 +379,10 @@ public sealed class PauseMenuController : ITickable, IDisposable
         float armorReduction = (1f - 100f / (100f + armorRating)) * 100f;
         string[] values =
         {
-            health == null ? "--" : $"{health.CurrentHealth:0}/{health.MaxHealth:0}",
-            $"{_characterStats.MaxHp:0}",
+            health == null ? "--" : $"{health.CurrentHealth:0.#}/{health.MaxHealth:0.#}",
+            $"{(health == null ? _characterStats.MaxHp : health.MaxHealth):0.#}",
             $"{_characterStats.RegenHp:0.0}/s",
-            $"{_characterStats.Shield:0}",
+            $"{_characterStats.Shield:0.#}",
             $"{_characterStats.Evasion:0.#}%",
             $"{armorReduction:0.#}%",
             $"{_characterStats.LifeSteal:0.#}%",

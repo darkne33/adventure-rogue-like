@@ -263,7 +263,8 @@ public sealed class FireFieldAbility : CharacterActiveAbility
             return;
 
         float lifeStealPercent = Mathf.Max(0f, _characterStats.LifeSteal) * 0.01f;
-        float healed = character.HealthSystem.IncreaseCurrentHealth(appliedDamage * lifeStealPercent);
+        float healed = character.HealthSystem.IncreaseCurrentHealth(
+            CharacterHealthRules.FromLegacyHealth(appliedDamage * lifeStealPercent));
         if (healed > 0f)
             _relicEventBus.PublishHeal(new RelicHealEvent(character, healed));
 

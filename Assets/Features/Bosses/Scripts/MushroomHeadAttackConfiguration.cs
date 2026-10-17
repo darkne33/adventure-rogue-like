@@ -18,7 +18,7 @@ namespace Features.Bosses.Scripts
         {
             ImpactNormalized = 0.4222222f;
             Radius = 2f;
-            Damage = 35;
+            Damage = 1f;
             RecoveryDuration = 0.35f;
         }
     }

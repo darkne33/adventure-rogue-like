@@ -54,7 +54,8 @@ namespace Features.Bosses.Scripts
         [field: SerializeField, Min(0.01f)] public float SinkDuration { get; private set; } = 0.35f;
 
         [field: Header("At most one hit per line, when a piece emerges")]
-        [field: SerializeField, Min(0)] public int Damage { get; private set; } = 10;
+        [field: Tooltip("Damage to the character in hearts.")]
+        [field: SerializeField, Range(0f, 1f)] public float Damage { get; private set; } = 1f;
         [field: SerializeField, Min(0f)]
         [field: Tooltip("Horizontal impulse away from the line, like BunEnemy's dash knockback.")]
         public float KnockbackForce { get; private set; } = 10f;

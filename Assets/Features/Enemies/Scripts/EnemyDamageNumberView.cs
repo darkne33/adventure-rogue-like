@@ -16,6 +16,7 @@ namespace Features.Enemies.Scripts
 
         [SerializeField] private Canvas _worldCanvas;
         [SerializeField] private TMP_FontAsset _fontAsset;
+        [SerializeField] private GameObject _criticalTextPrefab;
 
         [Inject] private DiContainer _container;
 
@@ -33,7 +34,7 @@ namespace Features.Enemies.Scripts
         private void LateUpdate() =>
             SyncRootTransform();
 
-        public void ShowDamage(int damage, float maximumHealth, bool isCritical, Color? damageColor = null)
+        public void ShowDamage(float damage, float maximumHealth, bool isCritical, Color? damageColor = null)
         {
             SyncRootTransform();
             DamageNumber number = GetNumber();
@@ -43,6 +44,11 @@ namespace Features.Enemies.Scripts
             number.Text.fontSize = DAMAGE_NUMBER_FONT_SIZE;
             number.Text.color = damageColor ?? Color.white;
             number.Text.outlineColor = TextOutlineColor;
+            if (number.CriticalText != null)
+            {
+                number.CriticalText.gameObject.SetActive(isCritical);
+                number.CriticalText.color = number.Text.color;
+            }
             number.CanvasGroup.alpha = 1f;
 
             float horizontalOffset = Random.Range(-0.45f, 0.45f);
@@ -82,6 +88,9 @@ namespace Features.Enemies.Scripts
 
         private void CreatePool()
         {
+            if (_criticalTextPrefab == null)
+                Debug.LogError($"{nameof(EnemyDamageNumberView)} requires a critical text prefab.", this);
+
             GameObject rootObject = new("EnemyDamageNumbers", typeof(RectTransform), typeof(Canvas),
                 typeof(ViewToCamera));
             _root = rootObject.GetComponent<RectTransform>();
@@ -115,7 +124,16 @@ namespace Features.Enemies.Scripts
                 text.outlineWidth = 0.18f;
                 text.outlineColor = TextOutlineColor;
 
-                DamageNumber number = new(numberObject, rectTransform, numberObject.GetComponent<CanvasGroup>(), text);
+                TextMeshProUGUI criticalText = null;
+                if (_criticalTextPrefab != null)
+                {
+                    GameObject criticalTextObject = _container.InstantiatePrefab(_criticalTextPrefab, rectTransform);
+                    criticalText = criticalTextObject.GetComponent<TextMeshProUGUI>();
+                    criticalTextObject.SetActive(false);
+                }
+
+                DamageNumber number = new(numberObject, rectTransform, numberObject.GetComponent<CanvasGroup>(), text,
+                    criticalText);
                 _numbers.Add(number);
                 Release(number);
             }
@@ -168,15 +186,17 @@ namespace Features.Enemies.Scripts
             public readonly RectTransform RectTransform;
             public readonly CanvasGroup CanvasGroup;
             public readonly TextMeshProUGUI Text;
+            public readonly TextMeshProUGUI CriticalText;
             public Sequence Sequence;
 
             public DamageNumber(GameObject gameObject, RectTransform rectTransform, CanvasGroup canvasGroup,
-                TextMeshProUGUI text)
+                TextMeshProUGUI text, TextMeshProUGUI criticalText)
             {
                 GameObject = gameObject;
                 RectTransform = rectTransform;
                 CanvasGroup = canvasGroup;
                 Text = text;
+                CriticalText = criticalText;
             }
         }
     }

@@ -9,39 +9,55 @@ public class HealthSystem
     private float _maxHealth;
     private float _currentHealth;
     private bool _isDead;
+    private float _pendingHealing;
 
     private readonly float _startHealth;
     private readonly IHealthView[] _characterHealthViews;
     private readonly IDamageView[] _damageViews;
     private readonly IDeathSystem _deathSystem;
     private readonly bool _isInvulnerable;
+    private readonly float _healthIncrement;
+    private readonly float _maximumHealthLimit;
 
     public HealthSystem(float startHealth, IHealthView[] characterHealthViews, IDeathSystem deathSystem,
-        IDamageView[] damageViews = null, bool isInvulnerable = false)
+        IDamageView[] damageViews = null, bool isInvulnerable = false,
+        float healthIncrement = 0f, float maximumHealthLimit = float.PositiveInfinity)
     {
         _startHealth = startHealth;
         _characterHealthViews = characterHealthViews;
         _deathSystem = deathSystem;
         _damageViews = damageViews;
         _isInvulnerable = isInvulnerable;
+        _healthIncrement = Math.Max(0f, healthIncrement);
+        _maximumHealthLimit = maximumHealthLimit;
     }
 
     public void Initialize()
     {
-        _maxHealth = _startHealth;
+        _maxHealth = NormalizeMaximumHealth(_startHealth);
         _currentHealth = _maxHealth;
         _isDead = false;
+        _pendingHealing = 0f;
 
         UpdateViews();
     }
 
-    public int GetDamage(int damage, bool isCritical = false, UnityEngine.Color? damageColor = null)
+    public int GetDamage(int damage, bool isCritical = false, UnityEngine.Color? damageColor = null) =>
+        (int)Math.Ceiling(GetDamage((float)damage, isCritical, damageColor));
+
+    public float GetDamage(float damage, bool isCritical = false, UnityEngine.Color? damageColor = null)
     {
         if (_isInvulnerable || _isDead || damage <= 0)
             return 0;
 
-        int appliedDamage = (int)Math.Ceiling(Math.Min(_currentHealth, damage));
+        if (_healthIncrement > 0f)
+            damage = (float)Math.Ceiling(damage / _healthIncrement - 0.0001f) * _healthIncrement;
+
+        float appliedDamage = _healthIncrement > 0f
+            ? Math.Min(_currentHealth, damage)
+            : (float)Math.Ceiling(Math.Min(_currentHealth, damage));
         _currentHealth = Math.Max(0f, _currentHealth - appliedDamage);
+        _pendingHealing = 0f;
         UpdateViews();
         UpdateDamageViews(appliedDamage, isCritical, damageColor);
 
@@ -59,7 +75,19 @@ public class HealthSystem
             return 0f;
 
         float previousHealth = _currentHealth;
+        if (_healthIncrement > 0f)
+        {
+            _pendingHealing += increase;
+            increase = (float)Math.Floor((_pendingHealing + 0.00001f) / _healthIncrement) * _healthIncrement;
+            if (increase <= 0f)
+                return 0f;
+
+            _pendingHealing = Math.Max(0f, _pendingHealing - increase);
+        }
+
         _currentHealth = Math.Min(_maxHealth, _currentHealth + increase);
+        if (_currentHealth >= _maxHealth)
+            _pendingHealing = 0f;
         UpdateViews();
         return _currentHealth - previousHealth;
     }
@@ -67,15 +95,21 @@ public class HealthSystem
     public void SetCurrentHealth(float health)
     {
         if (_isDead)
-            _isDead = false;
+            return;
 
-        _currentHealth = Math.Clamp(health, 0f, _maxHealth);
+        _currentHealth = Math.Clamp(NormalizeHealth(health), 0f, _maxHealth);
+        _pendingHealing = 0f;
         UpdateViews();
+        if (_currentHealth <= 0f)
+        {
+            _isDead = true;
+            _deathSystem.HandleDeath();
+        }
     }
 
     public void SetMaxHealth(float maxHealth, bool healIncrease = true)
     {
-        maxHealth = Math.Max(1f, maxHealth);
+        maxHealth = NormalizeMaximumHealth(maxHealth);
         if (Math.Abs(_maxHealth - maxHealth) < 0.001f)
             return;
 
@@ -86,8 +120,18 @@ public class HealthSystem
             _currentHealth += difference;
 
         _currentHealth = Math.Min(_currentHealth, _maxHealth);
+        if (_currentHealth >= _maxHealth)
+            _pendingHealing = 0f;
         UpdateViews();
     }
+
+    private float NormalizeMaximumHealth(float health) =>
+        Math.Clamp(NormalizeHealth(health), _healthIncrement > 0f ? _healthIncrement : 1f,
+            _maximumHealthLimit);
+
+    private float NormalizeHealth(float health) => _healthIncrement > 0f
+        ? (float)Math.Round(health / _healthIncrement, MidpointRounding.AwayFromZero) * _healthIncrement
+        : health;
 
     private void UpdateViews()
     {
@@ -95,7 +139,7 @@ public class HealthSystem
             healthView.UpdateHealth(_currentHealth, _maxHealth);
     }
 
-    private void UpdateDamageViews(int damage, bool isCritical, UnityEngine.Color? damageColor)
+    private void UpdateDamageViews(float damage, bool isCritical, UnityEngine.Color? damageColor)
     {
         if (_damageViews == null)
             return;

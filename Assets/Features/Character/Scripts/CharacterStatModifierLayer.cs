@@ -253,7 +253,8 @@ public sealed class CharacterStatModifierLayer
             StatType.CritChance => Mathf.Clamp(value, 0f, CritChanceCap),
             StatType.Evasion => Mathf.Clamp(value, 0f, EvasionCap),
             StatType.CooldownReduction => Mathf.Clamp(value, 0f, CooldownReductionCap),
-            StatType.MaxHp or StatType.RegenHp or StatType.Shield or StatType.Armor or StatType.GainHp or
+            StatType.MaxHp => CharacterHealthRules.ClampMaximum(value),
+            StatType.RegenHp or StatType.Shield or StatType.Armor or StatType.GainHp or
                 StatType.MovementSpeed or StatType.MovementAcceleration or StatType.JumpForce or
                 StatType.RotationSpeed or StatType.GravityMultiplier or StatType.ProjectileCount =>
                 Mathf.Max(0f, value),

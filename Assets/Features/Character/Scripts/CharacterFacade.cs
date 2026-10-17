@@ -37,6 +37,7 @@ public class CharacterFacade : MonoBehaviour
     [Inject] private AllAbilitiesConfiguration _abilitiesConfiguration;
     [InjectOptional] private RelicManager _relicManager;
     [InjectOptional] private RelicEventBus _relicEventBus;
+    [Inject] private IRogueLikeRuntimeDataService _runtimeDataService;
     [Inject] private Features.Sounds.ISoundsService _sounds;
 
     public void PlayCombatSound(Features.Sounds.SoundId sound) => _sounds.Play(sound);
@@ -59,8 +60,8 @@ public class CharacterFacade : MonoBehaviour
     private CharacterCameraMoveSystem _cameraSystem;
     private CharacterProximityTransparencySystem _proximityTransparencySystem;
     private DealDamageEffectSystem _damageEffectSystem;
+    private CharacterInvulnerabilitySystem _invulnerabilitySystem;
     private IDamageView _damageView;
-    private float _invulnerableUntilTime;
     private bool _isTransitionPaused;
     private bool _wasKinematicBeforeControlLock;
     private int _obstacleLayer = -1;
@@ -95,6 +96,8 @@ public class CharacterFacade : MonoBehaviour
 
     private void Update()
     {
+        _invulnerabilitySystem.Tick(Time.deltaTime, _pauseEntity.IsPauseEntity);
+
         UpdateHealth(Time.deltaTime);
         UpdateShield(Time.deltaTime);
         _moveSystem.CaptureJumpInput(Time.deltaTime);
@@ -107,8 +110,12 @@ public class CharacterFacade : MonoBehaviour
         _cameraSystem.Move();
     }
 
+    private void OnDisable() =>
+        _invulnerabilitySystem?.Reset();
+
     private void OnDestroy()
     {
+        _invulnerabilitySystem?.Dispose();
         _moveSystem?.Dispose();
         _cameraSystem?.Dispose();
         _proximityTransparencySystem?.Dispose();
@@ -153,7 +160,8 @@ public class CharacterFacade : MonoBehaviour
         CharacterAbilitySystem abilitySystem, CharacterAnimationSystem animationSystem,
         CharacterMoveSystem moveSystem, CharacterCameraMoveSystem cameraSystem,
         CharacterProximityTransparencySystem proximityTransparencySystem,
-        DealDamageEffectSystem damageEffectSystem, IDamageView damageView)
+        DealDamageEffectSystem damageEffectSystem, IDamageView damageView,
+        CharacterInvulnerabilitySystem invulnerabilitySystem)
     {
         _rigidbody = rigidbody;
         _collider = collider;
@@ -167,11 +175,12 @@ public class CharacterFacade : MonoBehaviour
         _proximityTransparencySystem = proximityTransparencySystem;
         _damageEffectSystem = damageEffectSystem;
         _damageView = damageView;
+        _invulnerabilitySystem = invulnerabilitySystem;
     }
 
-    public bool ReceiveDamage(int rawDamage, CombatTarget source)
+    public bool ReceiveDamage(float rawDamage, CombatTarget source)
     {
-        if (Time.unscaledTime < _invulnerableUntilTime)
+        if (_pauseEntity.IsPauseEntity || _invulnerabilitySystem.IsActive)
             return false;
 
         if (_healthSystem.IsDead || rawDamage <= 0)
@@ -185,43 +194,56 @@ public class CharacterFacade : MonoBehaviour
         }
 
         if (_relicManager != null && _relicManager.TryBlockIncomingDamage(this))
+        {
+            GrantDamageInvulnerability(CharacterHealthRules.HalfHeart);
+            _sounds.Play(Features.Sounds.SoundId.PlayerBlock);
             return false;
+        }
+
+        if (_runtimeDataService.CurrentIndexLevel >= 6)
+            rawDamage = Mathf.Max(1f, rawDamage);
 
         float armorMultiplier = 100f / (100f + Mathf.Max(0f, _characterStats.Armor));
-        int reducedDamage = Mathf.Max(1, Mathf.RoundToInt(rawDamage * armorMultiplier));
+        float reducedDamage = rawDamage * armorMultiplier;
         if (_relicManager != null)
             reducedDamage = _relicManager.ModifyIncomingDamage(this, reducedDamage);
 
         if (reducedDamage <= 0)
             return false;
 
+        reducedDamage = CharacterHealthRules.NormalizeDamage(reducedDamage);
         float shieldBeforeDamage = _shieldSystem.CurrentShield;
-        int absorbedDamage = _shieldSystem.AbsorbDamage(reducedDamage);
+        float absorbedDamage = _shieldSystem.AbsorbDamage(reducedDamage);
         if (absorbedDamage > 0)
             _sounds.Play(_shieldSystem.CurrentShield <= 0f && shieldBeforeDamage > 0f
                 ? Features.Sounds.SoundId.PlayerShieldBreak : Features.Sounds.SoundId.PlayerBlock);
-        int healthDamage = reducedDamage - absorbedDamage;
+        float healthDamage = reducedDamage - absorbedDamage;
 
         float healthBeforeDamage = _healthSystem.CurrentHealth;
         if (healthDamage > 0 && healthBeforeDamage - healthDamage <= 0f &&
             _relicManager != null &&
             _relicManager.TryCancelFatalDamage(this, healthDamage))
         {
-            int rescuedHealthDamage =
-                Mathf.CeilToInt(Mathf.Max(0f, healthBeforeDamage - _healthSystem.CurrentHealth));
+            float rescuedHealthDamage =
+                Mathf.Max(0f, healthBeforeDamage - _healthSystem.CurrentHealth);
+            GrantDamageInvulnerability(reducedDamage);
+            _moveSystem.ResetBunnyHopBonus();
             PlayDamageFeedback(absorbedDamage + rescuedHealthDamage);
             _damageEffectSystem.DealDamage();
+            _relicEventBus?.PublishDamageTaken(new RelicDamageTakenEvent(this, source,
+                absorbedDamage + rescuedHealthDamage, "Enemy"));
             return true;
         }
 
-        int appliedHealthDamage = healthDamage > 0 ? _healthSystem.GetDamage(healthDamage) : 0;
+        float appliedHealthDamage = healthDamage > 0f ? _healthSystem.GetDamage(healthDamage) : 0f;
         if (appliedHealthDamage > 0 && !_healthSystem.IsDead)
             _sounds.Play(Features.Sounds.SoundId.PlayerHit);
-        int appliedDamage = absorbedDamage + appliedHealthDamage;
+        float appliedDamage = absorbedDamage + appliedHealthDamage;
 
         if (appliedDamage <= 0)
             return false;
 
+        GrantDamageInvulnerability(reducedDamage);
         _moveSystem.ResetBunnyHopBonus();
         PlayDamageFeedback(appliedDamage);
         _damageEffectSystem.DealDamage();
@@ -234,15 +256,19 @@ public class CharacterFacade : MonoBehaviour
         return true;
     }
 
-    public bool ReceiveDirectDamage(int damage, string damageType)
+    public bool ReceiveDirectDamage(float damage, string damageType)
     {
+        if (_pauseEntity.IsPauseEntity || _invulnerabilitySystem.IsActive)
+            return false;
+
         if (_healthSystem.IsDead || damage <= 0)
             return false;
 
-        int appliedDamage = _healthSystem.GetDamage(damage);
+        float appliedDamage = _healthSystem.GetDamage(damage);
         if (appliedDamage <= 0)
             return false;
 
+        GrantDamageInvulnerability(appliedDamage);
         if (!_healthSystem.IsDead)
             _sounds.Play(Features.Sounds.SoundId.PlayerHit);
         PlayDamageFeedback(appliedDamage);
@@ -251,7 +277,7 @@ public class CharacterFacade : MonoBehaviour
         return true;
     }
 
-    private void PlayDamageFeedback(int damage)
+    private void PlayDamageFeedback(float damage)
     {
         if (damage <= 0)
             return;
@@ -260,8 +286,17 @@ public class CharacterFacade : MonoBehaviour
         _cameraSystem.PlayDamageShake();
     }
 
-    public void SetTemporaryInvulnerability(float duration) =>
-        _invulnerableUntilTime = Mathf.Max(_invulnerableUntilTime, Time.unscaledTime + duration);
+    public void SetTemporaryInvulnerability(float duration)
+    {
+        if (!_healthSystem.IsDead)
+            _invulnerabilitySystem.Grant(duration);
+    }
+
+    private void GrantDamageInvulnerability(float damage)
+    {
+        if (!_healthSystem.IsDead)
+            _invulnerabilitySystem.GrantAfterDamage(damage);
+    }
 
     public void SetTransitionPaused(bool state)
     {
@@ -332,7 +367,7 @@ public class CharacterFacade : MonoBehaviour
 
     private void UpdateHealth(float deltaTime)
     {
-        _healthSystem.SetMaxHealth(_characterStats.MaxHp);
+        _healthSystem.SetMaxHealth(_characterStats.MaxHp, healIncrease: false);
 
         if (_pauseEntity.IsPauseEntity == false)
         {

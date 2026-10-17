@@ -23,12 +23,37 @@ namespace Features.Quests.Scripts
         [SerializeField] private Sprite _silverIcon;
         [SerializeField] private Sprite _portraitPlaceholder;
 
+        private QuestDefinition[] _activeQuests;
+        private UnlockDefinition[] _activeUnlocks;
+
         public IReadOnlyList<string> DefaultCharacters => _defaultCharacters ?? Array.Empty<string>();
         public IReadOnlyList<AbilityName> DefaultAbilities => _defaultAbilities ?? Array.Empty<AbilityName>();
         public IReadOnlyList<RelicDefinition> DefaultRelics => _defaultRelics ?? Array.Empty<RelicDefinition>();
-        public IReadOnlyList<QuestDefinition> Quests => _quests ?? Array.Empty<QuestDefinition>();
-        public IReadOnlyList<UnlockDefinition> Unlocks => _unlocks ?? Array.Empty<UnlockDefinition>();
+        public IReadOnlyList<QuestDefinition> Quests => _activeQuests ??=
+            Array.FindAll(_quests ?? Array.Empty<QuestDefinition>(), quest => quest != null && !quest.IsDisabled);
+        public IReadOnlyList<UnlockDefinition> Unlocks => _activeUnlocks ??=
+            Array.FindAll(_unlocks ?? Array.Empty<UnlockDefinition>(), unlock => unlock != null && !unlock.IsDisabled);
         public Sprite SilverIcon => _silverIcon;
         public Sprite PortraitPlaceholder => _portraitPlaceholder;
+
+        internal QuestDefinition GetConfiguredQuest(string questId)
+        {
+            foreach (QuestDefinition quest in _quests ?? Array.Empty<QuestDefinition>())
+                if (quest != null && quest.Id == questId)
+                    return quest;
+            return null;
+        }
+
+        private void OnEnable() => InvalidateActiveDefinitions();
+
+#if UNITY_EDITOR
+        private void OnValidate() => InvalidateActiveDefinitions();
+#endif
+
+        private void InvalidateActiveDefinitions()
+        {
+            _activeQuests = null;
+            _activeUnlocks = null;
+        }
     }
 }

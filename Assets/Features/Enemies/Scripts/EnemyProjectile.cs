@@ -14,7 +14,7 @@ namespace Features.Enemies.Scripts
         private EnemyFacade _source;
         private CancellationTokenSource _linkedCancellationTokenSource;
         private Collider _collider;
-        private int _damage;
+        private float _damage;
         private bool _isLaunched;
         private bool _isResolved;
         private ISoundsService _sounds;
@@ -27,7 +27,7 @@ namespace Features.Enemies.Scripts
         private void Awake() =>
             _blockingLayerMask = LayerMask.GetMask("Obstacle", "Wall");
 
-        protected CancellationToken InitializeProjectile(Vector3 startPosition, int damage,
+        protected CancellationToken InitializeProjectile(Vector3 startPosition, float damage,
             EnemyFacade source, CharacterFacade target, CancellationToken cancellationToken)
         {
             CancelCurrentFlight();

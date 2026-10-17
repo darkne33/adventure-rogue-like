@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ScrollAbilityConfiguration
   <AbilityName>k__BackingField: 12
   DisplayName: Max HP Scroll
-  Description: Oops it's ABILITY?! :)
+  Description: Adds half a red heart to maximum health without healing. Maximum 12 hearts.
   <Icon>k__BackingField: {fileID: 21300000, guid: 838c1ba005454c6894bb6cc56415238b, type: 3}
-  <DefaultIncreaseStat>k__BackingField: 4
-  <StatSuffix>k__BackingField:
+  <DefaultIncreaseStat>k__BackingField: 0.5
+  <StatSuffix>k__BackingField: " hearts"

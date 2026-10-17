@@ -177,7 +177,7 @@ namespace Features.Quests.Scripts
             if (CompletedRuns < quest.MinimumCompletedRuns)
                 requirements.Add($"Finish {quest.MinimumCompletedRuns} runs ({CompletedRuns}/{quest.MinimumCompletedRuns})");
             foreach (string questId in quest.RequiredQuestIds)
-                if (!IsCompleted(questId))
+                if (!IsQuestRequirementMet(questId))
                     requirements.Add($"Complete {GetQuest(questId)?.Title ?? questId}");
             foreach (string unlockId in quest.RequiredUnlockIds)
             {
@@ -217,7 +217,7 @@ namespace Features.Quests.Scripts
 
         public bool IsRequirementMet(UnlockDefinition unlock) => unlock != null &&
             (string.IsNullOrWhiteSpace(unlock.RequiredQuestId) ||
-             GetQuest(unlock.RequiredQuestId) != null && IsCompleted(unlock.RequiredQuestId));
+             IsQuestRequirementMet(unlock.RequiredQuestId));
 
         public bool CanPurchase(UnlockDefinition unlock) => unlock != null &&
             !string.IsNullOrWhiteSpace(unlock.Id) && !IsOwned(unlock) &&
@@ -465,12 +465,18 @@ namespace Features.Quests.Scripts
             return true;
         }
 
+        private bool IsQuestRequirementMet(string questId)
+        {
+            QuestDefinition quest = Configuration.GetConfiguredQuest(questId);
+            return quest != null && (quest.IsDisabled || IsCompleted(questId));
+        }
+
         private bool ArePrerequisitesMet(QuestDefinition quest)
         {
             if (CompletedRuns < quest.MinimumCompletedRuns)
                 return false;
             foreach (string questId in quest.RequiredQuestIds)
-                if (!IsCompleted(questId))
+                if (!IsQuestRequirementMet(questId))
                     return false;
             foreach (string unlockId in quest.RequiredUnlockIds)
                 if (!IsOwned(GetUnlock(unlockId)))
@@ -553,7 +559,7 @@ namespace Features.Quests.Scripts
                 if (data.Version >= 4 && data.QuestProgress != null)
                 {
                     foreach (var entry in data.QuestProgress)
-                        if (GetQuest(entry.Key) != null)
+                        if (Configuration.GetConfiguredQuest(entry.Key) != null)
                             _questProgress[entry.Key] = Math.Max(0, entry.Value);
                 }
                 else

@@ -56,7 +56,8 @@ namespace Features.Relics.Scripts
                 return;
             bool killed = target.IsDead;
             target.EffectsSystem.DealDamage(0.05f);
-            float healing = applied * Mathf.Max(0f, _stats.LifeSteal) * 0.01f;
+            float healing = CharacterHealthRules.FromLegacyHealth(
+                applied * Mathf.Max(0f, _stats.LifeSteal) * 0.01f);
             if (healing > 0f)
             {
                 float healed = character.HealthSystem.IncreaseCurrentHealth(healing);

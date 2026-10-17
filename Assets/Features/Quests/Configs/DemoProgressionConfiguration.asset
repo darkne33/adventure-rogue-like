@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Quests.Scripts.ProgressionConfiguration
   _defaultCharacters:
   - rabbit
-  _defaultAbilities: 0100000000000000120000000700000003000000040000000600000005000000
+  _defaultAbilities: 01000000000000001200000007000000040000000600000005000000
   _defaultRelics:
   - {fileID: 11400000, guid: 159a9539d24f45e5b019237a978c6c20, type: 2}
   - {fileID: 11400000, guid: 5566d33206f349fbaa754ce6d65ac35f, type: 2}
@@ -132,6 +132,7 @@ MonoBehaviour:
     - character_mr_pocket
     _characterId: mr-pocket
   - _id: armor_scroll_3
+    _disabled: 1
     _title: THICK SKIN
     _description: Raise the Armor Scroll to level 5 in one run.
     _category: 3
@@ -186,6 +187,7 @@ MonoBehaviour:
     _requiredUnlockIds:
     - relic_golden_sneakers
   - _id: total_kills_500
+    _disabled: 1
     _title: ARMORED RESPONSE
     _description: Raise the Armor Scroll to level 7 in one run.
     _category: 2
@@ -473,6 +475,7 @@ MonoBehaviour:
     _requiredQuestId: total_kills_500
     _silverCost: 3
   - _id: scroll_shield
+    _disabled: 1
     _category: 2
     _characterId: ""
     _ability: {fileID: 11400000, guid: 4976130e6aa846d7a3b62065fe10d5ee, type: 2}

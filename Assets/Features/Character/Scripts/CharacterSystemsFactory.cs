@@ -42,7 +42,6 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         Rigidbody rigidbody = facade.GetComponent<Rigidbody>();
         Collider collider = facade.GetComponent<Collider>();
         CharacterFxSystem fxSystem = facade.CharacterModel.GetComponent<CharacterFxSystem>();
-        HealthView worldHealthView = facade.GetComponent<HealthView>();
         Animator animator = facade.CharacterModel.GetComponent<Animator>();
         PauseEntity pauseEntity = _pauseEntityDistributor.EntityDistribute();
 
@@ -69,13 +68,17 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
 
         var deathSystem = new CharacterDeathSystem(facade, _runResultsController);
         var healthSystem = new HealthSystem(_characterStats.MaxHp,
-            new IHealthView[] { characterPanel.CharacterHealthView, worldHealthView, lowHealthVignetteView },
-            deathSystem);
+            new IHealthView[] { characterPanel.CharacterHealthView, lowHealthVignetteView },
+            deathSystem, healthIncrement: CharacterHealthRules.HalfHeart,
+            maximumHealthLimit: CharacterHealthRules.MaximumHearts);
         CharacterSettingsConfiguration settings = _characterConfiguration.CharacterSettings;
         var shieldSystem = new ShieldSystem(settings.ShieldRegenerationDelay,
             settings.ShieldRegenerationPerSecond, characterPanel.CharacterShieldView);
+        var invulnerabilitySystem = new CharacterInvulnerabilitySystem(facade.MeshRenderers,
+            settings.DamageInvulnerabilitySecondsPerHalfHeart, settings.InvulnerabilityBlinkInterval);
 
         facade.Construct(rigidbody, collider, _characterStats, pauseEntity, healthSystem, shieldSystem, abilitySystem,
-            animationSystem, moveSystem, cameraSystem, proximityTransparencySystem, damageEffectSystem, damageView);
+            animationSystem, moveSystem, cameraSystem, proximityTransparencySystem, damageEffectSystem, damageView,
+            invulnerabilitySystem);
     }
 }

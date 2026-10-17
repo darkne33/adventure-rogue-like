@@ -11,7 +11,8 @@ namespace Features.Bosses.Scripts
         [field: Tooltip("Normalized clip position where ground contact, damage and the impact effect occur together.")]
         public float ImpactNormalized { get; protected set; } = 0.6666667f;
         [field: SerializeField, Min(0.01f)] public float Radius { get; protected set; } = 2.3f;
-        [field: SerializeField, Min(0)] public int Damage { get; protected set; } = 20;
+        [field: Tooltip("Damage to the character in hearts.")]
+        [field: SerializeField, Range(0f, 1f)] public float Damage { get; protected set; } = 1f;
         [field: SerializeField, Min(0f)] public float RecoveryDuration { get; protected set; } = 0.2f;
 
         [field: Header("Fixed ground warning")]

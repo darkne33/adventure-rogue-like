@@ -20,7 +20,7 @@ Keep quest and unlock IDs stable: saves refer to these IDs, even when an old num
 - Scrolls: Damage, Armor, Attack Speed, Crit Damage and Crit Chance.
 - Relics: Hot Dog and Venom Blade (green), Iron Hammer and Cupid's Arrow (blue), Turbo Skates (purple). No legendary relic is unlocked by default. These are five available collection entries, not five items granted to the run inventory.
 
-Bullet Explosion and Punch have separate Weapons entries in UNLOCKS and appear alongside DUKE and MR POCKET as two rewards for their respective character quests. Newly purchasing DUKE grants `weapon_bullet_explosion`; newly purchasing MR POCKET grants `weapon_punch`. These weapons become available to all characters without an extra silver payment. Completing the quest alone only enables the character purchase. The character and weapon ownership IDs are saved together. Loading an older save in which a character is already owned does not grant its shared weapon retroactively; that character retains its own starting weapon.
+Bullet Explosion and Punch have separate Weapons entries in UNLOCKS. Their respective character quests show only DUKE and MR POCKET in reward icons, descriptions and completion notifications. Newly purchasing DUKE grants `weapon_bullet_explosion`; newly purchasing MR POCKET grants `weapon_punch`. These weapons become available to all characters without an extra silver payment. Completing the quest alone only enables the character purchase. The character and weapon ownership IDs are saved together. Loading an older save in which a character is already owned does not grant its shared weapon retroactively; that character retains its own starting weapon.
 
 ## Progress, purchases and silver
 

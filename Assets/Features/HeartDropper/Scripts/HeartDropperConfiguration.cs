@@ -7,7 +7,7 @@ public sealed class HeartDropperConfiguration : ScriptableObject
 {
     [field: Header("Reward")]
     [field: SerializeField] public GameObject HeartPrefab { get; private set; }
-    [field: SerializeField, Range(0f, 1f)] public float HealPercentage { get; private set; } = 0.2f;
+    [field: SerializeField, Min(0.5f)] public float HealHearts { get; private set; } = 1f;
     [field: SerializeField] public TMP_FontAsset HealPopupFont { get; private set; }
 
     [field: Header("Drop")]
