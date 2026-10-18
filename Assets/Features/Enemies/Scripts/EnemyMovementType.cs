@@ -5,5 +5,6 @@ public enum EnemyMovementType
     AggressiveChase,
     Aggressive,
     RangeChase,
-    Stationary
+    Stationary,
+    RandomRoom
 }

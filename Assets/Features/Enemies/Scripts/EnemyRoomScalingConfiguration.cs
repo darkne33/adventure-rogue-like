@@ -43,6 +43,7 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
         new(EnemyType.Bomb, 4, 20f, 8),
         new(EnemyType.Ghost, 6, 18f, 8),
         new(EnemyType.Chan, 8, 5f, 2),
+        new(EnemyType.Skeleton, 8, 5f, 2),
         new(EnemyType.Bun, 10, 5f, 2),
         new(EnemyType.Stone_Spikes, 8, 8f, 3, maxAliveInSmallRoom: 1)
     };
@@ -126,7 +127,8 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
         return rule.Weight * (IsSpecialistRoom(roomIndex) ? 2.5f : IsSwarmRoom(roomIndex) ? 0.65f : 1f);
     }
 
-    public static bool IsRanged(EnemyType type) => type is EnemyType.Ghost or EnemyType.Chan;
+    public static bool IsRanged(EnemyType type) =>
+        type is EnemyType.Ghost or EnemyType.Chan or EnemyType.Skeleton;
 
     private static int GetCount(int[] counts, int roomIndex, int fallback)
     {

@@ -138,6 +138,19 @@ public class EnemyConfiguration : ScriptableObject
     [field: Range(0f, 180f)]
     [field: SerializeField] public float RangeChaseRepositionAngle { get; private set; } = 60f;
 
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyMovementType), EnemyMovementType.RandomRoom)]
+    [field: Min(0.1f)]
+    [field: SerializeField] public float RandomRoomMinimumTravelDistance { get; private set; } = 4f;
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyMovementType), EnemyMovementType.RandomRoom)]
+    [field: Min(0.1f)]
+    [field: SerializeField] public float RandomRoomArrivalDistance { get; private set; } = 0.75f;
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyMovementType), EnemyMovementType.RandomRoom)]
+    [field: Min(0.1f)]
+    [field: SerializeField] public float RandomRoomSelectionRetryDelay { get; private set; } = 0.5f;
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyMovementType), EnemyMovementType.RandomRoom)]
+    [field: Min(0.1f)]
+    [field: SerializeField] public float RandomRoomStuckTimeout { get; private set; } = 2.5f;
+
     [field: Header("AI Settings")]
     [field: Tooltip("The enemy starts moving and attacking when the character enters this radius.")]
     [field: Min(0.1f)]

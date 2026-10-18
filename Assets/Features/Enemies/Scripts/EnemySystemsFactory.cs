@@ -1,4 +1,6 @@
 using System;
+using Core;
+using Core.Services;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -13,11 +15,13 @@ namespace Features.Enemies.Scripts
         private readonly LevelsConfiguration _levelsConfiguration;
         private readonly GoldDropper _goldDropper;
         private readonly ExpDropper _expDropper;
+        private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
 
         public EnemySystemsFactory(ICharacterProvider characterProvider, IEnemiesProvider enemiesProvider,
             CharacterStats characterStats, IRogueLikeRuntimeDataService runtimeDataService,
             LevelsConfiguration levelsConfiguration,
-            GoldDropper goldDropper, ExpDropper expDropper)
+            GoldDropper goldDropper, ExpDropper expDropper,
+            ISceneService<RogueLikeSceneProvider> sceneService)
         {
             _characterProvider = characterProvider;
             _enemiesProvider = enemiesProvider;
@@ -26,6 +30,7 @@ namespace Features.Enemies.Scripts
             _levelsConfiguration = levelsConfiguration;
             _goldDropper = goldDropper;
             _expDropper = expDropper;
+            _sceneService = sceneService;
         }
 
         public void Create(EnemyFacade facade)
@@ -36,6 +41,8 @@ namespace Features.Enemies.Scripts
             Rigidbody rigidbody = facade.GetComponent<Rigidbody>();
             NavMeshAgent navMeshAgent = facade.GetComponent<NavMeshAgent>();
             Animator animator = facade.GetComponent<Animator>();
+            if (animator == null)
+                animator = facade.GetComponentInChildren<Animator>(true);
             EnemyCollisionDetector collisionDetector = facade.GetComponent<EnemyCollisionDetector>();
             EnemyAggroIndicatorView aggroIndicatorView =
                 facade.GetComponent<EnemyAggroIndicatorView>() ??
@@ -140,9 +147,29 @@ namespace Features.Enemies.Scripts
                     facade, character, configuration, navMeshAgent, animationSystem),
                 EnemyMovementType.Stationary => new EnemyStationaryMovementSystem(
                     facade, character, animationSystem),
+                EnemyMovementType.RandomRoom => new EnemyRandomRoomMovementSystem(
+                    facade, character, configuration, navMeshAgent, animationSystem,
+                    GetCurrentRoom(), _levelsConfiguration.GroundLayer,
+                    facade.GetComponent<EnemyRangedAttackView>()?.MinimumAttackDistance ?? 0f),
                 _ => throw new ArgumentOutOfRangeException(nameof(configuration.EnemyMovementType),
                     configuration.EnemyMovementType, "Enemy movement type is not supported.")
             };
+        }
+
+        private Room GetCurrentRoom()
+        {
+            LevelView level = _sceneService.GameSceneComponentsService?.CurrentLevel;
+            if (level == null)
+                return null;
+
+            for (int i = 0; i < level.Rooms.Count; i++)
+            {
+                Room room = level.Rooms[i]?.Room;
+                if (room != null && ReferenceEquals(room.RoomData, _runtimeDataService.CurrentRoomData))
+                    return room;
+            }
+
+            return null;
         }
 
         private void ConfigureRoomStats(EnemyFacade facade)

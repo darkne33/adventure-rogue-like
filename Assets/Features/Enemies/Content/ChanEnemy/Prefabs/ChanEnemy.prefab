@@ -153,6 +153,7 @@ MonoBehaviour:
   _enemyConfiguration: {fileID: 11400000, guid: 507ac4a34920c3047b2cf5c6519e113b, type: 2}
   _meshRenderers:
   - {fileID: 5961210851037494594}
+  _movementVisual: {fileID: 0}
 --- !u!114 &226054964259705086
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -290,7 +291,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6297887375957133414}
-  m_Mesh: {fileID: 6182050287067357235, guid: a94d3e43dfa956644ac8114d1f9cefdd, type: 3}
+  m_Mesh: {fileID: 6182050287067357235, guid: 52ca0d3c06bc6044bba41db3d59688c9, type: 3}
 --- !u!23 &5961210851037494594
 MeshRenderer:
   m_ObjectHideFlags: 0

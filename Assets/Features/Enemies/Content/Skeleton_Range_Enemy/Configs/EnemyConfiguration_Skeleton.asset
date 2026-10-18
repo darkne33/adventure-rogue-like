@@ -14,18 +14,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyConfiguration
   <EnemyRank>k__BackingField: 0
   <MaxHealth>k__BackingField: 20
-  <Damage>k__BackingField: 1
+  <Damage>k__BackingField: 0.5
   <EnemyDamage>k__BackingField: 1
-  <DamageRange>k__BackingField: 20
+  <DamageRange>k__BackingField: 10000
   <DamageCooldown>k__BackingField: 2.4
   <AttackPreparationDuration>k__BackingField: 0.55
-  <EnemyDamageType>k__BackingField: 3
+  <EnemyDamageType>k__BackingField: 4
   <MovementPauseAfterAttack>k__BackingField: 1.25
   <EnemyAnimationType>k__BackingField: 3
-  <EnemyMovementType>k__BackingField: 1
+  <EnemyMovementType>k__BackingField: 6
+  <RandomizeSkirmisherOnSpawn>k__BackingField: 0
   <Exp>k__BackingField: 10
   <DistanceToStop>k__BackingField: 0
   <Speed>k__BackingField: 4.75
   <RotationSpeed>k__BackingField: 360
   <Acceleration>k__BackingField: 12
-  <AggroRange>k__BackingField: 15
+  <RandomRoomMinimumTravelDistance>k__BackingField: 4
+  <RandomRoomArrivalDistance>k__BackingField: 0.75
+  <RandomRoomSelectionRetryDelay>k__BackingField: 0.5
+  <RandomRoomStuckTimeout>k__BackingField: 2.5
+  <AggroRange>k__BackingField: 10000
+  <AggroReactionDuration>k__BackingField: 0.65

@@ -81,7 +81,7 @@ namespace Features.Enemies.Scripts
                     return;
 
                 RotateTowardsCharacter(enemyTransform, true);
-                SpawnProjectile(cancellationToken);
+                SpawnProjectile();
 
                 _enemyFacade.AnimationSystem.IdleAnimation();
                 float movementPause = Mathf.Max(
@@ -117,6 +117,7 @@ namespace Features.Enemies.Scripts
                     _enemyFacade.IsDead == false &&
                     _enemyFacade.IsAggro &&
                     _enemyFacade.IsStopped == false &&
+                    _enemyFacade.CanAttack &&
                     _cooldown <= 0f &&
                     distanceToCharacter >= _minimumDistanceExecuteDamage &&
                     distanceToCharacter <= _distanceExecuteDamage)
@@ -153,7 +154,7 @@ namespace Features.Enemies.Scripts
             return offset.magnitude;
         }
 
-        private void SpawnProjectile(CancellationToken cancellationToken)
+        private void SpawnProjectile()
         {
             _enemyFacade.PlayAttackSound();
             Transform spawnPoint = _attackView.ProjectileSpawnPoint;
@@ -166,10 +167,13 @@ namespace Features.Enemies.Scripts
 
             EnemyCannonball projectile = UnityEngine.Object.Instantiate(
                 _attackView.ProjectilePrefab, startPosition, rotation);
+            // Released projectiles outlive the enemy that fired them.
+            CancellationToken projectileCancellationToken =
+                _characterFacade.gameObject.GetCancellationTokenOnDestroy();
             projectile.Launch(startPosition, targetPosition,
                 _attackView.ProjectileFlightDuration / Mathf.Max(0.05f, _enemyFacade.RelicTimeScale),
                 _attackView.ProjectileArcHeight, _attackView.ImpactRadius, _enemyConfiguration.Damage,
-                _enemyFacade, _characterFacade, cancellationToken);
+                _enemyFacade, _characterFacade, projectileCancellationToken);
         }
 
         private void RotateTowardsCharacter(Transform enemyTransform, bool immediately = false)

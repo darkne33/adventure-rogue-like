@@ -45,10 +45,7 @@ namespace Features.Enemies.Scripts
             number.Text.color = damageColor ?? Color.white;
             number.Text.outlineColor = TextOutlineColor;
             if (number.CriticalText != null)
-            {
                 number.CriticalText.gameObject.SetActive(isCritical);
-                number.CriticalText.color = number.Text.color;
-            }
             number.CanvasGroup.alpha = 1f;
 
             float horizontalOffset = Random.Range(-0.45f, 0.45f);
@@ -82,8 +79,32 @@ namespace Features.Enemies.Scripts
                     .SetEase(Ease.OutCubic))
                 .AppendInterval(0.12f)
                 .Append(number.CanvasGroup.DOFade(0f, 0.28f).SetEase(Ease.InQuad))
-                .Join(number.RectTransform.DOAnchorPosY(endPosition.y + 0.35f, 0.28f).SetEase(Ease.InQuad))
-                .OnComplete(() => Release(number));
+                .Join(number.RectTransform.DOAnchorPosY(endPosition.y + 0.35f, 0.28f).SetEase(Ease.InQuad));
+
+            if (isCritical && number.CriticalText != null)
+                AnimateCriticalText(number, startPosition, horizontalOffset < 0f ? 1f : -1f);
+
+            number.Sequence.OnComplete(() => Release(number));
+        }
+
+        private void AnimateCriticalText(DamageNumber number, Vector2 damagePosition, float direction)
+        {
+            RectTransform rectTransform = number.CriticalText.rectTransform;
+            Vector2 startPosition = damagePosition + new Vector2(direction * 0.85f, 0.4f);
+            Vector2 endPosition = startPosition + new Vector2(direction * 1.1f, 1.35f);
+
+            number.CriticalText.color = number.Text.color;
+            number.CriticalCanvasGroup.alpha = 1f;
+            rectTransform.anchoredPosition = startPosition;
+            rectTransform.localRotation = Quaternion.identity;
+            rectTransform.localScale = Vector3.one * DAMAGE_NUMBER_START_SCALE;
+
+            number.Sequence
+                .Insert(0f, rectTransform.DOScale(DAMAGE_NUMBER_TARGET_SCALE, 0.2f).SetEase(Ease.OutBack))
+                .Insert(0f, rectTransform.DOAnchorPos(endPosition, 0.8f).SetEase(Ease.OutCubic))
+                .Insert(0.92f, number.CriticalCanvasGroup.DOFade(0f, 0.28f).SetEase(Ease.InQuad))
+                .Insert(0.92f, rectTransform.DOAnchorPosY(endPosition.y + 0.35f, 0.28f)
+                    .SetEase(Ease.InQuad));
         }
 
         private void CreatePool()
@@ -127,7 +148,7 @@ namespace Features.Enemies.Scripts
                 TextMeshProUGUI criticalText = null;
                 if (_criticalTextPrefab != null)
                 {
-                    GameObject criticalTextObject = _container.InstantiatePrefab(_criticalTextPrefab, rectTransform);
+                    GameObject criticalTextObject = _container.InstantiatePrefab(_criticalTextPrefab, _root);
                     criticalText = criticalTextObject.GetComponent<TextMeshProUGUI>();
                     criticalTextObject.SetActive(false);
                 }
@@ -170,6 +191,8 @@ namespace Features.Enemies.Scripts
                 return;
 
             number.GameObject.SetActive(false);
+            if (number.CriticalText != null)
+                number.CriticalText.gameObject.SetActive(false);
             number.Sequence = null;
             _availableNumbers.Enqueue(number);
         }
@@ -187,6 +210,7 @@ namespace Features.Enemies.Scripts
             public readonly CanvasGroup CanvasGroup;
             public readonly TextMeshProUGUI Text;
             public readonly TextMeshProUGUI CriticalText;
+            public readonly CanvasGroup CriticalCanvasGroup;
             public Sequence Sequence;
 
             public DamageNumber(GameObject gameObject, RectTransform rectTransform, CanvasGroup canvasGroup,
@@ -197,6 +221,7 @@ namespace Features.Enemies.Scripts
                 CanvasGroup = canvasGroup;
                 Text = text;
                 CriticalText = criticalText;
+                CriticalCanvasGroup = criticalText != null ? criticalText.GetComponent<CanvasGroup>() : null;
             }
         }
     }

@@ -184,6 +184,9 @@ namespace Features.Enemies.Scripts
             int projectileCount = Mathf.Max(1, _bulletConfiguration.ProjectileCount);
             float spreadAngle = Mathf.Clamp(_bulletConfiguration.SpreadAngle, 0f, 180f);
             float centerIndex = (projectileCount - 1) * 0.5f;
+            // Released projectiles outlive the enemy that fired them.
+            CancellationToken projectileCancellationToken =
+                _characterFacade.gameObject.GetCancellationTokenOnDestroy();
 
             for (int i = 0; i < projectileCount; i++)
             {
@@ -196,7 +199,7 @@ namespace Features.Enemies.Scripts
                 projectile.Launch(startPosition, projectileDirection,
                     _bulletConfiguration.Speed * relicTimeScale,
                     _bulletConfiguration.Lifetime / relicTimeScale, _enemyConfiguration.Damage,
-                    _enemyFacade, _characterFacade, cancellationToken);
+                    _enemyFacade, _characterFacade, projectileCancellationToken);
             }
         }
 
