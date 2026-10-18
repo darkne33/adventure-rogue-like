@@ -213,8 +213,8 @@ namespace Features.Quests.Scripts
                 _status.color = ProgressionMenuUi.Muted;
                 if (!requirementMet)
                 {
-                    int progress = quest != null ? Mathf.Clamp(_service.GetProgress(quest), 0, quest.Target) : 0;
-                    int target = quest != null ? quest.Target : 1;
+                    int target = quest != null ? quest.DisplayTarget : 1;
+                    int progress = quest != null ? Mathf.Clamp(_service.GetProgress(quest), 0, target) : 0;
                     _progress.text = $"{progress:N0} / {target:N0}";
                     _progressBarFill.rectTransform.anchorMax = new Vector2(
                         target > 0 ? Mathf.Clamp01((float)progress / target) : 0f, 1f);
@@ -233,8 +233,8 @@ namespace Features.Quests.Scripts
             {
                 _requirement.text = quest != null ? _service.GetQuestDescription(quest) : "COMPLETE THE REQUIRED QUEST";
                 _requirement.color = ProgressionMenuUi.White;
-                int progress = quest != null ? Mathf.Clamp(_service.GetProgress(quest), 0, quest.Target) : 0;
-                int target = quest != null ? quest.Target : 1;
+                int target = quest != null ? quest.DisplayTarget : 1;
+                int progress = quest != null ? Mathf.Clamp(_service.GetProgress(quest), 0, target) : 0;
                 _progress.text = $"{progress:N0} / {target:N0}";
                 _progressBarFill.rectTransform.anchorMax = new Vector2(
                     target > 0 ? Mathf.Clamp01((float)progress / target) : 0f, 1f);

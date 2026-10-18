@@ -124,7 +124,7 @@ namespace Features.Quests.Scripts
             }
             _rows.Clear();
             QuestRowView selected = null;
-            foreach (QuestDefinition quest in _service.Definitions.OrderBy(quest => quest.MinimumCompletedRuns))
+            foreach (QuestDefinition quest in _service.Definitions)
             {
                 if (_hideCompleted && _service.IsCompleted(quest.Id) && !_service.CanClaimReward(quest.Id))
                     continue;

@@ -45,11 +45,13 @@ namespace Features.Quests.Scripts
         [SerializeField] private ProgressionCategory _category;
         [SerializeField] private QuestMetric _metric;
         [SerializeField, Min(1)] private int _target = 1;
+        [SerializeField] private QuestMetric _secondaryMetric;
+        [SerializeField, Min(0), Tooltip("Optional lifetime condition, independent of the main goal. Zero disables it.")]
+        private int _secondaryTarget;
+        [SerializeField, Tooltip("Optional ownership condition, used instead of the secondary metric.")]
+        private string _secondaryUnlockId;
         [SerializeField, Min(0)] private int _silverReward;
         [SerializeField] private string[] _legacyQuestIds = Array.Empty<string>();
-        [SerializeField, Min(0)] private int _minimumCompletedRuns;
-        [SerializeField] private string[] _requiredQuestIds = Array.Empty<string>();
-        [SerializeField] private string[] _requiredUnlockIds = Array.Empty<string>();
         [SerializeField] private string _characterId;
         [SerializeField] private AbilityConfiguration _ability;
 
@@ -60,14 +62,15 @@ namespace Features.Quests.Scripts
         public ProgressionCategory Category => _category;
         public QuestMetric Metric => _metric;
         public int Target => Mathf.Max(1, _target);
+        public QuestMetric SecondaryMetric => _secondaryMetric;
+        public int SecondaryTarget => Mathf.Max(0, _secondaryTarget);
+        public string SecondaryUnlockId => _secondaryUnlockId;
+        public bool HasSecondaryUnlockCondition => !string.IsNullOrWhiteSpace(SecondaryUnlockId);
+        public bool HasSecondaryCondition => HasSecondaryUnlockCondition || SecondaryTarget > 0;
+        public int DisplayTarget => HasSecondaryCondition ? 2 : Target;
         public int SilverReward => Mathf.Max(0, _silverReward);
         public IReadOnlyList<string> LegacyQuestIds => _legacyQuestIds ?? Array.Empty<string>();
-        public int MinimumCompletedRuns => Mathf.Max(0, _minimumCompletedRuns);
-        public IReadOnlyList<string> RequiredQuestIds => _requiredQuestIds ?? Array.Empty<string>();
-        public IReadOnlyList<string> RequiredUnlockIds => _requiredUnlockIds ?? Array.Empty<string>();
         public string CharacterId => _characterId;
         public AbilityConfiguration Ability => _ability;
-        public bool HasPrerequisites => MinimumCompletedRuns > 0 || RequiredQuestIds.Count > 0 ||
-                                        RequiredUnlockIds.Count > 0 || !string.IsNullOrWhiteSpace(CharacterId);
     }
 }

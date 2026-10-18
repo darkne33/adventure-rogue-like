@@ -80,6 +80,7 @@ namespace Features.Quests.Scripts
                 : throw new ArgumentNullException(nameof(configuration));
             Load();
             RestoreLegacyQuestCompletions();
+            RestoreRecordedProgress();
             _wallet.Silver.CountChanged += HandleSilverChanged;
             Application.quitting += Flush;
             Application.focusChanged += HandleFocusChanged;
@@ -94,9 +95,9 @@ namespace Features.Quests.Scripts
 
             _isRunActive = true;
             _activeQuests.Clear();
-            // Snapshot eligibility: later steps start in a new run, never midway through this one.
+            // Every objective records immediately; only character-specific goals filter the selected character.
             foreach (QuestDefinition quest in Definitions)
-                if (!IsCompleted(quest.Id) && ArePrerequisitesMet(quest) &&
+                if (!IsCompleted(quest.Id) &&
                     (string.IsNullOrWhiteSpace(quest.CharacterId) || quest.CharacterId == characterId))
                     _activeQuests.Add(quest.Id);
         }
@@ -166,35 +167,7 @@ namespace Features.Quests.Scripts
             return null;
         }
 
-        public string GetQuestDescription(QuestDefinition quest)
-        {
-            if (quest == null)
-                return string.Empty;
-            if (IsCompleted(quest.Id))
-                return quest.Description;
-
-            var requirements = new List<string>();
-            if (CompletedRuns < quest.MinimumCompletedRuns)
-                requirements.Add($"Finish {quest.MinimumCompletedRuns} runs ({CompletedRuns}/{quest.MinimumCompletedRuns})");
-            foreach (string questId in quest.RequiredQuestIds)
-                if (!IsQuestRequirementMet(questId))
-                    requirements.Add($"Complete {GetQuest(questId)?.Title ?? questId}");
-            foreach (string unlockId in quest.RequiredUnlockIds)
-            {
-                UnlockDefinition unlock = GetUnlock(unlockId);
-                if (!IsOwned(unlock))
-                    requirements.Add($"Own {unlock?.DisplayName ?? unlockId}");
-            }
-
-            if (requirements.Count > 0)
-            {
-                string remaining = requirements.Count > 1 ? $" (+{requirements.Count - 1} more)" : string.Empty;
-                return $"{quest.Description}\nNext: {requirements[0]}{remaining}.";
-            }
-            return quest.HasPrerequisites
-                ? $"{quest.Description}\nStarts next eligible run."
-                : quest.Description;
-        }
+        public string GetQuestDescription(QuestDefinition quest) => quest?.Description ?? string.Empty;
 
         public IEnumerable<UnlockDefinition> GetUnlocksForQuest(string questId)
         {
@@ -246,6 +219,8 @@ namespace Features.Quests.Scripts
                 {
                     _updatingWallet = false;
                 }
+                // A recorded objective can complete when its independent ownership condition is purchased.
+                CompleteEligibleQuests();
                 Flush();
                 Changed?.Invoke();
                 return true;
@@ -339,9 +314,19 @@ namespace Features.Quests.Scripts
             Changed?.Invoke();
         }
 
-        // For single-run goals this is the best result ever reached, not a sum of runs.
-        public int GetProgress(QuestDefinition quest) =>
-            IsCompleted(quest.Id) ? quest.Target : Math.Min(quest.Target, GetQuestProgress(quest.Id));
+        // Two-condition goals show completed conditions; single goals retain their metric progress.
+        public int GetProgress(QuestDefinition quest)
+        {
+            if (IsCompleted(quest.Id))
+                return quest.DisplayTarget;
+
+            int progress = Math.Min(quest.Target, GetQuestProgress(quest.Id));
+            if (!quest.HasSecondaryCondition)
+                return progress;
+
+            return (progress >= quest.Target ? 1 : 0) +
+                   (IsSecondaryConditionMet(quest) ? 1 : 0);
+        }
 
         public void RecordBest(QuestMetric metric, int value)
         {
@@ -351,7 +336,7 @@ namespace Features.Quests.Scripts
             bool changed = value > GetMetric(metric);
             if (changed)
                 _progress[metric] = value;
-            // A new eligible quest still needs this run's result even when the lifetime best is higher.
+            // Character-specific goals still need this character's result when the global best is higher.
             foreach (QuestDefinition quest in Definitions)
                 if (quest.Metric == metric && _activeQuests.Contains(quest.Id))
                     changed |= SetQuestProgress(quest, value);
@@ -471,17 +456,12 @@ namespace Features.Quests.Scripts
             return quest != null && (quest.IsDisabled || IsCompleted(questId));
         }
 
-        private bool ArePrerequisitesMet(QuestDefinition quest)
+        private bool IsSecondaryConditionMet(QuestDefinition quest)
         {
-            if (CompletedRuns < quest.MinimumCompletedRuns)
-                return false;
-            foreach (string questId in quest.RequiredQuestIds)
-                if (!IsQuestRequirementMet(questId))
-                    return false;
-            foreach (string unlockId in quest.RequiredUnlockIds)
-                if (!IsOwned(GetUnlock(unlockId)))
-                    return false;
-            return true;
+            if (quest.HasSecondaryUnlockCondition)
+                return IsOwned(GetUnlock(quest.SecondaryUnlockId));
+
+            return !quest.HasSecondaryCondition || GetMetric(quest.SecondaryMetric) >= quest.SecondaryTarget;
         }
 
         private void RecordChange()
@@ -497,7 +477,8 @@ namespace Features.Quests.Scripts
             bool completedAny = false;
             foreach (QuestDefinition quest in Definitions)
             {
-                if (IsCompleted(quest.Id) || GetQuestProgress(quest.Id) < quest.Target || !ArePrerequisitesMet(quest))
+                if (IsCompleted(quest.Id) || GetQuestProgress(quest.Id) < quest.Target ||
+                    !IsSecondaryConditionMet(quest))
                     continue;
 
                 // Completion unlocks the content; silver is credited only when the reward is claimed.
@@ -540,6 +521,14 @@ namespace Features.Quests.Scripts
             }
         }
 
+        private void RestoreRecordedProgress()
+        {
+            // Global history cannot identify the character or a specific ability that earned it.
+            foreach (QuestDefinition quest in Definitions)
+                if (string.IsNullOrWhiteSpace(quest.CharacterId) && quest.Metric != QuestMetric.SpecificAbilityLevel)
+                    _dirty |= SetQuestProgress(quest, GetMetric(quest.Metric));
+        }
+
         private void Load()
         {
             if (!PlayerPrefs.HasKey(SaveKey))
@@ -564,10 +553,7 @@ namespace Features.Quests.Scripts
                 }
                 else
                 {
-                    // Old global totals cannot satisfy steps that were never eligible in that save.
-                    foreach (QuestDefinition quest in Definitions)
-                        if (!quest.HasPrerequisites)
-                            _questProgress[quest.Id] = Math.Min(quest.Target, GetMetric(quest.Metric));
+                    // Shared restoration imports only history that can be attributed to this goal.
                     _dirty = true;
                 }
 

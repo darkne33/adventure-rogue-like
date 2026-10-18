@@ -46,15 +46,16 @@ namespace Features.Quests.Scripts
             _rewardAlert.SetActive(service.CanClaimReward(quest.Id));
             _completedCheck.SetIsOnWithoutNotify(service.IsRewardClaimed(quest.Id));
             _condition.text = quest.Description;
-            bool showProgress = quest.Target > 1 && !completed;
+            int target = quest.DisplayTarget;
+            bool showProgress = target > 1 && !completed;
             _progressRoot.SetActive(showProgress);
             Vector2 conditionRight = _conditionAnchorMax;
             if (!showProgress)
                 conditionRight.x = ((RectTransform)_progressRoot.transform).anchorMax.x;
             _condition.rectTransform.anchorMax = conditionRight;
-            int progress = Mathf.Clamp(service.GetProgress(quest), 0, quest.Target);
-            _progressText.text = $"{progress:N0} / {quest.Target:N0}";
-            float fraction = quest.Target > 0 ? (float)progress / quest.Target : 0f;
+            int progress = Mathf.Clamp(service.GetProgress(quest), 0, target);
+            _progressText.text = $"{progress:N0} / {target:N0}";
+            float fraction = target > 0 ? (float)progress / target : 0f;
             _progressFill.anchorMax = new Vector2(Mathf.Clamp01(fraction), 1f);
 
             UnlockDefinition[] rewards = service.GetUnlocksForQuest(quest.Id).ToArray();
