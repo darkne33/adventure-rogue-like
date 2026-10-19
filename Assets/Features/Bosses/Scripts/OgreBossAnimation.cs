@@ -8,6 +8,9 @@ namespace Features.Bosses.Scripts
 
         private static readonly int MovementParameter = Animator.StringToHash("Movement");
         private static readonly int AttackParameter = Animator.StringToHash("Attack");
+        private static readonly int IdleState = Animator.StringToHash("Base Layer.Idle");
+        private static readonly int MoveState = Animator.StringToHash("Base Layer.Move");
+        private static readonly int AttackState = Animator.StringToHash("Base Layer.Attack");
         private readonly Animator _animator;
         private readonly AnimationClip _attackClip;
         private float _timeScale = 1f;
@@ -58,6 +61,7 @@ namespace Features.Bosses.Scripts
 
         private void SetMovement(bool moving)
         {
+            bool wasAttacking = _attacking;
             _attacking = false;
             _attackPlaybackSpeed = 1f;
             UpdateSpeed();
@@ -65,6 +69,8 @@ namespace Features.Bosses.Scripts
                 return;
             _animator.SetBool(MovementParameter, moving);
             _animator.ResetTrigger(AttackParameter);
+            if (wasAttacking)
+                _animator.Play(moving ? MoveState : IdleState, 0, 0f);
         }
 
         private void StartAttack(float playbackSpeed)
@@ -75,8 +81,8 @@ namespace Features.Bosses.Scripts
             _attackPlaybackSpeed = Mathf.Max(0f, playbackSpeed);
             _animator.SetBool(MovementParameter, false);
             _animator.ResetTrigger(AttackParameter);
-            _animator.SetTrigger(AttackParameter);
             UpdateSpeed();
+            _animator.Play(AttackState, 0, 0f);
         }
 
         private void UpdateSpeed()

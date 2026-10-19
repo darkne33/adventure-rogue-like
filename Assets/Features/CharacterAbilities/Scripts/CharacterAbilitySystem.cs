@@ -63,6 +63,12 @@ public class CharacterAbilitySystem
         }
     }
 
+    public void RestartActiveCooldowns()
+    {
+        foreach (CharacterActiveAbility ability in _activeAbilities.Values)
+            ability.RestartCooldown();
+    }
+
     public void ReduceActiveCooldowns(float seconds)
     {
         float reduction = Mathf.Max(0f, seconds);

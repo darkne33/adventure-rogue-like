@@ -52,12 +52,16 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
 
             if (scrollAbilities.Count > 0)
             {
-                // Keep the usual card count even when the build contains only a few scrolls.
-                while (offers.Count < totalOfferCount)
-                {
-                    offerAbilities.Clear();
-                    AddRandomOffers(scrollAbilities, totalOfferCount - offers.Count, offerAbilities, offers);
-                }
+                AddRandomOffers(scrollAbilities, totalOfferCount, offerAbilities, offers);
+
+                List<CharacterActiveAbility> fallbackActiveAbilities = availableAbilities
+                    .OfType<CharacterActiveAbility>()
+                    .Where(_upgradeBuildService.Contains)
+                    .Where(IsAvailableForCurrentBuild)
+                    .ToList();
+
+                AddRandomOffers(fallbackActiveAbilities, totalOfferCount - offers.Count,
+                    offerAbilities, offers);
 
                 return offers;
             }

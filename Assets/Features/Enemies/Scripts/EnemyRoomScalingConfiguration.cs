@@ -7,14 +7,16 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
 {
     [Tooltip("One entry per first combat-room visit in the run. Later rooms keep the final value.")]
     [SerializeField] private int[] _startingEnemies =
-        { 2, 3, 4, 5, 7, 9, 12, 14, 19, 14, 24, 24, 24, 24, 24, 24, 26, 27, 28, 30 };
+        { 2, 3, 4, 5, 7, 9, 12, 14, 16, 14, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16 };
     [Tooltip("Total enemies across all waves; this can exceed the simultaneous enemy limit. Later rooms keep the final value.")]
     [SerializeField] private int[] _totalEnemies =
-        { 2, 3, 4, 5, 7, 9, 12, 14, 19, 14, 24, 34, 29, 38, 48, 53, 61, 70, 80, 90 };
+        { 2, 3, 4, 5, 7, 9, 12, 14, 16, 14, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16 };
     [Tooltip("Maximum living enemies at once, including survivors from earlier waves.")]
     [SerializeField, Min(1)] private int _maxAliveEnemies = 30;
-    [Tooltip("Maximum total enemies across all waves for a Small room. Larger groups use Medium rooms.")]
-    [SerializeField, Min(1)] private int _maxEnemiesInSmallRoom = 7;
+    [Tooltip("Maximum total enemies across all waves for a Low_Size (Small) room. Larger groups use Medium rooms.")]
+    [SerializeField, Min(1)] private int _maxEnemiesInSmallRoom = 8;
+    [Tooltip("Maximum total enemies across all waves for a Medium_Size room.")]
+    [SerializeField, Min(1)] private int _maxEnemiesInMediumRoom = 16;
     [Header("Combat Waves")]
     [Tooltip("First one-based combat-room visit where rooms can use three waves, regardless of level.")]
     [SerializeField, Min(1)] private int _firstWaveRoom = 5;
@@ -50,25 +52,32 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
 
     public EnemySpawnRule[] EnemyRules => _enemyRules;
     public int MaxAliveEnemies => Mathf.Max(1, _maxAliveEnemies);
+    public int MaxEnemiesInSmallRoom => Mathf.Max(1, _maxEnemiesInSmallRoom);
+    public int MaxEnemiesInMediumRoom => Mathf.Max(MaxEnemiesInSmallRoom, _maxEnemiesInMediumRoom);
     public int SpawnBatchSize => Mathf.Max(1, _spawnBatchSize);
     public float SpawnBatchDelay => Mathf.Max(0f, _spawnBatchDelay);
     public bool UsesOnlyElites(int levelIndex) =>
         levelIndex >= Mathf.Max(1, _eliteOnlyStartLevel) - 1;
     public int GetStartEnemyCount(int roomIndex) =>
-        Mathf.Min(MaxAliveEnemies, GetCount(_startingEnemies, roomIndex, 3));
+        Mathf.Min(MaxAliveEnemies, Mathf.Min(MaxEnemiesInMediumRoom,
+            GetCount(_startingEnemies, roomIndex, 3)));
     public int GetAllEnemyCount(int roomIndex) =>
-        Mathf.Max(GetStartEnemyCount(roomIndex), GetCount(_totalEnemies, roomIndex, 3));
+        Mathf.Min(MaxEnemiesInMediumRoom,
+            Mathf.Max(GetStartEnemyCount(roomIndex), GetCount(_totalEnemies, roomIndex, 3)));
+    public int GetAllEnemyCount(int roomIndex, bool isSmallRoom) =>
+        Mathf.Min(isSmallRoom ? MaxEnemiesInSmallRoom : MaxEnemiesInMediumRoom,
+            GetAllEnemyCount(roomIndex));
     public bool UsesSmallRoom(int roomIndex) =>
-        GetAllEnemyCount(roomIndex) <= Mathf.Max(1, _maxEnemiesInSmallRoom);
+        GetAllEnemyCount(roomIndex) <= MaxEnemiesInSmallRoom;
 
-    public int GetMaxAlive(EnemySpawnRule rule, int roomIndex) =>
-        UsesSmallRoom(roomIndex) && rule.MaxAliveInSmallRoom > 0
+    public int GetMaxAlive(EnemySpawnRule rule, bool isSmallRoom) =>
+        isSmallRoom && rule.MaxAliveInSmallRoom > 0
             ? rule.MaxAliveInSmallRoom
             : rule.MaxAlive;
 
-    public int[] CreateWaveEnemyCounts(int roomIndex)
+    public int[] CreateWaveEnemyCounts(int roomIndex, bool isSmallRoom)
     {
-        int totalEnemies = GetAllEnemyCount(roomIndex);
+        int totalEnemies = GetAllEnemyCount(roomIndex, isSmallRoom);
         float waveChance = Mathf.Clamp01(_waveRoomChancePercent / 100f);
         if (roomIndex < Mathf.Max(1, _firstWaveRoom) - 1 || totalEnemies < 3 ||
             _wavePatterns == null || _wavePatterns.Length == 0 || waveChance <= 0f ||

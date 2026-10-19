@@ -37,6 +37,9 @@ public abstract class CharacterActiveAbility : CharacterAbility
 
     public abstract float CalculateEstimatedDps();
 
+    public virtual void RestartCooldown() =>
+        StartCooldown();
+
     protected void StartCooldown() =>
         CurrentCooldown = GetModifiedCooldown();
 

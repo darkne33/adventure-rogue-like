@@ -108,6 +108,7 @@ public sealed class MinimapController : IDisposable, ITickable
 
         float mapRotation = character.CameraPivot.eulerAngles.y;
         currentIcon.SetPlayerRotation(-mapRotation);
+        currentIcon.SetRoomDirection(mapRotation);
         UpdateEnemyMarkers(currentIcon, currentRoomView);
         _view.Content.localRotation = Quaternion.Euler(0f, 0f, mapRotation);
 

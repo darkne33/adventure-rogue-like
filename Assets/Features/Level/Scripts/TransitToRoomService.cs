@@ -113,6 +113,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
 
                         if (roomData is DefaultEnemiesRoomData)
                         {
+                            character.CharacterAbilitySystem.RestartActiveCooldowns();
                             await _gameModeService.Get<RogueLikeStateMachine>()
                                 .EnterState<RogueLikeRoomPrepareState>();
                         }

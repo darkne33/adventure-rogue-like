@@ -5,6 +5,9 @@ using UnityEngine.UI;
 public sealed class MinimapRoomIcon : MonoBehaviour
 {
     [SerializeField] private Image _fill;
+    [SerializeField] private Sprite _availableSprite;
+    [SerializeField] private Sprite _visitedSprite;
+    [SerializeField] private Sprite _currentSprite;
     [SerializeField] private Image _outline;
     [SerializeField] private Image _startMarker;
     [SerializeField] private Image _exitMarker;
@@ -15,25 +18,28 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     [SerializeField] private Image _chestMarker;
     [SerializeField] private Image _combatRoomMarker;
     [SerializeField] private RectTransform _playerMarker;
+    [SerializeField] private bool _showPositionMarkers = true;
+    [SerializeField] private RectTransform _roomDirectionMarker;
+    [SerializeField, Min(0f)] private float _roomDirectionGap = 2f;
     [SerializeField] private RectTransform _enemyMarkerRoot;
     [SerializeField] private RectTransform _enemyMarkerPrefab;
     [SerializeField] private RectTransform _goldMarkerRoot;
     [SerializeField] private RectTransform _goldMarkerPrefab;
     [SerializeField] private CanvasGroup _canvasGroup;
     [SerializeField] private Color _availableOutlineColor =
-        new(0.08f, 0.07f, 0.06f, 1f);
+        new(0.02f, 0.02f, 0.02f, 1f);
     [SerializeField] private Color _visitedOutlineColor =
-        new(0.08f, 0.07f, 0.06f, 1f);
+        new(0.02f, 0.02f, 0.02f, 1f);
     [SerializeField] private Color _currentOutlineColor =
-        new(0.12f, 0.1f, 0.07f, 1f);
+        new(0.02f, 0.02f, 0.02f, 1f);
     [SerializeField] private Color _bossOutlineColor =
-        new(0.4f, 0.1f, 0.08f, 1f);
+        new(0.18f, 0.05f, 0.04f, 1f);
     [SerializeField] private Color _availableFillColor =
-        new(0.28f, 0.27f, 0.24f, 1f);
+        new(42f / 255f, 41f / 255f, 35f / 255f, 1f);
     [SerializeField] private Color _visitedFillColor =
-        new(0.56f, 0.54f, 0.48f, 1f);
+        new(100f / 255f, 100f / 255f, 100f / 255f, 1f);
     [SerializeField] private Color _currentFillColor =
-        new(0.93f, 0.88f, 0.69f, 1f);
+        new(212f / 255f, 212f / 255f, 212f / 255f, 1f);
     [SerializeField] private Vector2 _playerMarkerRange = new(18f, 18f);
     [SerializeField] private Vector2 _enemyMarkerRange = new(18f, 18f);
     [SerializeField] private Vector2 _goldMarkerRange = new(18f, 18f);
@@ -129,7 +135,13 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     {
         bool isHidden = state == MinimapRoomState.Hidden;
         _canvasGroup.alpha = isHidden ? 0f : 1f;
-        _playerMarker.gameObject.SetActive(state == MinimapRoomState.Current);
+        _playerMarker.gameObject.SetActive(_showPositionMarkers && state == MinimapRoomState.Current);
+        if (_roomDirectionMarker != null)
+        {
+            _roomDirectionMarker.gameObject.SetActive(state == MinimapRoomState.Current);
+            if (state == MinimapRoomState.Current)
+                transform.SetAsLastSibling();
+        }
         if (state != MinimapRoomState.Current)
             SetEnemyPositions(null);
 
@@ -148,13 +160,29 @@ public sealed class MinimapRoomIcon : MonoBehaviour
             _outline.color = bossColor;
         }
 
-        _fill.color = state switch
+        Sprite fillSprite = state switch
         {
-            MinimapRoomState.Available => _availableFillColor,
-            MinimapRoomState.Visited => _visitedFillColor,
-            MinimapRoomState.Current => _currentFillColor,
-            _ => Color.clear
+            MinimapRoomState.Available => _availableSprite,
+            MinimapRoomState.Visited => _visitedSprite,
+            MinimapRoomState.Current => _currentSprite,
+            _ => _availableSprite
         };
+
+        if (fillSprite != null)
+        {
+            _fill.sprite = fillSprite;
+            _fill.color = isHidden ? Color.clear : Color.white;
+        }
+        else
+        {
+            _fill.color = state switch
+            {
+                MinimapRoomState.Available => _availableFillColor,
+                MinimapRoomState.Visited => _visitedFillColor,
+                MinimapRoomState.Current => _currentFillColor,
+                _ => Color.clear
+            };
+        }
     }
 
     public void SetPlayerPosition(Vector2 normalizedPosition)
@@ -167,9 +195,24 @@ public sealed class MinimapRoomIcon : MonoBehaviour
     public void SetPlayerRotation(float zRotation) =>
         _playerMarker.localRotation = Quaternion.Euler(0f, 0f, zRotation);
 
+    public void SetRoomDirection(float cameraYaw)
+    {
+        if (_roomDirectionMarker == null)
+            return;
+
+        float radians = cameraYaw * Mathf.Deg2Rad;
+        Vector2 direction = new(Mathf.Sin(radians), Mathf.Cos(radians));
+        Vector2 roomSize = _fill.rectTransform.rect.size;
+        float radius = Mathf.Max(roomSize.x, roomSize.y) * 0.5f + _roomDirectionGap;
+
+        // The map already rotates by +yaw. Apply the camera heading once in room space.
+        _roomDirectionMarker.anchoredPosition = direction * radius;
+        _roomDirectionMarker.localRotation = Quaternion.Euler(0f, 0f, -cameraYaw);
+    }
+
     public void SetEnemyPositions(IReadOnlyList<Vector2> normalizedPositions)
     {
-        int count = normalizedPositions?.Count ?? 0;
+        int count = _showPositionMarkers ? (normalizedPositions?.Count ?? 0) : 0;
         EnsureEnemyMarkers(count);
 
         for (int index = 0; index < _enemyMarkers.Count; index++)
@@ -190,7 +233,7 @@ public sealed class MinimapRoomIcon : MonoBehaviour
 
     public void SetGoldPositions(IReadOnlyList<Vector2> normalizedPositions)
     {
-        int count = normalizedPositions?.Count ?? 0;
+        int count = _showPositionMarkers ? (normalizedPositions?.Count ?? 0) : 0;
         EnsureMarkers(_goldMarkers, _goldMarkerRoot, _goldMarkerPrefab, count);
 
         for (int index = 0; index < _goldMarkers.Count; index++)

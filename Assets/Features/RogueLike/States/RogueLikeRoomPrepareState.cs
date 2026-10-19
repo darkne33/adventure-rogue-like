@@ -51,7 +51,8 @@ namespace Core
             if (currentRoomData is BossRoomData)
                 _bossSpawner.SpawnBoss();
             else
-                _enemySpawner.TrySpawnEnemies(_characterProvider.CharacterFacade);
+                await _enemySpawner.TrySpawnEnemiesAsync(_characterProvider.CharacterFacade, cts,
+                    isFirstVisit: _rogueLikeRuntimeDataService.IsFirstVisitToCurrentRoom);
         }
     }
 }

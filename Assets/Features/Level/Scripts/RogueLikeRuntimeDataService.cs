@@ -5,6 +5,7 @@ public class RogueLikeRuntimeDataService : IRogueLikeRuntimeDataService
 {
     public int CurrentIndexLevel { get; set; }
     public RoomData CurrentRoomData { get; private set; }
+    public bool IsFirstVisitToCurrentRoom { get; private set; }
     public int VisitedRoomsCount => _visitedRooms.Count;
     public int VisitedCombatRoomsCount => _combatRoomVisitIndices.Count;
 
@@ -35,7 +36,8 @@ public class RogueLikeRuntimeDataService : IRogueLikeRuntimeDataService
 
         RoomData previousRoom = CurrentRoomData;
         CurrentRoomData = roomData;
-        if (_visitedRooms.Add(roomData) && roomData is DefaultEnemiesRoomData)
+        IsFirstVisitToCurrentRoom = _visitedRooms.Add(roomData);
+        if (IsFirstVisitToCurrentRoom && roomData is DefaultEnemiesRoomData)
             _combatRoomVisitIndices.Add(roomData, _combatRoomVisitIndices.Count);
         RoomChanged?.Invoke(previousRoom, CurrentRoomData);
     }

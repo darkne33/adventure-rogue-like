@@ -36,8 +36,10 @@ public class EnemySpawner
     private readonly List<EnemySpawnRule> _roomEnemyRules = new();
     private readonly Dictionary<EnemyType, int> _spawnedByType = new();
     private int _roomProgressIndex;
+    private bool _isSmallRoom;
     private int _elitesSpawnedInCurrentRoom;
     private bool _isRoomSpawningActive;
+    private OpeningEnemySpawnBatch _openingSpawnBatch;
 
     private const float RayStartHeight = 50f;
     private const float RayDistance = 100f;
@@ -50,6 +52,7 @@ public class EnemySpawner
     private const float EnemySpawnRiseDuration = 0.5f;
     private const float PortalFadeDuration = 0.3f;
     private const float SpawnExclusionRadius = 8f;
+    private const float FirstVisitSpawnExclusionRadius = 15f;
 
     public EnemySpawner(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IEnemyFactory enemyFactory,
         LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider, IEffectsService effectsService,
@@ -92,8 +95,13 @@ public class EnemySpawner
         _loadedEnemyFactoryConfiguration = levelSettings.EnemyFactoryConfiguration;
     }
 
-    public void TrySpawnEnemies(CharacterFacade characterFacade)
+    public void TrySpawnEnemies(CharacterFacade characterFacade) =>
+        TrySpawnEnemiesAsync(characterFacade).Forget();
+
+    public async UniTask TrySpawnEnemiesAsync(CharacterFacade characterFacade,
+        CancellationToken cancellationToken = default, bool isFirstVisit = false)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         EnemyRoomSettings configuration = GetCurrentConfiguration(characterFacade,
             out DefaultEnemiesRoomData currentRoomData, out LevelSettings levelSettings);
 
@@ -106,8 +114,10 @@ public class EnemySpawner
             throw new System.InvalidOperationException("Enemy room balance configuration is missing.");
 
         _roomProgressIndex = _rogueLikeRuntimeDataService.GetCombatProgressIndex(currentRoomData);
-        _allEnemiesInCurrentRoom = _roomBalance.GetAllEnemyCount(_roomProgressIndex);
-        _waveEnemyCounts = _roomBalance.CreateWaveEnemyCounts(_roomProgressIndex);
+        Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
+        _isSmallRoom = currentRoom.IsSmallEnemyRoom;
+        _allEnemiesInCurrentRoom = _roomBalance.GetAllEnemyCount(_roomProgressIndex, _isSmallRoom);
+        _waveEnemyCounts = _roomBalance.CreateWaveEnemyCounts(_roomProgressIndex, _isSmallRoom);
         _waveIndex = 0;
         _waveSpawnTarget = _waveEnemyCounts[0];
         _waveReinforcementThreshold = _roomBalance.GetWaveReinforcementThreshold(_waveEnemyCounts[0]);
@@ -116,6 +126,7 @@ public class EnemySpawner
         _spawnedEnemiesInCurrentRoom = 0;
         _pendingEnemySpawnCount = 0;
         _spawnGeneration++;
+        _openingSpawnBatch?.Cancel();
         _elitesSpawnedInCurrentRoom = 0;
         _spawnedByType.Clear();
         SelectRoomEnemyRules(configuration, levelSettings.EnemyFactoryConfiguration);
@@ -123,14 +134,28 @@ public class EnemySpawner
 
         int initialEnemyCount = _waveEnemyCounts[0];
         List<EnemyType> enemyTypes = BuildSpawnQueue(initialEnemyCount);
-        Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
-        SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes, characterFacade, spawnImmediately: true);
-
-        if (_pendingEnemySpawnCount == 0 &&
-            (_spawnedEnemiesInCurrentRoom >= _allEnemiesInCurrentRoom ||
-             _spawnedEnemiesInCurrentRoom == 0))
+        var openingSpawnBatch = new OpeningEnemySpawnBatch(
+            isFirstVisit ? FirstVisitSpawnExclusionRadius : SpawnExclusionRadius, cancellationToken,
+            characterFacade.GetCancellationTokenOnDestroy(), currentRoom.GetCancellationTokenOnDestroy());
+        _openingSpawnBatch = openingSpawnBatch;
+        try
         {
-            FinishCurrentRoomSpawning();
+            SpawnEnemyTypes(currentRoom, levelSettings, enemyTypes, characterFacade,
+                spawnImmediately: true, openingSpawnBatch: openingSpawnBatch);
+            await openingSpawnBatch.WaitForCompletion();
+
+            if (_pendingEnemySpawnCount == 0 &&
+                (_spawnedEnemiesInCurrentRoom >= _allEnemiesInCurrentRoom ||
+                 _spawnedEnemiesInCurrentRoom == 0))
+            {
+                FinishCurrentRoomSpawning();
+            }
+        }
+        finally
+        {
+            if (ReferenceEquals(_openingSpawnBatch, openingSpawnBatch))
+                _openingSpawnBatch = null;
+            openingSpawnBatch.Dispose();
         }
     }
 
@@ -307,7 +332,8 @@ public class EnemySpawner
     }
 
     private int SpawnEnemyTypes(Room currentRoom, LevelSettings levelSettings,
-        IReadOnlyList<EnemyType> enemyTypes, CharacterFacade characterFacade, bool spawnImmediately = false)
+        IReadOnlyList<EnemyType> enemyTypes, CharacterFacade characterFacade, bool spawnImmediately = false,
+        OpeningEnemySpawnBatch openingSpawnBatch = null)
     {
         if (enemyTypes.Count == 0)
             return 0;
@@ -315,18 +341,24 @@ public class EnemySpawner
         // Record the whole wave before spawning, including when the opening wave finishes synchronously.
         _spawnedEnemiesInCurrentRoom += enemyTypes.Count;
         _pendingEnemySpawnCount += enemyTypes.Count;
-        SpawnEnemyTypesInBatches(currentRoom, levelSettings, enemyTypes, characterFacade,
-            _spawnGeneration, spawnImmediately).Forget();
+        UniTask schedulingTask = SpawnEnemyTypesInBatches(currentRoom, levelSettings, enemyTypes,
+            characterFacade, _spawnGeneration, spawnImmediately, openingSpawnBatch);
+        if (openingSpawnBatch == null)
+            schedulingTask.Forget();
+        else
+            openingSpawnBatch.SchedulingTask = schedulingTask;
         return enemyTypes.Count;
     }
 
     private async UniTask SpawnEnemyTypesInBatches(Room currentRoom, LevelSettings levelSettings,
         IReadOnlyList<EnemyType> enemyTypes, CharacterFacade characterFacade, int spawnGeneration,
-        bool spawnImmediately)
+        bool spawnImmediately, OpeningEnemySpawnBatch openingSpawnBatch = null)
     {
+        CancellationToken cancellationToken = openingSpawnBatch?.CancellationToken ?? default;
+        float spawnExclusionRadius = openingSpawnBatch?.SpawnExclusionRadius ?? SpawnExclusionRadius;
         if (spawnImmediately == false)
-            await UniTask.NextFrame();
-        if (IsSpawnRequestActive(currentRoom, characterFacade, spawnGeneration) == false)
+            await UniTask.NextFrame(cancellationToken: cancellationToken);
+        if (IsSpawnRequestActive(currentRoom, characterFacade, spawnGeneration, openingSpawnBatch) == false)
             return;
 
         Physics.SyncTransforms();
@@ -343,12 +375,13 @@ public class EnemySpawner
         for (int i = 0; i < enemyTypes.Count; i++)
         {
             if (spawnImmediately == false && i > 0 && i % batchSize == 0)
-                await UniTask.Delay(System.TimeSpan.FromSeconds(_roomBalance.SpawnBatchDelay));
+                await UniTask.Delay(System.TimeSpan.FromSeconds(_roomBalance.SpawnBatchDelay),
+                    cancellationToken: cancellationToken);
 
-            if (IsSpawnRequestActive(currentRoom, characterFacade, spawnGeneration) == false)
+            if (IsSpawnRequestActive(currentRoom, characterFacade, spawnGeneration, openingSpawnBatch) == false)
                 return;
 
-            if (await WaitForSpawnCapacity(currentRoom, characterFacade, spawnGeneration) == false)
+            if (await WaitForSpawnCapacity(currentRoom, characterFacade, spawnGeneration, openingSpawnBatch) == false)
                 return;
 
             var enemyType = enemyTypes[i];
@@ -365,9 +398,13 @@ public class EnemySpawner
             Vector3 spawnPosition = default;
             bool hasSpawnPosition = groundColliders.Count > 0 &&
                                     (TryFindValidSpawnPosition(currentRoom, groundColliders,
-                                         spawnVolume, characterFacade, out spawnPosition) ||
-                                     reusableSpawnPositions.TryGetValue(spawnVolume,
-                                         out spawnPosition));
+                                         spawnVolume, characterFacade, out spawnPosition,
+                                         spawnExclusionRadius) ||
+                                     (reusableSpawnPositions.TryGetValue(spawnVolume,
+                                          out spawnPosition) &&
+                                      (spawnExclusionRadius == SpawnExclusionRadius ||
+                                       GetFlatSqrDistance(spawnPosition, characterFacade.transform.position) >=
+                                       spawnExclusionRadius * spawnExclusionRadius)));
             if (hasSpawnPosition == false)
             {
                 pendingEnemySpawns.Add(new PendingEnemySpawn(enemy, spawnVolume, enemyType));
@@ -375,14 +412,14 @@ public class EnemySpawner
             }
 
             reusableSpawnPositions[spawnVolume] = spawnPosition;
-            SpawnEnemy(enemy, spawnPosition, enemyType).Forget();
+            StartEnemySpawn(enemy, spawnPosition, enemyType, openingSpawnBatch);
             _pendingEnemySpawnCount--;
         }
 
         if (pendingEnemySpawns.Count > 0)
         {
             await RetryPendingEnemySpawns(currentRoom, groundColliders, pendingEnemySpawns,
-                characterFacade, spawnGeneration, spawnImmediately);
+                characterFacade, spawnGeneration, spawnImmediately, openingSpawnBatch);
         }
 
         if (IsSpawnRequestActive(currentRoom, characterFacade, spawnGeneration) &&
@@ -395,23 +432,27 @@ public class EnemySpawner
 
     private async UniTask RetryPendingEnemySpawns(Room room,
         IReadOnlyList<Collider> groundColliders, List<PendingEnemySpawn> pendingEnemySpawns,
-        CharacterFacade characterFacade, int spawnGeneration, bool spawnImmediately)
+        CharacterFacade characterFacade, int spawnGeneration, bool spawnImmediately,
+        OpeningEnemySpawnBatch openingSpawnBatch)
     {
+        CancellationToken cancellationToken = openingSpawnBatch?.CancellationToken ?? default;
+        float spawnExclusionRadius = openingSpawnBatch?.SpawnExclusionRadius ?? SpawnExclusionRadius;
         var reusableSpawnPositions = new Dictionary<EnemySpawnVolume, Vector3>();
         IReadOnlyList<Collider> availableGroundColliders = groundColliders;
         int pendingSpawnIndex = 0;
 
         while (pendingEnemySpawns.Count > 0 &&
-               IsSpawnRequestActive(room, characterFacade, spawnGeneration))
+               IsSpawnRequestActive(room, characterFacade, spawnGeneration, openingSpawnBatch))
         {
             if (spawnImmediately)
-                await UniTask.NextFrame();
+                await UniTask.NextFrame(cancellationToken: cancellationToken);
             else
-                await UniTask.Delay(System.TimeSpan.FromSeconds(_roomBalance.SpawnBatchDelay));
-            if (IsSpawnRequestActive(room, characterFacade, spawnGeneration) == false)
+                await UniTask.Delay(System.TimeSpan.FromSeconds(_roomBalance.SpawnBatchDelay),
+                    cancellationToken: cancellationToken);
+            if (IsSpawnRequestActive(room, characterFacade, spawnGeneration, openingSpawnBatch) == false)
                 return;
 
-            if (await WaitForSpawnCapacity(room, characterFacade, spawnGeneration) == false)
+            if (await WaitForSpawnCapacity(room, characterFacade, spawnGeneration, openingSpawnBatch) == false)
                 return;
 
             if (availableGroundColliders.Count == 0)
@@ -423,15 +464,19 @@ public class EnemySpawner
                     pendingSpawnIndex = 0;
 
                 PendingEnemySpawn pendingSpawn = pendingEnemySpawns[pendingSpawnIndex];
-                bool hasSpawnPosition = reusableSpawnPositions.TryGetValue(
-                                            pendingSpawn.SpawnVolume, out Vector3 spawnPosition) ||
+                bool hasSpawnPosition = (reusableSpawnPositions.TryGetValue(
+                                             pendingSpawn.SpawnVolume, out Vector3 spawnPosition) &&
+                                         (spawnExclusionRadius == SpawnExclusionRadius ||
+                                          GetFlatSqrDistance(spawnPosition, characterFacade.transform.position) >=
+                                          spawnExclusionRadius * spawnExclusionRadius)) ||
                                         TryFindValidSpawnPosition(room, availableGroundColliders,
                                             pendingSpawn.SpawnVolume, characterFacade,
-                                            out spawnPosition);
+                                            out spawnPosition, spawnExclusionRadius);
                 if (hasSpawnPosition)
                 {
                     reusableSpawnPositions[pendingSpawn.SpawnVolume] = spawnPosition;
-                    SpawnEnemy(pendingSpawn.Enemy, spawnPosition, pendingSpawn.EnemyType).Forget();
+                    StartEnemySpawn(pendingSpawn.Enemy, spawnPosition, pendingSpawn.EnemyType,
+                        openingSpawnBatch);
                     pendingEnemySpawns.RemoveAt(pendingSpawnIndex);
                     _pendingEnemySpawnCount--;
                 }
@@ -445,23 +490,25 @@ public class EnemySpawner
     }
 
     private async UniTask<bool> WaitForSpawnCapacity(Room room, CharacterFacade characterFacade,
-        int spawnGeneration)
+        int spawnGeneration, OpeningEnemySpawnBatch openingSpawnBatch)
     {
         // Splitting enemies can occupy slots after this wave's queue was prepared.
-        while (IsSpawnRequestActive(room, characterFacade, spawnGeneration))
+        while (IsSpawnRequestActive(room, characterFacade, spawnGeneration, openingSpawnBatch))
         {
             if (_enemiesProvider.AliveCount < _roomBalance.MaxAliveEnemies)
                 return true;
 
-            await UniTask.NextFrame();
+            await UniTask.NextFrame(cancellationToken: openingSpawnBatch?.CancellationToken ?? default);
         }
 
         return false;
     }
 
     private bool IsSpawnRequestActive(Room room, CharacterFacade characterFacade,
-        int spawnGeneration) =>
-        _isRoomSpawningActive &&
+        int spawnGeneration, OpeningEnemySpawnBatch openingSpawnBatch = null)
+    {
+        openingSpawnBatch?.CancellationToken.ThrowIfCancellationRequested();
+        bool isActive = _isRoomSpawningActive &&
         _spawnGeneration == spawnGeneration &&
         room != null &&
         characterFacade != null &&
@@ -469,6 +516,10 @@ public class EnemySpawner
         _rogueLikeRuntimeDataService.CurrentRoomData is DefaultEnemiesRoomData currentRoomData &&
         ReferenceEquals(currentRoomData, _activeRoomData) &&
         ReferenceEquals(room.RoomData, _activeRoomData);
+        if (isActive == false)
+            openingSpawnBatch?.Cancel();
+        return isActive;
+    }
 
     private void SelectRoomEnemyRules(EnemyRoomSettings configuration,
         EnemyFactoryConfiguration factory)
@@ -567,7 +618,7 @@ public class EnemySpawner
             foreach (EnemySpawnRule rule in _roomEnemyRules)
             {
                 aliveByType.TryGetValue(rule.EnemyType, out int alive);
-                int maxAlive = _roomBalance.GetMaxAlive(rule, _roomProgressIndex);
+                int maxAlive = _roomBalance.GetMaxAlive(rule, _isSmallRoom);
                 if (maxAlive > 0 && alive >= maxAlive ||
                     EnemyRoomScalingConfiguration.IsRanged(rule.EnemyType) &&
                     rangedAlive >= _roomBalance.GetRangedLimit(_roomProgressIndex))
@@ -601,7 +652,19 @@ public class EnemySpawner
         return spawnQueue;
     }
 
-    private async UniTask SpawnEnemy(GameObject enemy, Vector3 spawnPosition, EnemyType enemyType)
+    private void StartEnemySpawn(GameObject enemy, Vector3 spawnPosition, EnemyType enemyType,
+        OpeningEnemySpawnBatch openingSpawnBatch)
+    {
+        UniTask spawnTask = SpawnEnemy(enemy, spawnPosition, enemyType,
+            openingSpawnBatch?.CancellationToken ?? default);
+        if (openingSpawnBatch == null)
+            spawnTask.Forget();
+        else
+            openingSpawnBatch.Add(spawnTask);
+    }
+
+    private async UniTask SpawnEnemy(GameObject enemy, Vector3 spawnPosition, EnemyType enemyType,
+        CancellationToken cancellationToken = default)
     {
         var offsetDown = 2f;
         Vector3 underGroundPosition = spawnPosition + Vector3.down * offsetDown;
@@ -616,7 +679,9 @@ public class EnemySpawner
         if (enemyFacade.Configuration?.EnemyRank == EnemyRank.Boss)
             _relicEventBus.PublishBossSpawned(new RelicBossSpawnEvent(enemyFacade, spawnPosition));
 
-        CancellationToken lifetimeToken = enemyFacade.GetCancellationTokenOnDestroy();
+        using var spawnCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, enemyFacade.GetCancellationTokenOnDestroy());
+        CancellationToken lifetimeToken = spawnCancellation.Token;
         UniTask portalLifetime = PlaySpawnPortal(spawnPosition, lifetimeToken);
 
         try
@@ -670,6 +735,79 @@ public class EnemySpawner
                 enemyFacade.SetStop(false);
 
             await portalLifetime;
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    private sealed class OpeningEnemySpawnBatch : System.IDisposable
+    {
+        private readonly CancellationTokenSource _cancellation;
+        private readonly List<UniTask> _spawnTasks = new();
+        private System.Exception _failure;
+
+        public CancellationToken CancellationToken => _cancellation.Token;
+        public float SpawnExclusionRadius { get; }
+        public UniTask SchedulingTask { private get; set; } = UniTask.CompletedTask;
+
+        public OpeningEnemySpawnBatch(float spawnExclusionRadius,
+            params CancellationToken[] cancellationTokens)
+        {
+            SpawnExclusionRadius = spawnExclusionRadius;
+            _cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationTokens);
+        }
+
+        public void Add(UniTask spawnTask) => _spawnTasks.Add(ObserveSpawn(spawnTask));
+        public void Cancel() => _cancellation.Cancel();
+        public void Dispose() => _cancellation.Dispose();
+
+        private async UniTask ObserveSpawn(UniTask spawnTask)
+        {
+            try
+            {
+                await spawnTask;
+            }
+            catch (System.Exception exception)
+            {
+                RecordFailure(exception);
+                Cancel();
+            }
+        }
+
+        public async UniTask WaitForCompletion()
+        {
+            try
+            {
+                await SchedulingTask;
+            }
+            catch (System.Exception exception)
+            {
+                RecordFailure(exception);
+                Cancel();
+            }
+
+            try
+            {
+                await UniTask.WhenAll(_spawnTasks);
+            }
+            catch (System.Exception exception)
+            {
+                RecordFailure(exception);
+            }
+
+            if (_failure != null)
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(_failure).Throw();
+            CancellationToken.ThrowIfCancellationRequested();
+        }
+
+        private void RecordFailure(System.Exception exception)
+        {
+            if (_failure == null ||
+                (_failure is System.OperationCanceledException &&
+                 exception is not System.OperationCanceledException))
+            {
+                _failure = exception;
+            }
         }
     }
 
@@ -742,7 +880,7 @@ public class EnemySpawner
 
     private bool TryFindValidSpawnPosition(Room room, IReadOnlyList<Collider> groundColliders,
         EnemySpawnVolume spawnVolume, CharacterFacade characterFacade,
-        out Vector3 validPosition)
+        out Vector3 validPosition, float spawnExclusionRadius = SpawnExclusionRadius)
     {
         const int maxAttempts = 50;
         Vector3 characterPosition = characterFacade.transform.position;
@@ -753,7 +891,7 @@ public class EnemySpawner
             if (IsPositionValid(room, candidate, spawnVolume, out validPosition))
             {
                 if (GetFlatSqrDistance(validPosition, characterPosition) <
-                    SpawnExclusionRadius * SpawnExclusionRadius)
+                    spawnExclusionRadius * spawnExclusionRadius)
                 {
                     continue;
                 }

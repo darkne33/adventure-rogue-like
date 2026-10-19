@@ -3,6 +3,10 @@ using UnityEngine;
 
 public class Room : MonoBehaviour
 {
+    [field: SerializeField]
+    [field: Tooltip("Uses the small combat room limit for the total number of enemies.")]
+    public bool IsSmallEnemyRoom { get; private set; }
+
     [field: SubclassSelector]
     [field: SerializeReference]
     public RoomData RoomData { get; private set; }

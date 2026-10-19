@@ -11,6 +11,12 @@ namespace Features.Bosses.Scripts
         [field: SerializeField, Min(0f)] public float Range { get; private set; } = 15f;
         [field: SerializeField, Min(0f)] public float Cooldown { get; private set; } = 4f;
 
+        [field: Header("Slam sequence")]
+        [field: SerializeField, Min(1)] public int StrikeCount { get; private set; } = 1;
+        [field: SerializeField]
+        [field: Tooltip("Capture the character's ground position separately before each strike.")]
+        public bool TargetCharacterPosition { get; private set; }
+
         public override IBossAttack CreateAttack(BossFacade boss, CharacterFacade character)
         {
             if (boss is not OgreBossFacade ogre)

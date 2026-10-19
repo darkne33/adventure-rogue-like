@@ -21,8 +21,6 @@ namespace Features.Enemies.Scripts
         private BoxCollider _collider;
         private Vector3 _direction;
         private int _heading;
-        private int _nextTurnStep;
-        private float _turnCountdown;
         private float _damageCooldown;
 
         public bool CanAttack => true;
@@ -50,8 +48,6 @@ namespace Features.Enemies.Scripts
                 _agent.ResetPath();
 
             SetHeading(UnityEngine.Random.Range(0, 4));
-            _nextTurnStep = -1;
-            ScheduleNextTurn();
             UpdateVisualRotation();
         }
 
@@ -86,7 +82,6 @@ namespace Features.Enemies.Scripts
             }
 
             float movementDeltaTime = Time.unscaledDeltaTime;
-            UpdateDirection(movementDeltaTime);
             CheckContact(_agent.nextPosition);
 
             float remainingDistance = Mathf.Max(0f, _configuration.Speed) * movementDeltaTime;
@@ -139,25 +134,6 @@ namespace Features.Enemies.Scripts
 
         public void OnAttackFinished()
         {
-        }
-
-        private void ScheduleNextTurn()
-        {
-            Vector2 interval = _configuration.RicochetTurnInterval;
-            float minimum = Mathf.Max(0.1f, Mathf.Min(interval.x, interval.y));
-            float maximum = Mathf.Max(minimum, Mathf.Max(interval.x, interval.y));
-            _turnCountdown = UnityEngine.Random.Range(minimum, maximum);
-        }
-
-        private void UpdateDirection(float deltaTime)
-        {
-            _turnCountdown -= deltaTime;
-            if (_turnCountdown <= 0f)
-            {
-                SetHeading(_heading + _nextTurnStep);
-                _nextTurnStep = -_nextTurnStep;
-                ScheduleNextTurn();
-            }
         }
 
         private void SetHeading(int heading)

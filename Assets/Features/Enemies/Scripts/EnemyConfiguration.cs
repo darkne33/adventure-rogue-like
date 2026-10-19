@@ -108,13 +108,6 @@ public class EnemyConfiguration : ScriptableObject
     [field: Tooltip("Solid environment layers from which the moving block reflects.")]
     [field: SerializeField] public LayerMask RicochetWallLayers { get; private set; } =
         (1 << 0) | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 11) | (1 << 14);
-    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Ricochet)]
-    [field: Tooltip("Minimum and maximum seconds between alternating 90-degree turns.")]
-    [field: SerializeField] public Vector2 RicochetTurnInterval { get; private set; } = new(3f, 5f);
-    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Ricochet)]
-    [field: Tooltip("Seconds to complete a smooth 90-degree turn.")]
-    [field: Min(0.01f)]
-    [field: SerializeField] public float RicochetTurnDuration { get; private set; } = 0.35f;
     [field: NaughtyAttributes.ShowIf(nameof(UsesDistanceToStop))]
     [field: Min(0f)]
     [field: SerializeField] public float DistanceToStop { get; private set; }

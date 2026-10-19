@@ -112,6 +112,13 @@ public sealed class PunchAbility : CharacterActiveAbility
         base.OnUnequip(characterStats);
     }
 
+    public override void RestartCooldown()
+    {
+        _attackSequence++;
+        _isAttacking = false;
+        base.RestartCooldown();
+    }
+
     public override float GetStatFromIncrease() =>
         _damage;
 

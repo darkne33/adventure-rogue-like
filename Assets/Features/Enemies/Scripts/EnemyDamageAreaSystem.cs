@@ -71,6 +71,8 @@ namespace Features.Enemies.Scripts
 
                 _enemyFacade.AnimationSystem.IdleAnimation();
                 _enemyFacade.AnimationSystem.AttackAnimation();
+                BombEnemyAnimation bombAnimation =
+                    _enemyFacade.AnimationSystem as BombEnemyAnimation;
 
                 float elapsed = 0f;
                 while (elapsed < _attackPreparationDuration)
@@ -82,8 +84,13 @@ namespace Features.Enemies.Scripts
                         LockPosition(attackPosition, rigidbody);
 
                     elapsed += Time.deltaTime;
+                    // Sample the full preparation clip with the detonation clock.
+                    bombAnimation?.SetAttackPreparationProgress(
+                        elapsed / _attackPreparationDuration);
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
+
+                bombAnimation?.SetAttackPreparationProgress(1f);
 
                 if (_enemyFacade.IsDead || _enemyFacade.CanAttack == false)
                     return;

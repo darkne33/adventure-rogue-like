@@ -16,6 +16,8 @@ namespace Features.Bosses.Scripts
         private float _wait;
         private int _lastClockFrame = -1;
         private bool _executing;
+        private BossAttackConfiguration[] _activeAttackPool;
+        private int _nextAttack;
 
         public OgreBossAttackSystem(OgreBossFacade boss, CharacterFacade character) : base(boss, character)
         {
@@ -31,6 +33,8 @@ namespace Features.Bosses.Scripts
             _wait = Mathf.Max(0f, _boss.Config.InitialAttackDelay);
             _lastClockFrame = -1;
             _executing = false;
+            _activeAttackPool = null;
+            _nextAttack = 0;
             _animation?.IdleAnimation();
         }
 
@@ -81,20 +85,63 @@ namespace Features.Bosses.Scripts
             if (!TryGetImpact(attack, out Vector3 impactPoint))
                 return;
 
+            _executing = true;
+            _boss.CombatSystem.SetAttacking(true);
+            try
+            {
+                for (int strike = 0; strike < Mathf.Max(1, attack.StrikeCount); strike++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (!CanContinue())
+                        return;
+                    if (strike > 0)
+                    {
+                        FaceCharacter();
+                        if (!TryGetImpact(attack, out impactPoint, false))
+                            return;
+                    }
+
+                    // Consecutive strikes share one ability, with no cooldown or recovery between them.
+                    _cooldown = Mathf.Max(0f, attack.Cooldown);
+                    if (!await ExecuteStrike(attack, impactPoint, cancellationToken, CanAnimate))
+                        return;
+                }
+
+                if (_activeAttackPool != null && _activeAttackPool.Length > 0)
+                {
+                    int completedAttack = Array.IndexOf(_activeAttackPool, attack);
+                    if (completedAttack >= 0)
+                        _nextAttack = (completedAttack + 1) % _activeAttackPool.Length;
+                }
+            }
+            finally
+            {
+                _executing = false;
+                _wait = Mathf.Max(0f, attack.RecoveryDuration);
+                if (_boss != null)
+                {
+                    if (!_boss.IsDead && _boss.isActiveAndEnabled && CanAnimate())
+                        _animation.IdleAnimation();
+                    _boss.CombatSystem.SetAttacking(false);
+                }
+            }
+        }
+
+        private async UniTask<bool> ExecuteStrike(OgreSlamAttackConfiguration attack, Vector3 impactPoint,
+            CancellationToken cancellationToken, Func<bool> canAnimate)
+        {
             // Capture before awaiting: dodging cannot redirect the warning or the impact.
             Vector3 direction = _boss.AttackRotation * Vector3.forward;
             Vector3 effectPoint = impactPoint;
-            effectPoint.y = _boss.ImpactOrigin.position.y;
+            effectPoint.y = attack.TargetCharacterPosition
+                ? impactPoint.y + _boss.ImpactOrigin.position.y - _boss.transform.position.y
+                : _boss.ImpactOrigin.position.y;
             float duration = Mathf.Max(0.01f, attack.Duration);
             float impact = Mathf.Clamp(attack.ImpactNormalized, 0.01f, 1f);
             float elapsed = 0f;
             bool hasHit = false;
             GameObject indicator = null;
             Vector3 indicatorScale = Vector3.one;
-            _executing = true;
-            _cooldown = Mathf.Max(0f, attack.Cooldown);
-            _boss.CombatSystem.SetAttacking(true);
-
             try
             {
                 if (attack.IndicatorPrefab != null)
@@ -107,7 +154,7 @@ namespace Features.Bosses.Scripts
                     UpdateWarning(indicator.transform, indicatorScale, attack, 0f);
                     indicator.SetActive(true);
                 }
-                if (CanAnimate())
+                if (canAnimate())
                     _animation.BeginTimedAttack(duration);
 
                 while (elapsed < duration)
@@ -115,7 +162,7 @@ namespace Features.Bosses.Scripts
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
                     if (!CanContinue())
-                        return;
+                        return false;
                     float delta = AdvanceClock();
                     if (delta <= 0f)
                         continue;
@@ -137,18 +184,11 @@ namespace Features.Bosses.Scripts
                         ApplyHit(impactPoint, attack, direction);
                     }
                 }
+                return true;
             }
             finally
             {
                 DestroyIndicator(indicator);
-                _executing = false;
-                _wait = Mathf.Max(0f, attack.RecoveryDuration);
-                if (_boss != null)
-                {
-                    if (!_boss.IsDead && _boss.isActiveAndEnabled && CanAnimate())
-                        _animation.IdleAnimation();
-                    _boss.CombatSystem.SetAttacking(false);
-                }
             }
         }
 
@@ -157,10 +197,19 @@ namespace Features.Bosses.Scripts
             HealthSystem health = _boss.HealthSystem;
             float percentage = health.CurrentHealth / Mathf.Max(1f, health.MaxHealth) * 100f;
             BossAttackConfiguration[] attacks = _boss.Config.GetAttacksForHealth(percentage);
-            if (attacks != null)
-                foreach (BossAttackConfiguration candidate in attacks)
-                    if (candidate is OgreSlamAttackConfiguration { IsEnabled: true } attack)
-                        return attack;
+            if (!ReferenceEquals(_activeAttackPool, attacks))
+            {
+                _activeAttackPool = attacks;
+                _nextAttack = 0;
+            }
+            if (attacks == null || attacks.Length == 0)
+                return null;
+            for (int offset = 0; offset < attacks.Length; offset++)
+            {
+                int index = (_nextAttack + offset) % attacks.Length;
+                if (attacks[index] is OgreSlamAttackConfiguration { IsEnabled: true } attack)
+                    return attack;
+            }
             return null;
         }
 
@@ -192,13 +241,17 @@ namespace Features.Bosses.Scripts
             _boss.transform.rotation = rotation;
         }
 
-        private bool TryGetImpact(OgreSlamAttackConfiguration attack, out Vector3 impactPoint)
+        private bool TryGetImpact(OgreSlamAttackConfiguration attack, out Vector3 impactPoint,
+            bool requireRange = true)
         {
             impactPoint = default;
             Vector3 target = _character.transform.position - _boss.transform.position;
             target.y = 0f;
-            if (target.sqrMagnitude > Mathf.Max(0f, attack.Range) * Mathf.Max(0f, attack.Range) ||
-                !TryGetGround(_boss.ImpactOrigin.position, out impactPoint))
+            if (requireRange && target.sqrMagnitude > Mathf.Max(0f, attack.Range) * Mathf.Max(0f, attack.Range))
+                return false;
+            if (attack.TargetCharacterPosition)
+                return TryGetGround(_character.transform.position, out impactPoint);
+            if (!TryGetGround(_boss.ImpactOrigin.position, out impactPoint))
                 return false;
             target = _character.transform.position - impactPoint;
             target.y = 0f;

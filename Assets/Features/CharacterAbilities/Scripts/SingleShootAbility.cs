@@ -72,6 +72,13 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         _additionalProjectileCount = 0f;
     }
 
+    public override void RestartCooldown()
+    {
+        _projectileLaunchSequence++;
+        _isLaunchingProjectiles = false;
+        base.RestartCooldown();
+    }
+
     public override float CalculateEstimatedDps()
     {
         if (AbilityConfig == null || AbilityConfig.Prefab == null)
