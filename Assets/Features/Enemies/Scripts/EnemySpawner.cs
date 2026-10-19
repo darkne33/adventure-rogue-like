@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
+using Infrastructure.SaveSystem;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -19,6 +20,7 @@ public class EnemySpawner
     private readonly RelicEventBus _relicEventBus;
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
     private readonly EnemyRoomObserver _enemyRoomObserver;
+    private readonly IPlayerSaveLoadService _playerSaveLoadService;
     private readonly Dictionary<GameObject, EnemySpawnVolume> _spawnVolumes = new();
     private readonly Collider[] _spawnOverlapResults = new Collider[64];
     private DefaultEnemiesRoomData _activeRoomData;
@@ -57,7 +59,7 @@ public class EnemySpawner
     public EnemySpawner(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IEnemyFactory enemyFactory,
         LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider, IEffectsService effectsService,
         RelicEventBus relicEventBus, ISceneService<RogueLikeSceneProvider> sceneService,
-        EnemyRoomObserver enemyRoomObserver)
+        EnemyRoomObserver enemyRoomObserver, IPlayerSaveLoadService playerSaveLoadService)
     {
         _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
         _enemyFactory = enemyFactory;
@@ -67,6 +69,7 @@ public class EnemySpawner
         _relicEventBus = relicEventBus;
         _sceneService = sceneService;
         _enemyRoomObserver = enemyRoomObserver;
+        _playerSaveLoadService = playerSaveLoadService;
         _enemiesProvider.EnemyRemoved += HandleEnemyRemoved;
     }
 
@@ -532,7 +535,9 @@ public class EnemySpawner
         bool eliteOnly = _roomBalance.UsesOnlyElites(levelIndex);
         foreach (EnemySpawnRule rule in _roomBalance.EnemyRules)
         {
-            if (rule == null || rule.Weight <= 0f || rule.FirstRoom > _roomProgressIndex + 1 ||
+            if (rule == null || rule.Weight <= 0f ||
+                (rule.FirstRoom > _roomProgressIndex + 1 &&
+                 !_playerSaveLoadService.HasEncounteredEnemy(rule.EnemyType)) ||
                 (!eliteOnly && rule.LastNormalLevel > 0 && levelIndex >= rule.LastNormalLevel) ||
                 System.Array.IndexOf(configuration.EnemyTypes, rule.EnemyType) < 0 ||
                 !factory.EnemyPrefabs.Exists(prefab => prefab.EnemyType == rule.EnemyType &&
@@ -712,6 +717,7 @@ public class EnemySpawner
                     rigidbody.position = spawnPosition;
 
                 spawnCompleted = true;
+                _playerSaveLoadService.RegisterEncounteredEnemy(enemyType);
             }
         }
         catch (System.OperationCanceledException)

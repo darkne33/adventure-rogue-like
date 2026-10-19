@@ -6,24 +6,22 @@ public class LevelFactory : ILevelFactory
 {
     private readonly LevelsConfiguration _levelsConfiguration;
     private readonly IRogueLikeRuntimeDataService _runtimeData;
-    private readonly CharacterWallet _characterWallet;
     private readonly DiContainer _container;
     private readonly List<Room> _remainingBossRooms = new();
 
     public LevelFactory(LevelsConfiguration levelsConfiguration, DiContainer container,
-        IRogueLikeRuntimeDataService runtimeData, CharacterWallet characterWallet)
+        IRogueLikeRuntimeDataService runtimeData)
     {
         _levelsConfiguration = levelsConfiguration;
         _container = container;
         _runtimeData = runtimeData;
-        _characterWallet = characterWallet;
     }
 
     public LevelView CreateLevelView(int levelNumber, Transform parent)
     {
         LevelSettings levelSettings = _levelsConfiguration.GetLevel(levelNumber);
         LevelRoomNode[] rooms = ProceduralLevelGenerator.Generate(_levelsConfiguration, levelNumber,
-            GetNextBossRoom(), _characterWallet.Gold.Count, _characterWallet.Keys.Count);
+            GetNextBossRoom());
         LevelView levelView = _container.InstantiatePrefabForComponent<LevelView>(levelSettings.LevelView, parent);
         try
         {

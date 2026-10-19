@@ -10,8 +10,7 @@ public static class ProceduralLevelGenerator
         RoomDirection.Up, RoomDirection.Down, RoomDirection.Left, RoomDirection.Right
     };
 
-    public static LevelRoomNode[] Generate(LevelsConfiguration configuration, int levelIndex, Room bossRoom,
-        int coins = 0, int keys = 0)
+    public static LevelRoomNode[] Generate(LevelsConfiguration configuration, int levelIndex, Room bossRoom)
     {
         if (configuration == null)
             throw new ArgumentNullException(nameof(configuration));
@@ -23,7 +22,7 @@ public static class ProceduralLevelGenerator
         ProceduralLevelSettings settings = configuration.ProceduralLevels;
         // Roll content once. Geometry retries must not change floor size or room chances.
         int roomCount = settings.RollRoomCount(levelIndex);
-        List<RoomType> specialRooms = settings.RollSpecialRooms(levelIndex, coins, keys);
+        List<RoomType> specialRooms = settings.RollSpecialRooms(levelIndex);
         var templates = new Templates(catalog, bossRoom, specialRooms);
 
         for (int attempt = 0; attempt < settings.GenerationAttempts; attempt++)
@@ -150,7 +149,7 @@ public static class ProceduralLevelGenerator
                 return false;
 
             var deadEnds = _rooms.FindAll(room => room.Type != RoomType.Start && room.ConnectionCount == 1);
-            if (deadEnds.Count < minimumDeadEnds)
+            if (deadEnds.Count < Mathf.Max(minimumDeadEnds, specialRooms.Count + 1))
                 return false;
             Shuffle(deadEnds);
             deadEnds.Sort((left, right) => right.Depth.CompareTo(left.Depth));
@@ -159,11 +158,9 @@ public static class ProceduralLevelGenerator
                 return false;
 
             // Convert existing dead ends instead of adding compulsory extra branches.
-            // The supported special types follow Rebirth's placement order.
+            // Reserve one dead end for the boss and place every selected special room.
             foreach (RoomType type in specialRooms)
             {
-                if (deadEnds.Count == 0)
-                    break;
                 LayoutRoom room = deadEnds[0];
                 if (_templates.Get(type, room.Connections).Count == 0)
                     return false;

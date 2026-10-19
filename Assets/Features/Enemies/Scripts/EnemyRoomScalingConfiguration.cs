@@ -153,6 +153,8 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
 public sealed class EnemySpawnRule
 {
     public EnemyType EnemyType;
+    [Tooltip("First one-based combat room where an unseen enemy type can appear. " +
+             "Previously encountered types are eligible from the first room in later runs.")]
     [Min(1)] public int FirstRoom = 1;
     [Tooltip("Last one-based level for this type in the normal enemy pool, inclusive. " +
              "Zero means unlimited. Elite-only levels ignore this limit.")]
