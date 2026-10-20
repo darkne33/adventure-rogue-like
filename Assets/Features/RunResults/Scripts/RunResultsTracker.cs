@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Features.Enemies.Scripts;
 using Features.Enemies.Scripts.Level.Scripts;
 using Features.Relics.Scripts;
+using Infrastructure.SaveSystem;
 using UnityEngine;
 using Zenject;
 
@@ -19,6 +20,7 @@ namespace Features.RunResults.Scripts
         private readonly ITimeScaleService _timeScale;
         private readonly IRoomTransitionService _roomTransition;
         private readonly RunRestartService _runRestart;
+        private readonly IPlayerSaveLoadService _playerSaveLoad;
         private readonly List<WeaponStatistics> _weapons = new();
         private readonly Dictionary<AbilityName, WeaponStatistics> _weaponsById = new();
 
@@ -36,7 +38,8 @@ namespace Features.RunResults.Scripts
         public RunResultsTracker(RelicEventBus events, IEnemiesProvider enemies,
             ICharacterProvider characterProvider, ICharacterLevelService characterLevel,
             CharacterWallet wallet, UpgradeBuildService build, ITimeScaleService timeScale,
-            IRoomTransitionService roomTransition, RunRestartService runRestart)
+            IRoomTransitionService roomTransition, RunRestartService runRestart,
+            IPlayerSaveLoadService playerSaveLoad)
         {
             _events = events;
             _enemies = enemies;
@@ -47,6 +50,7 @@ namespace Features.RunResults.Scripts
             _timeScale = timeScale;
             _roomTransition = roomTransition;
             _runRestart = runRestart;
+            _playerSaveLoad = playerSaveLoad;
 
             _events.Hit += HandleHit;
             _enemies.EnemyDefeated += HandleEnemyDefeated;
@@ -87,7 +91,7 @@ namespace Features.RunResults.Scripts
                 RefreshWeaponBuild();
             }
 
-            _isRunActive = false;
+            CompleteRun();
             var weapons = new List<RunWeaponResult>(_weapons.Count);
             foreach (WeaponStatistics weapon in _weapons)
             {
@@ -98,6 +102,15 @@ namespace Features.RunResults.Scripts
             _capturedResults = new RunResultsData(_survivedSeconds, _levelReached,
                 _enemiesDefeated, _goldEarned, _silverEarned, weapons);
             return _capturedResults;
+        }
+
+        public void CompleteRun()
+        {
+            if (_isDisposed || !_isRunActive || _runRestart.IsRestarting)
+                return;
+
+            _isRunActive = false;
+            _playerSaveLoad.RegisterCompletedRun();
         }
 
         public void Tick()

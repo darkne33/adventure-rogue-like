@@ -36,18 +36,18 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
     [Header("Room Enemy Mix")]
     [Tooltip("Maximum distinct enemy types selected once for the entire room, across all waves.")]
     [SerializeField, Range(1, 5)] private int _maximumEnemyTypesPerRoom = 3;
-    [Tooltip("Chance to use just one of the unlocked enemy types. Other rooms mix two or more.")]
+    [Tooltip("Chance to use just one of the available enemy types. Other rooms mix two or more.")]
     [SerializeField, Range(0f, 100f)] private float _singleEnemyTypeRoomChancePercent = 20f;
     [SerializeField] private EnemySpawnRule[] _enemyRules =
     {
-        new(EnemyType.Dummy, 1, 50f, 0, lastNormalLevel: 2),
-        new(EnemyType.Skeleton_Head, 2, 14f, 4),
-        new(EnemyType.Bomb, 4, 20f, 8),
-        new(EnemyType.Ghost, 6, 18f, 8),
-        new(EnemyType.Chan, 8, 5f, 2),
-        new(EnemyType.Skeleton, 8, 5f, 2),
-        new(EnemyType.Bun, 10, 5f, 2),
-        new(EnemyType.Stone_Spikes, 8, 8f, 3, maxAliveInSmallRoom: 1)
+        new(EnemyType.Dummy, 50f, 0, lastNormalLevel: 2),
+        new(EnemyType.Skeleton_Head, 14f, 4),
+        new(EnemyType.Bomb, 20f, 8),
+        new(EnemyType.Ghost, 18f, 8),
+        new(EnemyType.Chan, 5f, 2),
+        new(EnemyType.Skeleton, 5f, 2),
+        new(EnemyType.Bun, 5f, 2),
+        new(EnemyType.Stone_Spikes, 8f, 3, maxAliveInSmallRoom: 1)
     };
 
     public EnemySpawnRule[] EnemyRules => _enemyRules;
@@ -153,9 +153,6 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
 public sealed class EnemySpawnRule
 {
     public EnemyType EnemyType;
-    [Tooltip("First one-based combat room where an unseen enemy type can appear. " +
-             "Previously encountered types are eligible from the first room in later runs.")]
-    [Min(1)] public int FirstRoom = 1;
     [Tooltip("Last one-based level for this type in the normal enemy pool, inclusive. " +
              "Zero means unlimited. Elite-only levels ignore this limit.")]
     [Min(0)] public int LastNormalLevel;
@@ -165,11 +162,10 @@ public sealed class EnemySpawnRule
     [Tooltip("Maximum alive at once in Small rooms; zero uses MaxAlive.")]
     [Min(0)] public int MaxAliveInSmallRoom;
 
-    public EnemySpawnRule(EnemyType enemyType, int firstRoom, float weight, int maxAlive,
+    public EnemySpawnRule(EnemyType enemyType, float weight, int maxAlive,
         int lastNormalLevel = 0, int maxAliveInSmallRoom = 0)
     {
         EnemyType = enemyType;
-        FirstRoom = firstRoom;
         LastNormalLevel = lastNormalLevel;
         Weight = weight;
         MaxAlive = maxAlive;

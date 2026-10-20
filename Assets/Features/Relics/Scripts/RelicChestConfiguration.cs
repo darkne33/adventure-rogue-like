@@ -50,7 +50,8 @@ namespace Features.Relics.Scripts
         [field: SerializeField] public float RelicPickupDistance { get; private set; } = 3f;
 
         [field: Header("Gray Chest Rewards")]
-        [field: SerializeField] public GameObject GrayChestSilverRewardPrefab { get; private set; }
+        [field: FormerlySerializedAs("<GrayChestSilverRewardPrefab>k__BackingField")]
+        [field: SerializeField] public GameObject GrayChestGoldRewardPrefab { get; private set; }
         [field: SerializeField] public GameObject GrayChestKeyRewardPrefab { get; private set; }
         [field: SerializeField, Min(1)] public int GrayChestMinCoins { get; private set; } = 1;
         [field: SerializeField, Min(1)] public int GrayChestMaxCoins { get; private set; } = 3;

@@ -30,7 +30,7 @@ namespace Features.Relics.Scripts
         public bool IsConfigured => _configuration != null && _container != null &&
                                     _characterProvider != null && _wallet != null &&
                                     _heartDropper != null && GetTotalWeight() > 0f &&
-                                    HasPickup(_configuration.GrayChestSilverRewardPrefab) &&
+                                    HasPickup(_configuration.GrayChestGoldRewardPrefab) &&
                                     HasPickup(_configuration.GrayChestKeyRewardPrefab);
 
         public GrayChestRewardPresenter(RelicChestConfiguration configuration,
@@ -59,8 +59,8 @@ namespace Features.Relics.Scripts
                 int coinCount = UnityEngine.Random.Range(minimum, maximum + 1);
                 for (int index = 0; index < coinCount; index++)
                 {
-                    DropCurrency(_configuration.GrayChestSilverRewardPrefab,
-                        chestPosition, spawnPosition, () => _wallet.Silver.Add(1));
+                    DropCurrency(_configuration.GrayChestGoldRewardPrefab,
+                        chestPosition, spawnPosition, () => _wallet.Gold.Add(1));
                 }
             }
 

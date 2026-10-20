@@ -536,8 +536,6 @@ public class EnemySpawner
         foreach (EnemySpawnRule rule in _roomBalance.EnemyRules)
         {
             if (rule == null || rule.Weight <= 0f ||
-                (rule.FirstRoom > _roomProgressIndex + 1 &&
-                 !_playerSaveLoadService.HasEncounteredEnemy(rule.EnemyType)) ||
                 (!eliteOnly && rule.LastNormalLevel > 0 && levelIndex >= rule.LastNormalLevel) ||
                 System.Array.IndexOf(configuration.EnemyTypes, rule.EnemyType) < 0 ||
                 !factory.EnemyPrefabs.Exists(prefab => prefab.EnemyType == rule.EnemyType &&
@@ -554,13 +552,22 @@ public class EnemySpawner
         }
 
         if (availableRules.Count == 0)
-            throw new System.InvalidOperationException("No enemies are unlocked for this combat room.");
+            throw new System.InvalidOperationException("No enemies are available for this combat room.");
 
         if (!availableRules.Exists(rule => !hazardTypes.Contains(rule.EnemyType)))
-            throw new System.InvalidOperationException("No combat enemies are unlocked for this combat room.");
+            throw new System.InvalidOperationException("No combat enemies are available for this combat room.");
 
-        // Pick a weighted subset without replacement once per room. Unlocking a type
-        // makes it eligible; neither it nor Dummy is mandatory in every encounter.
+        if (_playerSaveLoadService.CompletedRuns == 0 && _roomProgressIndex == 0)
+        {
+            EnemySpawnRule dummyRule = availableRules.Find(rule => rule.EnemyType == EnemyType.Dummy);
+            if (dummyRule != null)
+            {
+                _roomEnemyRules.Add(dummyRule);
+                return;
+            }
+        }
+
+        // Every type is eligible immediately. Pick a weighted subset without replacement per room.
         int typeCount = _roomBalance.RollEnemyTypeCount(availableRules.Count, _roomProgressIndex);
         bool hasCombatEnemy = false;
         for (int i = 0; i < typeCount; i++)
