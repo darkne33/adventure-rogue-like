@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(menuName = "Configs/Levels/Room Catalog", fileName = "LevelRoomCatalog")]
 public sealed class LevelRoomCatalog : ScriptableObject
@@ -9,7 +10,8 @@ public sealed class LevelRoomCatalog : ScriptableObject
     [SerializeField] private Room[] _smallEnemyRooms = Array.Empty<Room>();
     [SerializeField] private Room[] _mediumEnemyRooms = Array.Empty<Room>();
     [SerializeField] private EnemyRoomSettings _enemySettings = new();
-    [SerializeField] private Room[] _rewardRooms = Array.Empty<Room>();
+    [FormerlySerializedAs("_rewardRooms")]
+    [SerializeField] private Room[] _treasureRooms = Array.Empty<Room>();
     [SerializeField] private Room[] _onlyRelicRooms = Array.Empty<Room>();
     [SerializeField] private Room[] _bloodRooms = Array.Empty<Room>();
     [SerializeField] private Room[] _shopRooms = Array.Empty<Room>();
@@ -20,7 +22,7 @@ public sealed class LevelRoomCatalog : ScriptableObject
     public IReadOnlyList<Room> SmallEnemyRooms => _smallEnemyRooms;
     public IReadOnlyList<Room> MediumEnemyRooms => _mediumEnemyRooms;
     public EnemyRoomSettings EnemySettings => _enemySettings;
-    public IReadOnlyList<Room> RewardRooms => _rewardRooms;
+    public IReadOnlyList<Room> TreasureRooms => _treasureRooms;
     public IReadOnlyList<Room> OnlyRelicRooms => _onlyRelicRooms;
     public IReadOnlyList<Room> BloodRooms => _bloodRooms;
     public IReadOnlyList<Room> ShopRooms => _shopRooms;

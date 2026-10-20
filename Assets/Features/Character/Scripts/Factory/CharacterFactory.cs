@@ -16,10 +16,12 @@ public class CharacterFactory : ICharacterFactory
     
     public async UniTask<CharacterFacade> CreatePlayer(Transform spawnPoint, CancellationToken cancellationToken)
     {
-        var characterContainer = _characterConfiguration.GetConfiguredSelectedCharacter().CharacterContainer;
+        CharacterDefinition definition = _characterConfiguration.GetConfiguredSelectedCharacter();
+        var characterContainer = definition.CharacterContainer;
         await characterContainer.Load(cancellationToken);
         var character =
             _container.InstantiatePrefabForComponent<CharacterFacade>(characterContainer.Get(), spawnPoint);
+        character.Definition = definition;
         character.transform.SetParent(null, true);
         character.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
         return character;

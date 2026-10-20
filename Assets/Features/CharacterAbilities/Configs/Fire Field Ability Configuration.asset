@@ -14,19 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FireFieldAbilityConfiguration
   <AbilityName>k__BackingField: 17
   DisplayName: Fire Trail
-  Description: Creates a damaging fire field after every 30 meters traveled.
+  Description: Creates a damaging fire field every 5 meters traveled. Each field lasts 1.5 seconds. Upgrades increase damage, duration, and radius.
   <Icon>k__BackingField: {fileID: 21300000, guid: e2ef936ee522474286910aab0f615009, type: 3}
   <Prefab>k__BackingField: {fileID: 1117364925471799688, guid: 69a077a0517314447a956fce91d28aa2, type: 3}
-  <DistancePerField>k__BackingField: 30
-  <MinimumDistancePerField>k__BackingField: 1.5
-  <FieldDuration>k__BackingField: 3
+  <DistancePerField>k__BackingField: 5
+  <FieldDuration>k__BackingField: 1.5
   <DamageTickInterval>k__BackingField: 0.5
   <DamageRadius>k__BackingField: 3.5
   <DamageHeight>k__BackingField: 2.5
   <StartDamage>k__BackingField: 4
   <DamageVariationPercent>k__BackingField: 20
   <DamageUpgradeIncrease>k__BackingField: 2
-  <DistanceUpgradeReduction>k__BackingField: 0.25
+  <DurationUpgradeIncrease>k__BackingField: 0.25
   <RadiusUpgradeIncrease>k__BackingField: 0.35
   <GroundRayStartHeight>k__BackingField: 4
   <GroundRayDistance>k__BackingField: 12

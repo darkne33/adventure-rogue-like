@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
 using Features.Sounds;
@@ -7,22 +8,17 @@ public sealed class FireFieldAbility : CharacterActiveAbility
 {
     private const float MaxTrackedMovementDelta = 15f;
     private const string DamageStatName = "Damage";
-    private const string DistanceStatName = "Distance";
+    private const string DurationStatName = "Duration";
     private const string RadiusStatName = "Radius";
 
     private static readonly AbilityUpgradeType[] FireFieldUpgradeTypes =
     {
         AbilityUpgradeType.Damage,
-        AbilityUpgradeType.FireFieldDistance,
+        AbilityUpgradeType.FireFieldDuration,
         AbilityUpgradeType.FireFieldRadius
     };
 
-    private static readonly AbilityUpgradeType[] FireFieldUpgradeTypesAtMinimumDistance =
-    {
-        AbilityUpgradeType.Damage,
-        AbilityUpgradeType.FireFieldRadius
-    };
-
+    private readonly List<FireFieldDamageArea> _activeFields = new();
     private readonly IEnemiesProvider _enemiesProvider;
     private readonly CharacterDamageCalculator _damageCalculator;
     private readonly CharacterStats _characterStats;
@@ -31,18 +27,16 @@ public sealed class FireFieldAbility : CharacterActiveAbility
     private readonly LevelsConfiguration _levelsConfiguration;
 
     private FireFieldAbilityConfiguration _configuration;
+    private SoundLoopEmitter _burningSound;
     private int _damage;
     private float _distancePerField;
+    private float _fieldDuration;
     private float _damageRadius;
     private float _distanceSinceLastField;
     private Vector3 _lastCharacterPosition;
     private bool _hasLastCharacterPosition;
 
-    public override AbilityUpgradeType[] UpgradeTypes =>
-        _configuration != null &&
-        _distancePerField <= _configuration.MinimumDistancePerField + Mathf.Epsilon
-            ? FireFieldUpgradeTypesAtMinimumDistance
-            : FireFieldUpgradeTypes;
+    public override AbilityUpgradeType[] UpgradeTypes => FireFieldUpgradeTypes;
 
     public FireFieldAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
         CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager,
@@ -64,13 +58,14 @@ public sealed class FireFieldAbility : CharacterActiveAbility
         Cooldown = 0f;
         _damage = 0;
         _distancePerField = _configuration.DistancePerField;
+        _fieldDuration = _configuration.FieldDuration;
         _damageRadius = _configuration.DamageRadius;
         _distanceSinceLastField = 0f;
         _hasLastCharacterPosition = false;
         StatName_1 = DamageStatName;
-        StatName_2 = DistanceStatName;
+        StatName_2 = DurationStatName;
         Stat_1 = _configuration.StartDamage;
-        Stat_2 = _distancePerField;
+        Stat_2 = _fieldDuration;
     }
 
     public override void OnEquip(CharacterStats characterStats)
@@ -91,7 +86,7 @@ public sealed class FireFieldAbility : CharacterActiveAbility
         }
 
         Stat_1 = _damage;
-        Stat_2 = _distancePerField;
+        Stat_2 = _fieldDuration;
     }
 
     private void ApplyUpgradeEffect(AbilityUpgradeEffect upgrade)
@@ -101,8 +96,8 @@ public sealed class FireFieldAbility : CharacterActiveAbility
             case AbilityUpgradeType.Damage:
                 _damage += GetDamageIncrease(upgrade.Value);
                 break;
-            case AbilityUpgradeType.FireFieldDistance:
-                ReduceDistancePerField(upgrade.Value);
+            case AbilityUpgradeType.FireFieldDuration:
+                _fieldDuration += GetDurationIncrease(upgrade.Value);
                 break;
             case AbilityUpgradeType.FireFieldRadius:
                 _damageRadius += GetRadiusIncrease(upgrade.Value);
@@ -117,8 +112,7 @@ public sealed class FireFieldAbility : CharacterActiveAbility
         _hasLastCharacterPosition = false;
     }
 
-    public override float GetStatFromIncrease() =>
-        _damage;
+    public override float GetStatFromIncrease() => _damage;
 
     public override float GetStatToIncrease(float upgradeMultiplier) =>
         GetDamageTo(upgradeMultiplier);
@@ -127,16 +121,16 @@ public sealed class FireFieldAbility : CharacterActiveAbility
         new[]
         {
             new AbilityUpgradePreview(DamageStatName, _configuration.StartDamage),
-            new AbilityUpgradePreview(DistanceStatName, _configuration.DistancePerField, "m")
+            new AbilityUpgradePreview(DurationStatName, _configuration.FieldDuration, "s")
         };
 
     public override AbilityUpgradePreview GetUpgradePreview(AbilityUpgradeEffect upgrade)
     {
         return upgrade.Type switch
         {
-            AbilityUpgradeType.FireFieldDistance =>
-                new AbilityUpgradePreview(DistanceStatName, _distancePerField,
-                    GetDistanceTo(upgrade.Value), "m"),
+            AbilityUpgradeType.FireFieldDuration =>
+                new AbilityUpgradePreview(DurationStatName, _fieldDuration,
+                    _fieldDuration + GetDurationIncrease(upgrade.Value), "s"),
             AbilityUpgradeType.FireFieldRadius =>
                 new AbilityUpgradePreview(RadiusStatName, _damageRadius,
                     _damageRadius + GetRadiusIncrease(upgrade.Value), "m"),
@@ -152,7 +146,7 @@ public sealed class FireFieldAbility : CharacterActiveAbility
 
         float interval = Mathf.Max(0.05f, Mathf.Max(0.05f, _configuration.DamageTickInterval) /
             Mathf.Max(0.01f, _characterStats.RelicAttackSpeedMultiplier));
-        float duration = Mathf.Max(0.1f, _configuration.FieldDuration * AbilityDurationMultiplier);
+        float duration = Mathf.Max(0.1f, _fieldDuration * AbilityDurationMultiplier);
         float fieldsPerSecond = Mathf.Max(0f, _characterStats.MovementSpeed) /
                                Mathf.Max(0.1f, _distancePerField);
         // A single maintained field on the target; overlapping fields and extra targets are excluded.
@@ -166,6 +160,7 @@ public sealed class FireFieldAbility : CharacterActiveAbility
             return;
 
         TrackMovement(character);
+        EnsureBurningSound(character);
     }
 
     private void TrackMovement(CharacterFacade character)
@@ -219,12 +214,39 @@ public sealed class FireFieldAbility : CharacterActiveAbility
             return;
         }
 
-        float duration = _configuration.FieldDuration * AbilityDurationMultiplier;
-        Sounds.Play(SoundId.FireFieldStart);
-        Sounds.PlayLoop(SoundId.FireFieldLoop, fieldObject.transform);
+        float duration = _fieldDuration * AbilityDurationMultiplier;
         damageArea.Initialize(_enemiesProvider, _damageRadius, _configuration.DamageHeight,
             _configuration.DamageTickInterval, duration, enemy => ApplyDamage(character, enemy),
-            _characterStats);
+            _characterStats, OnFieldExpired);
+        _activeFields.Add(damageArea);
+    }
+
+    private void EnsureBurningSound(CharacterFacade character)
+    {
+        if (_activeFields.Count == 0 || _burningSound != null)
+            return;
+
+        Sounds.PlayLoop(SoundId.FireFieldLoop, character.transform);
+        foreach (SoundLoopEmitter loop in character.GetComponentsInChildren<SoundLoopEmitter>())
+        {
+            if (loop.Sound != SoundId.FireFieldLoop || loop.transform.parent != character.transform ||
+                !loop.isActiveAndEnabled)
+                continue;
+
+            _burningSound = loop;
+            break;
+        }
+    }
+
+    private void OnFieldExpired(FireFieldDamageArea field)
+    {
+        if (!_activeFields.Remove(field) || _activeFields.Count > 0 || _burningSound == null)
+            return;
+
+        _burningSound.Stop();
+        _burningSound.gameObject.SetActive(false);
+        Object.Destroy(_burningSound.gameObject);
+        _burningSound = null;
     }
 
     private bool TryGetGroundPosition(Vector3 position, out Vector3 groundPosition, out Vector3 groundNormal)
@@ -289,20 +311,8 @@ public sealed class FireFieldAbility : CharacterActiveAbility
     private int GetDamageTo(float upgradeMultiplier) =>
         (_damage <= 0 ? _configuration.StartDamage : _damage) + GetDamageIncrease(upgradeMultiplier);
 
-    private float GetDistanceTo(float upgradeMultiplier) =>
-        Mathf.Max(_configuration.MinimumDistancePerField,
-            _distancePerField - GetDistanceReduction(upgradeMultiplier));
-
-    private float GetDistanceReduction(float upgradeMultiplier) =>
-        GetUpgradeValue(_configuration.DistanceUpgradeReduction, upgradeMultiplier);
-
-    private void ReduceDistancePerField(float upgradeMultiplier)
-    {
-        float previousDistance = Mathf.Max(0.1f, _distancePerField);
-        float travelProgress = Mathf.Clamp01(_distanceSinceLastField / previousDistance);
-        _distancePerField = GetDistanceTo(upgradeMultiplier);
-        _distanceSinceLastField = travelProgress * _distancePerField;
-    }
+    private float GetDurationIncrease(float upgradeMultiplier) =>
+        GetUpgradeValue(_configuration.DurationUpgradeIncrease, upgradeMultiplier);
 
     private float GetRadiusIncrease(float upgradeMultiplier) =>
         GetUpgradeValue(_configuration.RadiusUpgradeIncrease, upgradeMultiplier);

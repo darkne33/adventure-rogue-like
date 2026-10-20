@@ -3,6 +3,7 @@ using System.Threading;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
 using Features.Bosses.Scripts;
+using Features.Bosses.UI;
 using Features.Enemies.Scripts;
 
 namespace Core
@@ -13,16 +14,18 @@ namespace Core
         private readonly EnemyRoomObserver _enemyRoomObserver;
         private readonly EnemySpawner _enemySpawner;
         private readonly BossSpawner _bossSpawner;
+        private readonly BossIntroService _bossIntro;
         private readonly ICharacterProvider _characterProvider;
 
         public RogueLikeRoomPrepareState(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService,
             EnemyRoomObserver enemyRoomObserver, EnemySpawner enemySpawner,
-            ICharacterProvider characterProvider, BossSpawner bossSpawner)
+            ICharacterProvider characterProvider, BossSpawner bossSpawner, BossIntroService bossIntro)
         {
             _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
             _enemyRoomObserver = enemyRoomObserver;
             _enemySpawner = enemySpawner;
             _bossSpawner = bossSpawner;
+            _bossIntro = bossIntro;
             _characterProvider = characterProvider;
         }
 
@@ -49,7 +52,11 @@ namespace Core
             }
 
             if (currentRoomData is BossRoomData)
+            {
+                await _bossIntro.PlayAsync(_bossSpawner.GetBossPrefab().Config, cts);
+                cts.ThrowIfCancellationRequested();
                 _bossSpawner.SpawnBoss();
+            }
             else
                 await _enemySpawner.TrySpawnEnemiesAsync(_characterProvider.CharacterFacade, cts,
                     isFirstVisit: _rogueLikeRuntimeDataService.IsFirstVisitToCurrentRoom);

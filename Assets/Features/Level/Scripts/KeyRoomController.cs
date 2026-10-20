@@ -1,5 +1,6 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Features.Relics.Scripts;
 using UnityEngine;
@@ -20,6 +21,7 @@ public sealed class KeyRoomController : MonoBehaviour
     [SerializeField] private Renderer _doorRenderer;
     [SerializeField] private Collider _doorCollider;
     [SerializeField] private Transform _chestSpawnPoint;
+    [SerializeField] private Transform[] _twoChestSpawnPoints;
     [SerializeField] private RelicChestInteractionView _interactionView = new();
 
     [Header("Interaction")]
@@ -35,7 +37,7 @@ public sealed class KeyRoomController : MonoBehaviour
     private Color _doorColor = Color.white;
     private Tween _doorFadeTween;
     private float _doorAlpha = 1f;
-    private RelicChest _spawnedChest;
+    private readonly List<RelicChest> _spawnedChests = new();
     private bool _isInitialized;
     private bool _isOpening;
     private bool _isOpen;
@@ -119,6 +121,9 @@ public sealed class KeyRoomController : MonoBehaviour
             throw new InvalidOperationException($"{name} does not have a Door collider reference.");
         if (_chestSpawnPoint == null)
             throw new InvalidOperationException($"{name} does not have a chest spawn point.");
+        if (_twoChestSpawnPoints == null || _twoChestSpawnPoints.Length != 2 ||
+            _twoChestSpawnPoints[0] == null || _twoChestSpawnPoints[1] == null)
+            throw new InvalidOperationException($"{name} does not have two prepared chest spawn points.");
     }
 
     private bool CanInteract()
@@ -172,32 +177,42 @@ public sealed class KeyRoomController : MonoBehaviour
         _isOpen = true;
         _doorRenderer.enabled = false;
 
-        StartCoroutine(EnableChestInteractionNextFrame());
+        EnableChestInteractionNextFrame().Forget();
     }
 
     private void SpawnChest()
     {
-        if (_spawnedChest != null)
+        if (_spawnedChests.Count > 0)
             return;
 
         if (_ownerRoom == null ||
-            !_relicChestSpawner.TrySpawnAt(_ownerRoom, _chestSpawnPoint,
-                out RelicChest chest))
+            !_relicChestSpawner.TrySpawnForKeyRoom(_ownerRoom, _chestSpawnPoint,
+                _twoChestSpawnPoints, _spawnedChests))
         {
             Debug.LogWarning($"Could not spawn a relic chest in {name}.", this);
             return;
         }
 
-        _spawnedChest = chest;
-        _spawnedChest.enabled = false;
+        foreach (RelicChest chest in _spawnedChests)
+            chest.enabled = false;
     }
 
-    private IEnumerator EnableChestInteractionNextFrame()
+    private async UniTask EnableChestInteractionNextFrame()
     {
-        yield return null;
+        var cancellationToken = this.GetCancellationTokenOnDestroy();
+        try
+        {
+            await UniTask.NextFrame(cancellationToken: cancellationToken);
 
-        if (_spawnedChest != null)
-            _spawnedChest.enabled = true;
+            foreach (RelicChest chest in _spawnedChests)
+            {
+                if (chest != null)
+                    chest.enabled = true;
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
     }
 
     private void InitializeDoorVisual()

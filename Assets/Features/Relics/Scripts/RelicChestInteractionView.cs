@@ -42,7 +42,7 @@ namespace Features.Relics.Scripts
             if (_displayedKeyPrice != keyPrice)
             {
                 _displayedKeyPrice = keyPrice;
-                _keyPriceText.text = $"{keyPrice} KEY";
+                _keyPriceText.text = keyPrice > 0 ? $"{keyPrice} KEY" : "OPEN";
             }
 
             _keyPriceText.color = canAfford ? Color.white : Color.red;

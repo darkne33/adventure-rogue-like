@@ -50,7 +50,7 @@ namespace Features.Enemies.Scripts.Level.Scripts
                                     $"{nextRoom.name} does not contain room data.");
 
             if (roomData is not DefaultEnemiesRoomData &&
-                roomData is not RewardRoomData &&
+                roomData is not TreasureRoomData &&
                 roomData is not OnlyRelicRoomData &&
                 roomData is not BloodRoomData &&
                 roomData is not ShopRoomData &&
@@ -117,12 +117,12 @@ namespace Features.Enemies.Scripts.Level.Scripts
                             await _gameModeService.Get<RogueLikeStateMachine>()
                                 .EnterState<RogueLikeRoomPrepareState>();
                         }
-                        else if (roomData is RewardRoomData rewardRoomData)
+                        else if (roomData is TreasureRoomData treasureRoomData)
                         {
-                            rewardRoomData.MarkCompleted();
+                            treasureRoomData.MarkCompleted();
                         }
 
-                        if (roomData is RewardRoomData or OnlyRelicRoomData or BloodRoomData or ShopRoomData or StartRoomData)
+                        if (roomData is TreasureRoomData or OnlyRelicRoomData or BloodRoomData or ShopRoomData or StartRoomData)
                             OpenRoomDoors(roomData);
 
                     },

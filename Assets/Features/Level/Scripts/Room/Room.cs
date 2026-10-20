@@ -58,18 +58,22 @@ public class BossRoomData : DefaultEnemiesRoomData
 }
 
 [Serializable]
-public class RewardRoomData : RoomData
+public class TreasureRoomData : RoomData
 {
-    [field: SerializeField, Min(1)] public int KeyPrice { get; private set; } = 1;
+    [field: SerializeField, Min(0)] public int KeyPrice { get; private set; } = 1;
     [field: SerializeField, Min(1)] public int MinChests { get; private set; } = 1;
     [field: SerializeField, Min(1)] public int MaxChests { get; private set; } = 2;
     [field: SerializeField]
     [field: Tooltip("Element 0 contains points for one chest, element 1 for two chests, and so on.")]
-    public RewardChestSpawnPoints[] ChestSpawnPointsByCount { get; private set; } =
-        Array.Empty<RewardChestSpawnPoints>();
+    public TreasureChestSpawnPoints[] ChestSpawnPointsByCount { get; private set; } =
+        Array.Empty<TreasureChestSpawnPoints>();
 
+    public bool RequiresKey => KeyPrice > 0;
     public bool IsCompleted { get; private set; }
     public bool IsUnlocked { get; private set; }
+
+    public void ConfigureEntrance(bool requiresKey) =>
+        KeyPrice = requiresKey ? 1 : 0;
 
     public void Unlock() =>
         IsUnlocked = true;
@@ -88,7 +92,7 @@ public class RewardRoomData : RoomData
             pointsIndex >= ChestSpawnPointsByCount.Length)
             return null;
 
-        RewardChestSpawnPoints spawnPoints = ChestSpawnPointsByCount[pointsIndex];
+        TreasureChestSpawnPoints spawnPoints = ChestSpawnPointsByCount[pointsIndex];
         if (spawnPoints?.Points == null || chestIndex < 0 || chestIndex >= spawnPoints.Points.Length)
             return null;
 
@@ -106,7 +110,7 @@ public class RewardRoomData : RoomData
 }
 
 [Serializable]
-public sealed class RewardChestSpawnPoints
+public sealed class TreasureChestSpawnPoints
 {
     [field: SerializeField] public Transform[] Points { get; private set; } = Array.Empty<Transform>();
 }
@@ -114,6 +118,15 @@ public sealed class RewardChestSpawnPoints
 [Serializable]
 public class ShopRoomData : RoomData
 {
+    [field: SerializeField, Min(1)] public int KeyPrice { get; private set; } = 1;
+
+    public bool IsUnlocked { get; private set; }
+
+    public void Unlock() =>
+        IsUnlocked = true;
+
+    public void ResetProgress() =>
+        IsUnlocked = false;
 }
 
 [Serializable]

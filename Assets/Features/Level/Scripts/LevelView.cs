@@ -194,10 +194,10 @@ public class LevelView : MonoBehaviour
                 enemiesRoomData.Configure(roomNode.EnemySettings);
                 room.SetRoomData(enemiesRoomData);
             }
-            else if (roomNode.Type == RoomType.Reward && room.RoomData is not RewardRoomData)
+            else if (roomNode.Type == RoomType.Treasure && room.RoomData is not TreasureRoomData)
             {
                 RoomDoor[] authoredDoors = room.RoomData?.RoomDoors;
-                room.SetRoomData(new RewardRoomData
+                room.SetRoomData(new TreasureRoomData
                 {
                     RoomDoors = authoredDoors
                 });
@@ -210,6 +210,11 @@ public class LevelView : MonoBehaviour
                     RoomDoors = authoredDoors
                 });
             }
+
+            if (roomNode.Type == RoomType.Treasure && room.RoomData is TreasureRoomData treasureRoomData)
+                treasureRoomData.ConfigureEntrance(!roomNode.IsFreeTreasureRoom);
+            else if (roomNode.Type == RoomType.OnlyRelic && room.RoomData is OnlyRelicRoomData onlyRelicRoomData)
+                onlyRelicRoomData.ConfigureEntrance(roomNode.OnlyRelicRequiresKey);
 
             roomNode.Bind(room);
         }
@@ -390,7 +395,7 @@ public class LevelView : MonoBehaviour
             case RoomType.Start:
                 throw new InvalidOperationException(
                     $"{roomNode.RoomPrefab.name} must contain StartRoomData.");
-            case RoomType.Reward:
+            case RoomType.Treasure:
                 return;
             case RoomType.OnlyRelic:
                 if (roomData is not OnlyRelicRoomData relicRoomData || relicRoomData.RelicSpawnPoint == null)
@@ -440,7 +445,7 @@ public class LevelView : MonoBehaviour
                     ValidateEnemySettings(roomNode.Room.name, enemiesRoomData.EnemySettings);
                 ValidateKeyRoomSpawnPoint(roomNode.Room.name, enemiesRoomData);
                 return;
-            case (RoomType.Reward, RewardRoomData):
+            case (RoomType.Treasure, TreasureRoomData):
                 return;
             case (RoomType.OnlyRelic, OnlyRelicRoomData relicRoomData):
                 if (relicRoomData.RelicSpawnPoint == null)
@@ -601,13 +606,13 @@ public class LevelView : MonoBehaviour
         if (IsConnectionBlocked(roomNode, direction, nodesByPosition))
             return false;
 
-        if ((roomNode.Type is RoomType.Reward or RoomType.OnlyRelic or RoomType.Blood) &&
+        if ((roomNode.Type is RoomType.Treasure or RoomType.OnlyRelic or RoomType.Blood) &&
             direction != GetRewardEntranceDirection(roomNode, nodesByPosition))
             return false;
 
         return !nodesByPosition.TryGetValue(roomNode.GridPosition + direction.ToGridOffset(),
                    out LevelRoomNode neighbour) ||
-               neighbour.Type is not (RoomType.Reward or RoomType.OnlyRelic or RoomType.Blood) ||
+               neighbour.Type is not (RoomType.Treasure or RoomType.OnlyRelic or RoomType.Blood) ||
                direction.Opposite() == GetRewardEntranceDirection(neighbour, nodesByPosition);
     }
 
@@ -620,7 +625,7 @@ public class LevelView : MonoBehaviour
         {
             if (nodesByPosition.TryGetValue(roomNode.GridPosition + direction.ToGridOffset(),
                     out LevelRoomNode neighbour) &&
-                neighbour.Type is not (RoomType.Reward or RoomType.OnlyRelic or RoomType.Blood) &&
+                neighbour.Type is not (RoomType.Treasure or RoomType.OnlyRelic or RoomType.Blood) &&
                 !IsConnectionBlocked(roomNode, direction, nodesByPosition))
                 return direction;
         }
@@ -1105,8 +1110,11 @@ public class LevelView : MonoBehaviour
                 case DefaultEnemiesRoomData enemiesRoomData:
                     enemiesRoomData.ResetProgress();
                     break;
-                case RewardRoomData rewardRoomData:
-                    rewardRoomData.ResetProgress();
+                case TreasureRoomData treasureRoomData:
+                    treasureRoomData.ResetProgress();
+                    break;
+                case ShopRoomData shopRoomData:
+                    shopRoomData.ResetProgress();
                     break;
                 case OnlyRelicRoomData relicRoomData:
                     relicRoomData.ResetProgress();
@@ -1220,7 +1228,7 @@ public class LevelView : MonoBehaviour
                 {
                     RoomType.Start => Color.cyan,
                     RoomType.Exit => Color.green,
-                    RoomType.Reward => Color.yellow,
+                    RoomType.Treasure => Color.yellow,
                     RoomType.OnlyRelic => new Color(1f, 0.75f, 0.1f, 1f),
                     RoomType.Blood => new Color(0.65f, 0.05f, 0.1f, 1f),
                     RoomType.Shop => Color.magenta,
@@ -1283,7 +1291,7 @@ public enum RoomType
     Start,
     Exit,
     Enemy,
-    Reward,
+    Treasure = 3,
     Shop,
     Boss = 5,
     OnlyRelic = 6,
@@ -1305,6 +1313,12 @@ public sealed class LevelRoomNode
     public RoomConnectionMask BlockedConnections { get; private set; }
     [field: SerializeField] public RoomType Type { get; private set; } = RoomType.Enemy;
     [field: SerializeField]
+    [field: Tooltip("Treasure Room entrance is open immediately and does not consume a key.")]
+    public bool IsFreeTreasureRoom { get; private set; }
+    [field: SerializeField]
+    [field: Tooltip("Only One Relic entrance is locked until one key is spent.")]
+    public bool OnlyRelicRequiresKey { get; private set; }
+    [field: SerializeField]
     [field: Tooltip("Used by combat rooms (Enemy and Exit).")]
     public EnemyRoomSettings EnemySettings { get; private set; } = new();
     [field: SerializeField]
@@ -1314,7 +1328,9 @@ public sealed class LevelRoomNode
     public LevelRoomNode(Room roomPrefab, Vector2Int gridPosition, RoomType type,
         RoomDirection levelExitDirection = default,
         EnemyRoomSettings enemySettings = null,
-        RoomConnectionMask blockedConnections = RoomConnectionMask.None)
+        RoomConnectionMask blockedConnections = RoomConnectionMask.None,
+        bool isFreeTreasureRoom = false,
+        bool onlyRelicRequiresKey = false)
     {
         _roomPrefab = roomPrefab;
         GridPosition = gridPosition;
@@ -1322,6 +1338,8 @@ public sealed class LevelRoomNode
         LevelExitDirection = levelExitDirection;
         EnemySettings = enemySettings ?? new EnemyRoomSettings();
         BlockedConnections = blockedConnections;
+        IsFreeTreasureRoom = isFreeTreasureRoom;
+        OnlyRelicRequiresKey = onlyRelicRequiresKey;
     }
 
     public void Bind(Room room) =>

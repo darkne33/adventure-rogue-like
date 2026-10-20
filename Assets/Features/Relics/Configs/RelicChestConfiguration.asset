@@ -13,6 +13,17 @@ MonoBehaviour:
   m_Name: RelicChestConfiguration
   m_EditorClassIdentifier:
   <ChestPrefab>k__BackingField: {fileID: 7387248207753150389, guid: d9e4fe85a861f974fa1421a3bfb43e40, type: 3}
+  <GrayChestPrefab>k__BackingField: {fileID: 7387248207753150389, guid: c31cc43d96de4ebdafb194fb774f5a0e, type: 3}
+  <OneGrayChestWeight>k__BackingField: 40
+  <TwoGrayChestsWeight>k__BackingField: 30
+  <OneGoldChestWeight>k__BackingField: 15
+  <TwoGoldChestsWeight>k__BackingField: 5
+  <GoldAndGrayChestWeight>k__BackingField: 10
+  <FreeTreasureOneGrayWeight>k__BackingField: 70
+  <FreeTreasureTwoGrayWeight>k__BackingField: 30
+  <KeyedTreasureOneGoldWeight>k__BackingField: 60
+  <KeyedTreasureGoldAndGrayWeight>k__BackingField: 25
+  <KeyedTreasureTwoGoldWeight>k__BackingField: 15
   <RelicPickupPrefab>k__BackingField: {fileID: 100000, guid: 7d65e8eaf55a48b08f5c084f5fb9ecbb, type: 3}
   <OnlyRelicPickupPrefab>k__BackingField: {fileID: 100000, guid: 577ecff4496d42efb704f63fc62ed6a5, type: 3}
   <MinChestsPerLevel>k__BackingField: 1
@@ -38,3 +49,15 @@ MonoBehaviour:
   <RelicPreviewScale>k__BackingField: 0.9
   <RelicPreviewRiseSpeed>k__BackingField: 0.05
   <RelicPickupDistance>k__BackingField: 3
+  <GrayChestSilverRewardPrefab>k__BackingField: {fileID: 5590898654358259726, guid: 4a88546fc46c40b39649584c2fcf0cd5, type: 3}
+  <GrayChestKeyRewardPrefab>k__BackingField: {fileID: 5590898654358259726, guid: 0a05d7b522194d78bc4671d0dd389c1a, type: 3}
+  <GrayChestMinCoins>k__BackingField: 1
+  <GrayChestMaxCoins>k__BackingField: 3
+  <GrayChestCoinsWeight>k__BackingField: 70
+  <GrayChestKeyWeight>k__BackingField: 10
+  <GrayChestHeartWeight>k__BackingField: 10
+  <GrayChestCoinsAndKeyWeight>k__BackingField: 2.5
+  <GrayChestCoinsAndHeartWeight>k__BackingField: 5
+  <GrayChestHeartAndKeyWeight>k__BackingField: 2.5
+  <GrayChestRewardScale>k__BackingField: 2
+  <GrayChestRewardScatterRadius>k__BackingField: 1.2

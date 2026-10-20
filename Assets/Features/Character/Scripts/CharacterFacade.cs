@@ -6,6 +6,7 @@ using Zenject;
 [RequireComponent(typeof(Rigidbody))]
 public class CharacterFacade : MonoBehaviour
 {
+    public CharacterDefinition Definition { get; internal set; }
     public HealthSystem HealthSystem => _healthSystem;
     public ShieldSystem ShieldSystem => _shieldSystem;
     public Rigidbody Rigidbody => _rigidbody;
@@ -23,6 +24,7 @@ public class CharacterFacade : MonoBehaviour
     public  Renderer[] MeshRenderers => _meshRenderers;
     public  Outline[] Outlines => _outlines;
     public  bool IsTransitionPaused => _isTransitionPaused;
+    public bool IsCinematicPaused => _pauseEntity?.IsCinematicPaused ?? false;
 
     [SerializeField] private GameObject _characterModel;
     [SerializeField] private GameObject _cameraPivot;

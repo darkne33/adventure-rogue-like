@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: WoodGuardScatterAttackConfiguration
   m_EditorClassIdentifier: Assembly-CSharp::Features.Bosses.Scripts.WoodGuardScatterAttackConfiguration
   <IsEnabled>k__BackingField: 1
-  <WarningDuration>k__BackingField: 1.2
+  <WarningDuration>k__BackingField: 0.84
   <InitialWarningScale>k__BackingField: 0.1
   <GroundOffset>k__BackingField: 0.04
   <IndicatorPrefab>k__BackingField: {fileID: 6769835410302440454, guid: e6c782a94b3d49aa9b2f506810ac3e75, type: 3}
@@ -27,13 +27,13 @@ MonoBehaviour:
   <KnockbackForce>k__BackingField: 10
   <KnockbackUpwardForce>k__BackingField: 10
   <SpawnCount>k__BackingField: 6
-  <MinRadius>k__BackingField: 2
-  <MaxRadius>k__BackingField: 6
-  <InitialDelay>k__BackingField: 1
-  <SpawnInterval>k__BackingField: 0.6
+  <MinRadius>k__BackingField: 0
+  <MaxRadius>k__BackingField: 0
+  <InitialDelay>k__BackingField: 0.7
+  <SpawnInterval>k__BackingField: 0.42
   <FollowCharacter>k__BackingField: 1
   <ShowWarning>k__BackingField: 1
   <PositionMode>k__BackingField: 0
   <StartingAngle>k__BackingField: 0
   <AngularStep>k__BackingField: 90
-  <MinimumPositionDistance>k__BackingField: 1.5
+  <MinimumPositionDistance>k__BackingField: 0

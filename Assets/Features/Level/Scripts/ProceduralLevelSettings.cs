@@ -9,6 +9,10 @@ public sealed class ProceduralLevelSettings
     [Tooltip("Maximum attempts to find a connected floor with enough dead ends and compatible prefabs.")]
     [SerializeField, Range(1, 8192)] private int _generationAttempts = 2048;
 
+    [Header("Only One Relic Room")]
+    [Tooltip("Chance that an Only One Relic room requires one key. Rolled once before layout retries.")]
+    [SerializeField, Range(0f, 1f)] private float _onlyRelicKeyedChance = 0.7f;
+
     [Header("Existing Additional Stat Growth")]
     [Tooltip("One-based floor number at which additional health/damage growth starts.")]
     [SerializeField, Min(1)] private int _statGrowthStartLevel = 4;
@@ -31,16 +35,24 @@ public sealed class ProceduralLevelSettings
 
     public int GetMinimumDeadEnds(int levelIndex) => levelIndex == 0 ? 5 : 6;
 
+    public bool RollOnlyRelicRequiresKey() =>
+        UnityEngine.Random.value < Mathf.Clamp01(_onlyRelicKeyedChance);
+
     public List<RoomType> RollSpecialRooms(int levelIndex)
     {
-        // Shops and keyed-chest rooms are mandatory on every floor of the endless run.
-        var types = new List<RoomType> { RoomType.Shop };
+        var types = new List<RoomType>();
 
-        // Standalone relic rooms retain their existing first-six-floor availability.
+        // Isaac's first three chapters contain six floors, through Depths II.
+        // This is the base rule; the current relic catalog has no late-floor room modifiers.
+        // Shop is the keyed wheel. Treasure Room uses its own free/keyed entrance state.
+        // Only Relic remains a separate room with its existing first-floor availability.
         if (levelIndex < 6)
-            types.Add(RoomType.OnlyRelic);
-
-        types.Add(RoomType.Reward);
+        {
+            types.Add(RoomType.Shop);
+            types.Add(RoomType.Treasure);
+            if (levelIndex == 0)
+                types.Add(RoomType.OnlyRelic);
+        }
 
         // Base Curse Room roll, through chapter 5. This game has no Devil Room visit state.
         if (levelIndex < 9 && UnityEngine.Random.Range(0, 2) == 0)

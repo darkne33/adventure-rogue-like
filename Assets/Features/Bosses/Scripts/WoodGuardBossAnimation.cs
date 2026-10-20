@@ -85,7 +85,8 @@ namespace Features.Bosses.Scripts
             _currentState = AttackState;
             _targetPlaybackSpeed = _attackClip != null
                 ? _attackClip.length / Mathf.Max(0.01f, warningDuration) : 1f;
-            _animator.SetTrigger(AttackTrigger);
+            _animator.ResetTrigger(AttackTrigger);
+            _animator.Play(AttackState, 0, 0f);
         }
 
         public void SetTimeScale(float timeScale)

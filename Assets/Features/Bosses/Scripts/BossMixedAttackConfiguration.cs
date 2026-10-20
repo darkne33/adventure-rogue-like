@@ -8,7 +8,7 @@ namespace Features.Bosses.Scripts
     {
         [field: SerializeField]
         [field: Tooltip("Attacks run together with individual start delays. The earliest enabled attack controls " +
-                        "the initial boss animation; ties use list order. Each horizontal attack takes over " +
+                        "the initial boss animation; ties use list order. Each horizontal or scatter attack takes over " +
                         "the animation when it starts. The boss waits for every attack to finish.")]
         public BossMixedAttackEntry[] Attacks { get; private set; } = Array.Empty<BossMixedAttackEntry>();
 

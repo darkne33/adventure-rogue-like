@@ -54,13 +54,13 @@ namespace Features.Relics.Scripts
             _activeChests.Clear();
             _eventBus.PublishChestsCleared();
 
-            if (level == null || _configuration.ChestPrefab == null ||
+            if (level == null || _configuration.ChestPrefab == null || _configuration.GrayChestPrefab == null ||
                 _configuration.RelicPickupPrefab == null)
                 return;
 
             Physics.SyncTransforms();
 
-            List<Room> rooms = GetRewardRooms(level);
+            List<Room> rooms = GetTreasureRooms(level);
             if (rooms.Count == 0)
                 return;
 
@@ -72,17 +72,25 @@ namespace Features.Relics.Scripts
             for (int index = 0; index < rooms.Count; index++)
             {
                 Room room = rooms[index];
-                if (room == null || room.RoomData is not RewardRoomData roomData)
+                if (room == null || room.RoomData is not TreasureRoomData roomData)
                     continue;
 
-                int chestCount = GetChestCount(roomData);
+                RollTreasureChestComposition(!roomData.RequiresKey,
+                    out int goldCount, out int grayCount);
+                if (goldCount > remainingChestRewards)
+                    continue;
+
+                int chestCount = goldCount + grayCount;
                 for (int chestIndex = 0; chestIndex < chestCount; chestIndex++)
                 {
-                    if (remainingChestRewards <= 0)
-                        return;
-
                     Transform spawnPoint = roomData.GetChestSpawnPoint(chestCount, chestIndex);
-                    if (SpawnChest(room, roomData, spawnPoint))
+                    if (spawnPoint == null)
+                        throw new InvalidOperationException(
+                            $"{room.name} requires prepared spawn points for {chestCount} treasure chests.");
+
+                    bool isGold = chestIndex >= grayCount;
+                    GameObject prefab = isGold ? _configuration.ChestPrefab : _configuration.GrayChestPrefab;
+                    if (SpawnChest(room, roomData, spawnPoint, spawnPoint.rotation, out _, prefab) && isGold)
                         remainingChestRewards--;
                 }
             }
@@ -111,13 +119,147 @@ namespace Features.Relics.Scripts
                 spawnPoint.rotation, out spawnedChest);
         }
 
-        private static int GetChestCount(RewardRoomData roomData) =>
-            roomData.GetChestCount();
+        public bool TrySpawnForKeyRoom(Room room, Transform singleSpawnPoint,
+            IReadOnlyList<Transform> twoChestSpawnPoints, ICollection<RelicChest> spawnedChests)
+        {
+            if (room == null)
+                throw new ArgumentNullException(nameof(room));
+            if (singleSpawnPoint == null)
+                throw new ArgumentNullException(nameof(singleSpawnPoint));
+            if (spawnedChests == null)
+                throw new ArgumentNullException(nameof(spawnedChests));
+            if (_configuration.ChestPrefab == null || _configuration.GrayChestPrefab == null ||
+                _configuration.RelicPickupPrefab == null)
+                return false;
 
-        private static List<Room> GetRewardRooms(LevelView level)
+            RollChestComposition(out int goldCount, out int grayCount);
+            int chestCount = goldCount + grayCount;
+            if (chestCount == 0)
+                return false;
+
+            if (chestCount == 2 && (twoChestSpawnPoints == null ||
+                twoChestSpawnPoints.Count < 2 || twoChestSpawnPoints[0] == null ||
+                twoChestSpawnPoints[1] == null))
+                throw new InvalidOperationException("Key room requires two prepared chest spawn points.");
+
+            if (goldCount > _relicPool.GetAvailable(_relicManager.ActiveRelics).Count())
+                return false;
+
+            bool hasSpawnedChest = false;
+            for (int index = 0; index < chestCount; index++)
+            {
+                Transform spawnPoint = chestCount == 1
+                    ? singleSpawnPoint
+                    : twoChestSpawnPoints[index];
+                GameObject prefab = index < grayCount
+                    ? _configuration.GrayChestPrefab
+                    : _configuration.ChestPrefab;
+                if (SpawnChest(room, room.RoomData, spawnPoint, spawnPoint.rotation,
+                        out RelicChest chest, prefab) == false)
+                    continue;
+
+                spawnedChests.Add(chest);
+                hasSpawnedChest = true;
+            }
+
+            return hasSpawnedChest;
+        }
+
+        private void RollTreasureChestComposition(bool isFree, out int goldCount, out int grayCount)
+        {
+            goldCount = 0;
+            grayCount = 0;
+            if (isFree)
+            {
+                float oneGray = Mathf.Max(0f, _configuration.FreeTreasureOneGrayWeight);
+                float twoGray = Mathf.Max(0f, _configuration.FreeTreasureTwoGrayWeight);
+                float total = oneGray + twoGray;
+                if (total <= 0f)
+                {
+                    Debug.LogError("Free Treasure Room weights must contain a positive weight.");
+                    return;
+                }
+
+                grayCount = UnityEngine.Random.value * total < oneGray ? 1 : 2;
+                return;
+            }
+
+            float oneGold = Mathf.Max(0f, _configuration.KeyedTreasureOneGoldWeight);
+            float mixed = Mathf.Max(0f, _configuration.KeyedTreasureGoldAndGrayWeight);
+            float twoGold = Mathf.Max(0f, _configuration.KeyedTreasureTwoGoldWeight);
+            float totalKeyed = oneGold + mixed + twoGold;
+            if (totalKeyed <= 0f)
+            {
+                Debug.LogError("Keyed Treasure Room weights must contain a positive weight.");
+                return;
+            }
+
+            float roll = UnityEngine.Random.value * totalKeyed;
+            if (roll < oneGold)
+                goldCount = 1;
+            else if (roll < oneGold + mixed)
+            {
+                goldCount = 1;
+                grayCount = 1;
+            }
+            else
+                goldCount = 2;
+        }
+
+        private void RollChestComposition(out int goldCount, out int grayCount)
+        {
+            float oneGrayWeight = Mathf.Max(0f, _configuration.OneGrayChestWeight);
+            float twoGrayWeight = Mathf.Max(0f, _configuration.TwoGrayChestsWeight);
+            float oneGoldWeight = Mathf.Max(0f, _configuration.OneGoldChestWeight);
+            float twoGoldWeight = Mathf.Max(0f, _configuration.TwoGoldChestsWeight);
+            float mixedWeight = Mathf.Max(0f, _configuration.GoldAndGrayChestWeight);
+            float totalWeight = oneGrayWeight + twoGrayWeight + oneGoldWeight +
+                                twoGoldWeight + mixedWeight;
+
+            goldCount = 0;
+            grayCount = 0;
+            if (totalWeight <= 0f)
+            {
+                Debug.LogError("Chest composition weights must contain a positive weight.");
+                return;
+            }
+
+            float roll = UnityEngine.Random.value * totalWeight;
+            if (roll < oneGrayWeight)
+            {
+                grayCount = 1;
+                return;
+            }
+
+            roll -= oneGrayWeight;
+            if (roll < twoGrayWeight)
+            {
+                grayCount = 2;
+                return;
+            }
+
+            roll -= twoGrayWeight;
+            if (roll < oneGoldWeight)
+            {
+                goldCount = 1;
+                return;
+            }
+
+            roll -= oneGoldWeight;
+            if (roll < twoGoldWeight)
+            {
+                goldCount = 2;
+                return;
+            }
+
+            goldCount = 1;
+            grayCount = 1;
+        }
+
+        private static List<Room> GetTreasureRooms(LevelView level)
         {
             return level.Rooms
-                .Where(node => node?.Room?.RoomData is RewardRoomData)
+                .Where(node => node?.Room?.RoomData is TreasureRoomData)
                 .Select(node => (Room)node.Room)
                 .ToList();
         }
@@ -127,9 +269,10 @@ namespace Features.Relics.Scripts
                 spawnPoint != null ? spawnPoint.rotation : room.transform.rotation, out _);
 
         private bool SpawnChest(Room room, RoomData roomData, Transform spawnPoint,
-            Quaternion rotation, out RelicChest spawnedChest)
+            Quaternion rotation, out RelicChest spawnedChest, GameObject chestPrefab = null)
         {
             spawnedChest = null;
+            chestPrefab ??= _configuration.ChestPrefab;
 
             Vector3 groundPoint;
             if (spawnPoint != null)
@@ -142,13 +285,13 @@ namespace Features.Relics.Scripts
                 return false;
             }
 
-            GameObject chestObject = _container.InstantiatePrefab(_configuration.ChestPrefab,
+            GameObject chestObject = _container.InstantiatePrefab(chestPrefab,
                 groundPoint + Vector3.up * _configuration.ChestSpawnHeight, rotation, room.transform);
 
             RelicChest chest = chestObject.GetComponent<RelicChest>();
             if (chest == null)
                 throw new InvalidOperationException(
-                    $"{_configuration.ChestPrefab.name} must contain RelicChest component.");
+                    $"{chestPrefab.name} must contain RelicChest component.");
 
             AlignBottomToGround(chestObject, groundPoint.y);
             _activeChests.Add(chest);

@@ -50,7 +50,7 @@ public static class PrebuiltLevelsGenerator
     };
 
     private static readonly int[] ExitRoomIndices = { 3, 3, 3 };
-    private static readonly int[] RewardRoomIndices = { 1, 1, 1 };
+    private static readonly int[] TreasureRoomIndices = { 1, 1, 1 };
     private static readonly RoomDirection[] ExitDirections =
     {
         RoomDirection.Up,
@@ -319,11 +319,11 @@ public static class PrebuiltLevelsGenerator
             {
                 bool isLevelExit =
                     roomIndex == ExitRoomIndices[levelNumber - 1];
-                bool isRewardRoom =
-                    roomIndex == RewardRoomIndices[levelNumber - 1];
+                bool isTreasureRoom =
+                    roomIndex == TreasureRoomIndices[levelNumber - 1];
                 RoomType roomType = isLevelExit
                     ? RoomType.Exit
-                    : isRewardRoom ? RoomType.Reward : RoomType.Enemy;
+                    : isTreasureRoom ? RoomType.Treasure : RoomType.Enemy;
                 roomNodes[roomIndex + 1] = new LevelRoomNode(
                     rooms[roomIndex],
                     layout[roomIndex],
@@ -335,7 +335,7 @@ public static class PrebuiltLevelsGenerator
 
                 RemoveUnusedDoors(rooms[roomIndex], layout[roomIndex], roomPositions,
                     hasNextLevel && isLevelExit, ExitDirections[levelNumber - 1]);
-                ConfigureRoomKind(rooms[roomIndex], isRewardRoom);
+                ConfigureRoomKind(rooms[roomIndex], isTreasureRoom);
             }
 
             RemoveUnusedDoors(startRoom, StartRoomGridPosition, roomPositions,
@@ -412,14 +412,14 @@ public static class PrebuiltLevelsGenerator
         PrefabUtility.RecordPrefabInstancePropertyModifications(room);
     }
 
-    private static void ConfigureRoomKind(DefaultRoom room, bool isRewardRoom)
+    private static void ConfigureRoomKind(DefaultRoom room, bool isTreasureRoom)
     {
         if (room.RoomData?.RoomDoors == null)
             throw new InvalidOperationException($"{room.name} does not contain configured doors.");
 
-        if (isRewardRoom)
+        if (isTreasureRoom)
         {
-            room.SetEditorRoomData(new RewardRoomData
+            room.SetEditorRoomData(new TreasureRoomData
             {
                 RoomDoors = room.RoomData.RoomDoors
             });
@@ -448,7 +448,7 @@ public static class PrebuiltLevelsGenerator
             Vector2Int destination = gridPosition + door.Direction.ToGridOffset();
             bool destinationIsReward = TryGetRoomIndex(layout, destination,
                                            out int destinationRoomIndex) &&
-                                       destinationRoomIndex == RewardRoomIndices[levelNumber - 1];
+                                       destinationRoomIndex == TreasureRoomIndices[levelNumber - 1];
             GameObject desiredPrefab = destinationIsReward ? coinDoorPrefab : defaultDoorPrefab;
             updatedDoors.Add(ReplaceDoorPrefabIfNeeded(door, desiredPrefab));
         }
@@ -540,7 +540,7 @@ public static class PrebuiltLevelsGenerator
                 RoomType.Start => node.Room?.RoomData is StartRoomData,
                 RoomType.Shop => node.Room?.RoomData is ShopRoomData,
                 RoomType.Boss => node.Room?.RoomData is BossRoomData,
-                RoomType.Reward or RoomType.Enemy or RoomType.Exit =>
+                RoomType.Treasure or RoomType.Enemy or RoomType.Exit =>
                     node.Room?.RoomData != null,
                 _ => false
             };

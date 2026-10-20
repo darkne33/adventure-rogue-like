@@ -32,21 +32,12 @@ namespace Features.Bosses.Scripts
             _healthUI = healthUI;
         }
 
+        public BossFacade GetBossPrefab() =>
+            GetCurrentSpawnPoint(out _).BossPrefab;
+
         public BossFacade SpawnBoss()
         {
-            if (_runtimeDataService.CurrentRoomData is not BossRoomData roomData)
-                throw new InvalidOperationException("Bosses can only be spawned in a boss room.");
-
-            LevelView level = _sceneService.GameSceneComponentsService?.CurrentLevel;
-            if (level == null)
-                throw new InvalidOperationException("Current level view is not available.");
-
-            Room room = GetCurrentRoom(level, roomData);
-            BossSpawnPoint point = room.GetComponentInChildren<BossSpawnPoint>();
-            if (point == null)
-                throw new InvalidOperationException($"Boss spawn point is missing in {room.name}.");
-            if (point.BossPrefab == null)
-                throw new InvalidOperationException($"Boss prefab is missing at {point.name}.");
+            BossSpawnPoint point = GetCurrentSpawnPoint(out BossRoomData roomData);
 
             Vector3 position = point.transform.position;
             Vector3 forward = Vector3.ProjectOnPlane(point.transform.forward, Vector3.up);
@@ -60,6 +51,26 @@ namespace Features.Bosses.Scripts
             _healthUI.Show(boss, roomData);
             _roomObserver.FinishEnemySpawning(_enemiesProvider.Count);
             return boss;
+        }
+
+        private BossSpawnPoint GetCurrentSpawnPoint(out BossRoomData roomData)
+        {
+            if (_runtimeDataService.CurrentRoomData is not BossRoomData currentRoomData)
+                throw new InvalidOperationException("Bosses can only be spawned in a boss room.");
+
+            roomData = currentRoomData;
+            LevelView level = _sceneService.GameSceneComponentsService?.CurrentLevel;
+            if (level == null)
+                throw new InvalidOperationException("Current level view is not available.");
+
+            Room room = GetCurrentRoom(level, roomData);
+            BossSpawnPoint point = room.GetComponentInChildren<BossSpawnPoint>();
+            if (point == null)
+                throw new InvalidOperationException($"Boss spawn point is missing in {room.name}.");
+            if (point.BossPrefab == null)
+                throw new InvalidOperationException($"Boss prefab is missing at {point.name}.");
+
+            return point;
         }
 
         private static Room GetCurrentRoom(LevelView level, BossRoomData roomData)

@@ -22,6 +22,15 @@ namespace Features.Relics.Scripts
         private readonly Dictionary<RelicDefinition, int> _reservedRewards = new();
         private int _lastInteractionFrame = -1;
 
+        internal bool TryBeginInteraction()
+        {
+            if (_lastInteractionFrame == Time.frameCount)
+                return false;
+
+            _lastInteractionFrame = Time.frameCount;
+            return true;
+        }
+
         internal bool TryBegin(IReadOnlyList<RelicDefinition> availableRelics,
             IReadOnlyCollection<RelicRuntimeState> activeRelics,
             RelicChestConfiguration configuration, out RelicChestRollPlan rollPlan)

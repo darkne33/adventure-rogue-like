@@ -94,6 +94,8 @@ public sealed class CharacterDefinition
     [SerializeField] private string _displayName;
     [SerializeField, TextArea(2, 5)] private string _description;
     [SerializeField] private Sprite _portrait;
+    [SerializeField] private Sprite _introPortrait;
+    [SerializeField] private string _introDisplayName;
     [SerializeField] private AddressableLoadContainerGameObject _characterContainer = new();
     [SerializeField] private CharacterSettingsConfiguration _characterSettings;
     [SerializeField, Range(-0.5f, 0.5f)] private float _previewOffsetY;
@@ -109,6 +111,10 @@ public sealed class CharacterDefinition
         : _displayName;
     public string Description => _description;
     public Sprite Portrait => _portrait;
+    public Sprite IntroPortrait => _introPortrait;
+    public string IntroDisplayName => string.IsNullOrWhiteSpace(_introDisplayName)
+        ? DisplayName
+        : _introDisplayName;
     public AddressableLoadContainerGameObject CharacterContainer => _characterContainer;
     public CharacterSettingsConfiguration CharacterSettings => _characterSettings;
     public float PreviewOffsetY => _previewOffsetY;

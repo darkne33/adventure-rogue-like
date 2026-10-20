@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Features.Bosses.UI;
 using Features.Quests.Scripts;
 using Features.Relics.Scripts;
 using Features.RunResults.Scripts;
@@ -27,6 +28,7 @@ namespace Core
         public RelicChestConfiguration RelicChest { get; private set; }
         public Shader ProximityFadeShader { get; private set; }
         public RunResultsPanel RunResults { get; private set; }
+        public BossIntroScreen BossIntro { get; private set; }
         public SoundsCatalog UiSounds { get; private set; }
         public SoundsCatalog GameplaySounds { get; private set; }
 
@@ -59,6 +61,7 @@ namespace Core
                     "Assets/Features/Character/Shaders/ProximityFadeLit.shader", token);
                 RunResults = await LoadPrefab<RunResultsPanel>(
                     "Assets/Features/RunResults/Prefabs/RunResultsPanel.prefab", token);
+                BossIntro = await LoadPrefab<BossIntroScreen>(BossIntroScreen.Address, token);
                 UiSounds = await Load<SoundsCatalog>(
                     "Assets/Features/Sounds/Configs/UiSoundsCatalog.asset", token);
                 GameplaySounds = await Load<SoundsCatalog>(
@@ -94,6 +97,7 @@ namespace Core
             RelicChest = null;
             ProximityFadeShader = null;
             RunResults = null;
+            BossIntro = null;
             UiSounds = null;
             GameplaySounds = null;
             _initialized = false;

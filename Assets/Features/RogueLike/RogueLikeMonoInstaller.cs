@@ -96,6 +96,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.BindInterfacesAndSelfTo<LevelProgressionService>().AsSingle();
         Container.BindInterfacesAndSelfTo<MinimapController>().AsSingle();
         Container.BindInterfacesAndSelfTo<BossHealthUIController>().AsSingle();
+        Container.BindInterfacesAndSelfTo<BossIntroService>().AsSingle();
     }
 
     private void BindSpawners()

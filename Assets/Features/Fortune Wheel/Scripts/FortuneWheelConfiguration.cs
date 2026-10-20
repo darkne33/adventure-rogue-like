@@ -11,7 +11,8 @@ namespace Features.FortuneWheel
         Heart,
         Key,
         Gold,
-        Relic
+        Relic,
+        Silver
     }
 
     [Serializable]

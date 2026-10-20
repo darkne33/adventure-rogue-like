@@ -54,11 +54,13 @@ namespace Features.FortuneWheel
         [SerializeField] private GameObject _heartRewardPrefab;
         [SerializeField] private GameObject _keyRewardPrefab;
         [SerializeField] private GameObject _goldRewardPrefab;
+        [SerializeField] private GameObject _silverRewardPrefab;
         [SerializeField] private GameObject _relicRewardPrefab;
         [SerializeField] private GameObject[] _relicRewardPrefabs = Array.Empty<GameObject>();
 
         [Header("Dropped Rewards")]
         [SerializeField] private GameObject _keyDropPrefab;
+        [SerializeField] private GameObject _silverDropPrefab;
         [SerializeField, Min(0.01f)] private float _rewardDropScale = 2f;
         [SerializeField, Min(0f)] private float _rewardDropForwardOffset = 0.45f;
 
@@ -708,6 +710,11 @@ namespace Features.FortuneWheel
                 case FortuneWheelRewardType.Gold:
                     DropGold(reward.Definition.Amount);
                     return;
+                case FortuneWheelRewardType.Silver:
+                    if (TryDropCurrencyReward(_silverDropPrefab,
+                            () => _characterWallet?.Silver.Add(reward.Definition.Amount)) == false)
+                        _characterWallet?.Silver.Add(reward.Definition.Amount);
+                    return;
                 case FortuneWheelRewardType.Relic:
                     DropRelic(reward.Relic);
                     return;
@@ -829,6 +836,7 @@ namespace Features.FortuneWheel
             FortuneWheelRewardType.Heart => _heartRewardPrefab,
             FortuneWheelRewardType.Key => _keyRewardPrefab,
             FortuneWheelRewardType.Gold => _goldRewardPrefab,
+            FortuneWheelRewardType.Silver => _silverRewardPrefab,
             FortuneWheelRewardType.Relic => GetRelicRewardPrefab(reward.Relic),
             _ => null
         };

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using Features.Enemies.Scripts.Level.Scripts;
@@ -12,7 +14,12 @@ namespace Features.Relics.Scripts
     {
         [Inject] private RelicChestRollService _rollService;
         [Inject] private ITimeScaleService _timeScaleService;
+        [Inject] private CharacterWallet _characterWallet;
+        [Inject] private CharacterStats _characterStats;
+        [Inject] private HeartDropper _heartDropper;
+        [Inject] private LevelsConfiguration _levelsConfiguration;
 
+        [SerializeField] private bool _isGrayChest;
         [SerializeField] private RelicChestInteractionView _interactionView = new();
         [SerializeField] private RelicChestRollView _rollView = new();
 
@@ -24,9 +31,12 @@ namespace Features.Relics.Scripts
         private RoomData _roomData;
         private Room _room;
         private RelicChestRollSequence _rollSequence;
+        private GrayChestRewardPresenter _grayRewardPresenter;
+        private RelicEventBus _eventBus;
         private bool _isOpened;
 
         public bool IsOpened => _isOpened;
+        public bool IsGrayChest => _isGrayChest;
         public Room Room => _room;
         public RoomData RoomData => _roomData;
 
@@ -48,6 +58,15 @@ namespace Features.Relics.Scripts
             _characterProvider = characterProvider;
             _roomData = roomData;
             _room = room;
+            _eventBus = eventBus;
+
+            if (_isGrayChest)
+            {
+                _grayRewardPresenter = new GrayChestRewardPresenter(configuration, container,
+                    characterProvider, _characterWallet, _characterStats, _heartDropper,
+                    _levelsConfiguration, eventBus, room);
+                return;
+            }
 
             RelicChestRewardPresenter rewardPresenter = new(configuration, relicManager, eventBus,
                 characterProvider, container, roomData, room);
@@ -76,6 +95,9 @@ namespace Features.Relics.Scripts
         private void Update()
         {
             bool canInteract = CanInteract();
+            if (canInteract)
+                _interactionView.SetKeyPrice(_isGrayChest ? 0 : 1,
+                    _isGrayChest || _characterWallet != null && _characterWallet.Keys.Count >= 1);
             _interactionView.SetAvailable(canInteract);
 
             if (canInteract && _inputActions != null &&
@@ -97,6 +119,15 @@ namespace Features.Relics.Scripts
         private void Open()
         {
             if (_isOpened)
+                return;
+
+            if (_isGrayChest)
+            {
+                OpenGrayChest();
+                return;
+            }
+
+            if (_characterWallet == null || _characterWallet.Keys.Count < 1)
                 return;
 
             if (_rollSequence == null || _rollView.IsConfigured == false)
@@ -123,10 +154,47 @@ namespace Features.Relics.Scripts
                 return;
 
             _isOpened = true;
+            _characterWallet.Keys.Remove(1);
             _interactionView.SetAvailable(false);
             _rollSequence.PlayAsync(rollPlan, transform.position,
                 () => _rollService.Finish(rollPlan),
                 this.GetCancellationTokenOnDestroy()).Forget();
+        }
+
+        private void OpenGrayChest()
+        {
+            if (_grayRewardPresenter == null || _grayRewardPresenter.IsConfigured == false ||
+                _rollView.IsConfigured == false)
+            {
+                Debug.LogError($"{name} is missing gray chest reward references.", this);
+                return;
+            }
+
+            if (_rollService.TryBeginInteraction() == false)
+                return;
+
+            _isOpened = true;
+            _interactionView.SetAvailable(false);
+            OpenGrayChestAsync(this.GetCancellationTokenOnDestroy()).Forget();
+        }
+
+        private async UniTask OpenGrayChestAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _rollView.PlayOpenAnimationAsync(cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                _eventBus.PublishChestOpened(transform.position);
+                _grayRewardPresenter.DropRewards(transform.position, _rollView.RewardRoot.position);
+                _rollView.CompleteReward();
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+            }
+            finally
+            {
+                _rollView.End();
+            }
         }
     }
 }

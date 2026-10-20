@@ -714,7 +714,7 @@ public sealed class LevelViewEditor : Editor
             RoomType.Start => "Start",
             RoomType.Exit => "Exit",
             RoomType.Enemy => "Enemy",
-            RoomType.Reward => "Reward",
+            RoomType.Treasure => "Treasure",
             RoomType.Shop => "Shop",
             RoomType.Boss => "Boss",
             _ => "Unknown"
@@ -738,7 +738,7 @@ public sealed class LevelViewEditor : Editor
             {
                 RoomType.Start => new Color(0.08f, 0.4f, 0.47f, 1f),
                 RoomType.Exit => new Color(0.13f, 0.45f, 0.22f, 1f),
-                RoomType.Reward => new Color(0.5f, 0.38f, 0.07f, 1f),
+                RoomType.Treasure => new Color(0.5f, 0.38f, 0.07f, 1f),
                 RoomType.Shop => new Color(0.42f, 0.18f, 0.48f, 1f),
                 RoomType.Boss => new Color(0.5f, 0.13f, 0.13f, 1f),
                 _ => new Color(0.25f, 0.27f, 0.3f, 1f)
@@ -749,7 +749,7 @@ public sealed class LevelViewEditor : Editor
         {
             RoomType.Start => new Color(0.55f, 0.87f, 0.91f, 1f),
             RoomType.Exit => new Color(0.58f, 0.84f, 0.62f, 1f),
-            RoomType.Reward => new Color(0.94f, 0.82f, 0.47f, 1f),
+            RoomType.Treasure => new Color(0.94f, 0.82f, 0.47f, 1f),
             RoomType.Shop => new Color(0.82f, 0.63f, 0.87f, 1f),
             RoomType.Boss => new Color(0.9f, 0.55f, 0.55f, 1f),
             _ => new Color(0.78f, 0.8f, 0.83f, 1f)

@@ -64,11 +64,12 @@ namespace Features.Bosses.Scripts
 
                             // Each entry gets its own runtime instance, even when a config is reused.
                             IBossAttack instance = attack.Configuration.CreateAttack(_boss, _character);
-                            bool isHorizontal = attack.Configuration is WoodGuardHorizontalAttackConfiguration;
-                            bool animateAttack = animateBoss && (attack == animationOwner || isHorizontal);
-                            if (animateBoss && isHorizontal)
+                            bool takesOverAnimation = attack.Configuration is WoodGuardHorizontalAttackConfiguration ||
+                                                      attack.Configuration is WoodGuardScatterAttackConfiguration;
+                            bool animateAttack = animateBoss && (attack == animationOwner || takesOverAnimation);
+                            if (animateBoss && takesOverAnimation)
                             {
-                                // A new horizontal windup takes over from earlier parallel attacks.
+                                // Horizontal and scatter windups take over from earlier parallel attacks.
                                 if (CanAnimateBoss())
                                     _boss.AnimationSystem.IdleAnimation();
                                 animationOwner = attack;

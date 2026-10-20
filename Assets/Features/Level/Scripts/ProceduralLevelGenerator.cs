@@ -23,13 +23,15 @@ public static class ProceduralLevelGenerator
         // Roll content once. Geometry retries must not change floor size or room chances.
         int roomCount = settings.RollRoomCount(levelIndex);
         List<RoomType> specialRooms = settings.RollSpecialRooms(levelIndex);
+        bool onlyRelicRequiresKey = specialRooms.Contains(RoomType.OnlyRelic) &&
+            settings.RollOnlyRelicRequiresKey();
         var templates = new Templates(catalog, bossRoom, specialRooms);
 
         for (int attempt = 0; attempt < settings.GenerationAttempts; attempt++)
         {
             var layout = new Layout(settings, templates);
             if (layout.TryBuild(roomCount, settings.GetMinimumDeadEnds(levelIndex), specialRooms))
-                return layout.CreateNodes(catalog.EnemySettings);
+                return layout.CreateNodes(catalog.EnemySettings, levelIndex == 0, onlyRelicRequiresKey);
         }
 
         throw new InvalidOperationException(
@@ -53,7 +55,7 @@ public static class ProceduralLevelGenerator
             {
                 IReadOnlyList<Room> rooms = type switch
                 {
-                    RoomType.Reward => catalog.RewardRooms,
+                    RoomType.Treasure => catalog.TreasureRooms,
                     RoomType.OnlyRelic => catalog.OnlyRelicRooms,
                     RoomType.Blood => catalog.BloodRooms,
                     RoomType.Shop => catalog.ShopRooms,
@@ -87,7 +89,7 @@ public static class ProceduralLevelGenerator
                     RoomType.Start => room.RoomData is StartRoomData,
                     RoomType.Enemy => room.RoomData is DefaultEnemiesRoomData and not BossRoomData,
                     RoomType.Boss => room.RoomData is BossRoomData,
-                    RoomType.Reward => room.RoomData is RewardRoomData,
+                    RoomType.Treasure => room.RoomData is TreasureRoomData,
                     RoomType.OnlyRelic => room.RoomData is OnlyRelicRoomData,
                     RoomType.Blood => room.RoomData is BloodRoomData,
                     RoomType.Shop => room.RoomData is ShopRoomData,
@@ -241,7 +243,8 @@ public static class ProceduralLevelGenerator
             throw new InvalidOperationException("A dead-end room must have one entrance.");
         }
 
-        public LevelRoomNode[] CreateNodes(EnemyRoomSettings enemySettings)
+        public LevelRoomNode[] CreateNodes(EnemyRoomSettings enemySettings, bool isFreeTreasureRoom,
+            bool onlyRelicRequiresKey)
         {
             var nodes = new LevelRoomNode[_rooms.Count];
             var used = new HashSet<Room>();
@@ -261,7 +264,9 @@ public static class ProceduralLevelGenerator
                 used.Add(selected);
                 nodes[i] = new LevelRoomNode(selected, room.Position, room.Type,
                     room.ExitDirection, room.Type == RoomType.Enemy ? enemySettings : null,
-                    RoomConnectionMask.All & ~room.Connections);
+                    RoomConnectionMask.All & ~room.Connections,
+                    isFreeTreasureRoom: room.Type == RoomType.Treasure && isFreeTreasureRoom,
+                    onlyRelicRequiresKey: room.Type == RoomType.OnlyRelic && onlyRelicRequiresKey);
             }
             return nodes;
         }

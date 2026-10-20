@@ -34,12 +34,23 @@ public sealed class RoomDoor : MonoBehaviour
     public RoomDirection Direction => _direction.RotateClockwise(_roomRotationQuarterTurns);
     public Room NextRoom => _nextRoom;
     public bool IsRewardGate =>
-        _nextRoom != null && _nextRoom.RoomData is RewardRoomData or OnlyRelicRoomData or ShopRoomData or BloodRoomData;
+        _nextRoom != null && _nextRoom.RoomData is TreasureRoomData or OnlyRelicRoomData or ShopRoomData or BloodRoomData;
     public bool HasConfiguredVisuals => _doorAnimator != null && _doorAnimator.IsConfigured;
     public bool HasRoomDestination => _nextRoom != null;
 
     private bool HasDestination => HasRoomDestination || _isLevelExit;
-    private bool RequiresKey => _nextRoom?.RoomData is RewardRoomData { IsUnlocked: false };
+    private bool RequiresKey =>
+        _nextRoom?.RoomData is TreasureRoomData { RequiresKey: true, IsUnlocked: false } or
+            OnlyRelicRoomData { RequiresKey: true, IsUnlocked: false } or
+            ShopRoomData { IsUnlocked: false };
+
+    private int KeyPrice => _nextRoom?.RoomData switch
+    {
+        TreasureRoomData treasureRoomData => Mathf.Max(0, treasureRoomData.KeyPrice),
+        OnlyRelicRoomData relicRoomData => Mathf.Max(0, relicRoomData.KeyPrice),
+        ShopRoomData shopRoomData => Mathf.Max(1, shopRoomData.KeyPrice),
+        _ => 0
+    };
 
     private void Awake()
     {
@@ -64,9 +75,9 @@ public sealed class RoomDoor : MonoBehaviour
     private void Update()
     {
         bool canInteract = CanInteract();
-        if (canInteract && _nextRoom.RoomData is RewardRoomData rewardRoomData)
+        if (canInteract)
         {
-            int keyPrice = Mathf.Max(1, rewardRoomData.KeyPrice);
+            int keyPrice = KeyPrice;
             _interactionView.SetKeyPrice(keyPrice,
                 _characterWallet != null && _characterWallet.Keys.Count >= keyPrice);
         }
@@ -144,7 +155,7 @@ public sealed class RoomDoor : MonoBehaviour
     private static DoorType GetDoorType(RoomData roomData) => roomData switch
     {
         OnlyRelicRoomData => DoorType.Item,
-        RewardRoomData => DoorType.Reward,
+        TreasureRoomData => DoorType.Reward,
         ShopRoomData => DoorType.Shop,
         BossRoomData => DoorType.Boss,
         BloodRoomData => DoorType.Blood,
@@ -219,18 +230,41 @@ public sealed class RoomDoor : MonoBehaviour
 
     private void TryUnlock()
     {
-        if (!CanInteract() || _nextRoom.RoomData is not RewardRoomData rewardRoomData)
+        if (!CanInteract())
             return;
 
-        int keyPrice = Mathf.Max(1, rewardRoomData.KeyPrice);
+        int keyPrice = KeyPrice;
         if (_characterWallet == null || _characterWallet.Keys.Count < keyPrice)
             return;
 
         _characterWallet.Keys.Remove(keyPrice);
-        rewardRoomData.Unlock();
+        switch (_nextRoom.RoomData)
+        {
+            case TreasureRoomData treasureRoomData:
+                treasureRoomData.Unlock();
+                break;
+            case OnlyRelicRoomData relicRoomData:
+                relicRoomData.Unlock();
+                break;
+            case ShopRoomData shopRoomData:
+                shopRoomData.Unlock();
+                break;
+        }
+
         _interactionView.SetAvailable(false);
         RefreshDoorVisual();
         RefreshOutline();
+
+        foreach (RoomDoor roomDoor in _nextRoom.RoomData.RoomDoors ?? Array.Empty<RoomDoor>())
+        {
+            RoomDoor entryDoor = roomDoor?._nextRoomEntryDoor;
+            if (entryDoor == null || entryDoor == this)
+                continue;
+
+            entryDoor._interactionView?.SetAvailable(false);
+            entryDoor.RefreshDoorVisual();
+            entryDoor.RefreshOutline();
+        }
     }
 
     private void RefreshOutline()

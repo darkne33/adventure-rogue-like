@@ -13,12 +13,20 @@ MonoBehaviour:
   m_Name: BossConfig_WoodGuard
   m_EditorClassIdentifier: Assembly-CSharp::Features.Bosses.Scripts.BossConfig
   <DisplayName>k__BackingField: Wood Guard
+  _introDisplayName: WOODY
+  <IntroPortrait>k__BackingField: {fileID: 21300000, guid: 094bd9f52fb391b429476824bed0a388, type: 3}
+  <IntroPortraitRect>k__BackingField:
+    serializedVersion: 2
+    x: 0.511
+    y: -0.066
+    width: 0.489
+    height: 0.845
   <HealthCanvasPrefab>k__BackingField: {fileID: 8300000000005, guid: 046472155e2e4284b4c1fe3bfae482f6, type: 3}
   <MaxHealth>k__BackingField: 3333
-  <BaseDps>k__BackingField: 100
-  <HealthScalingExponent>k__BackingField: 0.6
   <Exp>k__BackingField: 20
   <DeathFadeDuration>k__BackingField: 0.25
+  <BaseDps>k__BackingField: 100
+  <HealthScalingExponent>k__BackingField: 0.6
   <AnimationSpeedBlendDuration>k__BackingField: 0.2
   <InitialAttackDelay>k__BackingField: 2
   <AttackInterval>k__BackingField: 0.7
@@ -28,6 +36,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8491c9e1b60f442996954f6b471d5e30, type: 2}
   - {fileID: 11400000, guid: 2fb6c53e8d224a95a7d04c5f142dfe81, type: 2}
   - {fileID: 11400000, guid: 73b031bc2a7d4bf8a9b6c51c6b02dc23, type: 2}
+  - {fileID: 11400000, guid: ed7e11264237eb645883dec28c93261a, type: 2}
   <AttackPhases>k__BackingField:
   - <MaxHealthPercentage>k__BackingField: 100
     <Attacks>k__BackingField:
@@ -39,7 +48,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 2fb6c53e8d224a95a7d04c5f142dfe81, type: 2}
   - <MaxHealthPercentage>k__BackingField: 40
     <Attacks>k__BackingField:
-    - {fileID: 11400000, guid: ed7e11264237eb645883dec28c93261a, type: 2}
     - {fileID: 11400000, guid: 73b031bc2a7d4bf8a9b6c51c6b02dc23, type: 2}
+    - {fileID: 11400000, guid: ed7e11264237eb645883dec28c93261a, type: 2}
     - {fileID: 11400000, guid: 4d3425c024914858a198e7e836ec6ab7, type: 2}
     - {fileID: 11400000, guid: 0db5b83264d732f4891de701d59a4642, type: 2}

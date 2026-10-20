@@ -1,21 +1,16 @@
 using System;
 using System.Collections.Generic;
-using DG.Tweening;
 using Features.Enemies.Scripts;
 using UnityEngine;
 
 public sealed class FireFieldDamageArea : MonoBehaviour
 {
-    [SerializeField] private Transform _puddleVisual;
-    [SerializeField, Min(0.01f)] private float _puddleBaseDiameter = 2f;
-    [SerializeField, Range(0f, 1f)] private float _puddleSpawnScale = 0.15f;
-    [SerializeField, Min(0f)] private float _puddleSpreadDuration = 0.35f;
-
     private readonly List<CombatTarget> _enemiesInRange = new();
     private readonly List<ParticleSystem> _particleSystems = new();
 
     private IEnemiesProvider _enemiesProvider;
     private Action<CombatTarget> _damageEnemy;
+    private Action<FireFieldDamageArea> _onExpired;
     private CharacterStats _characterStats;
     private float _radiusSqr;
     private float _height;
@@ -23,17 +18,17 @@ public sealed class FireFieldDamageArea : MonoBehaviour
     private float _damageTickTimer;
     private float _remainingDuration;
     private bool _isInitialized;
-    private Tween _puddleSpreadTween;
 
     public void Initialize(IEnemiesProvider enemiesProvider, float radius, float height,
         float damageTickInterval, float duration, Action<CombatTarget> damageEnemy,
-        CharacterStats characterStats = null)
+        CharacterStats characterStats = null, Action<FireFieldDamageArea> onExpired = null)
     {
         float safeRadius = Mathf.Max(0.1f, radius);
         Vector3 fieldScale = transform.lossyScale;
         float damageRadius = safeRadius * Mathf.Max(Mathf.Abs(fieldScale.x), Mathf.Abs(fieldScale.z));
         _enemiesProvider = enemiesProvider;
         _damageEnemy = damageEnemy;
+        _onExpired = onExpired;
         _characterStats = characterStats;
         _radiusSqr = damageRadius * damageRadius;
         _height = Mathf.Max(0.1f, height) * Mathf.Abs(fieldScale.y);
@@ -41,7 +36,6 @@ public sealed class FireFieldDamageArea : MonoBehaviour
         _damageTickTimer = 0f;
         _remainingDuration = Mathf.Max(0.1f, duration);
         ApplyParticleRadius(safeRadius);
-        ApplyPuddleRadius(safeRadius);
         _isInitialized = true;
     }
 
@@ -53,6 +47,7 @@ public sealed class FireFieldDamageArea : MonoBehaviour
         _remainingDuration -= Time.deltaTime;
         if (_remainingDuration <= 0f)
         {
+            NotifyExpired();
             Destroy(gameObject);
             return;
         }
@@ -64,6 +59,23 @@ public sealed class FireFieldDamageArea : MonoBehaviour
         _damageTickTimer += Mathf.Max(0.05f, _damageTickInterval /
             Mathf.Max(0.01f, _characterStats?.RelicAttackSpeedMultiplier ?? 1f));
         DamageEnemiesInRange();
+    }
+
+    private void OnDisable() =>
+        NotifyExpired();
+
+    private void OnDestroy() =>
+        NotifyExpired();
+
+    private void NotifyExpired()
+    {
+        if (_isInitialized == false)
+            return;
+
+        _isInitialized = false;
+        Action<FireFieldDamageArea> onExpired = _onExpired;
+        _onExpired = null;
+        onExpired?.Invoke(this);
     }
 
     private void DamageEnemiesInRange()
@@ -111,28 +123,5 @@ public sealed class FireFieldDamageArea : MonoBehaviour
 
             shape.radius = radius;
         }
-    }
-
-    private void ApplyPuddleRadius(float radius)
-    {
-        if (_puddleVisual == null)
-            return;
-
-        float scale = radius * 2f / Mathf.Max(0.01f, _puddleBaseDiameter);
-        Vector3 targetScale = Vector3.one * scale;
-
-        _puddleSpreadTween?.Kill();
-
-        if (_puddleSpreadDuration <= 0f)
-        {
-            _puddleVisual.localScale = targetScale;
-            return;
-        }
-
-        _puddleVisual.localScale = targetScale * _puddleSpawnScale;
-        _puddleSpreadTween = _puddleVisual
-            .DOScale(targetScale, _puddleSpreadDuration)
-            .SetEase(Ease.OutCubic)
-            .SetLink(gameObject);
     }
 }

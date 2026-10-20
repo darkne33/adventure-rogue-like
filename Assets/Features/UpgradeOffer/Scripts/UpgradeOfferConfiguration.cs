@@ -153,7 +153,7 @@ public enum AbilityUpgradeType
     Damage = 3,
     Targets = 4,
     AdditionalProjectiles = 5,
-    FireFieldDistance = 6,
+    FireFieldDuration = 6,
     FireFieldRadius = 7,
     EarthRockRadius = 8,
     EarthRockRotationSpeed = 9,

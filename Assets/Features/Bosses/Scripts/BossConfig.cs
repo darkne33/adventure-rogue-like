@@ -12,6 +12,17 @@ namespace Features.Bosses.Scripts
         [field: SerializeField] public string DisplayName { get; private set; } = "Boss";
         [field: SerializeField] public BossHealthCanvas HealthCanvasPrefab { get; private set; }
 
+        [Header("Boss introduction")]
+        [SerializeField] private string _introDisplayName;
+        [field: SerializeField] public Sprite IntroPortrait { get; private set; }
+        [field: SerializeField]
+        [field: Tooltip("Portrait rectangle in normalized screen coordinates, measured from the top-left.")]
+        public Rect IntroPortraitRect { get; private set; } = new Rect(0.511f, -0.066f, 0.489f, 0.845f);
+
+        public string IntroDisplayName => string.IsNullOrWhiteSpace(_introDisplayName)
+            ? DisplayName
+            : _introDisplayName;
+
         [field: Header("Health and rewards")]
         [field: SerializeField, Min(1)]
         [field: Tooltip("Base health at Base Dps. Runtime health is fixed once before combat.")]
