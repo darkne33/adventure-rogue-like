@@ -11,6 +11,7 @@ namespace Features.Relics.Scripts
         [SerializeField] private CanvasGroup _promptCanvasGroup;
         [SerializeField] private Transform _promptTransform;
         [SerializeField] private UnityEngine.UI.Text _keyPriceText;
+        [SerializeField] private UnityEngine.UI.Image _keyPriceIcon;
         [SerializeField, Min(0f)] private float _showDuration = 0.14f;
         [SerializeField, Min(0f)] private float _hideDuration = 0.12f;
 
@@ -42,7 +43,9 @@ namespace Features.Relics.Scripts
             if (_displayedKeyPrice != keyPrice)
             {
                 _displayedKeyPrice = keyPrice;
-                _keyPriceText.text = keyPrice > 0 ? $"{keyPrice} KEY" : "OPEN";
+                _keyPriceText.text = keyPrice > 0 ? keyPrice.ToString() : "Open";
+                if (_keyPriceIcon != null)
+                    _keyPriceIcon.gameObject.SetActive(keyPrice > 0);
             }
 
             _keyPriceText.color = canAfford ? Color.white : Color.red;

@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6a048cfd8b548b5a9cf8e4585f98d21, type: 3}
   m_Name: BossConfig_Ogre
   m_EditorClassIdentifier: Assembly-CSharp::Features.Bosses.Scripts.BossConfig
-  <DisplayName>k__BackingField: ORG
+  <DisplayName>k__BackingField: BIG MAMA
+  <HealthCanvasPrefab>k__BackingField: {fileID: 8300000000005, guid: 046472155e2e4284b4c1fe3bfae482f6, type: 3}
   _introDisplayName: BIG MAMA
   <IntroPortrait>k__BackingField: {fileID: 21300000, guid: 3fcb3a69aeddf314da2b4871adea56f2, type: 3}
   <IntroPortraitRect>k__BackingField:
@@ -21,16 +22,15 @@ MonoBehaviour:
     y: 0.014
     width: 0.37
     height: 0.77
-  <HealthCanvasPrefab>k__BackingField: {fileID: 8300000000005, guid: 046472155e2e4284b4c1fe3bfae482f6, type: 3}
   <MaxHealth>k__BackingField: 3333
-  <BaseDps>k__BackingField: 100
-  <HealthScalingExponent>k__BackingField: 0.6
   <Exp>k__BackingField: 25
   <DeathFadeDuration>k__BackingField: 0.25
+  <BaseDps>k__BackingField: 100
+  <HealthScalingExponent>k__BackingField: 0.6
   <AnimationSpeedBlendDuration>k__BackingField: 0.2
   <InitialAttackDelay>k__BackingField: 1.5
-  <AttackInterval>k__BackingField: 4
+  <AttackInterval>k__BackingField: 2
   <Attacks>k__BackingField:
   - {fileID: 11400000, guid: b9bdc52843e74d94aa6d890b84a36bcf, type: 2}
-  - {fileID: 11400000, guid: e6ea29c40a3e4a65974d7da9bd0e802f, type: 2}
+  - {fileID: 11400000, guid: bbd89d31b3a64e5b9b91acc0d93ad324, type: 2}
   <AttackPhases>k__BackingField: []

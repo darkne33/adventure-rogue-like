@@ -81,6 +81,9 @@ namespace Features.Bosses.Editor
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
 
+            MushroomRangeRadiusAttackConfiguration radialAttack = Require<MushroomRangeRadiusAttackConfiguration>(
+                Root + "/Configs/RangeRadiusAttack.asset");
+
             BossConfig config = GetOrCreate<BossConfig>(Root + "/Configs/BossConfig_Mushroom.asset",
                 out bool newConfig);
             if (newConfig)
@@ -99,13 +102,21 @@ namespace Features.Bosses.Editor
             SerializedProperty attacks = Property(serializedConfig, "Attacks");
             if (newConfig || attacks.arraySize == 0)
             {
-                attacks.arraySize = 2;
+                attacks.arraySize = 3;
                 attacks.GetArrayElementAtIndex(0).objectReferenceValue = jumpAttack;
                 attacks.GetArrayElementAtIndex(1).objectReferenceValue = headAttack;
-                serializedConfig.ApplyModifiedPropertiesWithoutUndo();
+                attacks.GetArrayElementAtIndex(2).objectReferenceValue = radialAttack;
             }
+            else if (!Enumerable.Range(0, attacks.arraySize).Any(index =>
+                         attacks.GetArrayElementAtIndex(index).objectReferenceValue == radialAttack))
+            {
+                int index = attacks.arraySize;
+                attacks.arraySize++;
+                attacks.GetArrayElementAtIndex(index).objectReferenceValue = radialAttack;
+            }
+            serializedConfig.ApplyModifiedPropertiesWithoutUndo();
 
-            CreateBossPrefab(model, material, controller, idle, jump, head, config, movement);
+            CreateBossPrefab(model, material, controller, idle, jump, head, config, movement, radialAttack);
             if (movement.SplitPrefab == null)
             {
                 var serialized = new SerializedObject(movement);
@@ -124,8 +135,8 @@ namespace Features.Bosses.Editor
             EditorGUIUtility.PingObject(Selection.activeObject);
             Debug.Log("Mushroom boss created: " + PrefabPath +
                       ". Tune health in BossConfig_Mushroom, movement in MushroomBossConfiguration, " +
-                      "and attacks in MushroomJumpAttackConfiguration and MushroomHeadAttackConfiguration. " +
-                      "Effect points: LandingEffectOrigin and HeadImpactOrigin.");
+                      "and attacks in MushroomJumpAttackConfiguration, MushroomHeadAttackConfiguration and RangeRadiusAttack. " +
+                      "Effect points: LandingEffectOrigin, HeadImpactOrigin and RadialAttackOrigin.");
         }
 
         private static Material CreateBodyMaterial(Material template, Texture2D texture)
@@ -212,7 +223,8 @@ namespace Features.Bosses.Editor
 
         private static void CreateBossPrefab(GameObject model, Material material,
             AnimatorController controller, AnimationClip idle, AnimationClip jump, AnimationClip head,
-            BossConfig config, MushroomBossConfiguration movement)
+            BossConfig config, MushroomBossConfiguration movement,
+            MushroomRangeRadiusAttackConfiguration radialAttack)
         {
             bool created = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) == null;
             GameObject root = created ? new GameObject("Mushroom_Boss") :
@@ -263,6 +275,7 @@ namespace Features.Bosses.Editor
                 Transform ground = Child(root.transform, "AttackOrigin", Vector3.zero);
                 Transform landing = Child(root.transform, "LandingEffectOrigin", Vector3.zero);
                 Transform impact = Child(root.transform, "HeadImpactOrigin", new Vector3(0f, 0f, 1.8f));
+                Transform radial = Child(root.transform, "RadialAttackOrigin", new Vector3(0f, 1.2f, 0f));
                 Transform target = Child(root.transform, "DamageTarget", bounds.center);
                 var serialized = new SerializedObject(boss);
                 serialized.FindProperty("_bossConfig").objectReferenceValue = config;
@@ -274,6 +287,8 @@ namespace Features.Bosses.Editor
                 serialized.FindProperty("_attackOrigin").objectReferenceValue = ground;
                 serialized.FindProperty("_landingEffectOrigin").objectReferenceValue = landing;
                 serialized.FindProperty("_headImpactOrigin").objectReferenceValue = impact;
+                serialized.FindProperty("_radialAttackOrigin").objectReferenceValue = radial;
+                serialized.FindProperty("_rangeRadiusAttack").objectReferenceValue = radialAttack;
                 SetAsset(serialized, "TargetToShootDamage", target);
                 Renderer[] renderers = visual.GetComponentsInChildren<Renderer>(true);
                 SerializedProperty rendererList = serialized.FindProperty("_meshRenderers");

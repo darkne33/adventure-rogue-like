@@ -20,6 +20,7 @@ namespace Features.Relics.Scripts
         [Inject] private IRogueLikeRuntimeDataService _runtimeDataService;
 
         [SerializeField] private ParticleSystem[] _treasureCircleRaysParticles;
+        [SerializeField] private RelicChestInteractionView _interactionView = new();
         [SerializeField] private bool _autoCollectOnApproach;
         [SerializeField] private bool _levitate;
         [SerializeField, Min(0f)] private float _levitationHeight = 0.25f;
@@ -47,8 +48,11 @@ namespace Features.Relics.Scripts
         public bool IsAvailable => _configuration != null && !_isPicked;
         public RoomData RoomData => _roomData;
 
-        private void Awake() =>
+        private void Awake()
+        {
             _inputActions = new InputSystem_Actions();
+            _interactionView.Initialize(gameObject);
+        }
 
         public void Construct(RelicDefinition relic, RelicChestConfiguration configuration,
             RelicManager relicManager, RelicEventBus eventBus, ICharacterProvider characterProvider,
@@ -133,6 +137,7 @@ namespace Features.Relics.Scripts
         private void OnDisable()
         {
             _inputActions?.Player.Interact.Disable();
+            _interactionView.SetAvailable(false, true);
             StopLevitation();
         }
 
@@ -148,25 +153,34 @@ namespace Features.Relics.Scripts
         {
             if (_timeScaleService.IsPaused || _isPicked || _configuration == null ||
                 _characterProvider?.CharacterFacade == null)
+            {
+                _interactionView.SetAvailable(false);
                 return;
+            }
 
             Transform character = _characterProvider.CharacterFacade.transform;
             Vector3 offset = (_autoCollectOnApproach ? _levitationOrigin : transform.position) -
                              character.position;
             if (_autoCollectOnApproach)
             {
+                _interactionView.SetAvailable(false);
                 if (!ReferenceEquals(_runtimeDataService.CurrentRoomData, _roomData))
                     return;
                 offset.y = 0f;
             }
             if (offset.sqrMagnitude > GetPickupDistance() * GetPickupDistance())
+            {
+                _interactionView.SetAvailable(false);
                 return;
+            }
 
             if (_autoCollectOnApproach)
             {
                 AutoCollect().Forget();
                 return;
             }
+
+            _interactionView.SetAvailable(true);
 
             if (_inputActions != null && _inputActions.Player.Interact.WasPressedThisFrame())
                 PickUp().Forget();
@@ -222,6 +236,7 @@ namespace Features.Relics.Scripts
                 return;
 
             _isPicked = true;
+            _interactionView.SetAvailable(false, true);
             AvailabilityChanged?.Invoke(IsAvailable);
             await OfferAndDestroy();
         }
@@ -232,6 +247,7 @@ namespace Features.Relics.Scripts
                 return;
 
             _isPicked = true;
+            _interactionView.SetAvailable(false, true);
             AvailabilityChanged?.Invoke(IsAvailable);
             StopLevitation();
             await FlyToCharacter();
@@ -249,6 +265,7 @@ namespace Features.Relics.Scripts
             Initialize(relic, configuration, relicManager, eventBus, characterProvider, roomData,
                 room, collectedCallback);
             _isPicked = true;
+            _interactionView.SetAvailable(false, true);
             AvailabilityChanged?.Invoke(IsAvailable);
 
             await FlyToCharacter();

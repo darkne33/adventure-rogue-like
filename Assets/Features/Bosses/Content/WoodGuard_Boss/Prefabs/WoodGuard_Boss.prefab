@@ -97,7 +97,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.0006981746, z: 0, w: 0.99999976}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 7, y: 7, z: 7}
+  m_LocalScale: {x: 7.5, y: 7.5, z: 7.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5582500555292272359}
@@ -114,6 +114,7 @@ Transform:
   - {fileID: 7184608313091274088}
   - {fileID: 3622751674835132065}
   - {fileID: 720000000000000104}
+  - {fileID: 720000000000000106}
   - {fileID: 7141188079042192644}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0.08, z: 0}
@@ -131,6 +132,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Bosses.Scripts.WoodGuardBossFacade
   <TargetToShootDamage>k__BackingField: {fileID: 720000000000000102}
   _bossConfig: {fileID: 11400000, guid: 8a8a9d5b70ef40fca3d18861f0c7f4d9, type: 2}
+  _rangeRadiusAttack: {fileID: 11400000, guid: 8f722d7607b046ce9a1124570da3e462, type: 2}
+  _radialAttackOrigin: {fileID: 720000000000000106}
   _collider: {fileID: 7780408491465957060}
   _meshRenderers:
   - {fileID: 3435415090523291124}
@@ -319,6 +322,37 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7208555340296687561}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &720000000000000105
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 720000000000000106}
+  m_Layer: 10
+  m_Name: RadialAttackOrigin
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &720000000000000106
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 720000000000000105}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

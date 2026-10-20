@@ -13,6 +13,8 @@ namespace Features.Bosses.Scripts
         private BossAttackConfiguration[] _activeAttackPool;
         private float _cooldown;
         private int _nextAttack;
+        private BossRadialAttack _radialAttack;
+        private float _nextAttackDelay;
 
         public BossAttackSystem(BossFacade boss, CharacterFacade character)
         {
@@ -26,6 +28,9 @@ namespace Features.Bosses.Scripts
             _activeAttackPool = null;
             _nextAttack = 0;
             _cooldown = Mathf.Max(0f, _boss.Config.InitialAttackDelay);
+            _radialAttack = _boss.RangeRadiusAttack != null
+                ? new BossRadialAttack(_boss.RangeRadiusAttack, _boss, _character) : null;
+            _nextAttackDelay = Mathf.Max(0.01f, _boss.Config.AttackInterval);
             _boss.AnimationSystem.IdleAnimation();
             UpdateAttackPool();
         }
@@ -45,6 +50,11 @@ namespace Features.Bosses.Scripts
                 return;
             foreach (BossAttackConfiguration config in attackPool)
             {
+                if (config is BossRadialAttackConfiguration radial)
+                {
+                    _radialAttack ??= new BossRadialAttack(radial, _boss, _character);
+                    continue;
+                }
                 if (config != null)
                     _attacks.Add((config, config.CreateAttack(_boss, _character)));
             }
@@ -63,7 +73,7 @@ namespace Features.Bosses.Scripts
                     if (_cooldown <= 0f)
                     {
                         await Execute(cancellationToken);
-                        _cooldown = Mathf.Max(0.01f, _boss.Config.AttackInterval);
+                        _cooldown = _nextAttackDelay;
                     }
                 }
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
@@ -75,6 +85,13 @@ namespace Features.Bosses.Scripts
             if (!_boss.CanAttack)
                 return;
             UpdateAttackPool();
+            _nextAttackDelay = Mathf.Max(0.01f, _boss.Config.AttackInterval);
+            if (_radialAttack != null && _radialAttack.IsReady)
+            {
+                _nextAttackDelay = Mathf.Max(0f, _radialAttack.Configuration.RecoveryDuration);
+                await ExecuteConfiguredAttack(_radialAttack, cancellationToken);
+                return;
+            }
             for (int i = 0; i < _attacks.Count; i++)
             {
                 var entry = _attacks[_nextAttack];
@@ -82,20 +99,25 @@ namespace Features.Bosses.Scripts
                 if (!entry.Config.IsEnabled)
                     continue;
 
-                _boss.CombatSystem.SetAttacking(true);
-                try
-                {
-                    await entry.Attack.Execute(cancellationToken);
-                }
-                finally
-                {
-                    if (_boss != null)
-                    {
-                        _boss.AnimationSystem.IdleAnimation();
-                        _boss.CombatSystem.SetAttacking(false);
-                    }
-                }
+                await ExecuteConfiguredAttack(entry.Attack, cancellationToken);
                 return;
+            }
+        }
+
+        private async UniTask ExecuteConfiguredAttack(IBossAttack attack, CancellationToken cancellationToken)
+        {
+            _boss.CombatSystem.SetAttacking(true);
+            try
+            {
+                await attack.Execute(cancellationToken);
+            }
+            finally
+            {
+                if (_boss != null)
+                {
+                    _boss.AnimationSystem.IdleAnimation();
+                    _boss.CombatSystem.SetAttacking(false);
+                }
             }
         }
     }

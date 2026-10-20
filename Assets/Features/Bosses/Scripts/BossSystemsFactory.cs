@@ -50,8 +50,33 @@ namespace Features.Bosses.Scripts
                 meshRenderers = facade.GetComponentsInChildren<Renderer>(true);
 
             IBossAnimationSystem animationSystem = CreateAnimationSystem(facade);
+            Transform telegraphTransform = null;
+            if (facade.RangeRadiusAttack != null)
+            {
+                foreach (Renderer renderer in meshRenderers)
+                {
+                    if (renderer == null)
+                        continue;
+                    telegraphTransform = renderer.transform;
+                    while (telegraphTransform.parent != null && telegraphTransform.parent != facade.transform)
+                        telegraphTransform = telegraphTransform.parent;
+                    if (telegraphTransform == facade.transform)
+                        telegraphTransform = null;
+                    break;
+                }
+            }
+            Vector3 telegraphShakeScale = Vector3.one;
+            if (telegraphTransform != null && telegraphTransform.parent != null)
+            {
+                Vector3 parentScale = telegraphTransform.parent.lossyScale;
+                telegraphShakeScale = new Vector3(
+                    1f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                    1f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                    1f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.z)));
+            }
             var effectsSystem = new DealDamageEffectSystem(
-                meshRenderers, useWhiteHitFlash: true, hitColorOverride: Color.white);
+                meshRenderers, telegraphTransform, useWhiteHitFlash: true, hitColorOverride: Color.white,
+                attackTelegraphShakeScale: telegraphShakeScale);
             var deathSystem = new BossDeathSystem(facade, _enemiesProvider, character,
                 _characterStats, _goldDropper, _expDropper);
             // Split children receive their parent's health immediately after Initialize;

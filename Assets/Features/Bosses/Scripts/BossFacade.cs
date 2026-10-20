@@ -28,6 +28,9 @@ namespace Features.Bosses.Scripts
         public BossConfig Config => _bossConfig;
         public BossState State => _combatSystem?.State ?? BossState.Dormant;
         public abstract Transform AttackOrigin { get; }
+        public Transform RadialAttackOrigin => _radialAttackOrigin != null ? _radialAttackOrigin : AttackOrigin;
+        public BossRadialAttackConfiguration RangeRadiusAttack => _rangeRadiusAttack;
+        public float RadialAttackClock { get; private set; }
         public Quaternion AttackRotation => GetFlatRotation(AttackOrigin.forward);
         public bool CanAttack => _initialized && isActiveAndEnabled && !IsDead && RelicTimeScale > 0f;
         public override float RelicTimeScale => Time.time < _stunnedUntil ? 0f :
@@ -36,6 +39,9 @@ namespace Features.Bosses.Scripts
         protected virtual EnemyType SpawnIdentity => EnemyType.None;
 
         [SerializeField] private BossConfig _bossConfig;
+        [SerializeField] private BossRadialAttackConfiguration _rangeRadiusAttack;
+        [Tooltip("Center and flight height of radial projectile rings, outside the animated skeleton.")]
+        [SerializeField] private Transform _radialAttackOrigin;
         [SerializeField] private Collider _collider;
         [SerializeField] private Renderer[] _meshRenderers;
         [Tooltip("Projectile aim points, selected in order. Empty entries are skipped. " +
@@ -67,6 +73,18 @@ namespace Features.Bosses.Scripts
         {
             _hasStarted = true;
             InitializeAndStartCombat(this.GetCancellationTokenOnDestroy()).Forget();
+        }
+
+        protected virtual void Update()
+        {
+            if (!_initialized || IsDead || State == BossState.Dormant ||
+                this is MushroomBossFacade { IsPlayingSplitTransition: true })
+                return;
+            CharacterFacade character = _characterProvider?.CharacterFacade;
+            if (character == null || character.HealthSystem == null || character.HealthSystem.IsDead ||
+                character.IsTransitionPaused || character.IsCinematicPaused)
+                return;
+            RadialAttackClock += Time.deltaTime * RelicTimeScale;
         }
 
         protected virtual void OnEnable()

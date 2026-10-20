@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d6ee49eca214063b8e6848e0ae91c2f, type: 3}
+  m_Name: WoodGuardRadialAttackConfiguration
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Bosses.Scripts.BossRadialAttackConfiguration
+  <IsEnabled>k__BackingField: 1
+  _projectilePrefab: {fileID: 100000, guid: 5c5d2cdf3f7b425b9e64f5fc3e5e8a24, type: 3}
+  _projectileCount: 24
+  _projectileSpeed: 30
+  _projectileLifetime: 5
+  _damage: 0.5
+  _spawnRadius: 1.25
+  _burstHealthPercentage: 50
+  _burstRingCount: 3
+  _ringInterval: 0.2
+  _ringAngleStep: 5
+  _warningDuration: 0.75
+  _recoveryDuration: 0.35
+  _cooldown: 6

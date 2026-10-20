@@ -6,10 +6,10 @@ namespace Features.Bosses.Scripts
 {
     public sealed class MushroomBossAttack : IBossAttack
     {
-        private readonly MushroomAttackConfiguration _configuration;
+        private readonly BossAttackConfiguration _configuration;
         private readonly MushroomBossFacade _boss;
 
-        public MushroomBossAttack(MushroomAttackConfiguration configuration, MushroomBossFacade boss)
+        public MushroomBossAttack(BossAttackConfiguration configuration, MushroomBossFacade boss)
         {
             _configuration = configuration;
             _boss = boss;
@@ -24,7 +24,14 @@ namespace Features.Bosses.Scripts
             if (_boss.AttackSystem is not MushroomBossAttackSystem attacks)
                 throw new InvalidOperationException("Mushroom attacks require an initialized MushroomBossAttackSystem.");
 
-            return attacks.ExecuteAttack(_configuration, cancellationToken, animateBoss, ownsAnimation);
+            return _configuration switch
+            {
+                BossRadialAttackConfiguration radial =>
+                    attacks.ExecuteRadialAttack(radial, cancellationToken, animateBoss, ownsAnimation),
+                MushroomAttackConfiguration impact =>
+                    attacks.ExecuteAttack(impact, cancellationToken, animateBoss, ownsAnimation),
+                _ => throw new InvalidOperationException("Unsupported Mushroom attack configuration.")
+            };
         }
     }
 }

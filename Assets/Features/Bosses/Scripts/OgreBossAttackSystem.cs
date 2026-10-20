@@ -12,6 +12,7 @@ namespace Features.Bosses.Scripts
         private readonly CharacterFacade _character;
         private OgreBossConfiguration _configuration;
         private OgreBossAnimation _animation;
+        private BossRadialAttack _radialAttack;
         private float _cooldown;
         private float _wait;
         private int _lastClockFrame = -1;
@@ -29,6 +30,9 @@ namespace Features.Bosses.Scripts
         {
             _configuration = _boss.MovementConfiguration;
             _animation = _boss.AnimationSystem as OgreBossAnimation;
+            _radialAttack = _boss.RangeRadiusAttack != null
+                ? new BossRadialAttack(_boss.RangeRadiusAttack, _boss, _character)
+                : null;
             _cooldown = 0f;
             _wait = Mathf.Max(0f, _boss.Config.InitialAttackDelay);
             _lastClockFrame = -1;
@@ -47,21 +51,28 @@ namespace Features.Bosses.Scripts
                 if (CanContinue() && _boss.CanAttack && delta > 0f && _configuration != null && _animation != null)
                 {
                     _wait = Mathf.Max(0f, _wait - delta);
-                    OgreSlamAttackConfiguration attack = FindAttack();
-                    if (_wait <= 0f && attack != null)
+                    if (_wait <= 0f && _radialAttack != null && _radialAttack.IsReady)
                     {
-                        FaceCharacter();
-                        if (TryGetImpact(attack, out _))
-                        {
-                            _animation.IdleAnimation();
-                            if (_cooldown <= 0f)
-                                await ExecuteAttack(attack, cancellationToken);
-                        }
-                        else
-                            MoveTowardsCharacter(delta);
+                        await ExecuteRadialAttack(cancellationToken);
                     }
                     else
-                        _animation.IdleAnimation();
+                    {
+                        OgreSlamAttackConfiguration attack = FindAttack();
+                        if (_wait <= 0f && attack != null)
+                        {
+                            FaceCharacter();
+                            if (TryGetImpact(attack, out _))
+                            {
+                                _animation.IdleAnimation();
+                                if (_cooldown <= 0f)
+                                    await ExecuteAttack(attack, cancellationToken);
+                            }
+                            else
+                                MoveTowardsCharacter(delta);
+                        }
+                        else
+                            _animation.IdleAnimation();
+                    }
                 }
                 else if (!_executing)
                     _animation?.IdleAnimation();
@@ -69,8 +80,50 @@ namespace Features.Bosses.Scripts
             }
         }
 
-        public override UniTask Execute(CancellationToken cancellationToken) =>
-            ExecuteAttack(FindAttack(), cancellationToken);
+        public override async UniTask Execute(CancellationToken cancellationToken)
+        {
+            if (_radialAttack != null && _radialAttack.IsReady)
+                await ExecuteRadialAttack(cancellationToken);
+            else
+                await ExecuteAttack(FindAttack(), cancellationToken);
+        }
+
+        private async UniTask ExecuteRadialAttack(CancellationToken cancellationToken,
+            bool animateBoss = true, Func<bool> ownsAnimation = null)
+        {
+            bool CanAnimate() => animateBoss && (ownsAnimation?.Invoke() ?? true);
+
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_executing || _radialAttack == null || !_radialAttack.IsReady ||
+                _configuration == null || _animation == null || !CanContinue() ||
+                !_boss.CanAttack || Time.deltaTime <= 0f)
+                return;
+
+            float clockBefore = _boss.RadialAttackClock;
+            _executing = true;
+            _boss.CombatSystem.SetAttacking(true);
+            try
+            {
+                FaceCharacter();
+                if (CanAnimate())
+                    _animation.IdleAnimation();
+                await _radialAttack.Execute(cancellationToken, animateBoss, ownsAnimation);
+            }
+            finally
+            {
+                _executing = false;
+                _wait = Mathf.Max(0f, _radialAttack.Configuration.RecoveryDuration);
+                if (_boss != null)
+                {
+                    _cooldown = Mathf.Max(0f, _cooldown -
+                        Mathf.Max(0f, _boss.RadialAttackClock - clockBefore));
+                    _lastClockFrame = Time.frameCount;
+                    if (!_boss.IsDead && _boss.isActiveAndEnabled && CanAnimate())
+                        _animation.IdleAnimation();
+                    _boss.CombatSystem.SetAttacking(false);
+                }
+            }
+        }
 
         internal async UniTask ExecuteAttack(OgreSlamAttackConfiguration attack,
             CancellationToken cancellationToken, bool animateBoss = true, Func<bool> ownsAnimation = null)

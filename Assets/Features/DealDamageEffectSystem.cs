@@ -24,6 +24,7 @@ namespace Features.Enemies.Scripts
         private readonly Material[] _regularHitMaterials;
         private readonly Material[] _whiteHitMaterials;
         private readonly Transform _attackTelegraphTransform;
+        private readonly Vector3 _attackTelegraphShakeScale;
         private readonly MaterialPropertyBlock _propertyBlock = new();
         private Tweener _hitTweener;
         private Tweener _whiteHitTweener;
@@ -39,11 +40,12 @@ namespace Features.Enemies.Scripts
 
         public DealDamageEffectSystem(Renderer[] meshRenderers,
             Transform attackTelegraphTransform = null, bool useWhiteHitFlash = false,
-            Color? hitColorOverride = null)
+            Color? hitColorOverride = null, Vector3? attackTelegraphShakeScale = null)
         {
             _meshRenderers = meshRenderers?.Where(renderer => renderer != null).ToArray()
                 ?? System.Array.Empty<Renderer>();
             _attackTelegraphTransform = attackTelegraphTransform;
+            _attackTelegraphShakeScale = attackTelegraphShakeScale ?? Vector3.one;
             _materials = _meshRenderers
                 .SelectMany(renderer => useWhiteHitFlash
                     ? renderer.materials : new[] { renderer.material })
@@ -177,7 +179,7 @@ namespace Features.Enemies.Scripts
                 Tween shakeTween = _attackTelegraphTransform
                     .DOShakePosition(
                         safeDuration,
-                        Vector3.one * AttackShakeStrength,
+                        Vector3.Scale(Vector3.one * AttackShakeStrength, _attackTelegraphShakeScale),
                         AttackShakeVibrato,
                         90f,
                         false,
@@ -189,6 +191,12 @@ namespace Features.Enemies.Scripts
                     .SetLink(_attackTelegraphTransform.gameObject)
                     .OnKill(RestoreAttackTelegraphPosition);
             }
+        }
+
+        public void SetAttackTelegraphTimeScale(float timeScale)
+        {
+            if (_attackTelegraphSequence != null)
+                _attackTelegraphSequence.timeScale = Mathf.Max(0f, timeScale);
         }
 
         private void SetAttackTelegraphProgress(float progress)

@@ -13,6 +13,7 @@ namespace Features.Bosses.Scripts
         private readonly CharacterFacade _character;
         private MushroomBossConfiguration _configuration;
         private MushroomBossAnimation _animation;
+        private BossRadialAttack _radialAttack;
         private float _headCooldown;
         private float _wait;
         private int _lastClockFrame = -1;
@@ -39,6 +40,12 @@ namespace Features.Bosses.Scripts
             _executing = false;
             _hasJumpReservation = false;
             _boss.AnimationSystem.IdleAnimation();
+            BossRadialAttackConfiguration radial = GetRadialAttack();
+            _radialAttack = radial != null ? new BossRadialAttack(radial, _boss, _character) : null;
+            if (radial == null)
+                Debug.LogError("RangeRadiusAttack is not assigned on the Mushroom boss prefab.", _boss);
+            else if (radial.IsEnabled && radial.ProjectilePrefab == null)
+                Debug.LogError("RangeRadiusAttack has no projectile prefab assigned.", radial);
         }
 
         public override async UniTask Tick(CancellationToken cancellationToken)
@@ -57,8 +64,60 @@ namespace Features.Bosses.Scripts
             }
         }
 
-        public override UniTask Execute(CancellationToken cancellationToken) =>
-            ExecuteAttack(null, cancellationToken);
+        public override async UniTask Execute(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!CanStartAttack())
+                return;
+
+            BossRadialAttackConfiguration radial = GetRadialAttack();
+            if (radial != null && (_radialAttack == null || _radialAttack.Configuration != radial))
+                _radialAttack = new BossRadialAttack(radial, _boss, _character);
+            if (radial != null && _radialAttack.IsReady)
+                await ExecuteRadialAttack(radial, cancellationToken);
+            else
+                await ExecuteAttack(null, cancellationToken);
+        }
+
+        internal async UniTask ExecuteRadialAttack(BossRadialAttackConfiguration attack,
+            CancellationToken cancellationToken, bool animateBoss = true, Func<bool> ownsAnimation = null)
+        {
+            bool CanAnimate() => animateBoss && (ownsAnimation?.Invoke() ?? true);
+
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!CanStartAttack() || attack == null || !attack.IsEnabled || attack.ProjectilePrefab == null)
+                return;
+            if (_radialAttack == null || _radialAttack.Configuration != attack)
+                _radialAttack = new BossRadialAttack(attack, _boss, _character);
+            if (!_radialAttack.IsReady)
+                return;
+
+            float clockBefore = _boss.RadialAttackClock;
+            _executing = true;
+            _hasJumpReservation = false;
+            _boss.CombatSystem.SetAttacking(true);
+
+            try
+            {
+                await _radialAttack.Execute(cancellationToken, animateBoss, ownsAnimation);
+            }
+            finally
+            {
+                _executing = false;
+                _hasJumpReservation = false;
+                _wait = Mathf.Max(0f, attack.RecoveryDuration) + GetSplitAttackDelay();
+                if (_boss != null)
+                {
+                    _headCooldown = Mathf.Max(0f, _headCooldown -
+                        Mathf.Max(0f, _boss.RadialAttackClock - clockBefore));
+                    _lastClockFrame = Time.frameCount;
+                    StopVelocity();
+                    if (!_boss.IsDead && _boss.isActiveAndEnabled && CanAnimate())
+                        _boss.AnimationSystem.IdleAnimation();
+                    _boss.CombatSystem.SetAttacking(false);
+                }
+            }
+        }
 
         internal async UniTask ExecuteAttack(MushroomAttackConfiguration requestedAttack,
             CancellationToken cancellationToken, bool animateBoss = true, Func<bool> ownsAnimation = null)
@@ -66,8 +125,7 @@ namespace Features.Bosses.Scripts
             bool CanAnimate() => animateBoss && (ownsAnimation?.Invoke() ?? true);
 
             cancellationToken.ThrowIfCancellationRequested();
-            if (_executing || _boss.IsPlayingSplitTransition || _configuration == null || _animation == null ||
-                !CanContinue() || !_boss.CanAttack || Time.deltaTime <= 0f)
+            if (!CanStartAttack())
                 return;
 
             MushroomJumpAttackConfiguration jump = requestedAttack == null
@@ -92,7 +150,8 @@ namespace Features.Bosses.Scripts
             // Capture a fixed point ahead, keeping the floor probe at the boss's base height.
             Vector3 headGroundProbe = start + direction * (head != null ? Mathf.Max(0f, head.ImpactDistance) : 0f);
             Vector3 impactPoint = default;
-            bool headAttack = head != null && _headCooldown <= 0f && distance <= Mathf.Max(0f, head.Range) &&
+            bool headAttack = head != null && _headCooldown <= 0f &&
+                              distance <= Mathf.Max(0f, head.Range) &&
                               TryGetGround(headGroundProbe, out impactPoint);
             if (!headAttack)
             {
@@ -119,7 +178,8 @@ namespace Features.Bosses.Scripts
             MushroomAttackConfiguration attack = headAttack ? (MushroomAttackConfiguration)head : jump;
             float duration = Mathf.Max(0.01f, attack.Duration);
             float impact = Mathf.Clamp(attack.ImpactNormalized, 0.01f, 1f);
-            float takeoff = headAttack ? 0f : Mathf.Clamp(jump.TakeoffNormalized, 0f, impact - 0.001f);
+            float takeoff = headAttack ? 0f :
+                Mathf.Clamp(jump.TakeoffNormalized, 0f, impact - 0.001f);
             float radius = Mathf.Max(0.01f, attack.Radius);
             GameObject indicator = null;
             Vector3 indicatorScale = Vector3.one;
@@ -221,7 +281,11 @@ namespace Features.Bosses.Scripts
             }
         }
 
-        private T FindAttack<T>() where T : MushroomAttackConfiguration
+        private BossRadialAttackConfiguration GetRadialAttack() =>
+            _boss.RangeRadiusAttack != null ? _boss.RangeRadiusAttack :
+                FindAttack<BossRadialAttackConfiguration>();
+
+        private T FindAttack<T>() where T : BossAttackConfiguration
         {
             HealthSystem health = _boss.HealthSystem;
             float healthPercentage = health.CurrentHealth / Mathf.Max(1f, health.MaxHealth) * 100f;
@@ -235,6 +299,9 @@ namespace Features.Bosses.Scripts
             }
             return null;
         }
+
+        private bool CanStartAttack() => CanContinue() && !_executing && !_boss.IsPlayingSplitTransition &&
+            _configuration != null && _animation != null && _boss.CanAttack && Time.deltaTime > 0f;
 
         private bool CanContinue() => _boss != null && !_boss.IsDead && _boss.isActiveAndEnabled &&
             _character != null && _character.HealthSystem != null && !_character.HealthSystem.IsDead &&
