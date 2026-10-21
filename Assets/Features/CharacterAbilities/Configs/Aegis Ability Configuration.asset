@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ca17b0c56e447e5a18ec99e061d68cb, type: 3}
+  m_Name: Aegis Ability Configuration
+  m_EditorClassIdentifier: Assembly-CSharp::AegisAbilityConfiguration
+  <AbilityName>k__BackingField: 22
+  <IsDisabled>k__BackingField: 0
+  DisplayName: Aegis
+  Description: Orbiting shields parry projectiles and attacks that hit them. Each parry consumes that shield and sends a retaliatory shockwave. Shields return only when combat ends.
+  <Icon>k__BackingField: {fileID: 21300000, guid: b131eca6f23a43ab912824efb3504f90, type: 3}
+  <Prefab>k__BackingField: {fileID: 11400001, guid: 5be86d277cff4caa98a6703ff706e91a, type: 3}
+  <StartShieldCount>k__BackingField: 2
+  <StartRotationSpeed>k__BackingField: 55
+  <StartDamage>k__BackingField: 10
+  <StartKnockback>k__BackingField: 3
+  <ShockwaveRadius>k__BackingField: 6
+  <ShockwaveAngle>k__BackingField: 120
+  <ShockwaveHeight>k__BackingField: 2.5
+  <ShockwaveDuration>k__BackingField: 1.5
+  <DamageUpgradeIncrease>k__BackingField: 2
+  <RotationSpeedUpgradeIncrease>k__BackingField: 15
+  <SizeUpgradeIncrease>k__BackingField: 0.15

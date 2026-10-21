@@ -14,15 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Bosses.Scripts.BossRadialAttackConfiguration
   <IsEnabled>k__BackingField: 1
   _projectilePrefab: {fileID: 100000, guid: d401c19029634dbb93f44cb5a0da2f6d, type: 3}
-  _projectileCount: 24
+  _pattern: 1
+  _projectileCount: 14
   _projectileSpeed: 30
   _projectileLifetime: 5
   _damage: 0.5
   _spawnRadius: 1.25
   _burstHealthPercentage: 50
-  _burstRingCount: 3
+  _burstRingCount: 1
   _ringInterval: 0.2
   _ringAngleStep: 5
   _warningDuration: 0.75
-  _recoveryDuration: 0.35
-  _cooldown: 6
+  _recoveryDuration: 0.6
+  _cooldown: 4.5
+  _volleySpreadAngle: 60
+  _volleyRangeMultiplier: {x: 0.65, y: 1.2}
+  _volleyFlightDuration: {x: 0.9, y: 1.3}
+  _volleyArcHeight: {x: 2.5, y: 5}

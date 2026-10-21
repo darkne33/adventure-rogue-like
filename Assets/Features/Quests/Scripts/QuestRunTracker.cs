@@ -65,6 +65,7 @@ namespace Features.Quests.Scripts
 
             _enemies.EnemyDefeated += HandleEnemyDefeated;
             _events.Hit += HandleHit;
+            _events.HealthDamageTaken += HandleHealthDamageTaken;
             _events.ChestOpened += HandleChestOpened;
             _events.RelicCollected += HandleRelicCollected;
             _events.RoomStarted += HandleRoomStarted;
@@ -156,6 +157,7 @@ namespace Features.Quests.Scripts
             _isSilverBankingActive = false;
             _enemies.EnemyDefeated -= HandleEnemyDefeated;
             _events.Hit -= HandleHit;
+            _events.HealthDamageTaken -= HandleHealthDamageTaken;
             _events.ChestOpened -= HandleChestOpened;
             _events.RelicCollected -= HandleRelicCollected;
             _events.RoomStarted -= HandleRoomStarted;
@@ -193,6 +195,16 @@ namespace Features.Quests.Scripts
             _relicProgress.RecordHit(hit);
             if (hit.Damage > 0 && hit.IsCritical)
                 _quests.AddProgress(QuestMetric.TotalCriticalHits, 1);
+        }
+
+        private void HandleHealthDamageTaken(RelicHealthDamageTakenEvent damageTaken)
+        {
+            // The final fatal hit also removes real health, so do not reject a newly dead victim.
+            if (!_isRunActive || _runRestart.IsRestarting ||
+                damageTaken.Character != _characterProvider.CharacterFacade)
+                return;
+
+            _quests.AddFractionalProgress(QuestMetric.TotalHealthDamageTaken, damageTaken.Amount);
         }
 
         private void HandleRoomStarted(RelicRoomEvent roomEvent)

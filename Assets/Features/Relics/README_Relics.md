@@ -104,7 +104,7 @@ The pool contains the original ten relics and these nine additions. Values are a
 
 Soy Milk and Polyphemus multiply each other and the existing damage/attack-speed bonuses. Their damage multiplier is applied before critical hits. They affect every ability: standard cooldowns, shot/punch series intervals, Earth Rock rotation and respawns, Fire Field damage intervals, Aquarius damage intervals, and dagger hit intervals. Damage has the existing one-point floor; continuous damage intervals have a 0.05-second floor. The fixed portion of Explosivo's proc damage remains fixed; its hit-dependent portion inherits the triggering hit's modifiers.
 
-Piercing/ricochet flight is shared by Fireball, Bullet Explosion and Rabbit Boomerang. The boomerang retains its native chain targeting. Earth Rock, Punch, Fire Field and orbiting daggers do not receive projectile piercing or ricochets. Coal tracks traveled path, including ricochets, rather than straight-line distance from the player.
+Fireball and Bullet Explosion share piercing/ricochet flight. Rabbit Boomerang has its own piercing flight and return to its moving owner, with a cooldown for each target's repeated hits. Piercing relics preserve this return; ricochet relics add wall bounces during the outward flight, followed by the same return. Earth Rock, Punch, Fire Field and orbiting daggers do not receive projectile piercing or ricochets. Coal tracks traveled path, including ricochets and the boomerang's return, rather than straight-line distance from the player.
 
 ### Builds with the existing relics
 

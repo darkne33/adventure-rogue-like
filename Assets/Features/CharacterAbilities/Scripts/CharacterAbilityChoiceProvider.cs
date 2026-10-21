@@ -45,6 +45,12 @@ public class CharacterAbilityChoiceProvider : IAbilityChoiceProvider
                 case AbilityName.Aura:
                     CreateAbility<AuraAbility>(abilityConfig, abilityConfig.AbilityName);
                     break;
+                case AbilityName.Aegis:
+                    CreateAbility<AegisAbility>(abilityConfig, abilityConfig.AbilityName);
+                    break;
+                case AbilityName.LightningStaff:
+                    CreateAbility<LightningStaffAbility>(abilityConfig, abilityConfig.AbilityName);
+                    break;
                 case AbilityName.AbilityDurationScroll:
                     CreateAbility<CharacterScrollAbilityDurationAbility>(abilityConfig, abilityConfig.AbilityName);
                     break;

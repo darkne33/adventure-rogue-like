@@ -161,7 +161,13 @@ public enum AbilityUpgradeType
     Cooldown = 11,
     PunchRadius = 12,
     PunchSimultaneousAttacks = 13,
-    AuraRadius = 14
+    AuraRadius = 14,
+    AegisCharges = 15,
+    AegisKnockback = 16,
+    AegisSize = 17,
+    AegisRotationSpeed = 18,
+    ProjectileSize = 19,
+    LightningBounces = 20
 }
 
 public readonly struct AbilityUpgradeEffect

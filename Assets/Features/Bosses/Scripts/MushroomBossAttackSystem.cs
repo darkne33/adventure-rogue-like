@@ -73,7 +73,7 @@ namespace Features.Bosses.Scripts
             BossRadialAttackConfiguration radial = GetRadialAttack();
             if (radial != null && (_radialAttack == null || _radialAttack.Configuration != radial))
                 _radialAttack = new BossRadialAttack(radial, _boss, _character);
-            if (radial != null && _radialAttack.IsReady)
+            if (radial != null && _radialAttack.IsReady && _boss.CanUseSplitRadialAttack())
                 await ExecuteRadialAttack(radial, cancellationToken);
             else
                 await ExecuteAttack(null, cancellationToken);
@@ -91,14 +91,15 @@ namespace Features.Bosses.Scripts
                 _radialAttack = new BossRadialAttack(attack, _boss, _character);
             if (!_radialAttack.IsReady)
                 return;
+            if (!_boss.TryBeginSplitRadialAttack(attack))
+                return;
 
             float clockBefore = _boss.RadialAttackClock;
-            _executing = true;
-            _hasJumpReservation = false;
-            _boss.CombatSystem.SetAttacking(true);
-
             try
             {
+                _executing = true;
+                _hasJumpReservation = false;
+                _boss.CombatSystem.SetAttacking(true);
                 await _radialAttack.Execute(cancellationToken, animateBoss, ownsAnimation);
             }
             finally
@@ -108,6 +109,7 @@ namespace Features.Bosses.Scripts
                 _wait = Mathf.Max(0f, attack.RecoveryDuration) + GetSplitAttackDelay();
                 if (_boss != null)
                 {
+                    _boss.CompleteSplitRadialAttack();
                     _headCooldown = Mathf.Max(0f, _headCooldown -
                         Mathf.Max(0f, _boss.RadialAttackClock - clockBefore));
                     _lastClockFrame = Time.frameCount;
@@ -566,7 +568,8 @@ namespace Features.Bosses.Scripts
             {
                 if (hit.GetComponentInParent<CharacterFacade>() != _character)
                     continue;
-                if (_character.ReceiveDamage(attack.Damage, _boss) && _character.Rigidbody != null &&
+                if (_character.ReceiveAreaDamage(attack.Damage, _boss, ground,
+                        ground + Vector3.up * radius, radius) && _character.Rigidbody != null &&
                     !_character.Rigidbody.isKinematic)
                 {
                     Vector3 direction = _character.transform.position - ground;

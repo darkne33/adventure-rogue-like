@@ -25,6 +25,9 @@ Bullet Explosion and Punch have separate Weapons entries in UNLOCKS. Their respe
 
 ## Progress, purchases and silver
 
+- Aegis uses the `health_damage_taken_50` quest and `weapon_aegis` unlock. Losing a total of 50 hearts to damage across runs with any character makes the weapon purchasable for 1 persistent silver and available to all characters after purchase. This condition is the user's requested adaptation. The quest adds no separate silver reward. Only health actually lost counts; dodges, shield absorption and prevented damage do not advance it.
+- `RelicHealthDamageTakenEvent` carries the character and actual health lost in hearts. `QuestRunTracker` forwards valid run events to `QuestService.AddFractionalProgress` without converting units. The existing quest save includes fractional remainders per metric and per quest, so half-heart hits accumulate across runs and restarts without rounding away progress.
+
 - All quests begin recording gameplay progress without waiting for completed runs, other quests or purchases. Optional character restrictions use the character selected at run start.
 - A quest has one main objective and, optionally, one independent metric or ownership condition. Both conditions count in either order, in the same run or different runs. An ownership condition never blocks gameplay progress; buying the required unlock completes the quest immediately if its gameplay objective is already satisfied.
 - DUKE's FIRST VICTORY (`run_kills_150`) requires reaching character level 7 and defeating one boss, with any character. Its progress shows completed conditions out of 2. The quest awards 3 silver, and DUKE costs 5 silver.

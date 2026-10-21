@@ -52,7 +52,7 @@ namespace Features.Enemies.Scripts
                 if (NavMeshAgent.hasPath)
                     NavMeshAgent.ResetPath();
 
-                RotateTowardsCharacter(direction);
+                RotateTowardsDirection(direction);
                 AnimationSystem.IdleAnimation();
                 return;
             }
@@ -63,16 +63,5 @@ namespace Features.Enemies.Scripts
                 MoveTo(Character.transform.position);
         }
 
-        private void RotateTowardsCharacter(Vector3 direction)
-        {
-            if (direction.sqrMagnitude <= 0.001f)
-                return;
-
-            Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
-            Enemy.transform.rotation = Quaternion.RotateTowards(
-                Enemy.transform.rotation,
-                targetRotation,
-                Configuration.RotationSpeed * Time.fixedDeltaTime);
-        }
     }
 }

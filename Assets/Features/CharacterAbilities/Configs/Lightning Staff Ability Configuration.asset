@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90d4d4cebcda44feaaa19f94ba655a44, type: 3}
+  m_Name: Lightning Staff Ability Configuration
+  m_EditorClassIdentifier: Assembly-CSharp::LightningStaffAbilityConfiguration
+  <AbilityName>k__BackingField: 23
+  <IsDisabled>k__BackingField: 0
+  DisplayName: Lightning Staff
+  Description: Calls lightning down on visible nearby enemies. Strikes damage a small area;
+    bounce upgrades let lightning chain between enemies, losing half its damage per bounce.
+  <Icon>k__BackingField: {fileID: 21300000, guid: a31f960698f54507b5727b6b41e2871f, type: 3}
+  <Prefab>k__BackingField: {fileID: 11400000, guid: 4f76e326aaf447428560c5e8fe8b47be, type: 3}
+  <StartDamage>k__BackingField: 7
+  <StartProjectileCount>k__BackingField: 1
+  <StartBounces>k__BackingField: 0
+  <Knockback>k__BackingField: 1
+  <TargetRange>k__BackingField: 40
+  <AttackDuration>k__BackingField: 1
+  <EndCooldown>k__BackingField: 1.1
+  <BurstInterval>k__BackingField: 0.3
+  <MinimumBurstInterval>k__BackingField: 0.04
+  <StrikeRadius>k__BackingField: 1.5
+  <StrikeHeight>k__BackingField: 2.5
+  <BounceRange>k__BackingField: 10
+  <BounceInterval>k__BackingField: 0.075
+  <BounceDamageMultiplier>k__BackingField: 0.5
+  <SkyHeight>k__BackingField: 12
+  <BoltLifetime>k__BackingField: 0.18
+  <VisionHeightOffset>k__BackingField: 1
+  <DamageUpgradeIncrease>k__BackingField: 2
+  <ProjectileCountUpgradeIncrease>k__BackingField: 1
+  <BounceUpgradeIncrease>k__BackingField: 1
+  <SizeUpgradeIncrease>k__BackingField: 0.2

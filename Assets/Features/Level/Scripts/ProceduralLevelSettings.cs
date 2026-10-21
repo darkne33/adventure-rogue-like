@@ -38,7 +38,7 @@ public sealed class ProceduralLevelSettings
     public bool RollOnlyRelicRequiresKey() =>
         UnityEngine.Random.value < Mathf.Clamp01(_onlyRelicKeyedChance);
 
-    public List<RoomType> RollSpecialRooms(int levelIndex)
+    public List<RoomType> RollSpecialRooms(int levelIndex, int goldCount)
     {
         var types = new List<RoomType>();
 
@@ -48,7 +48,8 @@ public sealed class ProceduralLevelSettings
         // Only Relic remains a separate room with its existing first-floor availability.
         if (levelIndex < 6)
         {
-            types.Add(RoomType.Shop);
+            if (goldCount >= 10)
+                types.Add(RoomType.Shop);
             types.Add(RoomType.Treasure);
             if (levelIndex == 0)
                 types.Add(RoomType.OnlyRelic);

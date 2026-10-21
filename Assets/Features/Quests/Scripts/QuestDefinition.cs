@@ -32,7 +32,8 @@ namespace Features.Quests.Scripts
         LowHealthEntryRoomsCleared = 23,
         TotalRunsCompleted = 24,
         TotalRoomsCleared = 25,
-        SpecificAbilityLevel = 26
+        SpecificAbilityLevel = 26,
+        TotalHealthDamageTaken = 27
     }
 
     [Serializable]

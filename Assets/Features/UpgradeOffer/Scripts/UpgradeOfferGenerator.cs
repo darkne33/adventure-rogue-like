@@ -165,9 +165,36 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         UpgradeRarityData rarityData =
             _upgradeOfferConfiguration.GetRandomRarityData(rejectedOfferCount);
 
+        if (ability is AegisAbility &&
+            rarityData.Rarity != UpgradeRarity.Epic && rarityData.Rarity != UpgradeRarity.Legendary &&
+            (primaryType == AbilityUpgradeType.AegisCharges || secondaryType == AbilityUpgradeType.AegisCharges))
+        {
+            List<AbilityUpgradeType> replacementTypes = ability.UpgradeTypes
+                .Where(type => type != AbilityUpgradeType.Default &&
+                               type != AbilityUpgradeType.AegisCharges &&
+                               type != primaryType && type != secondaryType)
+                .Distinct()
+                .ToList();
+            if (replacementTypes.Count == 0)
+                throw new System.InvalidOperationException(
+                    "Aegis must provide another non-charge upgrade for Common and Rare offers.");
+
+            AbilityUpgradeType replacement = TakeRandomUpgradeType(replacementTypes);
+            if (primaryType == AbilityUpgradeType.AegisCharges)
+                primaryType = replacement;
+            else
+                secondaryType = replacement;
+            (primaryType, secondaryType) = OrderPair(primaryType, secondaryType);
+
+            // The replacement has its own rejection history. Roll once for this final pair;
+            // it has no charge effect, so every rarity is valid and no reroll loop is needed.
+            rejectedOfferCount = _upgradeBuildService.GetRejectedOfferCount(ability, primaryType, secondaryType);
+            rarityData = _upgradeOfferConfiguration.GetRandomRarityData(rejectedOfferCount);
+        }
+
         return new UpgradeOffer(ability, rarityData.Rarity,
-            CreateUpgradeEffect(primaryType, rarityData),
-            CreateUpgradeEffect(secondaryType, rarityData));
+            CreateUpgradeEffect(ability, primaryType, rarityData),
+            CreateUpgradeEffect(ability, secondaryType, rarityData));
     }
 
     private UpgradeOffer CreateSingleUpgradeOffer(CharacterAbility ability)
@@ -179,15 +206,27 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
             _upgradeOfferConfiguration.GetRandomRarityData(rejectedOfferCount);
 
         return new UpgradeOffer(ability, rarityData.Rarity,
-            CreateUpgradeEffect(upgradeType, rarityData));
+            CreateUpgradeEffect(ability, upgradeType, rarityData));
     }
 
-    private AbilityUpgradeEffect CreateUpgradeEffect(AbilityUpgradeType upgradeType,
+    private AbilityUpgradeEffect CreateUpgradeEffect(CharacterAbility ability, AbilityUpgradeType upgradeType,
         UpgradeRarityData rarityData)
     {
-        float value = upgradeType == AbilityUpgradeType.AdditionalProjectiles
-            ? _upgradeOfferConfiguration.GetRandomProjectileCountIncrease(rarityData)
+        if (ability is AegisAbility && upgradeType == AbilityUpgradeType.AegisCharges)
+            return new AbilityUpgradeEffect(upgradeType, 1f);
+
+        float multiplier = ability is AegisAbility or LightningStaffAbility
+            ? rarityData.Rarity switch
+            {
+                UpgradeRarity.Rare => 1.4f,
+                UpgradeRarity.Epic => 1.6f,
+                UpgradeRarity.Legendary => 2f,
+                _ => 1f
+            }
             : rarityData.UpgradeMultiplier;
+        float value = upgradeType == AbilityUpgradeType.AdditionalProjectiles && ability is not LightningStaffAbility
+            ? _upgradeOfferConfiguration.GetRandomProjectileCountIncrease(rarityData)
+            : multiplier;
 
         return new AbilityUpgradeEffect(upgradeType, value);
     }
@@ -252,6 +291,8 @@ public class UpgradeOfferGenerator : IUpgradeOfferGenerator
         type == AbilityUpgradeType.Targets ||
         type == AbilityUpgradeType.PunchSimultaneousAttacks ||
         type == AbilityUpgradeType.EarthRockStoneCount ||
+        type == AbilityUpgradeType.AegisCharges ||
+        type == AbilityUpgradeType.LightningBounces ||
         (type == AbilityUpgradeType.Cooldown && ability is AuraAbility);
 
     private static AbilityUpgradeType TakeRandomUpgradeType(List<AbilityUpgradeType> upgradeTypes)

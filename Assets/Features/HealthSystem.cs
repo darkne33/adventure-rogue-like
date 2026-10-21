@@ -2,6 +2,8 @@
 
 public class HealthSystem
 {
+    public event Action<float> DamageReceived;
+
     public float MaxHealth => _maxHealth;
     public float CurrentHealth => _currentHealth;
     public bool IsDead => _isDead;
@@ -60,6 +62,9 @@ public class HealthSystem
         _pendingHealing = 0f;
         UpdateViews();
         UpdateDamageViews(appliedDamage, isCritical, damageColor);
+
+        // Publish the real health loss before death ends and saves the current run.
+        DamageReceived?.Invoke(appliedDamage);
 
         if (_currentHealth > 0)
             return appliedDamage;

@@ -311,7 +311,8 @@ namespace Features.Enemies.Scripts
             {
                 if (hit.GetComponentInParent<CharacterFacade>() != _character)
                     continue;
-                if (_character.ReceiveDamage(_configuration.Damage, _enemy) && _character.Rigidbody != null &&
+                if (_character.ReceiveAreaDamage(_configuration.Damage, _enemy, ground,
+                        ground + Vector3.up * radius, radius) && _character.Rigidbody != null &&
                     !_character.Rigidbody.isKinematic)
                 {
                     Vector3 direction = _character.transform.position - ground;

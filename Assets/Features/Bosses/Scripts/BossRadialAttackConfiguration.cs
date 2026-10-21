@@ -3,11 +3,18 @@ using UnityEngine.Serialization;
 
 namespace Features.Bosses.Scripts
 {
+    public enum BossProjectilePattern
+    {
+        Radial = 0,
+        ArcingVolley = 1
+    }
+
     [CreateAssetMenu(menuName = "Configs/Bosses/Radial Attack", fileName = "RangeRadiusAttack")]
     public class BossRadialAttackConfiguration : BossAttackConfiguration
     {
         [Header("Projectile")]
-        [Tooltip("Prepared BasicBigMissileRed prefab with MushroomRadialProjectile on its root.")]
+        [SerializeField] private BossProjectilePattern _pattern = BossProjectilePattern.Radial;
+        [Tooltip("Prepared projectile prefab with MushroomRadialProjectile on its root.")]
         [SerializeField, FormerlySerializedAs("<ProjectilePrefab>k__BackingField")]
         private GameObject _projectilePrefab;
         [SerializeField, Min(3), FormerlySerializedAs("<ProjectileCount>k__BackingField")]
@@ -25,6 +32,16 @@ namespace Features.Bosses.Scripts
         [SerializeField, Min(0f), FormerlySerializedAs("<SpawnRadius>k__BackingField")]
         private float _spawnRadius = 1.25f;
 
+        [Header("Arcing volley")]
+        [Tooltip("Total horizontal spread, aimed at the character when the volley is released.")]
+        [SerializeField, Range(0f, 180f)] private float _volleySpreadAngle = 60f;
+        [Tooltip("Random travel distance as a fraction of the distance to the captured target.")]
+        [SerializeField] private Vector2 _volleyRangeMultiplier = new(0.65f, 1.2f);
+        [Tooltip("Random flight duration of each projectile, in boss time.")]
+        [SerializeField] private Vector2 _volleyFlightDuration = new(0.9f, 1.3f);
+        [Tooltip("Random arc height above the line between launch and landing, in world units.")]
+        [SerializeField] private Vector2 _volleyArcHeight = new(2.5f, 5f);
+
         [Header("Low-health burst")]
         [Tooltip("At or below this percentage of maximum health, release a series of rings.")]
         [SerializeField, Range(0f, 100f)] private float _burstHealthPercentage = 50f;
@@ -40,16 +57,21 @@ namespace Features.Bosses.Scripts
         private float _warningDuration = 0.75f;
         [SerializeField, Min(0f), FormerlySerializedAs("<RecoveryDuration>k__BackingField")]
         private float _recoveryDuration = 0.35f;
-        [Tooltip("Time between radial attack starts, in boss time.")]
+        [Tooltip("Time between projectile attack starts, in boss time.")]
         [SerializeField, Min(0.01f), FormerlySerializedAs("<Cooldown>k__BackingField")]
         private float _cooldown = 6f;
 
+        public BossProjectilePattern Pattern => _pattern;
         public GameObject ProjectilePrefab => _projectilePrefab;
         public int ProjectileCount => _projectileCount;
         public float ProjectileSpeed => _projectileSpeed;
         public float ProjectileLifetime => _projectileLifetime;
         public float Damage => _damage;
         public float SpawnRadius => _spawnRadius;
+        public float VolleySpreadAngle => _volleySpreadAngle;
+        public Vector2 VolleyRangeMultiplier => _volleyRangeMultiplier;
+        public Vector2 VolleyFlightDuration => _volleyFlightDuration;
+        public Vector2 VolleyArcHeight => _volleyArcHeight;
         public float BurstHealthPercentage => _burstHealthPercentage;
         public int BurstRingCount => _burstRingCount;
         public float RingInterval => _ringInterval;

@@ -69,6 +69,35 @@ public class CharacterAbilitySystem
             ability.RestartCooldown();
     }
 
+    public bool TryBlockIncomingDamage(CharacterFacade character, CombatTarget source, Vector3? origin = null)
+    {
+        foreach (CharacterActiveAbility ability in _activeAbilities.Values)
+            if (ability is AegisAbility aegis && aegis.TryBlockAttack(character, source, origin))
+                return true;
+        return false;
+    }
+
+    public bool TryBlockProjectile(CharacterFacade character, CombatTarget source, Vector3 from,
+        Vector3 to, float radius, out float hitDistance)
+    {
+        hitDistance = 0f;
+        return _activeAbilities.TryGetValue(AbilityName.Aegis, out CharacterActiveAbility ability) &&
+               ability is AegisAbility aegis &&
+               aegis.TryBlockSegment(character, source, from, to, radius, out hitDistance);
+    }
+
+    public bool TryBlockBox(CharacterFacade character, CombatTarget source, Vector3 center,
+        Vector3 halfExtents, Quaternion rotation) =>
+        _activeAbilities.TryGetValue(AbilityName.Aegis, out CharacterActiveAbility ability) &&
+        ability is AegisAbility aegis && aegis.TryBlockBox(character, source, center, halfExtents, rotation);
+
+    public void Dispose()
+    {
+        foreach (CharacterActiveAbility ability in _activeAbilities.Values)
+            if (ability is System.IDisposable disposable)
+                disposable.Dispose();
+    }
+
     public void ReduceActiveCooldowns(float seconds)
     {
         float reduction = Mathf.Max(0f, seconds);

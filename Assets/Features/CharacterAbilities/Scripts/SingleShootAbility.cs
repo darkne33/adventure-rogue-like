@@ -122,8 +122,10 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         _isLaunchingProjectiles == false &&
         character != null &&
         base.IsReady(character) &&
-        _enemiesProvider.GetClosestEnemyByCharacter(character.transform, AutoTargetingDistance)
-            is { CanBeAttacked: true };
+        FindProjectileTarget(character) is { CanBeAttacked: true };
+
+    protected virtual CombatTarget FindProjectileTarget(CharacterFacade character) =>
+        _enemiesProvider.GetClosestEnemyByCharacter(character.transform, AutoTargetingDistance);
 
     protected override void OnUse(CharacterFacade character)
     {
@@ -144,6 +146,8 @@ public abstract class SingleShootAbility : CharacterActiveAbility
     protected virtual void OnProjectileLaunchCompleted()
     {
     }
+
+    protected virtual bool CanContinueProjectileLaunch(CharacterFacade character) => true;
 
     protected AbilityUpgradePreview GetAdditionalProjectileUpgradePreview(AbilityUpgradeEffect upgrade)
     {
@@ -275,7 +279,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
                         cancellationToken: character.GetCancellationTokenOnDestroy());
                 }
 
-                if (launchSequence != _projectileLaunchSequence)
+                if (launchSequence != _projectileLaunchSequence || !CanContinueProjectileLaunch(character))
                     return;
 
                 int shotIndex = shotsPerProjectile > 1 ? index % shotsPerProjectile : index;
@@ -295,8 +299,7 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     private void ShootProjectile(CharacterFacade character, int projectileIndex, int projectileCount)
     {
-        CombatTarget targetEnemy = _enemiesProvider.GetClosestEnemyByCharacter(character.transform,
-            AutoTargetingDistance);
+        CombatTarget targetEnemy = FindProjectileTarget(character);
 
         if (targetEnemy == null || !targetEnemy.CanBeAttacked || targetEnemy.IsDead)
             return;

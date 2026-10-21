@@ -173,8 +173,11 @@ namespace Features.Enemies.Scripts
 
             if (IsCharacterInsideDamageRadius(explosionPosition))
             {
-                _characterFacade.ReceiveDamage(
-                    _enemyConfiguration.Damage, _enemyFacade);
+                // Match the explosion's circular footprint at the shield's height.
+                Vector3 shieldPlaneCenter = explosionPosition;
+                shieldPlaneCenter.y = _characterFacade.ProjectileSpawnPosition.y;
+                _characterFacade.ReceiveAreaDamage(_enemyConfiguration.Damage, _enemyFacade,
+                    shieldPlaneCenter, shieldPlaneCenter, Mathf.Max(0f, _enemyConfiguration.AreaDamageRadius));
             }
 
             DamageEnemiesInsideRadius(explosionPosition);

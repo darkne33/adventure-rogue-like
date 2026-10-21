@@ -1,306 +1,197 @@
-using System.Collections.Generic;
-using DG.Tweening;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
 using UnityEngine;
 
-public class RabbitBoomerangAbility : SingleShootAbility
+public sealed class RabbitBoomerangAbility : SingleShootAbility
 {
-    private const string BoomerangStatName = "Targets";
-    private const string SpeedStatName = "Speed";
-    private const string CooldownStatName = "Cooldown";
-    private const string BounceRadiusStatName = "Bounce Radius";
     private const string DamageStatName = "Damage";
+    private const string SpeedStatName = "Speed";
+    private const string SizeStatName = "Size";
 
     private static readonly AbilityUpgradeType[] BoomerangUpgradeTypes =
     {
         AbilityUpgradeType.Damage,
         AbilityUpgradeType.ProjectileSpeed,
-        AbilityUpgradeType.Cooldown,
-        AbilityUpgradeType.BounceRadius,
-        AbilityUpgradeType.Targets,
+        AbilityUpgradeType.ProjectileSize,
         AbilityUpgradeType.AdditionalProjectiles
     };
 
-    private static readonly AbilityUpgradeType[] BoomerangUpgradeTypesAtMinimumCooldown =
-    {
-        AbilityUpgradeType.Damage,
-        AbilityUpgradeType.ProjectileSpeed,
-        AbilityUpgradeType.BounceRadius,
-        AbilityUpgradeType.Targets,
-        AbilityUpgradeType.AdditionalProjectiles
-    };
-
-    private int _bonusTargets;
-    private float _bounceRadius;
+    private readonly IRelicProjectileContext _projectileContext;
+    private CancellationTokenSource _flightLifetime;
+    private float _size;
+    private int _launchRoomSequence;
 
     private RabbitBoomerangAbilityConfiguration BoomerangConfig =>
         (RabbitBoomerangAbilityConfiguration)AbilityConfig;
-    public override AbilityUpgradeType[] UpgradeTypes =>
-        AbilityConfig != null && Cooldown <= MinimumCooldown + Mathf.Epsilon
-            ? BoomerangUpgradeTypesAtMinimumCooldown
-            : BoomerangUpgradeTypes;
+
+    protected override int BaseProjectileCount => Mathf.Max(1, BoomerangConfig.StartProjectileCount);
+    public override AbilityUpgradeType[] UpgradeTypes => BoomerangUpgradeTypes;
 
     public RabbitBoomerangAbility(IEnemiesProvider enemiesProvider, CharacterDamageCalculator damageCalculator,
         CharacterStats characterStats, RelicEventBus relicEventBus, RelicManager relicManager)
         : base(enemiesProvider, damageCalculator, characterStats, relicEventBus, relicManager)
     {
+        _projectileContext = relicManager.ProjectileContext;
     }
 
-    public override float GetStatFromIncrease() =>
-        Level <= 0 ? 0 : GetBoomerangMaxHitCount();
+    public override float GetStatFromIncrease() => Level <= 0 ? 0f : Damage;
 
-    public override float GetStatToIncrease(float upgradeMultiplier) =>
-        GetTargetsTo(upgradeMultiplier);
+    public override float GetStatToIncrease(float upgradeMultiplier) => GetDamageTo(upgradeMultiplier);
 
-    public override AbilityUpgradePreview[] GetAcquirePreviews() =>
-        new[]
-        {
-            new AbilityUpgradePreview(BoomerangStatName, BoomerangConfig.StartTargets),
-            new AbilityUpgradePreview(DamageStatName, AbilityConfig.StartDamage)
-        };
+    public override float CalculateEstimatedDps() => base.CalculateEstimatedDps() * 2f;
 
-    public override AbilityUpgradePreview GetUpgradePreview(AbilityUpgradeEffect upgrade)
+    public override AbilityUpgradePreview[] GetAcquirePreviews() => new[]
     {
-        return upgrade.Type switch
+        new AbilityUpgradePreview(DamageStatName, AbilityConfig.StartDamage),
+        new AbilityUpgradePreview("Projectiles", BaseProjectileCount)
+    };
+
+    public override AbilityUpgradePreview GetUpgradePreview(AbilityUpgradeEffect upgrade) =>
+        upgrade.Type switch
         {
-            AbilityUpgradeType.AdditionalProjectiles =>
-                GetAdditionalProjectileUpgradePreview(upgrade),
-            AbilityUpgradeType.BounceRadius =>
-                new AbilityUpgradePreview(BounceRadiusStatName, _bounceRadius,
-                    _bounceRadius + GetBounceRadiusIncrease(upgrade.Value), "m"),
-            AbilityUpgradeType.Targets =>
-                new AbilityUpgradePreview(BoomerangStatName, GetTargetsFrom(),
-                    GetTargetsTo(upgrade.Value)),
-            AbilityUpgradeType.ProjectileSpeed =>
-                new AbilityUpgradePreview(SpeedStatName, ProjectileSpeed,
-                    ProjectileSpeed + GetSpeedIncrease(upgrade.Value)),
-            AbilityUpgradeType.Cooldown =>
-                new AbilityUpgradePreview(CooldownStatName, Cooldown,
-                    GetCooldownTo(upgrade.Value), "s"),
-            _ => new AbilityUpgradePreview(DamageStatName, Damage,
-                GetDamageTo(upgrade.Value))
+            AbilityUpgradeType.AdditionalProjectiles => GetAdditionalProjectileUpgradePreview(upgrade),
+            AbilityUpgradeType.ProjectileSize => new AbilityUpgradePreview(SizeStatName, _size * 100f,
+                (_size + GetSizeIncrease(upgrade.Value)) * 100f, "%"),
+            AbilityUpgradeType.ProjectileSpeed => new AbilityUpgradePreview(SpeedStatName, ProjectileSpeed,
+                ProjectileSpeed + GetSpeedIncrease(upgrade.Value)),
+            _ => new AbilityUpgradePreview(DamageStatName, Damage, GetDamageTo(upgrade.Value))
         };
+
+    public override void OnUnequip(CharacterStats characterStats)
+    {
+        CancelFlights();
+        base.OnUnequip(characterStats);
+    }
+
+    public override void RestartCooldown()
+    {
+        CancelFlights();
+        base.RestartCooldown();
     }
 
     protected override void OnShootableInitialized()
     {
+        CancelFlights();
         Level = 0;
-        _bonusTargets = 0;
-        _bounceRadius = BoomerangConfig.BounceRadius;
-        StatName_1 = BoomerangStatName;
-        Stat_1 = BoomerangConfig.StartTargets;
+        Damage = AbilityConfig.StartDamage;
+        _size = 1f;
+        RefreshStats();
     }
 
     protected override void OnShootableEquipped(CharacterStats characterStats)
     {
-        if (Damage <= 0)
-            Damage = AbilityConfig.StartDamage;
-
         ApplyUpgradeEffect(CurrentPrimaryUpgrade);
         if (CurrentSecondaryUpgrade.HasValue)
             ApplyUpgradeEffect(CurrentSecondaryUpgrade.Value);
-
-        Stat_1 = GetBoomerangMaxHitCount();
+        RefreshStats();
     }
 
-    private void ApplyUpgradeEffect(AbilityUpgradeEffect upgrade)
+    protected override void OnUse(CharacterFacade character)
     {
-        switch (upgrade.Type)
+        _launchRoomSequence = _projectileContext.RoomSequence;
+        base.OnUse(character);
+    }
+
+    protected override bool CanContinueProjectileLaunch(CharacterFacade character) =>
+        IsAcquired && character != null && character.isActiveAndEnabled &&
+        !character.HealthSystem.IsDead && !character.IsTransitionPaused && !character.IsCinematicPaused &&
+        _launchRoomSequence == _projectileContext.RoomSequence;
+
+    protected override CombatTarget FindProjectileTarget(CharacterFacade character)
+    {
+        Vector3 origin = character.ProjectileSpawnPosition;
+        float range = Mathf.Max(0.1f, BoomerangConfig.TargetingRange);
+        float closestDistance = range * range;
+        CombatTarget closest = null;
+        foreach (CombatTarget candidate in EnemiesProvider.ActiveEnemies)
         {
-            case AbilityUpgradeType.BounceRadius:
-                _bounceRadius += GetBounceRadiusIncrease(upgrade.Value);
-                break;
-            case AbilityUpgradeType.ProjectileSpeed:
-                IncreaseProjectileSpeed(GetSpeedIncrease(upgrade.Value));
-                break;
-            case AbilityUpgradeType.Cooldown:
-                ReduceCooldown(GetCooldownReduction(upgrade.Value));
-                break;
-            case AbilityUpgradeType.Targets:
-                _bonusTargets += GetTargetIncrease(upgrade.Value);
-                break;
-            case AbilityUpgradeType.Damage:
-                IncreaseDamage(GetDamageIncrease(upgrade.Value));
-                break;
+            if (candidate == null || !candidate.CanBeAttacked || candidate.IsDead ||
+                !candidate.gameObject.activeInHierarchy)
+                continue;
+
+            Vector3 offset = GetEnemyTargetPosition(candidate) - origin;
+            if (offset.sqrMagnitude > closestDistance || !HasLineOfSight(origin, offset))
+                continue;
+
+            closestDistance = offset.sqrMagnitude;
+            closest = candidate;
         }
+        return closest;
+    }
+
+    private static bool HasLineOfSight(Vector3 origin, Vector3 offset)
+    {
+        if (offset.sqrMagnitude <= 0.0001f)
+            return true;
+
+        RaycastHit[] hits = Physics.RaycastAll(origin, offset.normalized, offset.magnitude,
+            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+        foreach (RaycastHit hit in hits)
+        {
+            Collider collider = hit.collider;
+            if (collider.GetComponentInParent<CombatTarget>() == null &&
+                collider.GetComponentInParent<CharacterFacade>() == null &&
+                collider.GetComponentInParent<PlayerCollisionDetector>() == null &&
+                collider.GetComponentInParent<EnemyProjectile>() == null)
+                return false;
+        }
+        return true;
     }
 
     protected override void OnProjectileCreated(CharacterFacade character, GameObject shootObj,
         PlayerCollisionDetector collisionDetector, CombatTarget targetEnemy, Vector3 spawnPosition,
         Vector3 targetPosition, Vector3 shootDirection, int projectileDamage)
     {
-        if (TryStartRelicProjectile(character, shootObj, collisionDetector, shootDirection,
-                Vector3.Distance(spawnPosition, targetPosition) + BoomerangConfig.OvertravelDistance +
-                _bounceRadius * Mathf.Max(0, GetBoomerangMaxHitCount() - 1), projectileDamage,
-                targetEnemy, GetBoomerangMaxHitCount(), _bounceRadius))
+        if (!shootObj.TryGetComponent(out SphereCollider hitbox))
+        {
+            Debug.LogError("Rabbitarang requires a SphereCollider on its prepared projectile prefab.", shootObj);
+            Object.Destroy(shootObj);
             return;
-        HashSet<CombatTarget> hitEnemies = new();
-        collisionDetector.OnHit = enemyFacade =>
-            DamageDeal(character, shootObj, enemyFacade, collisionDetector, hitEnemies, projectileDamage);
-        MoveBoomerangToEnemy(character, shootObj, collisionDetector, hitEnemies, targetEnemy, projectileDamage,
-            targetPosition);
+        }
+
+        _flightLifetime ??= new CancellationTokenSource();
+        shootObj.transform.localScale *= _size;
+        var flight = new RabbitBoomerangFlight(shootObj, hitbox, collisionDetector, character,
+            _projectileContext, BoomerangConfig, ProjectileSpeed, shootDirection,
+            (target, distance) =>
+            {
+                Sounds.Play(Features.Sounds.SoundId.BoomerangImpact);
+                ApplyDamage(character, target, projectileDamage, distance, collisionDetector);
+            });
+        flight.Run(_flightLifetime.Token).Forget();
     }
 
-    private void DamageDeal(CharacterFacade character, GameObject shootObj, CombatTarget enemyFacade,
-        PlayerCollisionDetector collisionDetector, HashSet<CombatTarget> hitEnemies, int projectileDamage)
+    private void ApplyUpgradeEffect(AbilityUpgradeEffect upgrade)
     {
-        if (shootObj == null)
-            return;
-
-        if (enemyFacade == null)
+        switch (upgrade.Type)
         {
-            DestroyShoot(shootObj);
-            return;
+            case AbilityUpgradeType.Damage:
+                IncreaseDamage(GetDamageIncrease(upgrade.Value));
+                break;
+            case AbilityUpgradeType.ProjectileSpeed:
+                IncreaseProjectileSpeed(GetSpeedIncrease(upgrade.Value));
+                break;
+            case AbilityUpgradeType.ProjectileSize:
+                _size += GetSizeIncrease(upgrade.Value);
+                break;
         }
-
-        if (hitEnemies.Count >= GetBoomerangMaxHitCount())
-        {
-            DestroyShoot(shootObj);
-            return;
-        }
-
-        if (hitEnemies.Contains(enemyFacade))
-        {
-            collisionDetector.ResetHit();
-            return;
-        }
-
-        if (enemyFacade.HealthSystem.IsDead)
-        {
-            DestroyShoot(shootObj);
-            return;
-        }
-
-        hitEnemies.Add(enemyFacade);
-        ApplyDamage(character, enemyFacade, projectileDamage, collisionDetector.TravelDistance, collisionDetector);
-
-        if (hitEnemies.Count >= GetBoomerangMaxHitCount())
-        {
-            DestroyShoot(shootObj);
-            return;
-        }
-
-        TryBounceBoomerang(character, shootObj, collisionDetector, hitEnemies, projectileDamage);
     }
 
-    private void TryBounceBoomerang(CharacterFacade character, GameObject shootObj,
-        PlayerCollisionDetector collisionDetector, HashSet<CombatTarget> hitEnemies, int projectileDamage)
+    private void RefreshStats()
     {
-        CombatTarget nextEnemy = FindNextBoomerangTarget(shootObj.transform.position, hitEnemies);
-        if (nextEnemy == null)
-        {
-            DestroyShoot(shootObj);
-            return;
-        }
-
-        MoveBoomerangToEnemy(character, shootObj, collisionDetector, hitEnemies, nextEnemy, projectileDamage,
-            nextEnemy.GetNextProjectileTarget().position);
+        StatName_1 = DamageStatName;
+        Stat_1 = Damage;
+        StatName_2 = SizeStatName;
+        Stat_2 = _size * 100f;
     }
 
-    private CombatTarget FindNextBoomerangTarget(Vector3 projectilePosition, HashSet<CombatTarget> hitEnemies)
+    private void CancelFlights()
     {
-        CombatTarget closestEnemy = null;
-        float closestSqrDistance = float.MaxValue;
-        float maxSqrDistance = _bounceRadius * _bounceRadius;
-
-        foreach (CombatTarget enemy in EnemiesProvider.ActiveEnemies)
-        {
-            if (enemy == null || !enemy.CanBeAttacked || hitEnemies.Contains(enemy) || enemy.HealthSystem.IsDead)
-                continue;
-
-            float sqrDistance = (GetEnemyTargetPosition(enemy) - projectilePosition).sqrMagnitude;
-            if (sqrDistance > maxSqrDistance || sqrDistance >= closestSqrDistance)
-                continue;
-
-            closestSqrDistance = sqrDistance;
-            closestEnemy = enemy;
-        }
-
-        return closestEnemy;
-    }
-
-    private void MoveBoomerangToEnemy(CharacterFacade character, GameObject shootObj,
-        PlayerCollisionDetector collisionDetector, HashSet<CombatTarget> hitEnemies, CombatTarget nextEnemy,
-        int projectileDamage, Vector3 targetPosition)
-    {
-        if (shootObj == null || nextEnemy == null)
-            return;
-
-        Vector3 startPosition = shootObj.transform.position;
-        Vector3 direction = targetPosition - startPosition;
-
-        if (direction.sqrMagnitude <= 0.001f)
-        {
-            DamageDeal(character, shootObj, nextEnemy, collisionDetector, hitEnemies, projectileDamage);
-            return;
-        }
-
-        direction.Normalize();
-        Vector3 endPosition = GetBoomerangEndPosition(shootObj.transform, startPosition, targetPosition, direction);
-        shootObj.transform.rotation = Quaternion.LookRotation(direction);
-        collisionDetector.ResetHit();
-        shootObj.transform.DOKill();
-        MoveProjectile(shootObj, endPosition).OnComplete(() => DestroyShoot(shootObj));
-    }
-
-    private Vector3 GetBoomerangEndPosition(Transform projectile, Vector3 startPosition, Vector3 targetPosition,
-        Vector3 direction)
-    {
-        Vector3 desiredEndPosition = targetPosition + direction * BoomerangConfig.OvertravelDistance;
-        float raycastSkin = Mathf.Max(0f, BoomerangConfig.RaycastSkin);
-        Vector3 rayOrigin = startPosition + direction * raycastSkin;
-        float rayDistance = Mathf.Max(0f, Vector3.Distance(startPosition, desiredEndPosition) - raycastSkin);
-        RaycastHit[] hits = Physics.RaycastAll(rayOrigin, direction, rayDistance, Physics.DefaultRaycastLayers,
-            QueryTriggerInteraction.Ignore);
-
-        bool foundBlockingHit = false;
-        float closestDistance = float.MaxValue;
-        Vector3 blockingPosition = desiredEndPosition;
-
-        foreach (RaycastHit hit in hits)
-        {
-            if (hit.distance >= closestDistance || !IsBoomerangBlockingCollider(hit.collider, projectile))
-                continue;
-
-            foundBlockingHit = true;
-            closestDistance = hit.distance;
-            blockingPosition = hit.point;
-        }
-
-        return foundBlockingHit ? blockingPosition : desiredEndPosition;
-    }
-
-    private static bool IsBoomerangBlockingCollider(Collider collider, Transform projectile)
-    {
-        if (collider == null || collider.isTrigger)
-            return false;
-
-        Transform hitTransform = collider.transform;
-        if (projectile != null && (hitTransform == projectile || hitTransform.IsChildOf(projectile)))
-            return false;
-
-        if (collider.GetComponentInParent<CombatTarget>() != null ||
-            collider.GetComponentInParent<CharacterFacade>() != null ||
-            collider.GetComponentInParent<PlayerCollisionDetector>() != null)
-            return false;
-
-        return true;
-    }
-
-    private int GetBoomerangMaxHitCount() =>
-        Mathf.Max(1, BoomerangConfig.StartTargets + _bonusTargets);
-
-    private int GetTargetIncrease(float upgradeMultiplier) =>
-        Mathf.Max(0, Mathf.RoundToInt(GetUpgradeValue(BoomerangConfig.TargetUpgradeIncrease, upgradeMultiplier)));
-
-    private int GetTargetsFrom() =>
-        Level <= 0 ? 0 : GetBoomerangMaxHitCount();
-
-    private int GetTargetsTo(float upgradeMultiplier)
-    {
-        int baseTargets = Level <= 0 ? BoomerangConfig.StartTargets : GetBoomerangMaxHitCount();
-        return baseTargets + GetTargetIncrease(upgradeMultiplier);
+        _flightLifetime?.Cancel();
+        _flightLifetime?.Dispose();
+        _flightLifetime = null;
     }
 
     private float GetDamageIncrease(float upgradeMultiplier) =>
@@ -312,13 +203,6 @@ public class RabbitBoomerangAbility : SingleShootAbility
     private float GetSpeedIncrease(float upgradeMultiplier) =>
         GetUpgradeValue(BoomerangConfig.SpeedUpgradeIncrease, upgradeMultiplier);
 
-    private float GetCooldownReduction(float upgradeMultiplier) =>
-        GetUpgradeValue(BoomerangConfig.CooldownUpgradeReduction, upgradeMultiplier);
-
-    private float GetCooldownTo(float upgradeMultiplier) =>
-        Mathf.Max(MinimumCooldown, Cooldown - GetCooldownReduction(upgradeMultiplier));
-
-    private float GetBounceRadiusIncrease(float upgradeMultiplier) =>
-        GetUpgradeValue(BoomerangConfig.BounceRadiusUpgradeIncrease, upgradeMultiplier);
-
+    private float GetSizeIncrease(float upgradeMultiplier) =>
+        GetUpgradeValue(BoomerangConfig.SizeUpgradeIncrease, upgradeMultiplier);
 }

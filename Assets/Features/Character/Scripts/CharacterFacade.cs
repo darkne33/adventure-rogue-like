@@ -117,6 +117,9 @@ public class CharacterFacade : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_healthSystem != null)
+            _healthSystem.DamageReceived -= HandleHealthDamageReceived;
+        _abilitySystem?.Dispose();
         _invulnerabilitySystem?.Dispose();
         _moveSystem?.Dispose();
         _cameraSystem?.Dispose();
@@ -169,7 +172,10 @@ public class CharacterFacade : MonoBehaviour
         _collider = collider;
         _characterStats = characterStats;
         _pauseEntity = pauseEntity;
+        if (_healthSystem != null)
+            _healthSystem.DamageReceived -= HandleHealthDamageReceived;
         _healthSystem = healthSystem;
+        _healthSystem.DamageReceived += HandleHealthDamageReceived;
         _shieldSystem = shieldSystem;
         _abilitySystem = abilitySystem;
         _moveSystem = moveSystem;
@@ -180,12 +186,44 @@ public class CharacterFacade : MonoBehaviour
         _invulnerabilitySystem = invulnerabilitySystem;
     }
 
-    public bool ReceiveDamage(float rawDamage, CombatTarget source)
+    public bool TryBlockProjectile(Vector3 from, Vector3 to, float radius, CombatTarget source,
+        out float hitDistance)
+    {
+        hitDistance = 0f;
+        return isActiveAndEnabled && _pauseEntity?.IsPauseEntity == false &&
+               _healthSystem?.IsDead == false && _abilitySystem != null &&
+               _abilitySystem.TryBlockProjectile(this, source, from, to, radius, out hitDistance);
+    }
+
+    public bool ReceiveAreaDamage(float damage, CombatTarget source, Vector3 from, Vector3 to, float radius)
+    {
+        if (_pauseEntity.IsPauseEntity || _invulnerabilitySystem.IsActive || _healthSystem.IsDead || damage <= 0f)
+            return false;
+        if (TryBlockProjectile(from, to, radius, source, out _))
+            return false;
+        return ReceiveDamage(damage, source, allowAegisBlock: false);
+    }
+
+    public bool ReceiveBoxDamage(float damage, CombatTarget source, Vector3 center,
+        Vector3 halfExtents, Quaternion rotation)
+    {
+        if (_pauseEntity.IsPauseEntity || _invulnerabilitySystem.IsActive || _healthSystem.IsDead || damage <= 0f)
+            return false;
+        if (_abilitySystem.TryBlockBox(this, source, center, halfExtents, rotation))
+            return false;
+        return ReceiveDamage(damage, source, allowAegisBlock: false);
+    }
+
+    public bool ReceiveDamage(float rawDamage, CombatTarget source, bool allowAegisBlock = true,
+        Vector3? damageOrigin = null)
     {
         if (_pauseEntity.IsPauseEntity || _invulnerabilitySystem.IsActive)
             return false;
 
         if (_healthSystem.IsDead || rawDamage <= 0)
+            return false;
+
+        if (allowAegisBlock && _abilitySystem.TryBlockIncomingDamage(this, source, damageOrigin))
             return false;
 
         float evasionChance = Mathf.Clamp(_characterStats.Evasion, 0f, 100f) * 0.01f;
@@ -228,6 +266,7 @@ public class CharacterFacade : MonoBehaviour
         {
             float rescuedHealthDamage =
                 Mathf.Max(0f, healthBeforeDamage - _healthSystem.CurrentHealth);
+            HandleHealthDamageReceived(rescuedHealthDamage);
             GrantDamageInvulnerability(reducedDamage);
             _moveSystem.ResetBunnyHopBonus();
             PlayDamageFeedback(absorbedDamage + rescuedHealthDamage);
@@ -277,6 +316,12 @@ public class CharacterFacade : MonoBehaviour
         _damageEffectSystem.DealDamage();
         _relicEventBus?.PublishDamageTaken(new RelicDamageTakenEvent(this, null, appliedDamage, damageType));
         return true;
+    }
+
+    private void HandleHealthDamageReceived(float amount)
+    {
+        if (amount > 0f)
+            _relicEventBus?.PublishHealthDamageTaken(new RelicHealthDamageTakenEvent(this, amount));
     }
 
     private void PlayDamageFeedback(float damage)

@@ -40,6 +40,7 @@ namespace Features.Bosses.Scripts
         private bool _hasSplit;
         private bool _experienceRewardClaimed;
         private SplitExperienceReward _splitExperienceReward;
+        private SplitRadialAttackGroup _splitRadialAttackGroup;
         private SplitTransition _splitTransition;
         private float _splitElapsed;
         private Vector3 _splitOriginalScale;
@@ -49,6 +50,14 @@ namespace Features.Bosses.Scripts
         private float _splitJumpHeight;
 
         private enum SplitTransition { None, Inflating, Jumping }
+
+        internal bool CanUseSplitRadialAttack() =>
+            _splitRadialAttackGroup == null || _splitRadialAttackGroup.CanUse(this);
+
+        internal bool TryBeginSplitRadialAttack(BossRadialAttackConfiguration attack) =>
+            _splitRadialAttackGroup == null || _splitRadialAttackGroup.TryBegin(this, attack.Cooldown);
+
+        internal void CompleteSplitRadialAttack() => _splitRadialAttackGroup?.Complete(this);
 
         public override int ClaimExperienceReward()
         {
@@ -251,6 +260,9 @@ namespace Features.Bosses.Scripts
                 }
                 children[0].SplitSibling = children[1];
                 children[1].SplitSibling = children[0];
+                var splitRadialAttackGroup = new SplitRadialAttackGroup(children[0], children[1]);
+                children[0]._splitRadialAttackGroup = splitRadialAttackGroup;
+                children[1]._splitRadialAttackGroup = splitRadialAttackGroup;
             }
             catch (Exception exception)
             {
@@ -277,6 +289,69 @@ namespace Features.Bosses.Scripts
             // Splitting is a replacement, not a kill, and must not grant the parent's death rewards.
             gameObject.SetActive(false);
             Destroy(gameObject);
+        }
+
+        private sealed class SplitRadialAttackGroup
+        {
+            private readonly MushroomBossFacade _first;
+            private readonly MushroomBossFacade _second;
+            private MushroomBossFacade _selectedShooter;
+            private MushroomBossFacade _activeShooter;
+            private float _firstReadyAt;
+            private float _secondReadyAt;
+
+            public SplitRadialAttackGroup(MushroomBossFacade first, MushroomBossFacade second)
+            {
+                _first = first;
+                _second = second;
+            }
+
+            public bool CanUse(MushroomBossFacade boss)
+            {
+                if (IsAlive(_activeShooter) || !IsAlive(boss))
+                    return false;
+
+                float readyAt = boss == _first ? _firstReadyAt : _secondReadyAt;
+                if (boss.RadialAttackClock < readyAt)
+                    return false;
+
+                // Keep the choice while the selected child finishes its current attack.
+                if (!IsAlive(_selectedShooter))
+                {
+                    bool firstAlive = IsAlive(_first);
+                    bool secondAlive = IsAlive(_second);
+                    _selectedShooter = firstAlive && secondAlive
+                        ? (UnityEngine.Random.Range(0, 2) == 0 ? _first : _second)
+                        : firstAlive ? _first : secondAlive ? _second : null;
+                }
+
+                return _selectedShooter == boss;
+            }
+
+            public bool TryBegin(MushroomBossFacade boss, float cooldown)
+            {
+                if (!CanUse(boss))
+                    return false;
+
+                _selectedShooter = null;
+                _activeShooter = boss;
+                float delay = Mathf.Max(0.01f, cooldown);
+                // Both children spend this cast's cooldown on their existing boss clocks.
+                if (_first != null)
+                    _firstReadyAt = _first.RadialAttackClock + delay;
+                if (_second != null)
+                    _secondReadyAt = _second.RadialAttackClock + delay;
+                return true;
+            }
+
+            public void Complete(MushroomBossFacade boss)
+            {
+                if (_activeShooter == boss)
+                    _activeShooter = null;
+            }
+
+            private static bool IsAlive(MushroomBossFacade boss) =>
+                boss != null && !boss.IsDead && boss.isActiveAndEnabled;
         }
 
         private sealed class SplitExperienceReward

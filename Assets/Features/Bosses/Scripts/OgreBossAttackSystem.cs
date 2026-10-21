@@ -386,7 +386,8 @@ namespace Features.Bosses.Scripts
             {
                 if (hit.GetComponentInParent<CharacterFacade>() != _character)
                     continue;
-                if (_character.ReceiveDamage(attack.Damage, _boss) && _character.Rigidbody != null &&
+                if (_character.ReceiveAreaDamage(attack.Damage, _boss, ground,
+                        ground + Vector3.up * radius, radius) && _character.Rigidbody != null &&
                     !_character.Rigidbody.isKinematic)
                 {
                     Vector3 direction = _character.transform.position - ground;

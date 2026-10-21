@@ -67,6 +67,13 @@ namespace Features.Bosses.Scripts
                 if (!CanContinue() || !_boss.CanAttack)
                     return;
 
+                if (Configuration.Pattern == BossProjectilePattern.ArcingVolley)
+                {
+                    LaunchVolley(cancellationToken);
+                    _boss.PlayCombatSound(Features.Sounds.SoundId.EnemyGhostShot);
+                    return;
+                }
+
                 HealthSystem health = _boss.HealthSystem;
                 float threshold = health.MaxHealth * Mathf.Clamp(Configuration.BurstHealthPercentage, 0f, 100f) * 0.01f;
                 int ringCount = health.CurrentHealth <= threshold ? Mathf.Max(1, Configuration.BurstRingCount) : 1;
@@ -151,17 +158,60 @@ namespace Features.Bosses.Scripts
             for (int index = 0; index < count; index++)
             {
                 Vector3 direction = rotation * Quaternion.AngleAxis(360f * index / count, Vector3.up) * Vector3.forward;
-                GameObject instance = Object.Instantiate(Configuration.ProjectilePrefab,
-                    origin + direction * radius, BossFacade.GetFlatRotation(direction));
-                if (!instance.TryGetComponent(out MushroomRadialProjectile projectile))
-                {
-                    Object.Destroy(instance);
-                    throw new InvalidOperationException(
-                        "Radial attacks require a BasicBigMissileRed prefab with MushroomRadialProjectile on its root.");
-                }
+                MushroomRadialProjectile projectile = CreateProjectile(origin + direction * radius, direction);
                 projectile.Launch(_boss, _character, direction, Configuration.ProjectileSpeed,
                     Configuration.ProjectileLifetime, Configuration.Damage);
             }
+        }
+
+        private void LaunchVolley(CancellationToken cancellationToken)
+        {
+            Vector3 origin = _boss.RadialAttackOrigin.position;
+            // Capture once: the entire volley can be dodged without the landing points following the player.
+            Vector3 target = _character.transform.position;
+            Vector3 aim = target - origin;
+            aim.y = 0f;
+            Vector3 forward = aim.sqrMagnitude > 0.0001f ? aim.normalized :
+                _boss.AttackRotation * Vector3.forward;
+            float spawnDistance = Mathf.Min(Mathf.Max(0f, Configuration.SpawnRadius), aim.magnitude * 0.5f);
+            Vector3 start = origin + forward * spawnDistance;
+            aim = target - start;
+            aim.y = 0f;
+            float distance = Mathf.Max(0.05f, aim.magnitude);
+            float halfSpread = Mathf.Clamp(Configuration.VolleySpreadAngle, 0f, 180f) * 0.5f;
+            int count = Mathf.Max(3, Configuration.ProjectileCount);
+            for (int index = 0; index < count; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                Vector3 direction = Quaternion.AngleAxis(UnityEngine.Random.Range(-halfSpread, halfSpread),
+                    Vector3.up) * forward;
+                Vector3 landing = start + direction * (distance * Sample(Configuration.VolleyRangeMultiplier, 0.05f));
+                // The player's jump height must not lift the landing plane.
+                landing.y = _boss.AttackOrigin.position.y;
+                float flightDuration = Sample(Configuration.VolleyFlightDuration, 0.1f);
+                float arcHeight = Sample(Configuration.VolleyArcHeight, 0f);
+                MushroomRadialProjectile projectile = CreateProjectile(start, direction);
+                projectile.LaunchArc(_boss, _character, landing, flightDuration, arcHeight,
+                    Configuration.Damage, cancellationToken);
+            }
+        }
+
+        private MushroomRadialProjectile CreateProjectile(Vector3 position, Vector3 direction)
+        {
+            GameObject instance = Object.Instantiate(Configuration.ProjectilePrefab,
+                position, BossFacade.GetFlatRotation(direction));
+            if (instance.TryGetComponent(out MushroomRadialProjectile projectile))
+                return projectile;
+            Object.Destroy(instance);
+            throw new InvalidOperationException(
+                "Boss projectile attacks require a prepared prefab with MushroomRadialProjectile on its root.");
+        }
+
+        private static float Sample(Vector2 range, float minimum)
+        {
+            float min = Mathf.Max(minimum, Mathf.Min(range.x, range.y));
+            float max = Mathf.Max(min, Mathf.Max(range.x, range.y));
+            return UnityEngine.Random.Range(min, max);
         }
     }
 }

@@ -6,7 +6,7 @@ public class EnemyHealthScalingConfiguration : ScriptableObject
 {
     [Tooltip("Health multipliers by first combat-room visit order in the run, independent of the player's current build.")]
     [SerializeField] private float[] _healthByRoom =
-        { 2.5f, 2.75f, 3f, 3.5f, 4f, 4.5f, 5f, 5.75f, 6.5f, 7.5f, 8.75f, 10f };
+        { 1.15f, 1.4f, 1.65f, 2.15f, 2.65f, 3.15f, 3.65f, 4.4f, 5.15f, 6.15f, 7.4f, 8.65f };
     [Tooltip("Scales only health growth above the first combat room, including additional floor growth. Starting health stays unchanged.")]
     [SerializeField, Range(0f, 1f)] private float _healthGrowthMultiplier = 0.85f;
     [SerializeField, Min(1f)] private float _finalSpeedMultiplier = 1.2f;

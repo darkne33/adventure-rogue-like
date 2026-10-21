@@ -66,7 +66,13 @@ namespace Features.Enemies.Scripts
         public override void Tick()
         {
             if (Time.timeScale <= 0f || Enemy.IsDead || Character == null ||
-                Character.HealthSystem.IsDead || !IsNavigationReady || !CanMove())
+                Character.HealthSystem.IsDead || !IsNavigationReady)
+            {
+                StopPhysicsMovement();
+                return;
+            }
+
+            if (CanMove() == false)
                 return;
 
             if (_isHoldingPosition && IsInsideAttackRange(Enemy.transform.position))

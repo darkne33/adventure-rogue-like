@@ -20,6 +20,8 @@ namespace Features.Enemies.Scripts
         private ISoundsService _sounds;
         private SoundId _impactSound;
         private bool _impactSoundPlayed;
+        private readonly RaycastHit[] _castHits = new RaycastHit[16];
+        private readonly Collider[] _overlaps = new Collider[16];
 
         protected bool IsResolved => _isResolved;
         protected virtual bool ResolvesDirectHits => true;
@@ -58,17 +60,84 @@ namespace Features.Enemies.Scripts
 
             Vector3 displacement = nextPosition - transform.position;
             float distance = displacement.magnitude;
+            Vector3 direction = distance > 0.0001f ? displacement / distance : Vector3.zero;
+            Vector3 center = GetCollisionCenter();
+            float radius = GetCollisionRadius();
+            int mask = _blockingLayerMask;
+            if (ResolvesDirectHits && _target != null && _target.Collider != null)
+                mask |= 1 << _target.Collider.gameObject.layer;
 
-            if (distance > 0.0001f && _blockingLayerMask != 0)
+            // Resolve existing wall/body overlaps before testing shields farther along the flight.
+            int overlapCount = Physics.OverlapSphereNonAlloc(center, radius, _overlaps, mask,
+                QueryTriggerInteraction.Collide);
+            Collider[] overlaps = overlapCount == _overlaps.Length
+                ? Physics.OverlapSphere(center, radius, mask, QueryTriggerInteraction.Collide)
+                : _overlaps;
+            if (overlapCount == _overlaps.Length)
+                overlapCount = overlaps.Length;
+            bool touchesBody = false;
+            for (int index = 0; index < overlapCount; index++)
             {
-                float radius = GetCollisionRadius();
-                if (Physics.SphereCast(transform.position, radius, displacement / distance,
-                        out RaycastHit hit, distance, _blockingLayerMask, QueryTriggerInteraction.Collide))
+                Collider other = overlaps[index];
+                if (IsBlockingCollider(other))
                 {
-                    transform.position = hit.point;
                     ResolveBlocked();
                     return false;
                 }
+                touchesBody |= IsTargetBody(other);
+            }
+            if (touchesBody)
+            {
+                ResolveHit();
+                Destroy(gameObject);
+                return false;
+            }
+
+            int hitCount = distance > 0.0001f
+                ? Physics.SphereCastNonAlloc(center, radius, direction, _castHits, distance, mask,
+                    QueryTriggerInteraction.Collide)
+                : 0;
+            RaycastHit[] hits = hitCount == _castHits.Length
+                ? Physics.SphereCastAll(center, radius, direction, distance, mask,
+                    QueryTriggerInteraction.Collide)
+                : _castHits;
+            if (hitCount == _castHits.Length)
+                hitCount = hits.Length;
+
+            float nearestDistance = distance;
+            Collider nearestCollider = null;
+            for (int index = 0; index < hitCount; index++)
+            {
+                RaycastHit hit = hits[index];
+                if (hit.distance <= nearestDistance &&
+                    (IsBlockingCollider(hit.collider) || IsTargetBody(hit.collider)))
+                {
+                    nearestDistance = hit.distance;
+                    nearestCollider = hit.collider;
+                }
+            }
+
+            // A shield can only intercept the actual swept volume before its first wall/body hit.
+            if (_damage > 0f && _target != null &&
+                _target.TryBlockProjectile(center, center + direction * nearestDistance, radius,
+                    _source, out float blockDistance))
+            {
+                transform.position += direction * blockDistance;
+                ResolveBlocked();
+                return false;
+            }
+
+            if (nearestCollider != null)
+            {
+                transform.position += direction * nearestDistance;
+                if (IsTargetBody(nearestCollider))
+                {
+                    ResolveHit();
+                    Destroy(gameObject);
+                }
+                else
+                    ResolveBlocked();
+                return false;
             }
 
             transform.position = nextPosition;
@@ -104,7 +173,7 @@ namespace Features.Enemies.Scripts
                     return;
             }
 
-            _target.ReceiveDamage(_damage, _source);
+            _target.ReceiveDamage(_damage, _source, allowAegisBlock: false);
         }
 
         private void OnTriggerEnter(Collider other)
@@ -112,11 +181,20 @@ namespace Features.Enemies.Scripts
             if (_isLaunched == false || _isResolved)
                 return;
 
-            CharacterFacade character = other.GetComponentInParent<CharacterFacade>();
-            if (ResolvesDirectHits && character != null && character == _target)
+            if (IsTargetBody(other))
             {
                 ResolveHit();
                 Destroy(gameObject);
+                return;
+            }
+
+            // Prepared shield triggers are character children, but are not the damageable body.
+            if (_damage > 0f && _target != null && other != null &&
+                other.GetComponentInParent<AegisShieldView>() != null &&
+                other.GetComponentInParent<CharacterFacade>() == _target)
+            {
+                // Reuse the overlap ordering so a shield beyond an existing wall/body hit is not spent.
+                TryMoveTo(transform.position);
                 return;
             }
 
@@ -133,10 +211,23 @@ namespace Features.Enemies.Scripts
             return Mathf.Max(0.01f, Mathf.Min(extents.x, extents.y, extents.z));
         }
 
+        private Vector3 GetCollisionCenter() => _collider switch
+        {
+            SphereCollider sphere => sphere.transform.TransformPoint(sphere.center),
+            BoxCollider box => box.transform.TransformPoint(box.center),
+            CapsuleCollider capsule => capsule.transform.TransformPoint(capsule.center),
+            null => transform.position,
+            _ => _collider.bounds.center
+        };
+
+        private bool IsTargetBody(Collider other) => ResolvesDirectHits && _target != null &&
+            other != null && other == _target.Collider;
+
         private bool IsBlockingCollider(Collider other) =>
-            (_blockingLayerMask & (1 << other.gameObject.layer)) != 0 ||
+            other != null && other != _collider &&
+            ((_blockingLayerMask & (1 << other.gameObject.layer)) != 0 ||
             other.GetComponentInParent<Wall>() != null ||
-            other.GetComponentInParent<Obstacle>() != null;
+            other.GetComponentInParent<Obstacle>() != null);
 
         private void ResolveBlocked()
         {

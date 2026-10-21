@@ -222,7 +222,8 @@ namespace Features.Bosses.Scripts
             {
                 if (hit.GetComponentInParent<CharacterFacade>() != _character)
                     continue;
-                if (_character.ReceiveDamage(_configuration.Damage, _boss) &&
+                if (_character.ReceiveBoxDamage(_configuration.Damage, _boss,
+                        piece.Center, size * 0.5f, piece.BoxRotation) &&
                     _character.Rigidbody != null && !_character.Rigidbody.isKinematic)
                 {
                     Vector3 direction = rotation * Vector3.forward;

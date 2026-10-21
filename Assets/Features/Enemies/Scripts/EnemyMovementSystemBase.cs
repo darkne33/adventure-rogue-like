@@ -38,6 +38,8 @@ namespace Features.Enemies.Scripts
 
         protected bool CanMove()
         {
+            PreparePhysicsMovement();
+
             if (Character == null || NavMeshAgent.isStopped ||
                 NavMeshAgent.isOnNavMesh == false || Enemy.IsDead)
                 return false;
@@ -107,9 +109,6 @@ namespace Features.Enemies.Scripts
 
         protected void UpdateManualNavigationPosition()
         {
-            if (NavMeshAgent.updatePosition)
-                return;
-
             Rigidbody rigidbody = Enemy.Rigidbody;
 
             // Kinematic enemies do not need physics to own their position. Let
@@ -119,24 +118,70 @@ namespace Features.Enemies.Scripts
             // can finish while automatic position updates are still disabled.
             if (rigidbody == null || rigidbody.isKinematic)
             {
+                if (NavMeshAgent.updatePosition)
+                    return;
+
                 NavMeshAgent.nextPosition = Enemy.transform.position;
                 NavMeshAgent.updatePosition = true;
                 return;
             }
 
-            Vector3 currentPosition = Enemy.transform.position;
-            Vector3 navigationPosition = NavMeshAgent.nextPosition;
+            // Navigation supplies steering; physics owns the body's pose so
+            // Rigidbody interpolation can smooth it between fixed updates.
+            Vector3 velocity = NavMeshAgent.desiredVelocity;
+            velocity.y = 0f;
+            velocity = Vector3.ClampMagnitude(velocity, NavMeshAgent.speed);
+            rigidbody.linearVelocity = new Vector3(
+                velocity.x, rigidbody.linearVelocity.y, velocity.z);
+            RotateTowardsDirection(velocity);
+        }
 
-            // Keep the visible enemy on the agent's path instead of lerping
-            // across NavMesh corners. Dynamic grounded enemies keep their
-            // physics-driven height; no-gravity enemies follow the NavMesh.
-            currentPosition.x = navigationPosition.x;
-            currentPosition.z = navigationPosition.z;
+        protected void RotateTowardsDirection(Vector3 direction)
+        {
+            direction.y = 0f;
+            if (direction.sqrMagnitude <= 0.001f)
+                return;
 
-            if (rigidbody.useGravity == false)
-                currentPosition.y = navigationPosition.y;
+            Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+            float rotationStep = Mathf.Max(0f, Configuration.RotationSpeed) * Time.fixedDeltaTime;
+            Rigidbody rigidbody = Enemy.Rigidbody;
+            if (rigidbody != null && rigidbody.isKinematic == false)
+            {
+                rigidbody.MoveRotation(Quaternion.RotateTowards(
+                    rigidbody.rotation, targetRotation, rotationStep));
+                return;
+            }
 
-            Enemy.transform.position = currentPosition;
+            Enemy.transform.rotation = Quaternion.RotateTowards(
+                Enemy.transform.rotation, targetRotation, rotationStep);
+        }
+
+        protected void StopPhysicsMovement()
+        {
+            Rigidbody rigidbody = Enemy.Rigidbody;
+            if (rigidbody == null || rigidbody.isKinematic)
+                return;
+
+            Vector3 velocity = rigidbody.linearVelocity;
+            rigidbody.linearVelocity = new Vector3(0f, velocity.y, 0f);
+            rigidbody.angularVelocity = Vector3.zero;
+        }
+
+        private void PreparePhysicsMovement()
+        {
+            Rigidbody rigidbody = Enemy.Rigidbody;
+            if (rigidbody == null || rigidbody.isKinematic)
+                return;
+
+            NavMeshAgent.updatePosition = false;
+            NavMeshAgent.updateRotation = false;
+
+            // Every tick starts stopped. A movement decision below supplies a
+            // new velocity; attack, aggro and arrival branches must not coast.
+            StopPhysicsMovement();
+
+            if (NavMeshAgent.isActiveAndEnabled && NavMeshAgent.isOnNavMesh)
+                NavMeshAgent.nextPosition = rigidbody.position;
         }
     }
 }

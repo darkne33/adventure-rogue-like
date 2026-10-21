@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Quests.Scripts.ProgressionConfiguration
   _defaultCharacters:
   - rabbit
-  _defaultAbilities: 01000000000000001200000007000000040000000600000005000000
+  _defaultAbilities: 0100000000000000120000000700000004000000060000000500000017000000
   _defaultRelics:
   - {fileID: 11400000, guid: 159a9539d24f45e5b019237a978c6c20, type: 2}
   - {fileID: 11400000, guid: 5566d33206f349fbaa754ce6d65ac35f, type: 2}
@@ -55,6 +55,13 @@ MonoBehaviour:
     _silverReward: 2
     _characterId: duke
     _ability: {fileID: 11400000, guid: c4e9a1b2d3f54768a9b0c1d2e3f40516, type: 2}
+  - _id: health_damage_taken_50
+    _title: UNBREAKABLE
+    _description: Lose a total of 50 hearts to damage across runs as any character. Only health actually lost counts.
+    _category: 1
+    _metric: 27
+    _target: 50
+    _silverReward: 0
   - _id: level_5
     _title: GETTING STARTED
     _description: Reach character level 7 in one run.
@@ -288,6 +295,17 @@ MonoBehaviour:
     _unlockedByDefault: 1
     _requiredQuestId: ""
     _silverCost: 0
+  - _id: weapon_lightning_staff
+    _category: 1
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: 85d9196d6d9f43ce841a4ad73af993bb, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 1
+    _requiredQuestId: ""
+    _silverCost: 0
   - _id: weapon_bullet_explosion
     _category: 1
     _characterId: ""
@@ -334,6 +352,17 @@ MonoBehaviour:
     _unlockedByDefault: 0
     _requiredQuestId: aura_close_kills_50
     _silverCost: 3
+  - _id: weapon_aegis
+    _category: 1
+    _characterId: ""
+    _ability: {fileID: 11400000, guid: a645f8d7142146bb82fb7eb123b9ef01, type: 2}
+    _relic: {fileID: 0}
+    _displayName: ""
+    _description: ""
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredQuestId: health_damage_taken_50
+    _silverCost: 1
   - _id: scroll_max_hp
     _category: 2
     _characterId: ""

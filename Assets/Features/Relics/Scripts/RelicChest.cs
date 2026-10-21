@@ -96,8 +96,7 @@ namespace Features.Relics.Scripts
         {
             bool canInteract = CanInteract();
             if (canInteract)
-                _interactionView.SetKeyPrice(_isGrayChest ? 0 : 1,
-                    _isGrayChest || _characterWallet != null && _characterWallet.Keys.Count >= 1);
+                _interactionView.SetKeyPrice(0, true);
             _interactionView.SetAvailable(canInteract);
 
             if (canInteract && _inputActions != null &&
@@ -127,9 +126,6 @@ namespace Features.Relics.Scripts
                 return;
             }
 
-            if (_characterWallet == null || _characterWallet.Keys.Count < 1)
-                return;
-
             if (_rollSequence == null || _rollView.IsConfigured == false)
             {
                 Debug.LogError($"{name} is missing relic roll references.", this);
@@ -154,7 +150,6 @@ namespace Features.Relics.Scripts
                 return;
 
             _isOpened = true;
-            _characterWallet.Keys.Remove(1);
             _interactionView.SetAvailable(false);
             _rollSequence.PlayAsync(rollPlan, transform.position,
                 () => _rollService.Finish(rollPlan),

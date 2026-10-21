@@ -21,5 +21,7 @@
     EarthRock = 18,
     BulletExplosion = 19,
     Punch = 20,
-    Aura = 21
+    Aura = 21,
+    Aegis = 22,
+    LightningStaff = 23
 }

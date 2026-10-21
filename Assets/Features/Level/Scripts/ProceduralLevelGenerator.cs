@@ -10,7 +10,8 @@ public static class ProceduralLevelGenerator
         RoomDirection.Up, RoomDirection.Down, RoomDirection.Left, RoomDirection.Right
     };
 
-    public static LevelRoomNode[] Generate(LevelsConfiguration configuration, int levelIndex, Room bossRoom)
+    public static LevelRoomNode[] Generate(LevelsConfiguration configuration, int levelIndex, Room bossRoom,
+        int goldCount)
     {
         if (configuration == null)
             throw new ArgumentNullException(nameof(configuration));
@@ -22,7 +23,7 @@ public static class ProceduralLevelGenerator
         ProceduralLevelSettings settings = configuration.ProceduralLevels;
         // Roll content once. Geometry retries must not change floor size or room chances.
         int roomCount = settings.RollRoomCount(levelIndex);
-        List<RoomType> specialRooms = settings.RollSpecialRooms(levelIndex);
+        List<RoomType> specialRooms = settings.RollSpecialRooms(levelIndex, goldCount);
         bool onlyRelicRequiresKey = specialRooms.Contains(RoomType.OnlyRelic) &&
             settings.RollOnlyRelicRequiresKey();
         var templates = new Templates(catalog, bossRoom, specialRooms);

@@ -171,7 +171,7 @@ namespace Features.Bosses.Scripts
             {
                 if (hit.GetComponentInParent<CharacterFacade>() != _character)
                     continue;
-                if (_character.ReceiveDamage(_configuration.Damage, _boss) &&
+                if (_character.ReceiveAreaDamage(_configuration.Damage, _boss, center, center, radius) &&
                     _character.Rigidbody != null && !_character.Rigidbody.isKinematic)
                 {
                     Vector3 direction = _character.transform.position - center;

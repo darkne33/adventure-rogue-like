@@ -9,6 +9,7 @@ namespace Features.Relics.Scripts
         public event Action<RelicHitEvent> Hit;
         public event Action<RelicKillEvent> Kill;
         public event Action<RelicDamageTakenEvent> DamageTaken;
+        public event Action<RelicHealthDamageTakenEvent> HealthDamageTaken;
         public event Action<RelicHealEvent> Heal;
         public event Action<RelicRoomEvent> RoomStarted;
         public event Action<RelicMoveDistanceEvent> MoveDistance;
@@ -28,6 +29,9 @@ namespace Features.Relics.Scripts
 
         public void PublishDamageTaken(RelicDamageTakenEvent damageTakenEvent) =>
             DamageTaken?.Invoke(damageTakenEvent);
+
+        public void PublishHealthDamageTaken(RelicHealthDamageTakenEvent damageTakenEvent) =>
+            HealthDamageTaken?.Invoke(damageTakenEvent);
 
         public void PublishHeal(RelicHealEvent healEvent) =>
             Heal?.Invoke(healEvent);
@@ -120,6 +124,18 @@ namespace Features.Relics.Scripts
             Attacker = attacker;
             Amount = amount;
             DamageType = damageType;
+        }
+    }
+
+    public readonly struct RelicHealthDamageTakenEvent
+    {
+        public CharacterFacade Character { get; }
+        public float Amount { get; }
+
+        public RelicHealthDamageTakenEvent(CharacterFacade character, float amount)
+        {
+            Character = character;
+            Amount = amount;
         }
     }
 

@@ -14,6 +14,8 @@ namespace Features.Quests.Scripts
         private readonly PlayerWallet _wallet;
         private readonly Dictionary<QuestMetric, int> _progress = new();
         private readonly Dictionary<string, int> _questProgress = new();
+        private readonly Dictionary<QuestMetric, double> _fractionalProgress = new();
+        private readonly Dictionary<string, double> _fractionalQuestProgress = new();
         private readonly HashSet<string> _activeQuests = new();
         private readonly HashSet<string> _completed = new();
         private readonly HashSet<string> _purchased = new();
@@ -356,6 +358,41 @@ namespace Features.Quests.Scripts
             RecordChange();
         }
 
+        public void AddFractionalProgress(QuestMetric metric, double amount)
+        {
+            if (!_isRunActive || amount <= 0d || double.IsNaN(amount) || double.IsInfinity(amount))
+                return;
+
+            // Save sub-unit progress separately, including each character-restricted objective.
+            // Individual half-heart hits must accumulate without rounding away progress.
+            _fractionalProgress.TryGetValue(metric, out double metricRemainder);
+            int metricIncrease = AccumulateFractionalProgress(amount, ref metricRemainder);
+            _fractionalProgress[metric] = metricRemainder;
+            _progress[metric] = (int)Math.Min(int.MaxValue, (long)GetMetric(metric) + metricIncrease);
+
+            foreach (QuestDefinition quest in Definitions)
+            {
+                if (quest.Metric != metric || !_activeQuests.Contains(quest.Id) || IsCompleted(quest.Id))
+                    continue;
+
+                _fractionalQuestProgress.TryGetValue(quest.Id, out double questRemainder);
+                int questIncrease = AccumulateFractionalProgress(amount, ref questRemainder);
+                _fractionalQuestProgress[quest.Id] = questRemainder;
+                SetQuestProgress(quest,
+                    (int)Math.Min(int.MaxValue, (long)GetQuestProgress(quest.Id) + questIncrease));
+            }
+
+            RecordChange();
+        }
+
+        private static int AccumulateFractionalProgress(double amount, ref double remainder)
+        {
+            double accumulated = Math.Min(int.MaxValue, amount + remainder);
+            double whole = Math.Floor(accumulated);
+            remainder = accumulated - whole;
+            return (int)whole;
+        }
+
         public void RecordAbilityLevel(AbilityName ability, int level)
         {
             if (!_isRunActive || level <= 0)
@@ -390,6 +427,10 @@ namespace Features.Quests.Scripts
                 data.Progress[entry.Key.ToString()] = entry.Value;
             foreach (var entry in _questProgress)
                 data.QuestProgress[entry.Key] = entry.Value;
+            foreach (var entry in _fractionalProgress)
+                data.FractionalProgress[entry.Key.ToString()] = entry.Value;
+            foreach (var entry in _fractionalQuestProgress)
+                data.FractionalQuestProgress[entry.Key] = entry.Value;
             data.CompletedIds.AddRange(_completed);
             data.PurchasedIds.AddRange(_purchased);
             data.ClaimedRewardIds.AddRange(_claimedRewards);
@@ -557,6 +598,17 @@ namespace Features.Quests.Scripts
                     _dirty = true;
                 }
 
+                if (data.FractionalProgress != null)
+                    foreach (var entry in data.FractionalProgress)
+                        if (Enum.TryParse(entry.Key, out QuestMetric metric) &&
+                            Enum.IsDefined(typeof(QuestMetric), metric) && IsValidRemainder(entry.Value))
+                            _fractionalProgress[metric] = entry.Value;
+
+                if (data.FractionalQuestProgress != null)
+                    foreach (var entry in data.FractionalQuestProgress)
+                        if (Configuration.GetConfiguredQuest(entry.Key) != null && IsValidRemainder(entry.Value))
+                            _fractionalQuestProgress[entry.Key] = entry.Value;
+
                 if (data.CompletedIds != null)
                     foreach (string id in data.CompletedIds)
                         if (!string.IsNullOrWhiteSpace(id))
@@ -593,6 +645,9 @@ namespace Features.Quests.Scripts
             }
         }
 
+        private static bool IsValidRemainder(double value) =>
+            !double.IsNaN(value) && !double.IsInfinity(value) && value >= 0d && value < 1d;
+
         [Serializable]
         private sealed class QuestSaveData
         {
@@ -600,6 +655,8 @@ namespace Features.Quests.Scripts
             public int Version = 2;
             public Dictionary<string, int> Progress = new();
             public Dictionary<string, int> QuestProgress = new();
+            public Dictionary<string, double> FractionalProgress = new();
+            public Dictionary<string, double> FractionalQuestProgress = new();
             public List<string> CompletedIds = new();
             public List<string> PurchasedIds = new();
             public List<string> ClaimedRewardIds = new();
