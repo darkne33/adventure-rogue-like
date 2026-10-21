@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 899ec8a9cc4f4db5a9175f6241dad499, type: 3}
+  m_Name: EnemyConfiguration_SkeletonElite
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyConfiguration
+  <EnemyRank>k__BackingField: 1
+  <MaxHealth>k__BackingField: 96
+  <Damage>k__BackingField: 0.5
+  <EnemyDamage>k__BackingField: 1
+  <DamageRange>k__BackingField: 10000
+  <DamageCooldown>k__BackingField: 0.84
+  <AttackPreparationDuration>k__BackingField: 0.55
+  <EnemyDamageType>k__BackingField: 4
+  <CannonballProjectileCount>k__BackingField: 3
+  <CannonballSpreadAngle>k__BackingField: 15
+  <MovementPauseAfterAttack>k__BackingField: 0.625
+  <EnemyAnimationType>k__BackingField: 3
+  <EnemyMovementType>k__BackingField: 6
+  <RandomizeSkirmisherOnSpawn>k__BackingField: 0
+  <Exp>k__BackingField: 10
+  <DistanceToStop>k__BackingField: 0
+  <Speed>k__BackingField: 8.208
+  <RotationSpeed>k__BackingField: 360
+  <Acceleration>k__BackingField: 12
+  <RandomRoomMinimumTravelDistance>k__BackingField: 4
+  <RandomRoomArrivalDistance>k__BackingField: 0.75
+  <RandomRoomSelectionRetryDelay>k__BackingField: 0.5
+  <RandomRoomStuckTimeout>k__BackingField: 2.5
+  <AggroRange>k__BackingField: 10000
+  <AggroReactionDuration>k__BackingField: 0.65

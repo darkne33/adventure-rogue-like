@@ -152,13 +152,13 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     }
 
     private void UpdateGoldCurrencyView(int amount) =>
-        SetText(Panel.PlayerGoldCurrencyText, amount.ToString());
+        SetText(Panel.PlayerGoldCurrencyText, amount.ToString("D2"));
 
     private void UpdateSilverCurrencyView(int amount) =>
-        SetText(Panel.PlayerSilverCurrencyText, amount.ToString());
+        SetText(Panel.PlayerSilverCurrencyText, amount.ToString("D2"));
 
     private void UpdateKeysCurrencyView(int amount) =>
-        SetText(Panel.PlayerKeysCurrencyText, amount.ToString());
+        SetText(Panel.PlayerKeysCurrencyText, amount.ToString("D2"));
 
     private void ResetKilledEnemiesView()
     {

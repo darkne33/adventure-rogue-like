@@ -36,6 +36,11 @@ public class EnemyConfiguration : ScriptableObject
     [field: Min(0f)]
     [field: SerializeField] public float AttackPreparationDuration { get; private set; } = 0.55f;
     [field: SerializeField] public EnemyDamageType EnemyDamageType { get; private set; }
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeDirection)]
+    [field: SerializeField, Min(1)] public int CannonballProjectileCount { get; private set; } = 1;
+    [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeDirection)]
+    [field: Tooltip("Angle in degrees between adjacent ballistic projectiles.")]
+    [field: SerializeField, Range(0f, 180f)] public float CannonballSpreadAngle { get; private set; }
     [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.Jump)]
     [field: SerializeField] public Features.Enemies.Scripts.EnemyJumpAttackConfiguration JumpConfiguration { get; private set; }
     [field: NaughtyAttributes.ShowIf(nameof(EnemyDamageType), EnemyDamageType.RangeArea)]

@@ -81,7 +81,7 @@ namespace Features.Enemies.Scripts
                     return;
 
                 RotateTowardsCharacter(enemyTransform, true);
-                SpawnProjectile();
+                SpawnProjectiles(cancellationToken);
 
                 _enemyFacade.AnimationSystem.IdleAnimation();
                 float movementPause = Mathf.Max(
@@ -154,26 +154,40 @@ namespace Features.Enemies.Scripts
             return offset.magnitude;
         }
 
-        private void SpawnProjectile()
+        private void SpawnProjectiles(CancellationToken cancellationToken)
         {
             _enemyFacade.PlayAttackSound();
             Transform spawnPoint = _attackView.ProjectileSpawnPoint;
             Vector3 startPosition = spawnPoint.position;
             Vector3 targetPosition = _characterFacade.transform.position + _attackView.TargetOffset;
             Vector3 direction = targetPosition - startPosition;
-            Quaternion rotation = direction.sqrMagnitude > 0.0001f
-                ? Quaternion.LookRotation(direction.normalized)
-                : Quaternion.identity;
-
-            EnemyCannonball projectile = UnityEngine.Object.Instantiate(
-                _attackView.ProjectilePrefab, startPosition, rotation);
+            int projectileCount = Mathf.Max(1, _enemyConfiguration.CannonballProjectileCount);
+            float spreadAngle = Mathf.Clamp(_enemyConfiguration.CannonballSpreadAngle, 0f, 180f);
+            float centerIndex = (projectileCount - 1) * 0.5f;
+            float flightDuration = _attackView.ProjectileFlightDuration /
+                                   Mathf.Max(0.05f, _enemyFacade.RelicTimeScale);
             // Released projectiles outlive the enemy that fired them.
             CancellationToken projectileCancellationToken =
                 _characterFacade.gameObject.GetCancellationTokenOnDestroy();
-            projectile.Launch(startPosition, targetPosition,
-                _attackView.ProjectileFlightDuration / Mathf.Max(0.05f, _enemyFacade.RelicTimeScale),
-                _attackView.ProjectileArcHeight, _attackView.ImpactRadius, _enemyConfiguration.Damage,
-                _enemyFacade, _characterFacade, projectileCancellationToken);
+
+            for (int i = 0; i < projectileCount; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                float angle = (i - centerIndex) * spreadAngle;
+                Vector3 projectileDirection = Quaternion.AngleAxis(angle, Vector3.up) * direction;
+                // Rotate only on X/Z so all shots keep the original range and ballistic arc.
+                Vector3 projectileTarget = angle == 0f
+                    ? targetPosition
+                    : startPosition + projectileDirection;
+                Quaternion rotation = projectileDirection.sqrMagnitude > 0.0001f
+                    ? Quaternion.LookRotation(projectileDirection.normalized)
+                    : Quaternion.identity;
+                EnemyCannonball projectile = UnityEngine.Object.Instantiate(
+                    _attackView.ProjectilePrefab, startPosition, rotation);
+                projectile.Launch(startPosition, projectileTarget, flightDuration,
+                    _attackView.ProjectileArcHeight, _attackView.ImpactRadius, _enemyConfiguration.Damage,
+                    _enemyFacade, _characterFacade, projectileCancellationToken);
+            }
         }
 
         private void RotateTowardsCharacter(Transform enemyTransform, bool immediately = false)

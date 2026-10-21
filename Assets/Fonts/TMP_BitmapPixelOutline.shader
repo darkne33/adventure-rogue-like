@@ -7,6 +7,10 @@ Shader "Little Rush/UI/TMP Bitmap Pixel Outline"
         _FaceColor ("Text Color", Color) = (1, 1, 1, 1)
         _OutlineColor ("Outline Color", Color) = (0, 0, 0, 1)
         [IntRange] _OutlineWidth ("Outline Width (Atlas Pixels)", Range(0, 4)) = 2
+        [Toggle(BITMAP_SHADOW_ON)] _UseShadow ("Use Shadow", Float) = 0
+        _ShadowColor ("Shadow Color", Color) = (0, 0, 0, 0)
+        _ShadowOffsetX ("Shadow Offset X (Atlas Pixels)", Range(-4, 4)) = 0
+        _ShadowOffsetY ("Shadow Offset Y (Atlas Pixels)", Range(-4, 4)) = 0
         [HideInInspector] _Padding ("Padding", Float) = 4
 
         _VertexOffsetX ("Vertex Offset X", Float) = 0
@@ -62,6 +66,7 @@ Shader "Little Rush/UI/TMP Bitmap Pixel Outline"
 
             #pragma multi_compile __ UNITY_UI_CLIP_RECT
             #pragma multi_compile __ UNITY_UI_ALPHACLIP
+            #pragma shader_feature_local __ BITMAP_SHADOW_ON
 
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
@@ -90,6 +95,9 @@ Shader "Little Rush/UI/TMP Bitmap Pixel Outline"
             fixed4 _FaceColor;
             fixed4 _OutlineColor;
             float _OutlineWidth;
+            fixed4 _ShadowColor;
+            float _ShadowOffsetX;
+            float _ShadowOffsetY;
 
             float _VertexOffsetX;
             float _VertexOffsetY;
@@ -142,6 +150,12 @@ Shader "Little Rush/UI/TMP Bitmap Pixel Outline"
 
                 fixed expandedAlpha = centerAlpha;
 
+                #if BITMAP_SHADOW_ON
+                    const float2 shadowUv = uv -
+                        _MainTex_TexelSize.xy * float2(_ShadowOffsetX, _ShadowOffsetY);
+                    fixed shadowExpandedAlpha = tex2D(_MainTex, shadowUv).a;
+                #endif
+
                 // Square max filter. Every atlas pixel inside the selected radius is
                 // sampled, so widths above one remain solid instead of forming gaps.
                 for (int y = -4; y <= 4; y++)
@@ -153,17 +167,28 @@ Shader "Little Rush/UI/TMP Bitmap Pixel Outline"
                         {
                             const float2 sampleOffset = _MainTex_TexelSize.xy * float2(x, y);
                             expandedAlpha = max(expandedAlpha, tex2D(_MainTex, uv + sampleOffset).a);
+                            #if BITMAP_SHADOW_ON
+                                shadowExpandedAlpha = max(
+                                    shadowExpandedAlpha, tex2D(_MainTex, shadowUv + sampleOffset).a);
+                            #endif
                         }
                     }
                 }
 
                 const fixed faceAlpha = centerAlpha * input.color.a;
                 const fixed outlineAlpha = saturate(expandedAlpha - centerAlpha) * _OutlineColor.a * input.color.a;
-                const fixed outputAlpha = faceAlpha + outlineAlpha * (1 - faceAlpha);
+                fixed outputAlpha = faceAlpha + outlineAlpha * (1 - faceAlpha);
 
                 const fixed3 faceColor = tex2D(_FaceTex, input.texcoord1).rgb * input.color.rgb;
-                const fixed3 premultipliedColor =
+                fixed3 premultipliedColor =
                     faceColor * faceAlpha + _OutlineColor.rgb * outlineAlpha * (1 - faceAlpha);
+
+                #if BITMAP_SHADOW_ON
+                    const fixed shadowAlpha =
+                        shadowExpandedAlpha * _ShadowColor.a * input.color.a * (1 - outputAlpha);
+                    premultipliedColor += _ShadowColor.rgb * shadowAlpha;
+                    outputAlpha += shadowAlpha;
+                #endif
 
                 fixed4 color = fixed4(
                     premultipliedColor / max(outputAlpha, 0.0001),
