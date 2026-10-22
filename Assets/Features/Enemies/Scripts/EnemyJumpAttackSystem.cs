@@ -30,6 +30,7 @@ namespace Features.Enemies.Scripts
         private int _lastClockFrame = -1;
 
         public bool CanAttack => true;
+        internal bool IsExecuting => _executing;
 
         private bool CanContinue => _enemy != null && _enemy.isActiveAndEnabled && !_enemy.IsDead &&
             _character != null && _character.HealthSystem != null && !_character.HealthSystem.IsDead &&
@@ -149,6 +150,9 @@ namespace Features.Enemies.Scripts
                     if (!CanContinue)
                         return;
 
+                    if (_enemy.IsAbilityKnockbackActive && _enemy.IsAbilityKnockbackPaused)
+                        continue;
+
                     float delta = AdvanceClock();
                     if (delta <= 0f)
                         continue;
@@ -165,6 +169,18 @@ namespace Features.Enemies.Scripts
                     float flight = Mathf.InverseLerp(takeoff, impact, progress);
                     Vector3 position = Vector3.Lerp(start, destination, flight);
                     position.y += 4f * Mathf.Max(0.1f, _jump.Height) * flight * (1f - flight);
+                    if (_enemy.IsAbilityKnockbackActive)
+                    {
+                        Vector3 correction = _body.position - position;
+                        correction.y = 0f;
+                        correction += _enemy.GetAbilityKnockbackDisplacement(_body.position, Time.deltaTime);
+                        start += correction;
+                        destination += correction;
+                        ground += correction;
+                        position += correction;
+                        if (indicator != null)
+                            indicator.transform.position += correction;
+                    }
                     SetPosition(position);
 
                     if (!hasHit && indicator != null)

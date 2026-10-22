@@ -12,6 +12,7 @@ namespace Features.Enemies.Scripts
         private const float NavMeshSampleDistance = 4f;
         private const float FallRecoveryDepth = 10f;
         private const float FallRecoveryHeight = 5f;
+        private const float KnockbackBoundaryClearance = 0.01f;
 
         public override HealthSystem HealthSystem => _healthSystem;
         public override DealDamageEffectSystem EffectsSystem => _effectsSystem;
@@ -22,6 +23,17 @@ namespace Features.Enemies.Scripts
                                  _navMeshAgent.isOnNavMesh ? _navMeshAgent.isStopped : _isStopped;
         public bool IsAggro { get; private set; }
         public bool IsRelicStunned => _isRelicStunned;
+        internal bool IsAbilityKnockbackActive => _abilityKnockbackRemaining > 0f &&
+                                                 isActiveAndEnabled && CanBeAttacked && !IsDead;
+        internal bool IsAbilityKnockbackPaused
+        {
+            get
+            {
+                CharacterFacade character = _characterProvider?.CharacterFacade;
+                return Time.timeScale <= 0f || RelicTimeScale <= 0f ||
+                       character != null && (character.IsTransitionPaused || character.IsCinematicPaused);
+            }
+        }
         public bool CanAttack => _movementSystem?.CanAttack != false && _isRelicStunned == false;
         public override float RelicTimeScale => !CanBeAttacked ? 1f : _isRelicStunned
             ? 0f
@@ -42,6 +54,7 @@ namespace Features.Enemies.Scripts
         [SerializeField] private Renderer[] _meshRenderers;
         [SerializeField] private Transform _movementVisual;
         [Inject] private ISoundsService _sounds;
+        [Inject] private ICharacterProvider _characterProvider;
         public ISoundsService Sounds => _sounds;
 
         public void PlayCombatSound(SoundId sound) => _sounds.Play(sound);
@@ -96,6 +109,13 @@ namespace Features.Enemies.Scripts
         private bool _releaseStopAfterRelicStun;
         private bool _isStopped;
         private Vector3 _spawnNavigationPosition;
+        private Vector3 _abilityKnockbackDirection;
+        private float _abilityKnockbackSpeed;
+        private float _abilityKnockbackDuration;
+        private float _abilityKnockbackRemaining;
+        private bool _abilityKnockbackControlsVelocity;
+        private bool _abilityKnockbackControlsNavigation;
+        private bool _abilityKnockbackRestoreUpdatePosition;
 
         [Inject]
         private void CreateSystems(IEnemySystemsFactory systemsFactory)
@@ -112,16 +132,40 @@ namespace Features.Enemies.Scripts
 
         private void FixedUpdate()
         {
+            StopAbilityKnockbackVelocity();
             RefreshRelicStatuses();
             if (TryRecoverFromFall())
+            {
+                ClearAbilityKnockback();
                 return;
+            }
 
-            if (_movementSystem is not EnemyRicochetAttackSystem)
+            if (IsDead || !CanBeAttacked)
+                ClearAbilityKnockback();
+            else if (IsAbilityKnockbackActive)
+                ControlAbilityKnockbackNavigation();
+            else
+                ReleaseAbilityKnockbackNavigation();
+
+            bool tickMovement = !IsAbilityKnockbackActive || _movementSystem is
+                EnemyDashAttackSystem or EnemyJumpAttackSystem { IsExecuting: true };
+            if (tickMovement && _movementSystem is not EnemyRicochetAttackSystem)
                 _movementSystem.Tick();
+
+            if (_movementSystem is not EnemyJumpAttackSystem { IsExecuting: true })
+                TickAbilityKnockback();
+        }
+
+        private void OnDisable()
+        {
+            ClearAbilityKnockback();
         }
 
         private void Update()
         {
+            if (_abilityKnockbackControlsNavigation)
+                ControlAbilityKnockbackNavigation();
+
             // The NavMesh-driven hazard moves once per rendered frame, including
             // during time-slow effects. Other enemies retain their physics tick.
             if (_movementSystem is EnemyRicochetAttackSystem)
@@ -236,6 +280,173 @@ namespace Features.Enemies.Scripts
 
             _persistentRelicSlow = multiplier;
             UpdateRelicNavigationSpeed();
+        }
+
+        public override void ApplyAbilityKnockback(Vector3 sourcePosition, float speed, float duration)
+        {
+            if (!isActiveAndEnabled || !CanBeAttacked || IsDead || speed <= 0f || duration <= 0f)
+                return;
+
+            Vector3 direction = transform.position - sourcePosition;
+            direction.y = 0f;
+            if (direction.sqrMagnitude <= 0.0001f)
+                return;
+
+            // A hit refreshes one short impulse, so rapid abilities cannot stack its speed.
+            _abilityKnockbackDirection = direction.normalized;
+            _abilityKnockbackSpeed = speed;
+            _abilityKnockbackDuration = duration;
+            _abilityKnockbackRemaining = duration;
+            ControlAbilityKnockbackNavigation();
+        }
+
+        internal Vector3 GetAbilityKnockbackDisplacement(Vector3 position, float deltaTime)
+        {
+            return TryGetAbilityKnockbackStep(deltaTime, out Vector3 displacement)
+                ? ConstrainAbilityKnockback(position, displacement) : Vector3.zero;
+        }
+
+        private void TickAbilityKnockback()
+        {
+            if (!IsAbilityKnockbackActive)
+                return;
+
+            float deltaTime = Time.fixedDeltaTime;
+            TryGetAbilityKnockbackStep(deltaTime, out Vector3 displacement);
+
+            Vector3 position = _rigidbody != null ? _rigidbody.position : transform.position;
+            if (_rigidbody != null && !_rigidbody.isKinematic)
+            {
+                Vector3 velocity = _rigidbody.linearVelocity;
+                displacement = ConstrainAbilityKnockback(position, displacement);
+                // The short rebound owns horizontal movement until it ends.
+                _rigidbody.linearVelocity = new Vector3(
+                    displacement.x / deltaTime, velocity.y, displacement.z / deltaTime);
+                _abilityKnockbackControlsVelocity = true;
+                return;
+            }
+
+            displacement = ConstrainAbilityKnockback(position, displacement);
+            if (_navMeshAgent != null && _navMeshAgent.isActiveAndEnabled && _navMeshAgent.isOnNavMesh)
+                _navMeshAgent.Move(displacement);
+
+            if (_rigidbody != null)
+                _rigidbody.MovePosition(position + displacement);
+            else
+                transform.position = position + displacement;
+        }
+
+        private bool TryGetAbilityKnockbackStep(float deltaTime, out Vector3 displacement)
+        {
+            displacement = Vector3.zero;
+            if (IsDead || !CanBeAttacked)
+            {
+                _abilityKnockbackRemaining = 0f;
+                return false;
+            }
+
+            float scaledDeltaTime = deltaTime * RelicTimeScale;
+            if (_abilityKnockbackRemaining <= 0f || scaledDeltaTime <= 0f || IsAbilityKnockbackPaused)
+                return false;
+
+            float step = Mathf.Min(scaledDeltaTime, _abilityKnockbackRemaining);
+            float influence = (_abilityKnockbackRemaining - step * 0.5f) / _abilityKnockbackDuration;
+            displacement = _abilityKnockbackDirection * (_abilityKnockbackSpeed * influence * step);
+            _abilityKnockbackRemaining -= step;
+            return true;
+        }
+
+        private Vector3 ConstrainAbilityKnockback(Vector3 position, Vector3 displacement)
+        {
+            if (_rigidbody != null)
+            {
+                if ((_rigidbody.constraints & RigidbodyConstraints.FreezePositionX) != 0)
+                    displacement.x = 0f;
+                if ((_rigidbody.constraints & RigidbodyConstraints.FreezePositionZ) != 0)
+                    displacement.z = 0f;
+            }
+
+            float distance = displacement.magnitude;
+            if (distance <= 0.0001f)
+                return Vector3.zero;
+
+            Vector3 direction = displacement / distance;
+            if (_navMeshAgent != null && _navMeshAgent.isActiveAndEnabled && _navMeshAgent.isOnNavMesh)
+            {
+                Vector3 samplePosition = position;
+                samplePosition.y = _navMeshAgent.nextPosition.y;
+                if (!NavMesh.SamplePosition(samplePosition, out NavMeshHit origin,
+                        Mathf.Max(0.1f, _navMeshAgent.radius), _navMeshAgent.areaMask))
+                    return Vector3.zero;
+
+                if (NavMesh.Raycast(origin.position, origin.position + displacement,
+                        out NavMeshHit boundary, _navMeshAgent.areaMask))
+                {
+                    Vector3 offset = boundary.position - origin.position;
+                    offset.y = 0f;
+                    distance = Mathf.Min(distance,
+                        Mathf.Max(0f, Vector3.Dot(offset, direction) - KnockbackBoundaryClearance));
+                }
+            }
+
+            if (_rigidbody != null && _rigidbody.SweepTest(direction, out RaycastHit hit,
+                    distance + KnockbackBoundaryClearance, QueryTriggerInteraction.Ignore))
+                distance = Mathf.Min(distance, Mathf.Max(0f, hit.distance - KnockbackBoundaryClearance));
+
+            return direction * distance;
+        }
+
+        private void StopAbilityKnockbackVelocity()
+        {
+            if (!_abilityKnockbackControlsVelocity)
+                return;
+
+            _abilityKnockbackControlsVelocity = false;
+            if (_rigidbody == null || _rigidbody.isKinematic)
+                return;
+
+            Vector3 velocity = _rigidbody.linearVelocity;
+            _rigidbody.linearVelocity = new Vector3(0f, velocity.y, 0f);
+        }
+
+        private void ControlAbilityKnockbackNavigation()
+        {
+            if (_navMeshAgent == null || !_navMeshAgent.isActiveAndEnabled || !_navMeshAgent.isOnNavMesh)
+                return;
+
+            if (!_abilityKnockbackControlsNavigation)
+            {
+                _abilityKnockbackRestoreUpdatePosition = _navMeshAgent.updatePosition;
+                _abilityKnockbackControlsNavigation = true;
+            }
+
+            _navMeshAgent.updatePosition = false;
+            Vector3 navigationPosition = _rigidbody != null ? _rigidbody.position : transform.position;
+            navigationPosition.y = _navMeshAgent.nextPosition.y;
+            _navMeshAgent.nextPosition = navigationPosition;
+            _navMeshAgent.velocity = Vector3.zero;
+        }
+
+        private void ReleaseAbilityKnockbackNavigation()
+        {
+            if (!_abilityKnockbackControlsNavigation)
+                return;
+
+            if (_navMeshAgent != null)
+            {
+                if (_navMeshAgent.isActiveAndEnabled && _navMeshAgent.isOnNavMesh)
+                    _navMeshAgent.nextPosition = _rigidbody != null ? _rigidbody.position : transform.position;
+                _navMeshAgent.updatePosition = _abilityKnockbackRestoreUpdatePosition;
+            }
+
+            _abilityKnockbackControlsNavigation = false;
+        }
+
+        private void ClearAbilityKnockback()
+        {
+            _abilityKnockbackRemaining = 0f;
+            StopAbilityKnockbackVelocity();
+            ReleaseAbilityKnockbackNavigation();
         }
 
         public override void ApplyRelicSlow(float multiplier, float duration)

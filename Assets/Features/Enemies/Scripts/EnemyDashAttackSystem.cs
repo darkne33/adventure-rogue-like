@@ -42,6 +42,7 @@ namespace Features.Enemies.Scripts
         private bool _canDamage;
         private bool _hasPhysicsSnapshot;
         private bool _useGravity;
+        private bool _wasAbilityKnockback;
         private Quaternion _attackRotation;
         private Vector3 _dashDirection;
         private Vector3 _dashOrigin;
@@ -92,6 +93,12 @@ namespace Features.Enemies.Scripts
 
             if (_state == State.Pursuit)
             {
+                if (_enemyFacade.IsAbilityKnockbackActive)
+                {
+                    StopHorizontalMovement();
+                    return;
+                }
+
                 _pursuitMovement.Tick();
                 return;
             }
@@ -227,6 +234,7 @@ namespace Features.Enemies.Scripts
             _previousDashPosition = _dashOrigin;
             _remainingDashDistance = Mathf.Max(0f, _enemyConfiguration.DashDistance);
             _lastDashStep = 0f;
+            _wasAbilityKnockback = false;
             _rigidbody.useGravity = false;
             _rigidbody.linearVelocity = Vector3.zero;
             for (int i = 0; i < _colliders.Length; i++)
@@ -244,6 +252,23 @@ namespace Features.Enemies.Scripts
         private void TickDash()
         {
             Vector3 position = _rigidbody.position;
+            if (_enemyFacade.IsAbilityKnockbackActive)
+            {
+                _remainingDashDistance = Mathf.Max(0f, _remainingDashDistance - _lastDashStep);
+                _lastDashStep = 0f;
+                _previousDashPosition = position;
+                _wasAbilityKnockback = true;
+                StopHorizontalMovement();
+                return;
+            }
+
+            if (_wasAbilityKnockback)
+            {
+                // A rebound is not part of the dash's swept damage path.
+                _previousDashPosition = position;
+                _wasAbilityKnockback = false;
+            }
+
             CheckDashHit(_previousDashPosition, position);
             if (CanContinueAttack == false)
             {

@@ -253,7 +253,7 @@ public sealed class LightningStaffAbility : CharacterActiveAbility, IDisposable
         {
             if (_owner == null || _owner.HealthSystem.IsDead)
                 break;
-            ApplyDamage(_strikeTargets[index], chain.Damage, from);
+            ApplyDamage(_strikeTargets[index], chain.Damage);
             if (sequence != _sequence)
                 return;
         }
@@ -304,7 +304,7 @@ public sealed class LightningStaffAbility : CharacterActiveAbility, IDisposable
         return result;
     }
 
-    private void ApplyDamage(CombatTarget target, float damage, Vector3 from)
+    private void ApplyDamage(CombatTarget target, float damage)
     {
         if (!IsValidTarget(target) || damage <= 0f)
             return;
@@ -316,18 +316,8 @@ public sealed class LightningStaffAbility : CharacterActiveAbility, IDisposable
         bool killed = target.IsDead;
         if (applied <= 0)
             return;
-        if (!killed && target.Rigidbody != null && !target.Rigidbody.isKinematic)
-        {
-            Vector3 direction = position - from;
-            direction.y = 0f;
-            if (direction.sqrMagnitude < 0.0001f)
-            {
-                direction = position - owner.transform.position;
-                direction.y = 0f;
-            }
-            if (direction.sqrMagnitude > 0.0001f)
-                target.Rigidbody.AddForce(direction.normalized * _configuration.Knockback, ForceMode.Impulse);
-        }
+        ApplyHitKnockback(owner, target);
+
         float healed = owner.HealthSystem.IncreaseCurrentHealth(CharacterHealthRules.FromLegacyHealth(
             applied * Mathf.Max(0f, _stats.LifeSteal) * 0.01f));
         if (healed > 0f)

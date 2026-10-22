@@ -10,7 +10,6 @@ public sealed class AegisAbilityConfiguration : AbilityConfiguration
 
     [field: Header("Shockwave")]
     [field: SerializeField, Min(1)] public int StartDamage { get; private set; } = 10;
-    [field: SerializeField, Min(0f)] public float StartKnockback { get; private set; } = 3f;
     [field: SerializeField, Min(0.1f)] public float ShockwaveRadius { get; private set; } = 6f;
     [field: SerializeField, Range(1f, 360f)] public float ShockwaveAngle { get; private set; } = 120f;
     [field: SerializeField, Min(0.1f)] public float ShockwaveHeight { get; private set; } = 2.5f;

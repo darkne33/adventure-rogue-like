@@ -196,7 +196,7 @@ public sealed class AegisAbility : CharacterActiveAbility, IDisposable
         float duration = Mathf.Max(0.05f, _configuration.ShockwaveDuration * AbilityDurationMultiplier);
         _waves.Add(new Shockwave(origin, direction.normalized, radius, duration,
             Mathf.Cos(_configuration.ShockwaveAngle * 0.5f * Mathf.Deg2Rad),
-            _configuration.ShockwaveHeight, GetBaseDamage(), _configuration.StartKnockback));
+            _configuration.ShockwaveHeight, GetBaseDamage()));
         UpdateView();
         _view?.PlayBlock(direction, radius, duration, _configuration.ShockwaveAngle);
         Sounds.Play(Features.Sounds.SoundId.PlayerBlock);
@@ -319,14 +319,8 @@ public sealed class AegisAbility : CharacterActiveAbility, IDisposable
         if (applied <= 0)
             return;
 
-        if (!killed && target.Rigidbody != null && !target.Rigidbody.isKinematic)
-        {
-            Vector3 push = target.transform.position - wave.Origin;
-            push.y = 0f;
-            if (push.sqrMagnitude < 0.0001f)
-                push = wave.Direction;
-            target.Rigidbody.AddForce(push.normalized * wave.Knockback, ForceMode.Impulse);
-        }
+        ApplyHitKnockback(_owner, target);
+
         float healed = _owner.HealthSystem.IncreaseCurrentHealth(CharacterHealthRules.FromLegacyHealth(
             applied * Mathf.Max(0f, _stats.LifeSteal) * 0.01f));
         if (healed > 0f)
@@ -410,12 +404,11 @@ public sealed class AegisAbility : CharacterActiveAbility, IDisposable
         public readonly float HalfAngleCos;
         public readonly float Height;
         public readonly int Damage;
-        public readonly float Knockback;
         public readonly HashSet<CombatTarget> HitTargets = new();
         public float Elapsed;
 
         public Shockwave(Vector3 origin, Vector3 direction, float radius, float duration,
-            float halfAngleCos, float height, int damage, float knockback)
+            float halfAngleCos, float height, int damage)
         {
             Origin = origin;
             Direction = direction;
@@ -424,7 +417,6 @@ public sealed class AegisAbility : CharacterActiveAbility, IDisposable
             HalfAngleCos = halfAngleCos;
             Height = height;
             Damage = damage;
-            Knockback = knockback;
         }
     }
 }

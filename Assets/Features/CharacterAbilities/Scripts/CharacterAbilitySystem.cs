@@ -69,6 +69,12 @@ public class CharacterAbilitySystem
             ability.RestartCooldown();
     }
 
+    public void ApplyThornsKnockback(CharacterFacade character, CombatTarget target)
+    {
+        if (_passiveAbilities.TryGetValue(AbilityName.ThornsDamageScroll, out CharacterPassiveAbility ability))
+            ability.ApplyHitKnockback(character, target);
+    }
+
     public bool TryBlockIncomingDamage(CharacterFacade character, CombatTarget source, Vector3? origin = null)
     {
         foreach (CharacterActiveAbility ability in _activeAbilities.Values)

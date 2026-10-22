@@ -566,6 +566,8 @@ public sealed class PunchAbility : CharacterActiveAbility
         if (appliedDamage <= 0)
             return;
 
+        ApplyHitKnockback(character, enemy);
+
         float lifeStealPercent = Mathf.Max(0f, _characterStats.LifeSteal) * 0.01f;
         float healed = character.HealthSystem.IncreaseCurrentHealth(
             CharacterHealthRules.FromLegacyHealth(appliedDamage * lifeStealPercent));

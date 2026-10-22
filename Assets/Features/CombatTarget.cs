@@ -20,6 +20,10 @@ public abstract class CombatTarget : MonoBehaviour
     public virtual Transform GetNextProjectileTarget() =>
         TargetToShootDamage != null ? TargetToShootDamage : transform;
 
+    public virtual void ApplyAbilityKnockback(Vector3 sourcePosition, float speed, float duration)
+    {
+    }
+
     public abstract void SetPersistentRelicSlow(float multiplier);
     public abstract void ApplyRelicSlow(float multiplier, float duration);
     public abstract void ApplyRelicStun(float duration);

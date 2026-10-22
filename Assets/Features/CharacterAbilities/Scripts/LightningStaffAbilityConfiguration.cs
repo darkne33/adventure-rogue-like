@@ -8,7 +8,6 @@ public sealed class LightningStaffAbilityConfiguration : AbilityConfiguration
     [field: SerializeField, Min(1f)] public float StartDamage { get; private set; } = 7f;
     [field: SerializeField, Min(1)] public int StartProjectileCount { get; private set; } = 1;
     [field: SerializeField, Min(0)] public int StartBounces { get; private set; }
-    [field: SerializeField, Min(0f)] public float Knockback { get; private set; } = 1f;
     [field: SerializeField, Min(0.1f)] public float TargetRange { get; private set; } = 40f;
     [field: SerializeField, Min(0.01f)] public float AttackDuration { get; private set; } = 1f;
     [field: SerializeField, Min(0.01f)] public float EndCooldown { get; private set; } = 1.1f;

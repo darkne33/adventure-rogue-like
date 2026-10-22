@@ -181,6 +181,8 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         if (appliedDamage <= 0)
             return;
 
+        ApplyHitKnockback(character, enemyFacade);
+
         float lifeStealPercent = Mathf.Max(0f, _characterStats.LifeSteal) * 0.01f;
         float healed = character.HealthSystem.IncreaseCurrentHealth(
             CharacterHealthRules.FromLegacyHealth(appliedDamage * lifeStealPercent));

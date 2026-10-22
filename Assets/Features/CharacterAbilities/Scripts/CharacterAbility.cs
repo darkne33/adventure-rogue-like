@@ -9,6 +9,7 @@ public abstract class CharacterAbility
     private static readonly AbilityUpgradeType[] DefaultUpgradeTypes = { AbilityUpgradeType.Default };
 
     private readonly Stack<AppliedAbilityUpgrade> _appliedUpgrades = new();
+    private AbilityConfiguration _hitConfiguration;
 
     public AbilityName Id { get; protected set; }
     public string DisplayName { get; protected set; }
@@ -66,10 +67,21 @@ public abstract class CharacterAbility
 
     public virtual void Initialize(AbilityConfiguration abilityConfig)
     {
+        _hitConfiguration = abilityConfig;
         Id = abilityConfig.AbilityName;
         DisplayName = abilityConfig.DisplayName;
         Description = abilityConfig.Description;
         Icon = abilityConfig.Icon;
+    }
+
+    protected internal void ApplyHitKnockback(CharacterFacade character, CombatTarget target)
+    {
+        if (character == null || target == null || target.IsDead || !target.CanBeAttacked ||
+            _hitConfiguration == null)
+            return;
+
+        target.ApplyAbilityKnockback(character.transform.position,
+            _hitConfiguration.HitKnockbackSpeed, _hitConfiguration.HitKnockbackDuration);
     }
 
     protected float GetCurrentUpgradeValue(float value) =>

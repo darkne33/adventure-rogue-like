@@ -292,7 +292,11 @@ public class CharacterFacade : MonoBehaviour
 
         int thornsDamage = Mathf.Max(0, Mathf.RoundToInt(_characterStats.ThornsDamage));
         if (source != null && source.CanBeAttacked && thornsDamage > 0)
-            source.HealthSystem.GetDamage(thornsDamage);
+        {
+            int appliedThornsDamage = source.HealthSystem.GetDamage(thornsDamage);
+            if (appliedThornsDamage > 0)
+                _abilitySystem.ApplyThornsKnockback(this, source);
+        }
 
         return true;
     }

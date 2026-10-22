@@ -8,7 +8,7 @@ public sealed class AegisShieldView : MonoBehaviour
 {
     [SerializeField] private Transform _orbitRoot;
     [SerializeField] private Transform _shieldTemplate;
-    [SerializeField] private LineRenderer _wavePrefab;
+    [SerializeField] private AegisBlockBurstView _wavePrefab;
     [SerializeField, Min(0.1f)] private float _orbitRadius = 1.6f;
     [SerializeField] private float _orbitDegreesPerSecond = 55f;
     [SerializeField] private Vector3 _shieldRotationOffset;
@@ -85,21 +85,16 @@ public sealed class AegisShieldView : MonoBehaviour
         {
             BlockWave wave = _waves[index];
             wave.Elapsed += elapsed;
-            if (wave.Renderer == null || wave.Elapsed >= wave.Duration)
+            if (wave.View == null || wave.Elapsed >= wave.Duration)
             {
-                if (wave.Renderer != null)
-                    Destroy(wave.Renderer.gameObject);
+                if (wave.View != null)
+                    Destroy(wave.View.gameObject);
                 _waves.RemoveAt(index);
                 continue;
             }
 
             float progress = Mathf.Clamp01(wave.Elapsed / wave.Duration);
-            float scale = Mathf.Lerp(0.1f, wave.Radius, progress);
-            wave.Renderer.transform.localScale = Vector3.one * scale;
-            Color color = wave.Color;
-            color.a *= 1f - progress;
-            wave.Renderer.startColor = color;
-            wave.Renderer.endColor = color;
+            wave.View.SetProgress(progress);
         }
     }
 
@@ -245,19 +240,11 @@ public sealed class AegisShieldView : MonoBehaviour
         if (direction.sqrMagnitude < 0.0001f)
             direction = Vector3.forward;
 
-        LineRenderer renderer = Instantiate(_wavePrefab,
+        AegisBlockBurstView view = Instantiate(_wavePrefab,
             _owner.ProjectileSpawnPosition + Vector3.up * _waveHeightOffset,
             Quaternion.LookRotation(direction.normalized, Vector3.up));
-        float halfAngle = Mathf.Clamp(arcDegrees, 1f, 360f) * 0.5f;
-        int points = renderer.positionCount;
-        for (int index = 0; index < points; index++)
-        {
-            float angle = Mathf.Lerp(-halfAngle, halfAngle,
-                index / (float)Mathf.Max(1, points - 1)) * Mathf.Deg2Rad;
-            renderer.SetPosition(index, new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle)));
-        }
-        renderer.transform.localScale = Vector3.one * 0.1f;
-        _waves.Add(new BlockWave(renderer, Mathf.Max(0.1f, radius), Mathf.Max(0.01f, duration)));
+        view.Configure(radius, arcDegrees);
+        _waves.Add(new BlockWave(view, Mathf.Max(0.01f, duration)));
     }
 
     public void Cleanup()
@@ -488,8 +475,8 @@ public sealed class AegisShieldView : MonoBehaviour
     {
         foreach (BlockWave wave in _waves)
         {
-            if (wave.Renderer != null)
-                Destroy(wave.Renderer.gameObject);
+            if (wave.View != null)
+                Destroy(wave.View.gameObject);
         }
         _waves.Clear();
     }
@@ -540,18 +527,14 @@ public sealed class AegisShieldView : MonoBehaviour
 
     private sealed class BlockWave
     {
-        public BlockWave(LineRenderer renderer, float radius, float duration)
+        public BlockWave(AegisBlockBurstView view, float duration)
         {
-            Renderer = renderer;
-            Radius = radius;
+            View = view;
             Duration = duration;
-            Color = renderer.startColor;
         }
 
-        public LineRenderer Renderer { get; }
-        public float Radius { get; }
+        public AegisBlockBurstView View { get; }
         public float Duration { get; }
-        public Color Color { get; }
         public float Elapsed { get; set; }
     }
 }
