@@ -118,7 +118,6 @@ namespace Features.Enemies.Scripts
             float elapsed = 0f;
 
             _executing = true;
-            _cooldown = Mathf.Max(0.1f, _jump.Interval);
             _useGravity = _body.useGravity;
             for (int i = 0; i < _colliders.Length; i++)
                 _wasTrigger[i] = _colliders[i] != null && _colliders[i].isTrigger;
@@ -188,6 +187,7 @@ namespace Features.Enemies.Scripts
                     if (!hasHit && progress >= impact)
                     {
                         hasHit = true;
+                        _cooldown = Mathf.Max(0.1f, _jump.Interval);
                         DestroyIndicator(indicator);
                         indicator = null;
                         _enemy.AnimationSystem.IdleAnimation();
@@ -236,7 +236,7 @@ namespace Features.Enemies.Scripts
             _lastClockFrame = Time.frameCount;
             float delta = CanContinue && _enemy.IsAggro && (_executing || !_enemy.IsStopped)
                 ? Time.deltaTime * _enemy.RelicTimeScale : 0f;
-            // Count flight and recovery as part of the interval between attack starts.
+            // The cooldown starts on landing and continues during grounded recovery.
             _cooldown = Mathf.Max(0f, _cooldown - delta);
             return delta;
         }

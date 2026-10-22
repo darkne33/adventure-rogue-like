@@ -36,6 +36,7 @@ public class EnemySpawner
     private EnemyRoomScalingConfiguration _roomBalance;
     private EnemyFactoryConfiguration _loadedEnemyFactoryConfiguration;
     private readonly List<EnemySpawnRule> _roomEnemyRules = new();
+    private readonly HashSet<EnemyType> _roomHazardTypes = new();
     private readonly Dictionary<EnemyType, int> _spawnedByType = new();
     private int _roomProgressIndex;
     private bool _isSmallRoom;
@@ -389,7 +390,7 @@ public class EnemySpawner
 
             var enemyType = enemyTypes[i];
             bool allowElite = _elitesSpawnedInCurrentRoom < _roomBalance.GetEliteLimit(_roomProgressIndex);
-            GameObject enemy = eliteOnly
+            GameObject enemy = eliteOnly && !_roomHazardTypes.Contains(enemyType)
                 ? levelSettings.EnemyFactoryConfiguration.GetEliteEnemyByType(enemyType)
                 : levelSettings.EnemyFactoryConfiguration.GetEnemyByType(
                     enemyType, _roomProgressIndex, allowElite, forceElite: _elitesSpawnedInCurrentRoom == 0);
@@ -528,33 +529,38 @@ public class EnemySpawner
         EnemyFactoryConfiguration factory)
     {
         _roomEnemyRules.Clear();
+        _roomHazardTypes.Clear();
         var availableRules = new List<EnemySpawnRule>();
         var availableTypes = new HashSet<EnemyType>();
-        var hazardTypes = new HashSet<EnemyType>();
         int levelIndex = _rogueLikeRuntimeDataService.CurrentIndexLevel;
         bool eliteOnly = _roomBalance.UsesOnlyElites(levelIndex);
         foreach (EnemySpawnRule rule in _roomBalance.EnemyRules)
         {
-            if (rule == null || rule.Weight <= 0f ||
+            if (rule == null || rule.Weight <= 0f || levelIndex < Mathf.Max(1, rule.FirstLevel) - 1 ||
                 (!eliteOnly && rule.LastNormalLevel > 0 && levelIndex >= rule.LastNormalLevel) ||
                 System.Array.IndexOf(configuration.EnemyTypes, rule.EnemyType) < 0 ||
-                !factory.EnemyPrefabs.Exists(prefab => prefab.EnemyType == rule.EnemyType &&
-                    (!eliteOnly || prefab.HasElitePrefab)) ||
                 !availableTypes.Add(rule.EnemyType))
                 continue;
 
+            EnemyPrefabData prefabData = factory.EnemyPrefabs
+                .Find(prefab => prefab.EnemyType == rule.EnemyType);
+            if (prefabData == null)
+                continue;
+
+            EnemyFacade prefabFacade = prefabData.NormalPrefabContainer.Get().GetComponent<EnemyFacade>();
+            bool isHazard = prefabFacade != null && !prefabFacade.CountsForRoomCompletion;
+            if (eliteOnly && !isHazard && !prefabData.HasElitePrefab)
+                continue;
+
             availableRules.Add(rule);
-            EnemyFacade prefabFacade = factory.EnemyPrefabs
-                .Find(prefab => prefab.EnemyType == rule.EnemyType)
-                .NormalPrefabContainer.Get().GetComponent<EnemyFacade>();
-            if (prefabFacade != null && !prefabFacade.CountsForRoomCompletion)
-                hazardTypes.Add(rule.EnemyType);
+            if (isHazard)
+                _roomHazardTypes.Add(rule.EnemyType);
         }
 
         if (availableRules.Count == 0)
             throw new System.InvalidOperationException("No enemies are available for this combat room.");
 
-        if (!availableRules.Exists(rule => !hazardTypes.Contains(rule.EnemyType)))
+        if (!availableRules.Exists(rule => !_roomHazardTypes.Contains(rule.EnemyType)))
             throw new System.InvalidOperationException("No combat enemies are available for this combat room.");
 
         if (_playerSaveLoadService.CompletedRuns == 0 && _roomProgressIndex == 0)
@@ -567,7 +573,7 @@ public class EnemySpawner
             }
         }
 
-        // Every type is eligible immediately. Pick a weighted subset without replacement per room.
+        // Pick a weighted subset of eligible types without replacement per room.
         int typeCount = _roomBalance.RollEnemyTypeCount(availableRules.Count, _roomProgressIndex);
         bool hasCombatEnemy = false;
         for (int i = 0; i < typeCount; i++)
@@ -577,7 +583,7 @@ public class EnemySpawner
             float totalWeight = 0f;
             foreach (EnemySpawnRule rule in availableRules)
             {
-                if (requireCombatEnemy && hazardTypes.Contains(rule.EnemyType))
+                if (requireCombatEnemy && _roomHazardTypes.Contains(rule.EnemyType))
                     continue;
                 totalWeight += _roomBalance.GetWeight(rule, _roomProgressIndex);
             }
@@ -586,7 +592,7 @@ public class EnemySpawner
             int selectedIndex = -1;
             for (int j = 0; j < availableRules.Count; j++)
             {
-                if (requireCombatEnemy && hazardTypes.Contains(availableRules[j].EnemyType))
+                if (requireCombatEnemy && _roomHazardTypes.Contains(availableRules[j].EnemyType))
                     continue;
                 selectedIndex = j;
                 roll -= _roomBalance.GetWeight(availableRules[j], _roomProgressIndex);
@@ -595,7 +601,7 @@ public class EnemySpawner
                 break;
             }
 
-            hasCombatEnemy |= !hazardTypes.Contains(availableRules[selectedIndex].EnemyType);
+            hasCombatEnemy |= !_roomHazardTypes.Contains(availableRules[selectedIndex].EnemyType);
             _roomEnemyRules.Add(availableRules[selectedIndex]);
             availableRules.RemoveAt(selectedIndex);
         }

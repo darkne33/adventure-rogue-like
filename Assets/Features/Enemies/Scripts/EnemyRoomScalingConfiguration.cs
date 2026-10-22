@@ -47,7 +47,8 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
         new(EnemyType.Chan, 5f, 2),
         new(EnemyType.Skeleton, 5f, 2),
         new(EnemyType.Bun, 5f, 2),
-        new(EnemyType.Stone_Spikes, 8f, 3, maxAliveInSmallRoom: 1)
+        new(EnemyType.Stone_Spikes, 8f, 3, maxAliveInSmallRoom: 1,
+            firstLevel: 4)
     };
 
     public EnemySpawnRule[] EnemyRules => _enemyRules;
@@ -153,6 +154,8 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
 public sealed class EnemySpawnRule
 {
     public EnemyType EnemyType;
+    [Tooltip("First one-based level where this type can spawn, inclusive.")]
+    [Min(1)] public int FirstLevel = 1;
     [Tooltip("Last one-based level for this type in the normal enemy pool, inclusive. " +
              "Zero means unlimited. Elite-only levels ignore this limit.")]
     [Min(0)] public int LastNormalLevel;
@@ -163,9 +166,11 @@ public sealed class EnemySpawnRule
     [Min(0)] public int MaxAliveInSmallRoom;
 
     public EnemySpawnRule(EnemyType enemyType, float weight, int maxAlive,
-        int lastNormalLevel = 0, int maxAliveInSmallRoom = 0)
+        int lastNormalLevel = 0, int maxAliveInSmallRoom = 0,
+        int firstLevel = 1)
     {
         EnemyType = enemyType;
+        FirstLevel = firstLevel;
         LastNormalLevel = lastNormalLevel;
         Weight = weight;
         MaxAlive = maxAlive;
