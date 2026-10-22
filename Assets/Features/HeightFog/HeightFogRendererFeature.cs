@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -8,6 +9,7 @@ namespace LittleRush.Rendering
     public sealed class HeightFogRendererFeature : ScriptableRendererFeature
     {
         private static bool renderingEnabled = true;
+        private static readonly Dictionary<Camera, Material> CameraMaterials = new();
 
         [SerializeField]
         private Material material;
@@ -19,6 +21,17 @@ namespace LittleRush.Rendering
 
         public static void SetRenderingEnabled(bool enabled) =>
             renderingEnabled = enabled;
+
+        public static void SetCameraMaterial(Camera camera, Material cameraMaterial)
+        {
+            if (ReferenceEquals(camera, null))
+                return;
+
+            if (cameraMaterial == null)
+                CameraMaterials.Remove(camera);
+            else
+                CameraMaterials[camera] = cameraMaterial;
+        }
 
         public override void Create()
         {
@@ -32,10 +45,16 @@ namespace LittleRush.Rendering
             ScriptableRenderer renderer,
             ref RenderingData renderingData)
         {
-            if (!renderingEnabled || material == null || heightFogPass == null)
+            if (!renderingEnabled || heightFogPass == null)
                 return;
 
             var cameraData = renderingData.cameraData;
+            Material cameraMaterial = CameraMaterials.TryGetValue(cameraData.camera, out Material customMaterial)
+                ? customMaterial
+                : material;
+
+            if (cameraMaterial == null)
+                return;
 
             if (cameraData.cameraType == CameraType.Preview ||
                 cameraData.cameraType == CameraType.Reflection ||
@@ -53,7 +72,7 @@ namespace LittleRush.Rendering
 #endif
 
             heightFogPass.renderPassEvent = injectionPoint;
-            heightFogPass.Setup(material);
+            heightFogPass.Setup(cameraMaterial);
             renderer.EnqueuePass(heightFogPass);
         }
 

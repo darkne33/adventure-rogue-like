@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Features.Bosses.Scripts;
+using LittleRush.Rendering;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
@@ -27,6 +28,7 @@ public sealed class MainMenuRoomController : MonoBehaviour
 
     [Header("Environment")]
     [SerializeField] private Material _skyboxMaterial;
+    [SerializeField] private Material _fogMaterial;
     [SerializeField] private VolumeProfile _postProcessProfile;
 
     [Header("Background blur")]
@@ -104,6 +106,9 @@ public sealed class MainMenuRoomController : MonoBehaviour
         if (_postProcessProfile == null)
             throw new InvalidOperationException("MainMenu_Room requires the gameplay post-processing profile.");
 
+        if (_fogMaterial == null)
+            throw new InvalidOperationException("MainMenu_Room requires a fog material.");
+
         if (_blurProfile == null)
             throw new InvalidOperationException("MainMenu_Room requires a background blur profile.");
 
@@ -171,6 +176,7 @@ public sealed class MainMenuRoomController : MonoBehaviour
         _background.raycastTarget = false;
         _background.color = Color.white;
         ResizeRenderTexture();
+        HeightFogRendererFeature.SetCameraMaterial(_camera, _fogMaterial);
     }
 
     private Volume CreateCameraVolume(string objectName, VolumeProfile profile, float priority)
@@ -254,6 +260,7 @@ public sealed class MainMenuRoomController : MonoBehaviour
     public void Close()
     {
         CancelCameraTransition();
+        HeightFogRendererFeature.SetCameraMaterial(_camera, null);
         ReleaseRenderTexture();
 
         if (_background != null)
@@ -340,6 +347,7 @@ public sealed class MainMenuRoomController : MonoBehaviour
     private void OnDestroy()
     {
         CancelCameraTransition();
+        HeightFogRendererFeature.SetCameraMaterial(_camera, null);
         ReleaseRenderTexture();
 
         if (_runtimeBlurProfile != null)
