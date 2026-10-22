@@ -20,6 +20,7 @@ public sealed class PausePanel : MonoBehaviour
     [SerializeField] private GameObject _settingsRoot;
     [FormerlySerializedAs("_inventorySlots")]
     [SerializeField] private CharacterBuildSlotView[] _abilitySlots;
+    [SerializeField] private CharacterBuildView _abilityBuildView;
     [SerializeField] private PauseRelicInventoryView _relicInventoryView;
     [SerializeField] private PauseStatRow[] _statRows;
 
@@ -93,6 +94,9 @@ public sealed class PausePanel : MonoBehaviour
 
         _abilitySlots[index]?.SetContent(icon, badge);
     }
+
+    public void SetAbilities(IReadOnlyList<UpgradeBuildEntry> abilities) =>
+        _abilityBuildView?.Refresh(abilities);
 
     public void ClearAbilitySlots(int firstIndex = 0)
     {

@@ -9,6 +9,9 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
     [SerializeField] private CharacterSelectionView _owner;
     [SerializeField] private Button _button;
     [SerializeField] private Image _portrait;
+    [SerializeField] private Image _background;
+    [SerializeField] private Sprite _normalBackgroundSprite;
+    [SerializeField] private Sprite _selectedBackgroundSprite;
     [SerializeField] private RectTransform _rectTransform;
     [SerializeField] private UIButtonJuice _buttonJuice;
     [SerializeField] private RectTransform _selectionFrame;
@@ -18,6 +21,8 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
     [Header("Selection Style")]
     [SerializeField] private float _selectedScale = 1.22f;
     [SerializeField] private float _selectionScaleDuration = 0.22f;
+    [SerializeField] private float _portraitPumpScale = 1.12f;
+    [SerializeField] private float _portraitPumpDuration = 0.24f;
 
     [Header("Selection Pulse")]
     [SerializeField] private float _appearanceDuration = 0.14f;
@@ -31,6 +36,10 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
     private Tween _selectionFadeTween;
     private Tween _selectionPulseScaleTween;
     private Tween _selectionPulseAlphaTween;
+    private Tween _portraitPumpTween;
+    private bool _hasSelectionState;
+    private bool _isSelected;
+    private int _selectedCharacterIndex = -1;
     private bool _isLocked;
     private bool _isOwned = true;
 
@@ -102,11 +111,26 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
     public void SetSelected(bool selected, bool animate)
     {
         selected &= !_isLocked;
+        bool selectionChanged = !_hasSelectionState || _isSelected != selected ||
+            (selected && _selectedCharacterIndex != _characterIndex);
+        _hasSelectionState = true;
+        _isSelected = selected;
+        _selectedCharacterIndex = selected ? _characterIndex : -1;
+        ApplyBackground(selected);
+
+        if (!selectionChanged)
+            return;
+
         _buttonJuice.SetBaseScaleMultiplier(
             selected ? _selectedScale : 1f,
             animate,
             _selectionScaleDuration,
-            Ease.OutCubic);
+            selected ? Ease.OutBack : Ease.OutCubic);
+
+        if (selected && animate && gameObject.activeInHierarchy)
+            PlayPortraitPump();
+        else
+            KillPortraitPump();
 
         if (selected)
             ShowSelectionFrame(animate);
@@ -128,6 +152,37 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
 
     private Color GetPortraitColor() =>
         _isOwned ? Color.white : new Color(0.42f, 0.42f, 0.48f, 1f);
+
+    private void ApplyBackground(bool selected)
+    {
+        Sprite sprite = selected ? _selectedBackgroundSprite : _normalBackgroundSprite;
+        if (_background != null && sprite != null)
+            _background.sprite = sprite;
+    }
+
+    private void PlayPortraitPump()
+    {
+        KillPortraitPump();
+        if (_portrait == null)
+            return;
+
+        RectTransform portraitTransform = _portrait.rectTransform;
+        _portraitPumpTween = DOTween.Sequence()
+            .Append(portraitTransform.DOScale(Vector3.one * _portraitPumpScale,
+                _portraitPumpDuration * 0.32f).SetEase(Ease.OutCubic))
+            .Append(portraitTransform.DOScale(Vector3.one,
+                _portraitPumpDuration * 0.68f).SetEase(Ease.OutBack))
+            .SetUpdate(true)
+            .SetLink(gameObject);
+    }
+
+    private void KillPortraitPump()
+    {
+        _portraitPumpTween?.Kill();
+        _portraitPumpTween = null;
+        if (_portrait != null)
+            _portrait.rectTransform.localScale = Vector3.one;
+    }
 
     private void ShowSelectionFrame(bool animate)
     {
@@ -210,6 +265,11 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
     private void KillAnimations()
     {
         KillSelectionFrameTweens();
+        KillPortraitPump();
+        _hasSelectionState = false;
+        _isSelected = false;
+        _selectedCharacterIndex = -1;
+        ApplyBackground(false);
         _buttonJuice.SetBaseScaleMultiplier(1f, false, 0f, Ease.OutCubic);
         ResetSelectionFrame();
     }

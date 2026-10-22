@@ -36,6 +36,7 @@ public sealed class UpgradeBuildService
     public int MaxPassiveAbilities => _maxPassiveAbilities;
     public bool IsFull => _selectedUpgrades.Count >= _maxSlots;
     public bool IsScrollOnlyUpgradeRound =>
+        PassiveAbilityCount < _maxPassiveAbilities &&
         _upgradeRound > 0 && _upgradeRound == _nextScrollOnlyUpgradeRound;
     public bool HasAdditionalUpgradeOffer => _selectedUpgrades.Exists(entry =>
         entry.Ability.Id == AbilityName.LuckScroll && entry.Ability.IsAcquired &&

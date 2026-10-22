@@ -29,7 +29,13 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 300001}
+  - {fileID: 310001}
+  - {fileID: 320001}
+  - {fileID: 330001}
+  - {fileID: 340001}
+  - {fileID: 350001}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -73,5 +79,237 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5eac2f16c9c4fb89460e9d27ed5c201, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterBuildView
-  _slotPrefab: {fileID: 100004, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
-  _slotCount: 5
+  _weaponSlots:
+  - {fileID: 300004}
+  - {fileID: 320004}
+  - {fileID: 340004}
+  _scrollSlots:
+  - {fileID: 310004}
+  - {fileID: 330004}
+  - {fileID: 350004}
+--- !u!1001 &300000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 200001}
+    m_Modifications:
+    - target: {fileID: 100000, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_Name
+      value: WeaponSlot_1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+--- !u!224 &300001 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+  m_PrefabInstance: {fileID: 300000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &300004 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100004, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+  m_PrefabInstance: {fileID: 300000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d8c6a8195e4eb78954f98c8f98e301, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterBuildSlotView
+--- !u!1001 &310000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 200001}
+    m_Modifications:
+    - target: {fileID: 100000, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_Name
+      value: ScrollSlot_1
+      objectReference: {fileID: 0}
+    - target: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 160
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+--- !u!224 &310001 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+  m_PrefabInstance: {fileID: 310000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &310004 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100004, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+  m_PrefabInstance: {fileID: 310000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d8c6a8195e4eb78954f98c8f98e301, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterBuildSlotView
+--- !u!1001 &320000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 200001}
+    m_Modifications:
+    - target: {fileID: 100000, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_Name
+      value: WeaponSlot_2
+      objectReference: {fileID: 0}
+    - target: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -160
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+--- !u!224 &320001 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+  m_PrefabInstance: {fileID: 320000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &320004 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100004, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+  m_PrefabInstance: {fileID: 320000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d8c6a8195e4eb78954f98c8f98e301, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterBuildSlotView
+--- !u!1001 &330000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 200001}
+    m_Modifications:
+    - target: {fileID: 100000, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_Name
+      value: ScrollSlot_2
+      objectReference: {fileID: 0}
+    - target: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 160
+      objectReference: {fileID: 0}
+    - target: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -160
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+--- !u!224 &330001 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+  m_PrefabInstance: {fileID: 330000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &330004 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100004, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+  m_PrefabInstance: {fileID: 330000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d8c6a8195e4eb78954f98c8f98e301, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterBuildSlotView
+--- !u!1001 &340000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 200001}
+    m_Modifications:
+    - target: {fileID: 100000, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_Name
+      value: WeaponSlot_3
+      objectReference: {fileID: 0}
+    - target: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -320
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+--- !u!224 &340001 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+  m_PrefabInstance: {fileID: 340000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &340004 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100004, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+  m_PrefabInstance: {fileID: 340000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d8c6a8195e4eb78954f98c8f98e301, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterBuildSlotView
+--- !u!1001 &350000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 200001}
+    m_Modifications:
+    - target: {fileID: 100000, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_Name
+      value: ScrollSlot_3
+      objectReference: {fileID: 0}
+    - target: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 160
+      objectReference: {fileID: 0}
+    - target: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -320
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+--- !u!224 &350001 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+  m_PrefabInstance: {fileID: 350000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &350004 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100004, guid: d36c0db76321411aaed39ca2cc0af501, type: 3}
+  m_PrefabInstance: {fileID: 350000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d8c6a8195e4eb78954f98c8f98e301, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterBuildSlotView

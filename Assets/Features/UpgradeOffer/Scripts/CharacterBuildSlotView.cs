@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 public sealed class CharacterBuildSlotView : MonoBehaviour
 {
-    private static readonly Color EmptyFrameColor = new(1f, 1f, 1f, 0.5f);
+    private static readonly Color EmptyFrameColor = Color.white;
     private static readonly Color FilledFrameColor = Color.white;
 
     [SerializeField] private Image _frameImage;

@@ -8,7 +8,7 @@ public class UpgradeOfferConfiguration : ScriptableObject
     [field: SerializeField] public UpgradeOfferItemFacade UpgradeOfferItemFacade { get; private set; }
     [field: SerializeField, Min(1)] public int MaxBuildSlots { get; private set; } = 5;
     [field: SerializeField, Min(1)] public int MaxActiveAbilities { get; private set; } = 3;
-    [field: SerializeField, Min(1)] public int MaxPassiveAbilities { get; private set; } = 3;
+    [field: SerializeField, Min(1)] public int MaxPassiveAbilities { get; private set; } = 2;
     [field: SerializeField, Min(1)] public int MinNormalUpgradesBeforeScrollOnly { get; private set; } = 3;
     [field: SerializeField, Min(1)] public int MaxNormalUpgradesBeforeScrollOnly { get; private set; } = 6;
     [field: SerializeField, Range(0f, 100f), Tooltip("Weapon chance for the additional card when no new weapon is available. Does not affect the guaranteed weapon card.")]

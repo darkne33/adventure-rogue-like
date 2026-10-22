@@ -1,42 +1,39 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class CharacterBuildView : MonoBehaviour
 {
-    [SerializeField] private CharacterBuildSlotView _slotPrefab;
-    [SerializeField, Min(1)] private int _slotCount = 5;
+    [SerializeField] private CharacterBuildSlotView[] _weaponSlots = Array.Empty<CharacterBuildSlotView>();
+    [SerializeField] private CharacterBuildSlotView[] _scrollSlots = Array.Empty<CharacterBuildSlotView>();
 
-    private readonly List<CharacterBuildSlotView> _slots = new();
-
-    private void Awake()
-    {
-        EnsureSlots();
+    private void Awake() =>
         Refresh(null);
-    }
 
     public void Refresh(IReadOnlyList<UpgradeBuildEntry> upgrades)
     {
-        EnsureSlots();
-
-        for (int index = 0; index < _slots.Count; index++)
-        {
-            if (upgrades != null && index < upgrades.Count)
-                _slots[index].SetUpgrade(upgrades[index]);
-            else
-                _slots[index].SetEmpty();
-        }
+        RefreshColumn<CharacterActiveAbility>(upgrades, _weaponSlots);
+        RefreshColumn<CharacterPassiveAbility>(upgrades, _scrollSlots);
     }
 
-    private void EnsureSlots()
+    private static void RefreshColumn<TAbility>(IReadOnlyList<UpgradeBuildEntry> upgrades,
+        CharacterBuildSlotView[] slots) where TAbility : CharacterAbility
     {
-        if (_slotPrefab == null)
-            return;
+        int slotIndex = 0;
 
-        while (_slots.Count < _slotCount)
+        if (upgrades != null)
         {
-            CharacterBuildSlotView slot = Instantiate(_slotPrefab, transform);
-            slot.name = $"BuildSlot_{_slots.Count + 1}";
-            _slots.Add(slot);
+            foreach (UpgradeBuildEntry upgrade in upgrades)
+            {
+                if (slotIndex >= slots.Length)
+                    break;
+
+                if (upgrade?.Ability is TAbility)
+                    slots[slotIndex++].SetUpgrade(upgrade);
+            }
         }
+
+        while (slotIndex < slots.Length)
+            slots[slotIndex++].SetEmpty();
     }
 }

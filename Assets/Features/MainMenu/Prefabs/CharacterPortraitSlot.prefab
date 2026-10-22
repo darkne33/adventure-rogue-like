@@ -203,6 +203,9 @@ MonoBehaviour:
   _owner: {fileID: 0}
   _button: {fileID: 200004}
   _portrait: {fileID: 201003}
+  _background: {fileID: 200003}
+  _normalBackgroundSprite: {fileID: 21300000, guid: 6c3b3b59c93e443ab7a218bd6048c5a3, type: 3}
+  _selectedBackgroundSprite: {fileID: 21300000, guid: 2e6641dc995c4a60b64933a89377f96f, type: 3}
   _rectTransform: {fileID: 200001}
   _buttonJuice: {fileID: 200009}
   _selectionFrame: {fileID: 203001}
@@ -210,6 +213,8 @@ MonoBehaviour:
   _lockedLabel: {fileID: 202003}
   _selectedScale: 1.22
   _selectionScaleDuration: 0.22
+  _portraitPumpScale: 1.12
+  _portraitPumpDuration: 0.24
   _appearanceDuration: 0.14
   _pulseDuration: 0.6
   _pulseScale: 1.045

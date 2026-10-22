@@ -353,21 +353,8 @@ public sealed class PauseMenuController : ITickable, IDisposable
             EventSystem.current.SetSelectedGameObject(button.gameObject);
     }
 
-    private void RefreshAbilities()
-    {
-        int slotIndex = 0;
-
-        foreach (UpgradeBuildEntry entry in _upgradeBuildService.SelectedUpgrades)
-        {
-            if (slotIndex >= _panel.AbilitySlotCount)
-                break;
-
-            _panel.SetAbilitySlot(slotIndex++, entry.Ability?.Icon,
-                entry.Ability == null ? string.Empty : $"LVL {entry.Level}");
-        }
-
-        _panel.ClearAbilitySlots(slotIndex);
-    }
+    private void RefreshAbilities() =>
+        _panel.SetAbilities(_upgradeBuildService.SelectedUpgrades);
 
     private void RefreshRelics() =>
         _panel.SetRelics(_relicManager.ActiveRelics);

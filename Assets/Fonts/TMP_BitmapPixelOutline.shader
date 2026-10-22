@@ -6,11 +6,13 @@ Shader "Little Rush/UI/TMP Bitmap Pixel Outline"
         _FaceTex ("Font Texture", 2D) = "white" {}
         _FaceColor ("Text Color", Color) = (1, 1, 1, 1)
         _OutlineColor ("Outline Color", Color) = (0, 0, 0, 1)
-        [IntRange] _OutlineWidth ("Outline Width (Atlas Pixels)", Range(0, 4)) = 2
+        [IntRange] _OutlineWidth ("Outline Width (Atlas Pixels)", Range(0, 16)) = 2
         [Toggle(BITMAP_SHADOW_ON)] _UseShadow ("Use Shadow", Float) = 0
         _ShadowColor ("Shadow Color", Color) = (0, 0, 0, 0)
-        _ShadowOffsetX ("Shadow Offset X (Atlas Pixels)", Range(-4, 4)) = 0
-        _ShadowOffsetY ("Shadow Offset Y (Atlas Pixels)", Range(-4, 4)) = 0
+        _ShadowOffsetX ("Shadow Offset X (Atlas Pixels)", Range(-32, 32)) = 0
+        _ShadowOffsetY ("Shadow Offset Y (Atlas Pixels)", Range(-32, 32)) = 0
+        [IntRange] _ShadowLength ("Shadow Length (Atlas Pixels)", Range(0, 64)) = 4
+        [IntRange] _ShadowWidth ("Shadow Width (Atlas Pixels)", Range(0, 16)) = 3
         [HideInInspector] _Padding ("Padding", Float) = 4
 
         _VertexOffsetX ("Vertex Offset X", Float) = 0
@@ -86,6 +88,7 @@ Shader "Little Rush/UI/TMP Bitmap Pixel Outline"
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord1 : TEXCOORD1;
                 float4 mask : TEXCOORD2;
+                float2 glyphCoord : TEXCOORD3;
             };
 
             sampler2D _MainTex;
@@ -98,6 +101,9 @@ Shader "Little Rush/UI/TMP Bitmap Pixel Outline"
             fixed4 _ShadowColor;
             float _ShadowOffsetX;
             float _ShadowOffsetY;
+            float _ShadowLength;
+            float _ShadowWidth;
+            float _Padding;
 
             float _VertexOffsetX;
             float _VertexOffsetY;
@@ -125,6 +131,7 @@ Shader "Little Rush/UI/TMP Bitmap Pixel Outline"
                 output.color = input.color * _FaceColor;
                 output.texcoord0 = input.texcoord0.xy;
                 output.texcoord1 = TRANSFORM_TEX(input.texcoord1, _FaceTex);
+                output.glyphCoord = input.texcoord1;
 
                 float2 pixelSize = clipPosition.w;
                 pixelSize /= abs(float2(
@@ -142,35 +149,90 @@ Shader "Little Rush/UI/TMP Bitmap Pixel Outline"
                 return output;
             }
 
+            fixed SampleGlyphAlpha(float2 uv, float4 glyphBounds)
+            {
+                if (any(uv < glyphBounds.xy) || any(uv >= glyphBounds.zw))
+                    return 0;
+
+                // Explicit LOD keeps sampling valid inside the variable shadow loops.
+                return tex2Dlod(_MainTex, float4(uv, 0, 0)).a;
+            }
+
+            #if BITMAP_SHADOW_ON
+                fixed SampleShadowAlpha(float2 uv, float4 glyphBounds)
+                {
+                    const float2 offset = float2(_ShadowOffsetX, _ShadowOffsetY);
+                    const float offsetLength = length(offset);
+                    const float2 direction = offsetLength > 0.0001
+                        ? offset / offsetLength
+                        : float2(0.70710678, -0.70710678);
+                    const int shadowLength = (int)floor(clamp(_ShadowLength, 0, 64) + 0.5);
+                    const int shadowRadius = (int)floor(clamp(_ShadowWidth, 0, 16) + 0.5);
+                    const float2 endOffset = direction * shadowLength;
+                    const int2 minimum = (int2)floor(min(float2(0, 0), endOffset)) - shadowRadius;
+                    const int2 maximum = (int2)ceil(max(float2(0, 0), endOffset)) + shadowRadius;
+                    const float2 safeDirection = float2(
+                        direction.x < 0 ? min(direction.x, -0.0001) : max(direction.x, 0.0001),
+                        direction.y < 0 ? min(direction.y, -0.0001) : max(direction.y, 0.0001));
+                    const float2 inverseDirection = 1.0 / safeDirection;
+                    const float radius = shadowRadius + 0.5;
+                    fixed shadowAlpha = 0;
+
+                    // Sample the swept square once per atlas pixel, rather than
+                    // repeating the entire width filter at every length step.
+                    for (int y = minimum.y; y <= maximum.y; y++)
+                    {
+                        for (int x = minimum.x; x <= maximum.x; x++)
+                        {
+                            const float2 sampleOffset = float2(x, y);
+                            const float2 first = (sampleOffset - radius) * inverseDirection;
+                            const float2 last = (sampleOffset + radius) * inverseDirection;
+                            const float2 entry = min(first, last);
+                            const float2 exit = max(first, last);
+                            const float entryDistance = max(0, max(entry.x, entry.y));
+                            const float exitDistance = min(shadowLength, min(exit.x, exit.y));
+
+                            if (entryDistance <= exitDistance)
+                            {
+                                const float2 sampleUv = uv -
+                                    _MainTex_TexelSize.xy * (offset + sampleOffset);
+                                shadowAlpha = max(shadowAlpha, SampleGlyphAlpha(sampleUv, glyphBounds));
+                                if (shadowAlpha >= 1)
+                                    return shadowAlpha;
+                            }
+                        }
+                    }
+
+                    return shadowAlpha;
+                }
+            #endif
+
             fixed4 frag(v2f input) : SV_Target
             {
                 const float2 uv = input.texcoord0;
-                const fixed centerAlpha = tex2D(_MainTex, uv).a;
-                const int outlineRadius = (int)floor(_OutlineWidth + 0.5);
+                // TMP Character texture mapping supplies 0..1 coordinates per quad.
+                // Remove its bitmap padding to isolate this glyph from atlas neighbours.
+                const float2 uvSpan = fwidth(uv) / max(fwidth(input.glyphCoord), float2(0.000001, 0.000001));
+                const float2 quadMinimum = uv - input.glyphCoord * uvSpan;
+                const float2 glyphPadding = (floor(_Padding) + 1) * _MainTex_TexelSize.xy;
+                const float4 glyphBounds = float4(
+                    quadMinimum + glyphPadding,
+                    quadMinimum + uvSpan - glyphPadding);
+                const fixed centerAlpha = SampleGlyphAlpha(uv, glyphBounds);
+                const int outlineRadius = (int)floor(clamp(_OutlineWidth, 0, 16) + 0.5);
 
                 fixed expandedAlpha = centerAlpha;
 
-                #if BITMAP_SHADOW_ON
-                    const float2 shadowUv = uv -
-                        _MainTex_TexelSize.xy * float2(_ShadowOffsetX, _ShadowOffsetY);
-                    fixed shadowExpandedAlpha = tex2D(_MainTex, shadowUv).a;
-                #endif
-
                 // Square max filter. Every atlas pixel inside the selected radius is
                 // sampled, so widths above one remain solid instead of forming gaps.
-                for (int y = -4; y <= 4; y++)
+                for (int y = -outlineRadius; y <= outlineRadius; y++)
                 {
-                    for (int x = -4; x <= 4; x++)
+                    for (int x = -outlineRadius; x <= outlineRadius; x++)
                     {
-                        const int sampleRadius = max(abs(x), abs(y));
-                        if (sampleRadius > 0 && sampleRadius <= outlineRadius)
+                        if (x != 0 || y != 0)
                         {
                             const float2 sampleOffset = _MainTex_TexelSize.xy * float2(x, y);
-                            expandedAlpha = max(expandedAlpha, tex2D(_MainTex, uv + sampleOffset).a);
-                            #if BITMAP_SHADOW_ON
-                                shadowExpandedAlpha = max(
-                                    shadowExpandedAlpha, tex2D(_MainTex, shadowUv + sampleOffset).a);
-                            #endif
+                            expandedAlpha = max(expandedAlpha, SampleGlyphAlpha(uv + sampleOffset, glyphBounds));
                         }
                     }
                 }
@@ -184,10 +246,13 @@ Shader "Little Rush/UI/TMP Bitmap Pixel Outline"
                     faceColor * faceAlpha + _OutlineColor.rgb * outlineAlpha * (1 - faceAlpha);
 
                 #if BITMAP_SHADOW_ON
-                    const fixed shadowAlpha =
-                        shadowExpandedAlpha * _ShadowColor.a * input.color.a * (1 - outputAlpha);
-                    premultipliedColor += _ShadowColor.rgb * shadowAlpha;
-                    outputAlpha += shadowAlpha;
+                    if (_ShadowColor.a > 0 && outputAlpha < 1)
+                    {
+                        const fixed shadowAlpha = SampleShadowAlpha(uv, glyphBounds) *
+                            _ShadowColor.a * input.color.a * (1 - outputAlpha);
+                        premultipliedColor += _ShadowColor.rgb * shadowAlpha;
+                        outputAlpha += shadowAlpha;
+                    }
                 #endif
 
                 fixed4 color = fixed4(
@@ -209,4 +274,6 @@ Shader "Little Rush/UI/TMP Bitmap Pixel Outline"
             ENDCG
         }
     }
+
+    CustomEditor "LittleRush.Editor.BitmapPixelOutlineShaderGUI"
 }
