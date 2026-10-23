@@ -72,6 +72,7 @@ MonoBehaviour:
   _descriptionText: {fileID: 173675}
   _mainButtonsRoot: {fileID: 132000}
   _settingsRoot: {fileID: 133000}
+  _soundSettings: {fileID: 5800000000000000001}
   _abilityBuildView: {fileID: 122003}
   _abilitySlots:
   - {fileID: 498724}
@@ -1984,108 +1985,87 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 133001}
     m_Modifications:
-    - target: {fileID: 100000, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
+    - target: {fileID: 100000, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
       propertyPath: m_Name
-      value: ComingSoon
+      value: AudioSettings
       objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0.92
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0.68
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
+    - target: {fileID: 100001, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.08
+      value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
+    - target: {fileID: 100001, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.48
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 0
+    - target: {fileID: 100001, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
+    - target: {fileID: 100001, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 100001, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
+    - target: {fileID: 100001, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_text
-      value: SETTINGS ARE COMING SOON
+    - target: {fileID: 100001, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_Color.a
-      value: 0.78
+    - target: {fileID: 100001, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_Color.b
-      value: 0.76
+    - target: {fileID: 100003, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_Color.g
-      value: 0.76
+    - target: {fileID: 100004, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
+      propertyPath: _handleCancelInput
+      value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_Color.r
-      value: 0.72
+    - target: {fileID: 110000, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_fontSize
-      value: 36
+    - target: {fileID: 600002, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_fontColor.a
-      value: 0.78
+    - target: {fileID: 120001, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.24
       objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_fontColor.b
-      value: 0.76
-      objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_fontColor.g
-      value: 0.76
-      objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_fontColor.r
-      value: 0.72
-      objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_fontSizeMax
-      value: 36
-      objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_fontSizeMin
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_fontSizeBase
-      value: 36
-      objectReference: {fileID: 0}
-    - target: {fileID: 100003, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
-      propertyPath: m_HorizontalAlignment
-      value: 2
+    - target: {fileID: 120001, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.77
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
+  m_SourcePrefab: {fileID: 100100000, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
 --- !u!224 &175673 stripped
 RectTransform:
-  m_CorrespondingSourceObject: {fileID: 100001, guid: 2be3f6a5c8d94a12e3f4a5b6c7d8e9f0, type: 3}
+  m_CorrespondingSourceObject: {fileID: 100001, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
   m_PrefabInstance: {fileID: 207000}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5800000000000000001 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100004, guid: 53ec3e784af647549f722c557f7a71c4, type: 3}
+  m_PrefabInstance: {fileID: 207000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b98cb04e6d84c57a313e28a5d1e94d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Sounds.SoundSettingsView
 --- !u!1001 &209000
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2242,7 +2222,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100001, guid: 4f9a2e37c6d84b90a125f7e8c3d6412b, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -125
+      value: -350
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 4f9a2e37c6d84b90a125f7e8c3d6412b, type: 3}
       propertyPath: m_MinWidth

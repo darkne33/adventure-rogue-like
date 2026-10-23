@@ -1,5 +1,6 @@
 using Features.Leaderboard;
 using Features.Quests.Scripts;
+using Features.Sounds;
 using TMPro;
 using UI;
 using UnityEngine;
@@ -16,6 +17,7 @@ public sealed class MainMenuPanel : PanelBase
     [field: SerializeField] public LeaderboardView Leaderboard { get; private set; }
     [field: SerializeField] public QuestsPanelView QuestsPanelPrefab { get; private set; }
     [field: SerializeField] public UnlocksPanelView UnlocksPanelPrefab { get; private set; }
+    [field: SerializeField] public SoundSettingsView SoundSettingsPrefab { get; private set; }
 
     [SerializeField] private CharacterConfiguration _characterConfiguration;
     [SerializeField] private GameObject _titleLogo;

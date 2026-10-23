@@ -33,6 +33,7 @@ namespace Core
 
                 await _gameAddressableService.InitializeAddressables();
                 await _gameplayAssets.Initialize(cts);
+                _soundsService.SetMusicSounds(_gameplayAssets.MusicSounds);
                 _soundsService.SetUiSounds(_gameplayAssets.UiSounds);
                 _soundsService.SetGameplaySounds(_gameplayAssets.GameplaySounds);
                 _quests.Initialize(_gameplayAssets.Progression);

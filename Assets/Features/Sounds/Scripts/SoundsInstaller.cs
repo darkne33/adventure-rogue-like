@@ -11,10 +11,11 @@ namespace Features.Sounds
                 .AsSingle();
 
             Container.BindInterfacesAndSelfTo<SoundsService>()
-                .FromNewComponentOnNewGameObject()
-                .WithGameObjectName("Sounds")
                 .AsSingle()
                 .NonLazy();
+
+            // Destroy playback before GameplayAssetService releases its Addressables.
+            Container.BindExecutionOrder<SoundsService>(50);
         }
     }
 }

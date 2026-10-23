@@ -3,6 +3,7 @@ using Core;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
 using Features.Leaderboard;
+using Features.Sounds;
 
 public class RogueLikePrepareStatsState : State
 {
@@ -10,20 +11,23 @@ public class RogueLikePrepareStatsState : State
     private readonly CharacterStatModifierLayer _statModifierLayer;
     private readonly CharacterConfiguration _characterConfiguration;
     private readonly RoomLeaderboardReporter _leaderboardReporter;
+    private readonly ISoundsService _sounds;
 
     public RogueLikePrepareStatsState(CharacterStats characterStats,
         CharacterStatModifierLayer statModifierLayer,
         CharacterConfiguration characterConfiguration,
-        RoomLeaderboardReporter leaderboardReporter)
+        RoomLeaderboardReporter leaderboardReporter, ISoundsService sounds)
     {
         _characterStats = characterStats;
         _statModifierLayer = statModifierLayer;
         _characterConfiguration = characterConfiguration;
         _leaderboardReporter = leaderboardReporter;
+        _sounds = sounds;
     }
 
     public override async UniTask Enter(CancellationToken cts)
     {
+        _sounds.RestartMusic(SoundId.GameplayMusic);
         CharacterStatsInitialize();
         _leaderboardReporter.BeginRun();
         await StateMachine.EnterState<RogueLikePrepareState>();

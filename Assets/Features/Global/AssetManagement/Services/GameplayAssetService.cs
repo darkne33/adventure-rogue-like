@@ -31,6 +31,7 @@ namespace Core
         public BossIntroScreen BossIntro { get; private set; }
         public SoundsCatalog UiSounds { get; private set; }
         public SoundsCatalog GameplaySounds { get; private set; }
+        public SoundsCatalog MusicSounds { get; private set; }
 
         public GameplayAssetService(IAddressableLoadService assets) => _assets = assets;
 
@@ -66,6 +67,8 @@ namespace Core
                     "Assets/Features/Sounds/Configs/UiSoundsCatalog.asset", token);
                 GameplaySounds = await Load<SoundsCatalog>(
                     "Assets/Features/Sounds/Configs/RetroArsenalSoundsCatalog.asset", token);
+                MusicSounds = await Load<SoundsCatalog>(
+                    "Assets/Features/Sounds/Configs/MusicSoundsCatalog.asset", token);
                 _initialized = true;
             }
             catch
@@ -100,6 +103,7 @@ namespace Core
             BossIntro = null;
             UiSounds = null;
             GameplaySounds = null;
+            MusicSounds = null;
             _initialized = false;
         }
 

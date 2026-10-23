@@ -1,6 +1,7 @@
 using System;
 using Core;
 using Cysharp.Threading.Tasks;
+using Features.Sounds;
 using UI;
 using UnityEngine;
 using Zenject;
@@ -13,6 +14,7 @@ public sealed class RunRestartService
     private readonly IPauseService _pauseService;
     private readonly IPanelService _panelService;
     private readonly GameStateMachine _gameStateMachine;
+    private readonly ISoundsService _sounds;
 
     private bool _openCharacterSelectionOnNextMainMenu;
 
@@ -21,7 +23,7 @@ public sealed class RunRestartService
 
     public RunRestartService(ISceneLoader sceneLoader, IGameModeService gameModeService,
         ICharacterLevelService characterLevelService, IPauseService pauseService,
-        IPanelService panelService, GameStateMachine gameStateMachine)
+        IPanelService panelService, GameStateMachine gameStateMachine, ISoundsService sounds)
     {
         _sceneLoader = sceneLoader;
         _gameModeService = gameModeService;
@@ -29,6 +31,7 @@ public sealed class RunRestartService
         _pauseService = pauseService;
         _panelService = panelService;
         _gameStateMachine = gameStateMachine;
+        _sounds = sounds;
     }
 
     public async UniTask<bool> Restart(string sceneName)
@@ -49,6 +52,7 @@ public sealed class RunRestartService
             await _panelService.HidePanelForce(PanelName.RoomTransitionPanel);
             await _panelService.HidePanelForce(PanelName.CharacterPanel);
 
+            _sounds.StopAllSfx();
             _pauseService.CancelPause();
             _gameModeService.Remove<RogueLikeStateMachine>();
             _characterLevelService.Reset();
@@ -113,6 +117,7 @@ public sealed class RunRestartService
             await _panelService.HidePanelForce(PanelName.RoomTransitionPanel);
             await _panelService.HidePanelForce(PanelName.CharacterPanel);
 
+            _sounds.StopAllSfx();
             _pauseService.CancelPause();
             _gameModeService.Remove<RogueLikeStateMachine>();
             _characterLevelService.Reset();

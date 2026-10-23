@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using CustomPackages.Package.StateMachine.States;
 using Cysharp.Threading.Tasks;
+using Features.Sounds;
 using Infrastructure.SceneProvider;
 using LittleRush.Rendering;
 using UI;
@@ -16,6 +17,7 @@ namespace Core
         [Inject] private IPanelService _panelService;
         [Inject] private ILoadingScreenService _loadingScreenService;
         [Inject] private ICursorService _cursorService;
+        [Inject] private ISoundsService _sounds;
         [Inject] private DiContainer _container;
 
         private ILevelFactory _levelFactory;
@@ -24,6 +26,7 @@ namespace Core
 
         private async UniTask<RogueLikeStateMachine> LoadGameScene(CancellationToken cancellationToken)
         {
+            _sounds.StopAllSfx();
             HeightFogRendererFeature.SetRenderingEnabled(false);
 
             if (_sceneLoader.HasActiveScene(SceneNames.GameScene))
@@ -75,6 +78,7 @@ namespace Core
                     },
                     () =>
                     {
+                        _sounds.Play(SoundId.MenuMusic);
                         presenter.ForceShow();
                         _cursorService.ShowUiCursor();
                     }, cancellationToken);

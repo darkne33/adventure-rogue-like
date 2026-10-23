@@ -209,7 +209,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
 
         _settingsOpen = true;
         _panel.ShowSettings();
-        Select(_panel.SettingsBackButton);
+        Select(_panel.SettingsFirstSelectable);
     }
 
     private void ShowMainButtons()
@@ -347,7 +347,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
         _ownsPause = false;
     }
 
-    private static void Select(UnityEngine.UI.Button button)
+    private static void Select(UnityEngine.UI.Selectable button)
     {
         if (button != null && EventSystem.current != null)
             EventSystem.current.SetSelectedGameObject(button.gameObject);

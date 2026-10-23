@@ -4,7 +4,7 @@ using Zenject;
 
 namespace Features.Sounds
 {
-    public sealed class SoundsService : MonoBehaviour, ISoundsService, IInitializable
+    public sealed class SoundsService : ISoundsService, IInitializable, ITickable, System.IDisposable
     {
         public float SfxVolume => _settings.SfxVolume;
         public float MusicVolume => _settings.MusicVolume;
@@ -24,7 +24,13 @@ namespace Features.Sounds
         private SoundSettingsData _settings;
         private AudioSource _sfxSource;
         private AudioSource _musicSource;
+        private SoundPlayback _playback;
+        private SoundDefinition _pendingMusic;
         private float _currentMusicVolume = 1f;
+        private float _musicGain = 1f;
+        private float _pauseFilterBlend;
+        private bool _gameplayPaused;
+        private bool _disposed;
         private bool _initialized;
         private float _nextUiHoverTime;
         private float _nextUiAdjustTime;
@@ -43,9 +49,58 @@ namespace Features.Sounds
 
             _settings = _settingsStorage.Load();
             BuildSoundsLookup();
-            CreateAudioSources();
             ApplySettings();
             _initialized = true;
+        }
+
+        // The catalog and all prefab/clip dependencies have finished Addressables loading.
+        public void SetMusicSounds(SoundsCatalog catalog)
+        {
+            EnsureInitialized();
+            if (catalog == null || catalog.PlaybackPrefab == null)
+                throw new System.InvalidOperationException("Music catalog requires a prepared SoundPlayback prefab.");
+            if (_disposed)
+                throw new System.ObjectDisposedException(nameof(SoundsService));
+
+            if (_playback == null)
+            {
+                _playback = UnityEngine.Object.Instantiate(catalog.PlaybackPrefab);
+                UnityEngine.Object.DontDestroyOnLoad(_playback.gameObject);
+                _sfxSource = _playback.GameSounds;
+                _musicSource = _playback.Music;
+                ApplySettings();
+            }
+
+            MergeSounds(catalog);
+        }
+
+        public void Tick()
+        {
+            if (_playback == null || _disposed)
+                return;
+
+            UpdateGameplayPause();
+            UpdateMusicFade();
+            UpdatePauseFilter();
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            StopAllSfx();
+            StopMusic();
+            if (_playback != null)
+            {
+                UnityEngine.Object.Destroy(_playback.gameObject);
+                _playback = null;
+            }
+            _sfxSource = null;
+            _musicSource = null;
+            _sounds.Clear();
+            _loopPrefab = null;
         }
 
         // Called after the UI catalog and its clips finish loading during bootstrap.
@@ -90,12 +145,16 @@ namespace Features.Sounds
             if (!TryGetSound(soundId, out SoundDefinition sound))
                 return;
 
-            if (sound.Channel == SoundChannel.Sfx && (sound.Loop || !AllowPlayback(sound)))
+            RequirePlayback();
+            if (sound.Channel != SoundChannel.Music && (sound.Loop || !AllowPlayback(sound)))
                 return;
 
             switch (sound.Channel)
             {
                 case SoundChannel.Sfx:
+                case SoundChannel.Ui:
+                case SoundChannel.XpAndGold:
+                case SoundChannel.Ambience:
                     PlaySfx(sound);
                     break;
                 case SoundChannel.Music:
@@ -110,7 +169,13 @@ namespace Features.Sounds
         public void StopAllSfx()
         {
             EnsureInitialized();
-            _sfxSource.Stop();
+            if (_playback != null)
+            {
+                _sfxSource.Stop();
+                _playback.Ui.Stop();
+                _playback.XpAndGold.Stop();
+                _playback.Ambience.Stop();
+            }
             StopGameplayLoops();
         }
 
@@ -118,7 +183,8 @@ namespace Features.Sounds
         {
             EnsureInitialized();
             if (owner == null || _loopPrefab == null ||
-                !TryGetSound(soundId, out SoundDefinition sound) || !sound.Loop)
+                !TryGetSound(soundId, out SoundDefinition sound) || !sound.Loop ||
+                sound.Channel != SoundChannel.Sfx)
                 return;
 
             int instances = 0;
@@ -139,7 +205,7 @@ namespace Features.Sounds
             if (instances >= sound.MaxLoopInstances)
                 return;
 
-            SoundLoopEmitter emitter = Instantiate(_loopPrefab, owner, false);
+            SoundLoopEmitter emitter = UnityEngine.Object.Instantiate(_loopPrefab, owner, false);
             emitter.Initialize(this, sound, GetClip(sound));
             _loops.Add(emitter);
         }
@@ -151,7 +217,7 @@ namespace Features.Sounds
                 if (loop != null)
                 {
                     loop.Stop();
-                    Destroy(loop.gameObject);
+                    UnityEngine.Object.Destroy(loop.gameObject);
                 }
             }
             _loops.Clear();
@@ -160,7 +226,10 @@ namespace Features.Sounds
 
         private bool AllowPlayback(SoundDefinition sound)
         {
-            if (_settings.SfxMuted || _settings.SfxVolume <= 0f)
+            if (_settings.SfxMuted || _settings.MasterVolume <= 0f ||
+                GetVolume(GetCategory(sound.Channel)) <= 0f)
+                return false;
+            if (sound.Channel != SoundChannel.Ui && Time.timeScale <= 0f)
                 return false;
             float now = Time.unscaledTime;
             if (_nextPlayTimes.TryGetValue(sound.Id, out float nextTime) && now < nextTime)
@@ -187,37 +256,75 @@ namespace Features.Sounds
         public void StopMusic()
         {
             EnsureInitialized();
-            _musicSource.Stop();
-            _musicSource.clip = null;
+            if (_musicSource != null)
+            {
+                _musicSource.Stop();
+                _musicSource.clip = null;
+                _playback.MusicLowPass.enabled = false;
+                _playback.MusicLowPass.cutoffFrequency = 22000f;
+            }
+            _pendingMusic = null;
             CurrentMusic = SoundId.None;
             _currentMusicVolume = 1f;
+            _musicGain = 1f;
+            _pauseFilterBlend = 0f;
         }
 
-        public void SetSfxVolume(float volume)
+        public void RestartMusic(SoundId soundId)
+        {
+            EnsureInitialized();
+            if (!TryGetSound(soundId, out SoundDefinition sound) || sound.Channel != SoundChannel.Music)
+                return;
+            RequirePlayback();
+            PlayMusic(sound, true);
+        }
+
+        public float GetVolume(SoundVolumeCategory category)
+        {
+            EnsureInitialized();
+            return category switch
+            {
+                SoundVolumeCategory.Master => _settings.MasterVolume,
+                SoundVolumeCategory.Music => _settings.MusicMuted ? 0f : _settings.MusicVolume,
+                SoundVolumeCategory.GameSounds => _settings.SfxMuted ? 0f : _settings.SfxVolume,
+                SoundVolumeCategory.Ambience => _settings.SfxMuted ? 0f : _settings.AmbienceVolume,
+                SoundVolumeCategory.Ui => _settings.SfxMuted ? 0f : _settings.UiVolume,
+                SoundVolumeCategory.XpAndGold => _settings.SfxMuted ? 0f : _settings.XpAndGoldVolume,
+                _ => throw new System.ArgumentOutOfRangeException(nameof(category), category, null)
+            };
+        }
+
+        public void SetVolume(SoundVolumeCategory category, float volume)
         {
             EnsureInitialized();
             volume = Mathf.Clamp01(volume);
-
-            if (Mathf.Approximately(_settings.SfxVolume, volume))
+            if (Mathf.Approximately(GetVolume(category), volume))
                 return;
 
-            _settings.SfxVolume = volume;
-            _sfxSource.volume = volume;
+            switch (category)
+            {
+                case SoundVolumeCategory.Master: _settings.MasterVolume = volume; break;
+                case SoundVolumeCategory.Music: _settings.MusicVolume = volume; break;
+                case SoundVolumeCategory.GameSounds: _settings.SfxVolume = volume; break;
+                case SoundVolumeCategory.Ambience: _settings.AmbienceVolume = volume; break;
+                case SoundVolumeCategory.Ui: _settings.UiVolume = volume; break;
+                case SoundVolumeCategory.XpAndGold: _settings.XpAndGoldVolume = volume; break;
+                default: throw new System.ArgumentOutOfRangeException(nameof(category), category, null);
+            }
+            // A nonzero slider also recovers legacy saved mute flags without a hidden mute state.
+            if (volume > 0f)
+            {
+                if (category == SoundVolumeCategory.Music)
+                    _settings.MusicMuted = false;
+                else if (category != SoundVolumeCategory.Master)
+                    _settings.SfxMuted = false;
+            }
+            ApplySettings();
             SaveSettings();
         }
 
-        public void SetMusicVolume(float volume)
-        {
-            EnsureInitialized();
-            volume = Mathf.Clamp01(volume);
-
-            if (Mathf.Approximately(_settings.MusicVolume, volume))
-                return;
-
-            _settings.MusicVolume = volume;
-            _musicSource.volume = volume * _currentMusicVolume;
-            SaveSettings();
-        }
+        public void SetSfxVolume(float volume) => SetVolume(SoundVolumeCategory.GameSounds, volume);
+        public void SetMusicVolume(float volume) => SetVolume(SoundVolumeCategory.Music, volume);
 
         public void SetSfxMuted(bool isMuted)
         {
@@ -227,7 +334,7 @@ namespace Features.Sounds
                 return;
 
             _settings.SfxMuted = isMuted;
-            _sfxSource.mute = isMuted;
+            ApplySettings();
             SaveSettings();
         }
 
@@ -239,7 +346,7 @@ namespace Features.Sounds
                 return;
 
             _settings.MusicMuted = isMuted;
-            _musicSource.mute = isMuted;
+            ApplySettings();
             SaveSettings();
         }
 
@@ -289,23 +396,20 @@ namespace Features.Sounds
             }
         }
 
-        private void CreateAudioSources()
-        {
-            _sfxSource = gameObject.AddComponent<AudioSource>();
-            _sfxSource.playOnAwake = false;
-            _sfxSource.loop = false;
-            _sfxSource.spatialBlend = 0f;
-
-            _musicSource = gameObject.AddComponent<AudioSource>();
-            _musicSource.playOnAwake = false;
-            _musicSource.spatialBlend = 0f;
-        }
-
         private void ApplySettings()
         {
-            _sfxSource.volume = _settings.SfxVolume;
+            if (_playback == null)
+                return;
+
+            _sfxSource.volume = _settings.MasterVolume * _settings.SfxVolume;
             _sfxSource.mute = _settings.SfxMuted;
-            _musicSource.volume = _settings.MusicVolume * _currentMusicVolume;
+            _playback.Ui.volume = _settings.MasterVolume * _settings.UiVolume;
+            _playback.Ui.mute = _settings.SfxMuted;
+            _playback.XpAndGold.volume = _settings.MasterVolume * _settings.XpAndGoldVolume;
+            _playback.XpAndGold.mute = _settings.SfxMuted;
+            _playback.Ambience.volume = _settings.MasterVolume * _settings.AmbienceVolume;
+            _playback.Ambience.mute = _settings.SfxMuted;
+            ApplyMusicVolume();
             _musicSource.mute = _settings.MusicMuted;
         }
 
@@ -332,27 +436,118 @@ namespace Features.Sounds
         {
             EnsureInitialized();
 
-            if (clip == null || _settings.SfxMuted || _settings.SfxVolume <= 0f)
+            if (clip == null || _settings.SfxMuted || _settings.SfxVolume <= 0f ||
+                _settings.MasterVolume <= 0f || Time.timeScale <= 0f)
                 return;
 
+            RequirePlayback();
             _sfxSource.PlayOneShot(clip, Mathf.Clamp01(volume));
         }
 
-        private void PlaySfx(SoundDefinition sound) =>
-            PlaySfx(GetClip(sound), sound.Volume);
-
-        private void PlayMusic(SoundDefinition sound)
+        private void PlaySfx(SoundDefinition sound)
         {
-            if (CurrentMusic == sound.Id && _musicSource.isPlaying)
+            AudioSource source = sound.Channel switch
+            {
+                SoundChannel.Sfx => _sfxSource,
+                SoundChannel.Ui => _playback.Ui,
+                SoundChannel.XpAndGold => _playback.XpAndGold,
+                SoundChannel.Ambience => _playback.Ambience,
+                _ => throw new System.ArgumentOutOfRangeException(nameof(sound.Channel))
+            };
+            source.PlayOneShot(GetClip(sound), sound.Volume);
+        }
+
+        private void PlayMusic(SoundDefinition sound, bool restart = false)
+        {
+            if (!restart && (_pendingMusic?.Id == sound.Id ||
+                (_pendingMusic == null && CurrentMusic == sound.Id && _musicSource.isPlaying)))
                 return;
 
+            if (_musicSource.isPlaying && _playback.MusicFadeDuration > 0f)
+            {
+                _pendingMusic = sound;
+                return;
+            }
+
+            StartMusic(sound);
+        }
+
+        private void StartMusic(SoundDefinition sound)
+        {
+            _pendingMusic = null;
             _musicSource.Stop();
             _musicSource.clip = sound.Clip;
             _musicSource.loop = sound.Loop;
             _currentMusicVolume = sound.Volume;
-            _musicSource.volume = _settings.MusicVolume * _currentMusicVolume;
+            _musicGain = _playback.MusicFadeDuration > 0f ? 0f : 1f;
             CurrentMusic = sound.Id;
+            ApplyMusicVolume();
             _musicSource.Play();
+        }
+
+        private void UpdateMusicFade()
+        {
+            float duration = _playback.MusicFadeDuration;
+            _musicGain = duration <= 0f ? (_pendingMusic == null ? 1f : 0f) :
+                Mathf.MoveTowards(_musicGain, _pendingMusic == null ? 1f : 0f, Time.unscaledDeltaTime / duration);
+
+            if (_pendingMusic != null && _musicGain <= 0f)
+                StartMusic(_pendingMusic);
+
+            ApplyMusicVolume();
+        }
+
+        private void ApplyMusicVolume() =>
+            _musicSource.volume = _settings.MasterVolume * _settings.MusicVolume * _currentMusicVolume * _musicGain;
+
+        private void UpdateGameplayPause()
+        {
+            bool paused = Time.timeScale <= 0f;
+            if (_gameplayPaused == paused)
+                return;
+            _gameplayPaused = paused;
+
+            SetPaused(_sfxSource, paused);
+            SetPaused(_playback.XpAndGold, paused);
+            SetPaused(_playback.Ambience, paused);
+        }
+
+        private static void SetPaused(AudioSource source, bool paused)
+        {
+            if (paused)
+                source.Pause();
+            else
+                source.UnPause();
+        }
+
+        private void UpdatePauseFilter()
+        {
+            // Pause never changes music position or pitch, including upgrade/reward screens.
+            bool filtered = CurrentMusic == SoundId.GameplayMusic && Time.timeScale <= 0f;
+            float duration = _playback.PauseFilterDuration;
+            _pauseFilterBlend = duration <= 0f ? (filtered ? 1f : 0f) :
+                Mathf.MoveTowards(_pauseFilterBlend, filtered ? 1f : 0f, Time.unscaledDeltaTime / duration);
+
+            AudioLowPassFilter filter = _playback.MusicLowPass;
+            filter.enabled = _pauseFilterBlend > 0f;
+            filter.cutoffFrequency = Mathf.Exp(Mathf.Lerp(Mathf.Log(22000f),
+                Mathf.Log(_playback.PausedMusicCutoff), _pauseFilterBlend));
+        }
+
+        private static SoundVolumeCategory GetCategory(SoundChannel channel) => channel switch
+        {
+            SoundChannel.Sfx => SoundVolumeCategory.GameSounds,
+            SoundChannel.Ui => SoundVolumeCategory.Ui,
+            SoundChannel.XpAndGold => SoundVolumeCategory.XpAndGold,
+            SoundChannel.Ambience => SoundVolumeCategory.Ambience,
+            SoundChannel.Music => SoundVolumeCategory.Music,
+            _ => throw new System.ArgumentOutOfRangeException(nameof(channel), channel, null)
+        };
+
+        private void RequirePlayback()
+        {
+            if (_playback == null)
+                throw new System.InvalidOperationException("Audio playback must be loaded during bootstrap before use.");
         }
 
         private void SaveSettings() =>
@@ -361,7 +556,7 @@ namespace Features.Sounds
         private void ReportInvalidSound(SoundId soundId, string message)
         {
             if (_reportedInvalidSounds.Add(soundId))
-                Debug.LogWarning(message, this);
+                Debug.LogWarning(message, _playback);
         }
 
         private void EnsureInitialized()

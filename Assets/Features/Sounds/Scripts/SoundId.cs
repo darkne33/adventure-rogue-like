@@ -62,6 +62,9 @@ namespace Features.Sounds
         RelicMeteor = 145,
         RelicDagger = 146,
         RelicWater = 147,
-        MushroomSplit = 151
+        MushroomSplit = 151,
+
+        MenuMusic = 200,
+        GameplayMusic = 201
     }
 }

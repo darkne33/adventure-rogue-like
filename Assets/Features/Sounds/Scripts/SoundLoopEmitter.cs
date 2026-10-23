@@ -48,7 +48,7 @@ namespace Features.Sounds
 
         private void ApplySettings()
         {
-            _source.volume = _volume * _sounds.SfxVolume;
+            _source.volume = _volume * _sounds.GetVolume(SoundVolumeCategory.Master) * _sounds.SfxVolume;
             _source.mute = _sounds.SfxMuted;
         }
 

@@ -8,9 +8,11 @@ namespace Features.Sounds
     {
         public IReadOnlyList<SoundDefinition> Sounds => _sounds;
         public SoundLoopEmitter LoopPrefab => _loopPrefab;
+        public SoundPlayback PlaybackPrefab => _playbackPrefab;
 
         [SerializeField] private List<SoundDefinition> _sounds = new();
         [SerializeField] private SoundLoopEmitter _loopPrefab;
+        [SerializeField] private SoundPlayback _playbackPrefab;
 
         private void OnValidate()
         {

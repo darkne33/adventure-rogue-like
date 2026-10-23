@@ -21,11 +21,13 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
     private bool _isCharacterSelectionOpen;
     private bool _isQuestsOpen;
     private bool _isUnlocksOpen;
+    private bool _isSettingsOpen;
     private LeaderboardView _leaderboardView;
     private CharacterSelectionView _characterSelectionView;
     private CharacterConfiguration _characterConfiguration;
     private QuestsPanelView _questsView;
     private UnlocksPanelView _unlocksView;
+    private SoundSettingsView _settingsView;
 
     public MainMenuPanelPresenter(ILeaderboardService leaderboardService,
         RunRestartService runRestartService, ISoundsService soundsService, QuestService questService,
@@ -44,6 +46,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         _isCharacterSelectionOpen = false;
         _isQuestsOpen = false;
         _isUnlocksOpen = false;
+        _isSettingsOpen = false;
         _leaderboardView = Panel.Leaderboard;
         _characterSelectionView = Panel.CharacterSelection;
         _characterConfiguration = Panel.CharacterConfiguration;
@@ -80,6 +83,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         Panel.PlayButton.onClick.AddListener(OpenCharacterSelection);
         Panel.QuestsButton.onClick.AddListener(OpenQuests);
         Panel.UnlocksButton.onClick.AddListener(OpenUnlocks);
+        Panel.SettingsButton.onClick.AddListener(OpenSettings);
         _questsView = QuestsPanelView.Create(Panel.QuestsPanelPrefab, Panel.transform, _container, _questService,
             _characterSelectionView.GetPortrait, _characterSelectionView.PortraitMaterial);
         _questsView.BackRequested += CloseQuests;
@@ -88,6 +92,10 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
             _characterSelectionView.GetPortrait, _characterSelectionView.PortraitMaterial);
         _unlocksView.BackRequested += CloseUnlocks;
         _unlocksView.Hide();
+        _settingsView = _container.InstantiatePrefabForComponent<SoundSettingsView>(
+            Panel.SoundSettingsPrefab, Panel.transform);
+        _settingsView.BackRequested += CloseSettings;
+        _settingsView.Hide();
         _characterSelectionView.SelectionRequested += SelectCharacter;
         _characterSelectionView.StartRequested += RequestPlay;
         _characterSelectionView.BackRequested += ReturnToMainMenu;
@@ -120,6 +128,14 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
             Panel.PlayButton.onClick.RemoveListener(OpenCharacterSelection);
             Panel.QuestsButton.onClick.RemoveListener(OpenQuests);
             Panel.UnlocksButton.onClick.RemoveListener(OpenUnlocks);
+            Panel.SettingsButton.onClick.RemoveListener(OpenSettings);
+
+            if (_settingsView != null)
+            {
+                _settingsView.BackRequested -= CloseSettings;
+                _settingsView.Hide();
+                UnityEngine.Object.Destroy(_settingsView.gameObject);
+            }
 
             if (_questsView != null)
             {
@@ -151,8 +167,10 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         _characterConfiguration = null;
         _questsView = null;
         _unlocksView = null;
+        _settingsView = null;
         _isQuestsOpen = false;
         _isUnlocksOpen = false;
+        _isSettingsOpen = false;
 
         return base.OnClosed();
     }
@@ -178,7 +196,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
 
     private void OpenCharacterSelection()
     {
-        if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen)
+        if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen || _isSettingsOpen)
             return;
 
         _isCharacterSelectionOpen = true;
@@ -192,7 +210,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
 
     private void OpenQuests()
     {
-        if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen || _questsView == null)
+        if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen || _isSettingsOpen || _questsView == null)
             return;
 
         _isQuestsOpen = true;
@@ -218,7 +236,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
 
     private void OpenUnlocks()
     {
-        if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen || _unlocksView == null)
+        if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen || _isSettingsOpen || _unlocksView == null)
             return;
 
         _isUnlocksOpen = true;
@@ -253,6 +271,34 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         catch (OperationCanceledException)
         {
         }
+    }
+
+    private void OpenSettings()
+    {
+        if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen ||
+            _isSettingsOpen || _settingsView == null)
+            return;
+
+        _isSettingsOpen = true;
+        Panel.SetButtonsInteractable(false);
+        Panel.SetHomeVisible(false);
+        Panel.SetSilverBalanceVisible(false);
+        _settingsView.Show();
+    }
+
+    private void CloseSettings()
+    {
+        if (_playRequested || !_isSettingsOpen)
+            return;
+
+        _isSettingsOpen = false;
+        _settingsView.Hide();
+        Panel.SetHomeVisible(true);
+        Panel.SetSilverBalanceVisible(true);
+        EnableInput();
+        _soundsService.Play(SoundId.UiBack);
+        if (EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(Panel.SettingsButton.gameObject);
     }
 
     private void SelectCharacter(int index, int direction)
@@ -332,7 +378,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         if (Panel == null)
             return;
 
-        if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen)
+        if (_playRequested || _isCharacterSelectionOpen || _isQuestsOpen || _isUnlocksOpen || _isSettingsOpen)
             return;
 
         Panel.SetButtonsInteractable(true);

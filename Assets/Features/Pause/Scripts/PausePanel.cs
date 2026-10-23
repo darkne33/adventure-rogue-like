@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Features.Relics.Scripts;
+using Features.Sounds;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -18,6 +19,7 @@ public sealed class PausePanel : MonoBehaviour
     [SerializeField] private TMP_Text _descriptionText;
     [SerializeField] private GameObject _mainButtonsRoot;
     [SerializeField] private GameObject _settingsRoot;
+    [SerializeField] private SoundSettingsView _soundSettings;
     [FormerlySerializedAs("_inventorySlots")]
     [SerializeField] private CharacterBuildSlotView[] _abilitySlots;
     [SerializeField] private CharacterBuildView _abilityBuildView;
@@ -44,6 +46,7 @@ public sealed class PausePanel : MonoBehaviour
     public RectTransform RightPanel => _rightPanel;
     public Button ResumeButton => _resumeButton;
     public Button SettingsBackButton => _settingsBackButton;
+    public UnityEngine.UI.Selectable SettingsFirstSelectable => _soundSettings.FirstSelectable;
     public int AbilitySlotCount => _abilitySlots?.Length ?? 0;
 
     private void Awake()
@@ -53,6 +56,7 @@ public sealed class PausePanel : MonoBehaviour
         _restartButton.onClick.AddListener(RequestRestart);
         _exitButton.onClick.AddListener(RequestExit);
         _settingsBackButton.onClick.AddListener(RequestSettingsBack);
+        _soundSettings.ConfigureNavigation(_settingsBackButton);
     }
 
     private void OnDestroy()
@@ -77,6 +81,7 @@ public sealed class PausePanel : MonoBehaviour
     {
         _mainButtonsRoot.SetActive(false);
         _settingsRoot.SetActive(true);
+        _soundSettings.RefreshVolumes();
     }
 
     public void SetMainButtonsInteractable(bool interactable)
