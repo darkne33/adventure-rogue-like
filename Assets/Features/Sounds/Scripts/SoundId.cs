@@ -65,6 +65,7 @@ namespace Features.Sounds
         MushroomSplit = 151,
 
         MenuMusic = 200,
-        GameplayMusic = 201
+        GameplayMusic = 201,
+        BossMusic = 202
     }
 }

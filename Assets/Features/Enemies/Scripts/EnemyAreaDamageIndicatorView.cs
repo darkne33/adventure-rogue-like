@@ -69,6 +69,12 @@ namespace Features.Enemies.Scripts
             SetHorizontalScale(_targetHorizontalScale);
         }
 
+        public void SetTimeScale(float timeScale)
+        {
+            if (_scaleTween != null)
+                _scaleTween.timeScale = Mathf.Max(0f, timeScale);
+        }
+
         public void Hide()
         {
             KillScaleTween();

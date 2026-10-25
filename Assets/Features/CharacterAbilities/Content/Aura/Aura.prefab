@@ -30,7 +30,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2479175815806371105}
+  - {fileID: 3582608006791504120}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &11400001
@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e32f35bd9e6498c81e17d7e1e0820ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AuraDamageArea
-  _visualRoot: {fileID: 2479175815806371105}
+  _visualRoot: {fileID: 3582608006791504120}
 --- !u!1001 &100100001
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -54,6 +54,38 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 400000}
     m_Modifications:
+    - target: {fileID: 710002, guid: e79cfb28eb2e4b859fe35a4cac1b9397, type: 3}
+      propertyPath: moveWithTransform
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 710002, guid: e79cfb28eb2e4b859fe35a4cac1b9397, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 710002, guid: e79cfb28eb2e4b859fe35a4cac1b9397, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 710002, guid: e79cfb28eb2e4b859fe35a4cac1b9397, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2633345486635382986, guid: e79cfb28eb2e4b859fe35a4cac1b9397, type: 3}
+      propertyPath: moveWithTransform
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2633345486635382986, guid: e79cfb28eb2e4b859fe35a4cac1b9397, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2633345486635382986, guid: e79cfb28eb2e4b859fe35a4cac1b9397, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2633345486635382986, guid: e79cfb28eb2e4b859fe35a4cac1b9397, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3582608006748063577, guid: e79cfb28eb2e4b859fe35a4cac1b9397, type: 3}
       propertyPath: m_LocalScale.x
       value: 6
@@ -62,12 +94,16 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 9209273042880332690, guid: e79cfb28eb2e4b859fe35a4cac1b9397, type: 3}
+      propertyPath: moveWithTransform
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e79cfb28eb2e4b859fe35a4cac1b9397, type: 3}
---- !u!4 &2479175815806371105 stripped
+--- !u!4 &3582608006791504120 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3582608006748063577, guid: e79cfb28eb2e4b859fe35a4cac1b9397, type: 3}
   m_PrefabInstance: {fileID: 100100001}

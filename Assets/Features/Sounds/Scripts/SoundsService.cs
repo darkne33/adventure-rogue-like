@@ -523,7 +523,8 @@ namespace Features.Sounds
         private void UpdatePauseFilter()
         {
             // Pause never changes music position or pitch, including upgrade/reward screens.
-            bool filtered = CurrentMusic == SoundId.GameplayMusic && Time.timeScale <= 0f;
+            bool filtered = (CurrentMusic == SoundId.GameplayMusic || CurrentMusic == SoundId.BossMusic) &&
+                            Time.timeScale <= 0f;
             float duration = _playback.PauseFilterDuration;
             _pauseFilterBlend = duration <= 0f ? (filtered ? 1f : 0f) :
                 Mathf.MoveTowards(_pauseFilterBlend, filtered ? 1f : 0f, Time.unscaledDeltaTime / duration);

@@ -1,4 +1,5 @@
 using System.Threading;
+using Features.Enemies.Scripts;
 using UnityEngine;
 
 namespace Features.Bosses.Scripts
@@ -10,6 +11,7 @@ namespace Features.Bosses.Scripts
         [SerializeField] private SphereCollider _hitCollider;
         [SerializeField] private LayerMask _blockingLayers;
         [SerializeField] private LayerMask _characterLayers;
+        [SerializeField] private EnemyAreaDamageIndicatorView _landingIndicatorPrefab;
 
         private readonly RaycastHit[] _castHits = new RaycastHit[16];
         private readonly Collider[] _overlaps = new Collider[16];
@@ -29,6 +31,7 @@ namespace Features.Bosses.Scripts
         private Vector3 _arcTarget;
         private float _arcHeight;
         private CancellationToken _cancellationToken;
+        private EnemyAreaDamageIndicatorView _landingIndicator;
 
         private void Awake() => _particles = GetComponentsInChildren<ParticleSystem>(true);
 
@@ -88,7 +91,18 @@ namespace Features.Bosses.Scripts
             _arcHeight = Mathf.Max(0f, arcHeight);
             _cancellationToken = cancellationToken;
             if (_cancellationToken.IsCancellationRequested)
+            {
                 Resolve(null);
+                return;
+            }
+
+            if (_landingIndicatorPrefab != null)
+            {
+                _landingIndicator = Instantiate(_landingIndicatorPrefab, landingPosition, Quaternion.identity);
+                _landingIndicator.Initialize();
+                _landingIndicator.Show(landingPosition, GetWorldRadius(), _lifetime);
+                _landingIndicator.SetTimeScale(_owner.RelicTimeScale);
+            }
         }
 
         private bool IsSpawnBlocked(Vector3 origin, float radius, Vector3 offset, float distance)
@@ -128,6 +142,8 @@ namespace Features.Bosses.Scripts
             bool paused = Time.deltaTime <= 0f || _character.IsCinematicPaused ||
                 (_arcing && _owner.RelicTimeScale <= 0f);
             SetVisualsPaused(paused);
+            if (_landingIndicator != null)
+                _landingIndicator.SetTimeScale(paused ? 0f : _owner.RelicTimeScale);
             if (paused)
                 return;
 
@@ -251,6 +267,7 @@ namespace Features.Bosses.Scripts
                 return;
             _resolved = true;
             _launched = false;
+            ClearLandingIndicator();
             if (_hitCollider != null)
                 _hitCollider.enabled = false;
             if (hit != null && _character != null &&
@@ -258,6 +275,19 @@ namespace Features.Bosses.Scripts
                 _character.ReceiveDamage(_damage, _owner, allowAegisBlock: false);
             Destroy(gameObject);
         }
+
+        private void ClearLandingIndicator()
+        {
+            if (_landingIndicator == null)
+                return;
+            _landingIndicator.gameObject.SetActive(false);
+            Destroy(_landingIndicator.gameObject);
+            _landingIndicator = null;
+        }
+
+        private void OnDisable() => ClearLandingIndicator();
+
+        private void OnDestroy() => ClearLandingIndicator();
 
         private void SetVisualsPaused(bool paused)
         {

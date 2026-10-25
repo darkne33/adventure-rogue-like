@@ -149,6 +149,20 @@ namespace Features.Bosses.Scripts
             body.angularVelocity = Vector3.zero;
         }
 
+        internal void LaunchAtCharacter()
+        {
+            Vector3 origin = _boss.RadialAttackOrigin.position;
+            Vector3 aim = _character.transform.position - origin;
+            aim.y = 0f;
+            Vector3 direction = aim.sqrMagnitude > 0.0001f ? aim.normalized :
+                _boss.AttackRotation * Vector3.forward;
+            float radius = Mathf.Min(Mathf.Max(0f, Configuration.SpawnRadius), aim.magnitude * 0.5f);
+            MushroomRadialProjectile projectile = CreateProjectile(origin + direction * radius, direction);
+            projectile.Launch(_boss, _character, direction, Configuration.ProjectileSpeed,
+                Configuration.ProjectileLifetime, Configuration.Damage);
+            _boss.PlayCombatSound(Features.Sounds.SoundId.EnemyGhostShot);
+        }
+
         private void LaunchRing(Quaternion rotation)
         {
             Vector3 origin = _boss.RadialAttackOrigin.position;

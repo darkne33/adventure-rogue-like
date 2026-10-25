@@ -3,6 +3,7 @@ using System.Threading;
 using Core;
 using Cysharp.Threading.Tasks;
 using Features.Bosses.Scripts;
+using Features.Sounds;
 using UI;
 using UnityEngine;
 using Zenject;
@@ -15,18 +16,20 @@ namespace Features.Bosses.UI
         private readonly IUIFactory _uiFactory;
         private readonly DiContainer _container;
         private readonly ICharacterProvider _characters;
+        private readonly GameplayMusicController _music;
         private readonly CancellationTokenSource _lifetime = new();
         private BossIntroScreen _screen;
         private bool _isPlaying;
         private bool _disposed;
 
         public BossIntroService(GameplayAssetService assets, IUIFactory uiFactory,
-            DiContainer container, ICharacterProvider characters)
+            DiContainer container, ICharacterProvider characters, GameplayMusicController music)
         {
             _assets = assets;
             _uiFactory = uiFactory;
             _container = container;
             _characters = characters;
+            _music = music;
         }
 
         public async UniTask PlayAsync(BossConfig boss, CancellationToken cancellationToken)
@@ -59,6 +62,7 @@ namespace Features.Bosses.UI
             {
                 EnsureScreen();
                 _screen.transform.SetAsLastSibling();
+                _music.StartBossIntroMusic();
                 await _screen.PlayAsync(definition.IntroPortrait, definition.IntroDisplayName,
                     boss.IntroPortrait, boss.IntroDisplayName, boss.IntroPortraitRect, token);
                 token.ThrowIfCancellationRequested();

@@ -14,6 +14,7 @@ namespace Features.Bosses.Scripts
         private OgreBossAnimation _animation;
         private BossRadialAttack _radialAttack;
         private float _cooldown;
+        private float _nextDamageReactionAt;
         private float _wait;
         private int _lastClockFrame = -1;
         private bool _executing;
@@ -44,40 +45,69 @@ namespace Features.Bosses.Scripts
 
         public override async UniTask Tick(CancellationToken cancellationToken)
         {
-            while (_boss != null && !_boss.IsDead)
+            void OnDamageReceived(float damage)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                float delta = AdvanceClock();
-                if (CanContinue() && _boss.CanAttack && delta > 0f && _configuration != null && _animation != null)
+                if (!cancellationToken.IsCancellationRequested)
+                    ReactToDamage(damage);
+            }
+
+            HealthSystem health = _boss.HealthSystem;
+            health.DamageReceived += OnDamageReceived;
+            try
+            {
+                while (_boss != null && !_boss.IsDead)
                 {
-                    _wait = Mathf.Max(0f, _wait - delta);
-                    if (_wait <= 0f && _radialAttack != null && _radialAttack.IsReady)
+                    cancellationToken.ThrowIfCancellationRequested();
+                    float delta = AdvanceClock();
+                    if (CanContinue() && _boss.CanAttack && delta > 0f && _configuration != null && _animation != null)
                     {
-                        await ExecuteRadialAttack(cancellationToken);
-                    }
-                    else
-                    {
-                        OgreSlamAttackConfiguration attack = FindAttack();
-                        if (_wait <= 0f && attack != null)
+                        _wait = Mathf.Max(0f, _wait - delta);
+                        if (_wait <= 0f && _radialAttack != null && _radialAttack.IsReady)
                         {
-                            FaceCharacter();
-                            if (TryGetImpact(attack, out _))
-                            {
-                                _animation.IdleAnimation();
-                                if (_cooldown <= 0f)
-                                    await ExecuteAttack(attack, cancellationToken);
-                            }
-                            else
-                                MoveTowardsCharacter(delta);
+                            await ExecuteRadialAttack(cancellationToken);
                         }
                         else
-                            _animation.IdleAnimation();
+                        {
+                            OgreSlamAttackConfiguration attack = FindAttack();
+                            if (_wait <= 0f && attack != null)
+                            {
+                                FaceCharacter();
+                                if (TryGetImpact(attack, out _))
+                                {
+                                    _animation.IdleAnimation();
+                                    if (_cooldown <= 0f)
+                                        await ExecuteAttack(attack, cancellationToken);
+                                }
+                                else
+                                    MoveTowardsCharacter(delta);
+                            }
+                            else
+                                _animation.IdleAnimation();
+                        }
                     }
+                    else if (!_executing)
+                        _animation?.IdleAnimation();
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
-                else if (!_executing)
-                    _animation?.IdleAnimation();
-                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
             }
+            finally
+            {
+                health.DamageReceived -= OnDamageReceived;
+            }
+        }
+
+        private void ReactToDamage(float damage)
+        {
+            BossRadialAttackConfiguration attack = _radialAttack?.Configuration;
+            if (damage <= 0f || _configuration == null || attack == null || !attack.IsEnabled ||
+                attack.ProjectilePrefab == null || !CanContinue() || !_boss.CanAttack ||
+                _boss.HealthSystem.CurrentHealth <= 0f || !_character.isActiveAndEnabled ||
+                _character.IsCinematicPaused || Time.deltaTime <= 0f ||
+                _boss.RadialAttackClock < _nextDamageReactionAt)
+                return;
+
+            _nextDamageReactionAt = _boss.RadialAttackClock + Mathf.Max(1f, _configuration.DamageReactionCooldown);
+            _radialAttack.LaunchAtCharacter();
         }
 
         public override async UniTask Execute(CancellationToken cancellationToken)

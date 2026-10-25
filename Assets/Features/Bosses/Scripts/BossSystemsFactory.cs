@@ -57,7 +57,12 @@ namespace Features.Bosses.Scripts
                 {
                     if (renderer == null)
                         continue;
-                    telegraphTransform = renderer.transform;
+                    // Wood Guard's skinned mesh and skeleton are separate root children.
+                    // Shake the skeleton so the cast moves the rendered body.
+                    telegraphTransform = facade is WoodGuardBossFacade &&
+                                         renderer is SkinnedMeshRenderer skinnedRenderer &&
+                                         skinnedRenderer.rootBone != null
+                        ? skinnedRenderer.rootBone : renderer.transform;
                     while (telegraphTransform.parent != null && telegraphTransform.parent != facade.transform)
                         telegraphTransform = telegraphTransform.parent;
                     if (telegraphTransform == facade.transform)
