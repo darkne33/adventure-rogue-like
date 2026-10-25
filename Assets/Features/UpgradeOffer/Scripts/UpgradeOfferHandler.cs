@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
+using Core;
+using Core.Services;
 using Cysharp.Threading.Tasks;
 using Features.Sounds;
 using UI;
@@ -19,6 +22,8 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
     private readonly ICharacterLevelService _characterLevelService;
     private readonly UpgradeBuildService _upgradeBuildService;
     private readonly ISoundsService _sounds;
+    private readonly IEffectsService _effectsService;
+    private readonly CancellationTokenSource _lifetime = new();
 
     private readonly List<UpgradeOfferItemView> _upgradeItems = new();
     private readonly List<UpgradeOffer> _currentOffers = new();
@@ -38,7 +43,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         IUpgradeOfferItemFactory upgradeOfferItemFactory, UpgradeOfferConfiguration upgradeOfferConfiguration,
         IPanelService panelService, CharacterStats characterStats, ICharacterProvider characterProvider,
         IPauseService pauseService, ICharacterLevelService characterLevelService,
-        UpgradeBuildService upgradeBuildService, ISoundsService sounds)
+        UpgradeBuildService upgradeBuildService, ISoundsService sounds, IEffectsService effectsService)
     {
         _upgradeOfferGenerator = upgradeOfferGenerator;
         _upgradeOfferItemFactory = upgradeOfferItemFactory;
@@ -50,6 +55,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         _characterLevelService = characterLevelService;
         _upgradeBuildService = upgradeBuildService;
         _sounds = sounds;
+        _effectsService = effectsService;
 
         _characterLevelService.OnLevelUp += OnLevelUp;
     }
@@ -102,12 +108,14 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         UpgradeOfferPanel.SetMoreUpgradeConditionVisible(_upgradeBuildService.HasAdditionalUpgradeOffer == false);
         _sounds.Play(SoundId.UiConfirm);
         _isClosing = true;
-        CloseCurrentOffer().Forget();
+        CloseCurrentOffer(playLevelUpEffect: true).Forget();
     }
 
     public void Dispose()
     {
         _characterLevelService.OnLevelUp -= OnLevelUp;
+        _lifetime.Cancel();
+        _lifetime.Dispose();
 
         if (_isOpen)
             _pauseService.CancelPause();
@@ -132,15 +140,68 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         PlayItemsAppearance();
     }
 
-    private async UniTask CloseCurrentOffer()
+    private async UniTask CloseCurrentOffer(bool playLevelUpEffect = false)
     {
+        CancellationToken token = _lifetime.Token;
         DestroyViews();
         await UpgradeOfferPanel.Hide();
+
+        if (token.IsCancellationRequested)
+            return;
 
         _pauseService.CancelPause();
         _isOpen = false;
         _isClosing = false;
+
+        if (playLevelUpEffect)
+            PlayLevelUpEffect(token).Forget();
+
         TryShowNextOffer();
+    }
+
+    private async UniTask PlayLevelUpEffect(CancellationToken token)
+    {
+        CharacterFacade character = _characterProvider.CharacterFacade;
+        if (character == null || character.Collider == null || token.IsCancellationRequested)
+            return;
+
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            token, character.GetCancellationTokenOnDestroy());
+        EffectPlayer effect = _effectsService.GetEffect(EffectName.CharacterLevelUp);
+        if (effect == null)
+            return;
+
+        Collider characterCollider = character.Collider;
+        try
+        {
+            float referenceHeight = Mathf.Max(0.01f, _upgradeOfferConfiguration.LevelUpEffectReferenceHeight);
+            effect.transform.localScale = Vector3.one * (characterCollider.bounds.size.y / referenceHeight);
+            effect.transform.rotation = Quaternion.identity;
+            effect.transform.position = GetLevelUpEffectPosition(characterCollider);
+            effect.PlayWithoutRelease();
+
+            while (effect.ParticleSystems.Any(particle => particle.IsAlive(true)))
+            {
+                cancellation.Token.ThrowIfCancellationRequested();
+                effect.transform.position = GetLevelUpEffectPosition(characterCollider);
+                await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellation.Token);
+            }
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            if (effect != null)
+                effect.Release();
+        }
+    }
+
+    private Vector3 GetLevelUpEffectPosition(Collider characterCollider)
+    {
+        Bounds bounds = characterCollider.bounds;
+        return new Vector3(bounds.center.x,
+            bounds.min.y + _upgradeOfferConfiguration.LevelUpEffectVerticalOffset, bounds.center.z);
     }
 
     private void DestroyViews()

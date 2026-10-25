@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using Features.PickupFeedback;
 using UI;
 
 namespace Features.Relics.Scripts
@@ -11,6 +12,7 @@ namespace Features.Relics.Scripts
         private readonly IPanelService _panelService;
         private readonly IPauseService _pauseService;
         private readonly RelicManager _relicManager;
+        private readonly ICharacterProvider _characterProvider;
         private readonly Queue<RelicDefinition> _pendingRelics = new();
 
         private RelicDescriptionPanel _panel;
@@ -19,12 +21,13 @@ namespace Features.Relics.Scripts
         private bool _isClosing;
 
         public RelicDescriptionHandler(RelicEventBus eventBus, IPanelService panelService,
-            IPauseService pauseService, RelicManager relicManager)
+            IPauseService pauseService, RelicManager relicManager, ICharacterProvider characterProvider)
         {
             _eventBus = eventBus;
             _panelService = panelService;
             _pauseService = pauseService;
             _relicManager = relicManager;
+            _characterProvider = characterProvider;
 
             _eventBus.RelicOffered += HandleRelicOffered;
         }
@@ -80,6 +83,7 @@ namespace Features.Relics.Scripts
                 return;
 
             _isClosing = true;
+            RelicDefinition collectedRelic = null;
 
             if (takeRelic)
             {
@@ -89,20 +93,24 @@ namespace Features.Relics.Scripts
                     return;
                 }
 
+                collectedRelic = _currentRelic;
                 _eventBus.PublishRelicCollected(_currentRelic);
             }
 
             _currentRelic = null;
-            CloseCurrentRelic().Forget();
+            CloseCurrentRelic(collectedRelic).Forget();
         }
 
-        private async UniTask CloseCurrentRelic()
+        private async UniTask CloseCurrentRelic(RelicDefinition collectedRelic)
         {
             await GetPanel().Hide();
 
             _pauseService.CancelPause();
             _isOpen = false;
             _isClosing = false;
+            if (collectedRelic != null)
+                _characterProvider?.CharacterFacade?.ShowPickupFeedback(
+                    PickupFeedbackKind.Relic, collectedRelic.Icon);
             TryShowNextRelic();
         }
 

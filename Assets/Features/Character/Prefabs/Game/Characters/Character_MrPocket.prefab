@@ -10155,6 +10155,7 @@ GameObject:
   - component: {fileID: 5374661559397912773}
   - component: {fileID: 3085349685794818528}
   - component: {fileID: 9000000000000000201}
+  - component: {fileID: 9000000000000000301}
   m_Layer: 9
   m_Name: Character_MrPocket
   m_TagString: Untagged
@@ -10188,6 +10189,7 @@ Transform:
   - {fileID: 162683716217879674}
   - {fileID: 1876882485621028351}
   - {fileID: 4168038051696753707}
+  - {fileID: 9000000000000000312}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &1897747299741300817
@@ -10266,6 +10268,54 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 448
   _pivotGroundChecker: {fileID: 1876882485621028351}
+  _deathPresentation: {fileID: 9000000000000000301}
+--- !u!114 &9000000000000000301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2033864240802010799}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7a45daed9c64bd4a45e80d6bbf8d548, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterDeathPresentation
+  _bodyPivot: {fileID: 9000000000000000102}
+  _animator: {fileID: 8530525705783084253}
+  _configuration: {fileID: 11400000, guid: e6dbc6f70eb54e3aaa620219c734d791, type: 2}
+  _soulOrigin: {fileID: 9000000000000000312}
+--- !u!1 &9000000000000000311
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9000000000000000312}
+  m_Layer: 9
+  m_Name: DeathSoulOrigin
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9000000000000000312
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9000000000000000311}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5559070631443764953}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3085349685794818528
 MonoBehaviour:
   m_ObjectHideFlags: 0

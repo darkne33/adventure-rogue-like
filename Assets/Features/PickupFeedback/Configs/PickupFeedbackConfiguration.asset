@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca3e72fc9a404df89cddca27a873c80b, type: 3}
+  m_Name: PickupFeedbackConfiguration
+  m_EditorClassIdentifier:
+  _viewPrefab: {fileID: 114000, guid: 75e41b3f4dd64d1bbdcb5a6c52b42fea, type: 3}
+  _silverIcon: {fileID: 21300000, guid: e4e4fb329176465a9feb87af84564070, type: 3}
+  _keyIcon: {fileID: 21300000, guid: e923c70a8ebd4f1f947d89b5c874f26c, type: 3}
+  _worldScale: 0.01
+  _headClearance: 0.55
+  _popDuration: 0.28
+  _ringDuration: 0.43
+  _flashDuration: 0.2
+  _fadeDuration: 0.27
+  _riseDistance: 18
+  _item:
+    _duration: 1.15
+    _iconSize: 72
+    _color: {r: 1, g: 0.855, b: 0.561, a: 1}
+    _sparkCount: 12
+    _spreadRadius: 60
+  _silver:
+    _duration: 0.72
+    _iconSize: 54
+    _color: {r: 0.871, g: 0.949, b: 1, a: 1}
+    _sparkCount: 7
+    _spreadRadius: 38
+  _key:
+    _duration: 1.05
+    _iconSize: 70
+    _color: {r: 1, g: 0.863, b: 0.533, a: 1}
+    _sparkCount: 12
+    _spreadRadius: 60
+  _relic:
+    _duration: 1.4
+    _iconSize: 76
+    _color: {r: 0.914, g: 0.725, b: 1, a: 1}
+    _sparkCount: 12
+    _spreadRadius: 60

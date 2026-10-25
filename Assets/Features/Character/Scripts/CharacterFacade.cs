@@ -1,4 +1,5 @@
 using Features.Enemies.Scripts;
+using Features.PickupFeedback;
 using Features.Relics.Scripts;
 using UnityEngine;
 using Zenject;
@@ -21,12 +22,14 @@ public class CharacterFacade : MonoBehaviour
         _collider != null ? _collider.bounds.center : transform.position;
 
     public GameObject CharacterModel => _characterModel;
+    public CharacterDeathPresentation DeathPresentation => _deathPresentation;
     public  Renderer[] MeshRenderers => _meshRenderers;
     public  Outline[] Outlines => _outlines;
     public  bool IsTransitionPaused => _isTransitionPaused;
     public bool IsCinematicPaused => _pauseEntity?.IsCinematicPaused ?? false;
 
     [SerializeField] private GameObject _characterModel;
+    [SerializeField] private CharacterDeathPresentation _deathPresentation;
     [SerializeField] private GameObject _cameraPivot;
     [SerializeField] private Transform _relicRootTarget;
     [SerializeField] private Renderer[] _meshRenderers;
@@ -64,6 +67,7 @@ public class CharacterFacade : MonoBehaviour
     private DealDamageEffectSystem _damageEffectSystem;
     private CharacterInvulnerabilitySystem _invulnerabilitySystem;
     private IDamageView _damageView;
+    private CharacterPickupFeedbackView _pickupFeedback;
     private bool _isTransitionPaused;
     private bool _wasKinematicBeforeControlLock;
     private int _obstacleLayer = -1;
@@ -73,6 +77,7 @@ public class CharacterFacade : MonoBehaviour
     private Color _shieldOutlineColor = Color.blue;
     private bool _isShieldOutlineActive;
     private bool _hasGroundContact;
+    private bool _abilitiesDisposed;
     private Vector3 _groundContactNormal;
     private readonly RaycastHit[] _groundProbeHits = new RaycastHit[GroundProbeHitCapacity];
 
@@ -119,11 +124,12 @@ public class CharacterFacade : MonoBehaviour
     {
         if (_healthSystem != null)
             _healthSystem.DamageReceived -= HandleHealthDamageReceived;
-        _abilitySystem?.Dispose();
+        DisposeAbilities();
         _invulnerabilitySystem?.Dispose();
         _moveSystem?.Dispose();
         _cameraSystem?.Dispose();
         _proximityTransparencySystem?.Dispose();
+        _damageEffectSystem?.Dispose();
     }
 
     private void FixedUpdate()
@@ -159,6 +165,12 @@ public class CharacterFacade : MonoBehaviour
         _healthSystem.Initialize();
         _shieldSystem.Initialize(_characterStats.Shield);
     }
+
+    internal void SetPickupFeedback(CharacterPickupFeedbackView pickupFeedback) =>
+        _pickupFeedback = pickupFeedback;
+
+    public void ShowPickupFeedback(PickupFeedbackKind kind, Sprite icon = null, int amount = 0) =>
+        _pickupFeedback?.Show(kind, icon, amount);
 
     public void Construct(Rigidbody rigidbody, Collider collider, CharacterStats characterStats,
         PauseEntity pauseEntity, HealthSystem healthSystem, ShieldSystem shieldSystem,
@@ -330,7 +342,7 @@ public class CharacterFacade : MonoBehaviour
 
     private void PlayDamageFeedback(float damage)
     {
-        if (damage <= 0)
+        if (damage <= 0 || _healthSystem.IsDead)
             return;
 
         _damageView?.ShowDamage(damage, _healthSystem.MaxHealth, false);
@@ -404,16 +416,56 @@ public class CharacterFacade : MonoBehaviour
 
     public void DisableAfterDeath()
     {
+        SetCinematicPaused(true);
+        _moveSystem.SetTransitionPaused(true);
+        _moveSystem.CanMove(false);
         enabled = false;
-        _rigidbody.linearVelocity = Vector3.zero;
-        _rigidbody.angularVelocity = Vector3.zero;
+        if (_rigidbody.isKinematic == false)
+        {
+            _rigidbody.linearVelocity = Vector3.zero;
+            _rigidbody.angularVelocity = Vector3.zero;
+        }
         _rigidbody.isKinematic = true;
         _collider.enabled = false;
 
-        if (_shadow != null)
-            Destroy(_shadow.gameObject);
+        DisposeAbilities();
+        _damageEffectSystem.StopForDeath();
+        _proximityTransparencySystem.Dispose();
 
-        Destroy(gameObject);
+        if (_shadow != null)
+            _shadow.gameObject.SetActive(false);
+    }
+
+    private void DisposeAbilities()
+    {
+        if (_abilitiesDisposed)
+            return;
+
+        _abilitiesDisposed = true;
+        _abilitySystem?.Dispose();
+    }
+
+    internal float GetDeathGroundHeight()
+    {
+        Bounds bounds = _collider.bounds;
+        float height = bounds.min.y;
+        float closestDistance = float.PositiveInfinity;
+        int fallbackMask = _defaultLayer >= 0 ? 1 << _defaultLayer : 0;
+        int count = Physics.RaycastNonAlloc(bounds.center, Vector3.down, _groundProbeHits,
+            100f, _shadowLayer.value | fallbackMask, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < count; i++)
+        {
+            RaycastHit hit = _groundProbeHits[i];
+            if (hit.collider == null || hit.rigidbody == _rigidbody ||
+                hit.normal.y <= MinGroundNormalY || !IsGroundSurface(hit.collider) ||
+                hit.distance >= closestDistance)
+                continue;
+
+            closestDistance = hit.distance;
+            height = hit.point.y;
+        }
+
+        return height;
     }
 
     private void UpdateHealth(float deltaTime)

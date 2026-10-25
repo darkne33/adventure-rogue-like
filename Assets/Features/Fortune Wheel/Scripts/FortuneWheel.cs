@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using Features.PickupFeedback;
 using Features.Relics.Scripts;
 using Features.RewardBag;
 using UnityEngine;
@@ -704,21 +705,34 @@ namespace Features.FortuneWheel
                     return;
                 case FortuneWheelRewardType.Key:
                     if (TryDropCurrencyReward(_keyDropPrefab,
-                            () => _characterWallet?.Keys.Add(reward.Definition.Amount)) == false)
-                        _characterWallet?.Keys.Add(reward.Definition.Amount);
+                            () => GrantCurrencyReward(_characterWallet?.Keys,
+                                PickupFeedbackKind.Key, reward.Definition.Amount)) == false)
+                        GrantCurrencyReward(_characterWallet?.Keys,
+                            PickupFeedbackKind.Key, reward.Definition.Amount);
                     return;
                 case FortuneWheelRewardType.Gold:
                     DropGold(reward.Definition.Amount);
                     return;
                 case FortuneWheelRewardType.Silver:
                     if (TryDropCurrencyReward(_silverDropPrefab,
-                            () => _characterWallet?.Silver.Add(reward.Definition.Amount)) == false)
-                        _characterWallet?.Silver.Add(reward.Definition.Amount);
+                            () => GrantCurrencyReward(_characterWallet?.Silver,
+                                PickupFeedbackKind.Silver, reward.Definition.Amount)) == false)
+                        GrantCurrencyReward(_characterWallet?.Silver,
+                            PickupFeedbackKind.Silver, reward.Definition.Amount);
                     return;
                 case FortuneWheelRewardType.Relic:
                     DropRelic(reward.Relic);
                     return;
             }
+        }
+
+        private void GrantCurrencyReward(Currency currency, PickupFeedbackKind kind, int amount)
+        {
+            if (currency == null)
+                return;
+
+            currency.Add(amount);
+            _characterProvider?.CharacterFacade?.ShowPickupFeedback(kind, amount: amount);
         }
 
         private void DropGold(int amount)

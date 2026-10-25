@@ -63,6 +63,7 @@ namespace Features.Sounds
         RelicDagger = 146,
         RelicWater = 147,
         MushroomSplit = 151,
+        BoomerangShotAlternate = 152,
 
         MenuMusic = 200,
         GameplayMusic = 201,

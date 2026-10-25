@@ -1,4 +1,5 @@
 using System;
+using Features.PickupFeedback;
 using Features.RewardBag;
 using UnityEngine;
 using Zenject;
@@ -67,7 +68,12 @@ namespace Features.Relics.Scripts
             if (reward is RewardType.Key or RewardType.CoinsAndKey or RewardType.HeartAndKey)
             {
                 DropCurrency(_configuration.GrayChestKeyRewardPrefab,
-                    chestPosition, spawnPosition, () => _wallet.Keys.Add(1));
+                    chestPosition, spawnPosition, () =>
+                    {
+                        _wallet.Keys.Add(1);
+                        _characterProvider?.CharacterFacade?.ShowPickupFeedback(
+                            PickupFeedbackKind.Key, amount: 1);
+                    });
             }
 
             if (reward is RewardType.Heart or RewardType.CoinsAndHeart or RewardType.HeartAndKey)

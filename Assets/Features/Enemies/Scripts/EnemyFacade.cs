@@ -49,6 +49,14 @@ namespace Features.Enemies.Scripts
         public override bool CountsForRoomCompletion => CanBeAttacked;
         public Transform AttackTelegraphTransform => GetAttackTelegraphTransform();
         public Transform MovementVisual => _movementVisual;
+        internal ExpDropper.RoomExperienceBudget ExperienceBudget { get; private set; }
+        internal double RoomExperienceShare { get; private set; }
+
+        internal void ConfigureRoomExperience(ExpDropper.RoomExperienceBudget budget, double share)
+        {
+            ExperienceBudget = budget;
+            RoomExperienceShare = share;
+        }
 
         [SerializeField] private EnemyConfiguration _enemyConfiguration;
         [SerializeField] private Renderer[] _meshRenderers;

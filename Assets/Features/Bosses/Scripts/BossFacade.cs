@@ -63,6 +63,7 @@ namespace Features.Bosses.Scripts
         private BossCombatSystem _combatSystem;
         private bool _initialized;
         private bool _hasStarted;
+        private bool _hasClaimedExperienceReward;
         private float _persistentSlow = 1f;
         private float _temporarySlow = 1f;
         private float _temporarySlowUntil;
@@ -204,7 +205,14 @@ namespace Features.Bosses.Scripts
 
         public void StopCombat() => _combatSystem?.Stop();
 
-        public virtual int ClaimExperienceReward() => Mathf.Max(0, Config.Exp);
+        public virtual bool TryClaimExperienceReward()
+        {
+            if (_hasClaimedExperienceReward)
+                return false;
+
+            _hasClaimedExperienceReward = true;
+            return true;
+        }
 
         public Transform GetClosestProjectileTarget(Vector3 position)
         {

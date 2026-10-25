@@ -22,6 +22,32 @@ public sealed class ExpDropper
             ? Mathf.Max(1f, _configuration != null ? _configuration.EliteExperienceMultiplier : 2f)
             : 1f;
 
+    public double BossLevelProgress =>
+        Mathf.Max(0f, _configuration != null ? _configuration.BossLevelProgress : 1f);
+
+    internal RoomExperienceBudget CreateRoomExperienceBudget(int enemyCount, float xpBonus)
+    {
+        double roomsPerUpgrade = Mathf.Clamp(
+            _configuration != null ? _configuration.CombatRoomsPerUpgrade : 2.5f, 2f, 3f);
+        double progress = (1d + Mathf.Max(0f, xpBonus) / 100d) / roomsPerUpgrade;
+        return new RoomExperienceBudget(progress, enemyCount);
+    }
+
+    public void DropLevelProgress(Vector3 position, double levelProgress)
+    {
+        if (levelProgress <= 0d)
+            return;
+
+        if (_configuration == null || _configuration.ExpRupeePrefab == null)
+        {
+            _characterLevelService.AddLevelProgress(levelProgress);
+            return;
+        }
+
+        CreateRupee(position).ConstructLevelProgress(levelProgress, _configuration,
+            _characterProvider, _characterLevelService, position + GetBurstOffset());
+    }
+
     public void DropExp(Vector3 position, int amount)
     {
         if (amount <= 0)
@@ -33,19 +59,51 @@ public sealed class ExpDropper
             return;
         }
 
+        CreateRupee(position).Construct(amount, _configuration, _characterProvider, _characterLevelService,
+            position + GetBurstOffset());
+    }
+
+    private ExpRupee CreateRupee(Vector3 position)
+    {
         GameObject rupeeObject = _container.InstantiatePrefab(_configuration.ExpRupeePrefab, position,
             Quaternion.identity, null);
         ExpRupee expRupee = rupeeObject.GetComponent<ExpRupee>();
-        if (expRupee == null)
-            expRupee = rupeeObject.AddComponent<ExpRupee>();
+        if (expRupee != null)
+            return expRupee;
 
-        expRupee.Construct(amount, _configuration, _characterProvider, _characterLevelService,
-            position + GetBurstOffset());
+        Object.Destroy(rupeeObject);
+        throw new System.InvalidOperationException("The experience pickup prefab must contain ExpRupee.");
     }
 
     private Vector3 GetBurstOffset()
     {
         Vector2 scatter = Random.insideUnitCircle * Mathf.Max(0f, _configuration.BurstScatterRadius);
         return new Vector3(scatter.x, Mathf.Max(0f, _configuration.BurstHeight), scatter.y);
+    }
+
+    internal sealed class RoomExperienceBudget
+    {
+        private double _remainingProgress;
+
+        public double EnemyShare { get; }
+        public bool IsSpawningFinished { get; private set; }
+
+        public RoomExperienceBudget(double progress, int enemyCount)
+        {
+            _remainingProgress = System.Math.Max(0d, progress);
+            EnemyShare = _remainingProgress / Mathf.Max(1, enemyCount);
+        }
+
+        public void FinishSpawning() => IsSpawningFinished = true;
+
+        public double Claim(double share, bool isRoomCleared)
+        {
+            // Hazards and unspawned slots leave their share for the final combat enemy.
+            double reward = isRoomCleared
+                ? _remainingProgress
+                : System.Math.Min(_remainingProgress, System.Math.Max(0d, share));
+            _remainingProgress -= reward;
+            return reward;
+        }
     }
 }

@@ -36,7 +36,17 @@ public class EnemyDeathSystem : IDeathSystem
     {
         _deathEffect?.Invoke();
         _enemiesProvider.RemoveEnemy(_enemyFacade);
-        _expDropper.DropExp(_enemyFacade.transform.position, CalculateExpReward(_enemyConfiguration.Exp));
+        ExpDropper.RoomExperienceBudget experienceBudget = _enemyFacade.ExperienceBudget;
+        if (experienceBudget != null)
+        {
+            bool isRoomCleared = experienceBudget.IsSpawningFinished && _enemiesProvider.Count == 0;
+            double progress = experienceBudget.Claim(_enemyFacade.RoomExperienceShare, isRoomCleared);
+            _expDropper.DropLevelProgress(_enemyFacade.transform.position, progress);
+        }
+        else
+        {
+            _expDropper.DropExp(_enemyFacade.transform.position, CalculateExpReward(_enemyConfiguration.Exp));
+        }
         _characterFacade.HealthSystem.IncreaseCurrentHealth(Mathf.Max(0f, _characterStats.GainHp));
         _goldDropper.DropGold(_enemyFacade.transform.position);
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Features.Bosses.UI;
+using Features.PickupFeedback;
 using Features.Quests.Scripts;
 using Features.Relics.Scripts;
 using Features.RunResults.Scripts;
@@ -29,6 +30,7 @@ namespace Core
         public Shader ProximityFadeShader { get; private set; }
         public RunResultsPanel RunResults { get; private set; }
         public BossIntroScreen BossIntro { get; private set; }
+        public PickupFeedbackConfiguration PickupFeedback { get; private set; }
         public SoundsCatalog UiSounds { get; private set; }
         public SoundsCatalog GameplaySounds { get; private set; }
         public SoundsCatalog MusicSounds { get; private set; }
@@ -63,6 +65,8 @@ namespace Core
                 RunResults = await LoadPrefab<RunResultsPanel>(
                     "Assets/Features/RunResults/Prefabs/RunResultsPanel.prefab", token);
                 BossIntro = await LoadPrefab<BossIntroScreen>(BossIntroScreen.Address, token);
+                PickupFeedback = await Load<PickupFeedbackConfiguration>(
+                    PickupFeedbackConfiguration.Address, token);
                 UiSounds = await Load<SoundsCatalog>(
                     "Assets/Features/Sounds/Configs/UiSoundsCatalog.asset", token);
                 GameplaySounds = await Load<SoundsCatalog>(
@@ -101,6 +105,7 @@ namespace Core
             ProximityFadeShader = null;
             RunResults = null;
             BossIntro = null;
+            PickupFeedback = null;
             UiSounds = null;
             GameplaySounds = null;
             MusicSounds = null;

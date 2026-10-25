@@ -222,6 +222,17 @@ namespace Features.Enemies.Scripts
             ClearAttackTelegraph();
         }
 
+        public void StopForDeath()
+        {
+            _isDying = true;
+            _hitTweener?.Kill();
+            _whiteHitTweener?.Kill();
+            _hitPower = 0f;
+            ApplyHitBlend();
+            SetWhiteHitPower(0f);
+            ClearAttackTelegraph();
+        }
+
         public Tween PlayDeathFade(float duration)
         {
             _isDying = true;

@@ -21,6 +21,9 @@ public class EnemySpawner
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
     private readonly EnemyRoomObserver _enemyRoomObserver;
     private readonly IPlayerSaveLoadService _playerSaveLoadService;
+    private readonly ExpDropper _expDropper;
+    private readonly CharacterStats _characterStats;
+    private ExpDropper.RoomExperienceBudget _roomExperienceBudget;
     private readonly Dictionary<GameObject, EnemySpawnVolume> _spawnVolumes = new();
     private readonly Collider[] _spawnOverlapResults = new Collider[64];
     private DefaultEnemiesRoomData _activeRoomData;
@@ -60,7 +63,8 @@ public class EnemySpawner
     public EnemySpawner(IRogueLikeRuntimeDataService rogueLikeRuntimeDataService, IEnemyFactory enemyFactory,
         LevelsConfiguration levelsConfiguration, IEnemiesProvider enemiesProvider, IEffectsService effectsService,
         RelicEventBus relicEventBus, ISceneService<RogueLikeSceneProvider> sceneService,
-        EnemyRoomObserver enemyRoomObserver, IPlayerSaveLoadService playerSaveLoadService)
+        EnemyRoomObserver enemyRoomObserver, IPlayerSaveLoadService playerSaveLoadService,
+        ExpDropper expDropper, CharacterStats characterStats)
     {
         _rogueLikeRuntimeDataService = rogueLikeRuntimeDataService;
         _enemyFactory = enemyFactory;
@@ -71,6 +75,8 @@ public class EnemySpawner
         _sceneService = sceneService;
         _enemyRoomObserver = enemyRoomObserver;
         _playerSaveLoadService = playerSaveLoadService;
+        _expDropper = expDropper;
+        _characterStats = characterStats;
         _enemiesProvider.EnemyRemoved += HandleEnemyRemoved;
     }
 
@@ -121,6 +127,8 @@ public class EnemySpawner
         Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
         _isSmallRoom = currentRoom.IsSmallEnemyRoom;
         _allEnemiesInCurrentRoom = _roomBalance.GetAllEnemyCount(_roomProgressIndex, _isSmallRoom);
+        _roomExperienceBudget = _expDropper.CreateRoomExperienceBudget(
+            _allEnemiesInCurrentRoom, _characterStats.XPBonus);
         _waveEnemyCounts = _roomBalance.CreateWaveEnemyCounts(_roomProgressIndex, _isSmallRoom);
         _waveIndex = 0;
         _waveSpawnTarget = _waveEnemyCounts[0];
@@ -307,6 +315,7 @@ public class EnemySpawner
             return;
 
         _isRoomSpawningActive = false;
+        _roomExperienceBudget?.FinishSpawning();
         _enemyRoomObserver.FinishEnemySpawning(_enemiesProvider.Count);
     }
 
@@ -674,7 +683,7 @@ public class EnemySpawner
         OpeningEnemySpawnBatch openingSpawnBatch)
     {
         UniTask spawnTask = SpawnEnemy(enemy, spawnPosition, enemyType,
-            openingSpawnBatch?.CancellationToken ?? default);
+            openingSpawnBatch?.CancellationToken ?? default, _roomExperienceBudget);
         if (openingSpawnBatch == null)
             spawnTask.Forget();
         else
@@ -682,11 +691,14 @@ public class EnemySpawner
     }
 
     private async UniTask SpawnEnemy(GameObject enemy, Vector3 spawnPosition, EnemyType enemyType,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ExpDropper.RoomExperienceBudget experienceBudget = null)
     {
         var offsetDown = 2f;
         Vector3 underGroundPosition = spawnPosition + Vector3.down * offsetDown;
         EnemyFacade enemyFacade = _enemyFactory.Create(enemy, underGroundPosition, spawnPosition);
+        if (enemyFacade.CountsForRoomCompletion && experienceBudget != null)
+            enemyFacade.ConfigureRoomExperience(experienceBudget, experienceBudget.EnemyShare);
         Rigidbody rigidbody = enemyFacade.Rigidbody;
         bool wasKinematic = rigidbody != null && rigidbody.isKinematic;
         bool hadCollisions = rigidbody != null && rigidbody.detectCollisions;

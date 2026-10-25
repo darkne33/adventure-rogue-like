@@ -6,6 +6,8 @@ using UnityEngine;
 public class UpgradeOfferConfiguration : ScriptableObject
 {
     [field: SerializeField] public UpgradeOfferItemFacade UpgradeOfferItemFacade { get; private set; }
+    [field: SerializeField, Min(0.01f)] public float LevelUpEffectReferenceHeight { get; private set; } = 2.2f;
+    [field: SerializeField] public float LevelUpEffectVerticalOffset { get; private set; } = 0.05f;
     [field: SerializeField, Min(1)] public int MaxBuildSlots { get; private set; } = 5;
     [field: SerializeField, Min(1)] public int MaxActiveAbilities { get; private set; } = 3;
     [field: SerializeField, Min(1)] public int MaxPassiveAbilities { get; private set; } = 2;

@@ -31,15 +31,8 @@ namespace Features.Bosses.Scripts
                 collider.enabled = false;
 
             _targets.RemoveEnemy(_boss);
-            int experienceReward = _boss.ClaimExperienceReward();
-            if (experienceReward > 0)
-            {
-                float scaledExp = experienceReward * (1f + Mathf.Max(0f, _stats.XPBonus) * 0.01f);
-                int exp = Mathf.FloorToInt(scaledExp);
-                if (Random.value < scaledExp - exp)
-                    exp++;
-                _expDropper.DropExp(_boss.transform.position, exp);
-            }
+            if (_boss.TryClaimExperienceReward())
+                _expDropper.DropLevelProgress(_boss.transform.position, _expDropper.BossLevelProgress);
             _goldDropper.DropGold(_boss.transform.position);
             if (_character != null && !_character.HealthSystem.IsDead)
                 _character.HealthSystem.IncreaseCurrentHealth(Mathf.Max(0f, _stats.GainHp));

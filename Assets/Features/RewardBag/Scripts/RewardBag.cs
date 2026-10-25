@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using Features.PickupFeedback;
 using Features.Relics.Scripts;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -193,7 +194,7 @@ namespace Features.RewardBag
             if (TryDropCurrencyReward(rewardType, collectedCallback))
                 return;
 
-            GrantCurrencyReward(rewardType);
+            GrantCurrencyReward(rewardType, _rewardAmount, _characterWallet, _characterProvider);
             collectedCallback?.Invoke();
         }
 
@@ -215,10 +216,10 @@ namespace Features.RewardBag
                 pickup = rewardObject.AddComponent<RewardBagPickup>();
 
             CharacterWallet characterWallet = _characterWallet;
+            ICharacterProvider characterProvider = _characterProvider;
             int rewardAmount = Mathf.Max(1, _rewardAmount);
-            Action grantReward = rewardType == RewardType.Silver
-                ? () => characterWallet.Silver.Add(rewardAmount)
-                : () => characterWallet.Keys.Add(rewardAmount);
+            Action grantReward = () =>
+                GrantCurrencyReward(rewardType, rewardAmount, characterWallet, characterProvider);
             pickup.Construct(_characterProvider, _characterStats, GetRewardLandPosition(),
                 grantReward, collectedCallback);
             return true;
@@ -264,12 +265,17 @@ namespace Features.RewardBag
                 particleSystem.Play(true);
         }
 
-        private void GrantCurrencyReward(RewardType rewardType)
+        private static void GrantCurrencyReward(RewardType rewardType, int amount,
+            CharacterWallet characterWallet, ICharacterProvider characterProvider)
         {
             if (rewardType == RewardType.Silver)
-                _characterWallet.Silver.Add(_rewardAmount);
+                characterWallet.Silver.Add(amount);
             else
-                _characterWallet.Keys.Add(_rewardAmount);
+                characterWallet.Keys.Add(amount);
+
+            characterProvider?.CharacterFacade?.ShowPickupFeedback(
+                rewardType == RewardType.Silver ? PickupFeedbackKind.Silver : PickupFeedbackKind.Key,
+                amount: amount);
         }
 
         private Vector3 GetRewardSpawnPosition()

@@ -245,7 +245,6 @@ public abstract class SingleShootAbility : CharacterActiveAbility
             Sounds.Play(Id switch
             {
                 AbilityName.FireBall => SoundId.FireballImpact,
-                AbilityName.RabbitBoomerang => SoundId.BoomerangImpact,
                 AbilityName.BulletExplosion => SoundId.BulletImpact,
                 _ => SoundId.None
             });
@@ -329,7 +328,6 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         Sounds.Play(Id switch
         {
             AbilityName.FireBall => SoundId.FireballShot,
-            AbilityName.RabbitBoomerang => SoundId.BoomerangShot,
             AbilityName.BulletExplosion => SoundId.BulletShot,
             _ => SoundId.None
         });

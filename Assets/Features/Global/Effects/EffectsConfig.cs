@@ -31,6 +31,7 @@ namespace Core.Services
     public enum EffectName
     {
         EnemyPortal = 1,
+        CharacterLevelUp = 2,
         RelicMeteorImpact = 100,
         RelicExplosiveCrate = 101,
         RelicExplosivoCharge = 102,

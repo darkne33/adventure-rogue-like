@@ -2,6 +2,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Features.Enemies.Scripts;
 using Features.Relics.Scripts;
+using Features.Sounds;
 using UnityEngine;
 
 public sealed class RabbitBoomerangAbility : SingleShootAbility
@@ -22,6 +23,7 @@ public sealed class RabbitBoomerangAbility : SingleShootAbility
     private CancellationTokenSource _flightLifetime;
     private float _size;
     private int _launchRoomSequence;
+    private bool _useAlternateShotSound;
 
     private RabbitBoomerangAbilityConfiguration BoomerangConfig =>
         (RabbitBoomerangAbilityConfiguration)AbilityConfig;
@@ -77,6 +79,7 @@ public sealed class RabbitBoomerangAbility : SingleShootAbility
         Level = 0;
         Damage = AbilityConfig.StartDamage;
         _size = 1f;
+        _useAlternateShotSound = false;
         RefreshStats();
     }
 
@@ -153,13 +156,12 @@ public sealed class RabbitBoomerangAbility : SingleShootAbility
 
         _flightLifetime ??= new CancellationTokenSource();
         shootObj.transform.localScale *= _size;
+        Sounds.Play(_useAlternateShotSound ? SoundId.BoomerangShotAlternate : SoundId.BoomerangShot);
+        _useAlternateShotSound = !_useAlternateShotSound;
         var flight = new RabbitBoomerangFlight(shootObj, hitbox, collisionDetector, character,
             _projectileContext, BoomerangConfig, ProjectileSpeed, shootDirection,
-            (target, distance) =>
-            {
-                Sounds.Play(Features.Sounds.SoundId.BoomerangImpact);
-                ApplyDamage(character, target, projectileDamage, distance, collisionDetector);
-            });
+            (target, distance) => ApplyDamage(character, target, projectileDamage, distance, collisionDetector),
+            () => Sounds.Play(SoundId.BoomerangImpact));
         flight.Run(_flightLifetime.Token).Forget();
     }
 

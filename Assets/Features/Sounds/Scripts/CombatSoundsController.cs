@@ -44,7 +44,8 @@ namespace Features.Sounds
             SoundId sound = hit.SourceAbility?.Id switch
             {
                 AbilityName.Punch => SoundId.PunchHit,
-                AbilityName.RabbitBoomerang => SoundId.BoomerangImpact,
+                // Boomerang contacts play their impact once in RabbitBoomerangFlight.
+                AbilityName.RabbitBoomerang => SoundId.None,
                 AbilityName.EarthRock => SoundId.StoneHit,
                 AbilityName.Aura => SoundId.AuraHit,
                 _ => hit.WeaponId == RelicBuildEffects.SacrificialDagger

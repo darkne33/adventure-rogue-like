@@ -8,6 +8,8 @@ public interface ICharacterLevelService
     public int GetCurrentExp { get; }
     public int GetMaxExp { get; }
     public int GetLevel { get; }
+    public float GetLevelProgress { get; }
     public void AddExp(int amount);
+    public void AddLevelProgress(double levelProgress);
     public void Reset();
 }

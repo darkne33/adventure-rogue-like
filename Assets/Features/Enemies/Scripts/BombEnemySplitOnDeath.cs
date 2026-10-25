@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
@@ -48,6 +49,7 @@ namespace Features.Enemies.Scripts
             Vector3 origin = transform.position;
             float angleStep = 360f / _spawnCount;
             float startAngle = UnityEngine.Random.Range(0f, 360f);
+            var spawnedBombs = new List<EnemyFacade>(_spawnCount);
 
             for (int i = 0; i < _spawnCount; i++)
             {
@@ -63,11 +65,21 @@ namespace Features.Enemies.Scripts
                 EnemyFacade spawnedBomb = _enemyFactory.Create(
                     _normalBombPrefab, spawnPosition, landingPosition);
                 spawnedBomb.SpawnType = EnemyType.Bomb;
+                spawnedBombs.Add(spawnedBomb);
 
                 _enemiesProvider.AddEnemy(spawnedBomb);
                 spawnedBomb.SetStop(true);
                 spawnedBomb.AnimationSystem?.IdleAnimation();
                 DropBomb(spawnedBomb, landingPosition).Forget();
+            }
+
+            EnemyFacade parent = GetComponent<EnemyFacade>();
+            if (parent != null && parent.ExperienceBudget != null)
+            {
+                double share = parent.RoomExperienceShare / (spawnedBombs.Count + 1);
+                parent.ConfigureRoomExperience(parent.ExperienceBudget, share);
+                foreach (EnemyFacade spawnedBomb in spawnedBombs)
+                    spawnedBomb.ConfigureRoomExperience(parent.ExperienceBudget, share);
             }
         }
 

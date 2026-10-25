@@ -16,6 +16,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
     private readonly CharacterConfiguration _characterConfiguration;
     private readonly ISceneService<RogueLikeSceneProvider> _sceneService;
     private readonly RunResultsController _runResultsController;
+    private readonly RunResultsTracker _runResultsTracker;
     private readonly IRogueLikeRuntimeDataService _runtimeDataService;
     private readonly GameplayAssetService _gameplayAssets;
 
@@ -23,7 +24,8 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         IPanelService panelService, CharacterStats characterStats, PauseEntityDistributor pauseEntityDistributor,
         CharacterConfiguration characterConfiguration,
         ISceneService<RogueLikeSceneProvider> sceneService, RunResultsController runResultsController,
-        IRogueLikeRuntimeDataService runtimeDataService, GameplayAssetService gameplayAssets)
+        IRogueLikeRuntimeDataService runtimeDataService, GameplayAssetService gameplayAssets,
+        RunResultsTracker runResultsTracker)
     {
         _cameraSettings = cameraSettings;
         _cameraService = cameraService;
@@ -33,6 +35,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         _characterConfiguration = characterConfiguration;
         _sceneService = sceneService;
         _runResultsController = runResultsController;
+        _runResultsTracker = runResultsTracker;
         _runtimeDataService = runtimeDataService;
         _gameplayAssets = gameplayAssets;
     }
@@ -66,7 +69,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         if (lowHealthVignetteView == null)
             throw new InvalidOperationException("Global Volume is missing LowHealthVignetteView.");
 
-        var deathSystem = new CharacterDeathSystem(facade, _runResultsController);
+        var deathSystem = new CharacterDeathSystem(facade, _runResultsController, _runResultsTracker);
         var healthSystem = new HealthSystem(_characterStats.MaxHp,
             new IHealthView[] { characterPanel.CharacterHealthView, lowHealthVignetteView },
             deathSystem, healthIncrement: CharacterHealthRules.HalfHeart,

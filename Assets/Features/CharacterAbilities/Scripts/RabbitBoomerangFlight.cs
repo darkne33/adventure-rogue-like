@@ -16,7 +16,9 @@ public sealed class RabbitBoomerangFlight
     private readonly IRelicProjectileContext _context;
     private readonly RabbitBoomerangAbilityConfiguration _configuration;
     private readonly Action<CombatTarget, float> _onHit;
+    private readonly Action _onImpact;
     private readonly Animator _animator;
+    private readonly RabbitBoomerangTrailView _trail;
     private readonly float _animationSpeed;
     private readonly float _speed;
     private readonly float _radius;
@@ -36,7 +38,7 @@ public sealed class RabbitBoomerangFlight
     public RabbitBoomerangFlight(GameObject projectile, SphereCollider hitbox,
         PlayerCollisionDetector detector, CharacterFacade owner, IRelicProjectileContext context,
         RabbitBoomerangAbilityConfiguration configuration, float speed, Vector3 direction,
-        Action<CombatTarget, float> onHit)
+        Action<CombatTarget, float> onHit, Action onImpact)
     {
         _projectile = projectile;
         _detector = detector;
@@ -44,6 +46,7 @@ public sealed class RabbitBoomerangFlight
         _context = context;
         _configuration = configuration;
         _onHit = onHit;
+        _onImpact = onImpact;
         _speed = Mathf.Max(0.1f, speed);
         Vector3 scale = hitbox.transform.lossyScale;
         _radius = Mathf.Max(0.01f, hitbox.radius *
@@ -52,6 +55,8 @@ public sealed class RabbitBoomerangFlight
         _roomSequence = context.RoomSequence;
         _animator = projectile.GetComponent<Animator>();
         _animationSpeed = _animator != null ? _animator.speed : 1f;
+        _trail = projectile.GetComponent<RabbitBoomerangTrailView>();
+        _trail?.Initialize();
     }
 
     public async UniTask Run(CancellationToken abilityLifetime)
@@ -74,6 +79,7 @@ public sealed class RabbitBoomerangFlight
                 {
                     float step = Mathf.Min(MaximumStepTime, remainingTime);
                     Tick(step);
+                    _trail?.Tick(step);
                     remainingTime -= step;
                 }
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellation.Token);
@@ -146,6 +152,7 @@ public sealed class RabbitBoomerangFlight
 
         float skin = Mathf.Max(0.001f, _configuration.CollisionSkin);
         Move(from + _outboundDirection * Mathf.Max(0f, surface.distance - skin));
+        _onImpact();
         if (_ricochets < _context.ProjectileRicochetCount)
         {
             _ricochets++;
@@ -226,6 +233,7 @@ public sealed class RabbitBoomerangFlight
             _nextHits[target] = _age + Mathf.Max(0.01f, _configuration.HitCooldown);
             float contactDistance = Mathf.Clamp(Vector3.Dot(collider.bounds.center - from, direction),
                 0f, distance);
+            _onImpact();
             _onHit(target, _distance + contactDistance);
         }
     }

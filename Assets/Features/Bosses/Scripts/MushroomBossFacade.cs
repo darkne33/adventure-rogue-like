@@ -59,17 +59,17 @@ namespace Features.Bosses.Scripts
 
         internal void CompleteSplitRadialAttack() => _splitRadialAttackGroup?.Complete(this);
 
-        public override int ClaimExperienceReward()
+        public override bool TryClaimExperienceReward()
         {
             if (!IsSplitChild)
-                return base.ClaimExperienceReward();
+                return base.TryClaimExperienceReward();
 
             if (_experienceRewardClaimed || _splitExperienceReward == null || HealthSystem == null ||
                 HealthSystem.CurrentHealth > 0f)
-                return 0;
+                return false;
 
             _experienceRewardClaimed = true;
-            return _splitExperienceReward.Claim();
+            return _splitExperienceReward.TryClaim();
         }
 
         public void SetHeadImpactPoint(Vector3 position)
@@ -232,7 +232,7 @@ namespace Features.Bosses.Scripts
             float childHealth = HealthSystem.CurrentHealth * 0.5f;
             float childMaxHealth = HealthSystem.MaxHealth * 0.5f;
             var children = new MushroomBossFacade[2];
-            var splitExperienceReward = new SplitExperienceReward(Config.Exp);
+            var splitExperienceReward = new SplitExperienceReward();
 
             try
             {
@@ -356,21 +356,15 @@ namespace Features.Bosses.Scripts
 
         private sealed class SplitExperienceReward
         {
-            private readonly int _experience;
             private int _remainingBosses = 2;
 
-            public SplitExperienceReward(int experience)
-            {
-                _experience = experience;
-            }
-
-            public int Claim()
+            public bool TryClaim()
             {
                 if (_remainingBosses <= 0)
-                    return 0;
+                    return false;
 
                 _remainingBosses--;
-                return _remainingBosses == 0 ? _experience : 0;
+                return _remainingBosses == 0;
             }
         }
     }

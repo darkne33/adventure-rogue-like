@@ -10,6 +10,8 @@ public sealed class ExpRupee : MonoBehaviour
     private ICharacterProvider _characterProvider;
     private ICharacterLevelService _characterLevelService;
     private int _amount;
+    private double _levelProgress;
+    private bool _usesLevelProgress;
     private float _attractionEnabledTime;
     private float _flightStartDistance;
     private bool _isCollecting;
@@ -19,14 +21,34 @@ public sealed class ExpRupee : MonoBehaviour
         Vector3 burstPosition)
     {
         _amount = Mathf.Max(1, amount);
+        _levelProgress = 0d;
+        _usesLevelProgress = false;
+        name = $"ExpRupee_{_amount}";
+        Initialize(configuration, characterProvider, characterLevelService, burstPosition);
+    }
+
+    public void ConstructLevelProgress(double levelProgress, ExpDropperConfiguration configuration,
+        ICharacterProvider characterProvider, ICharacterLevelService characterLevelService,
+        Vector3 burstPosition)
+    {
+        _amount = 0;
+        _levelProgress = levelProgress;
+        _usesLevelProgress = true;
+        name = "ExpRupee_LevelProgress";
+        Initialize(configuration, characterProvider, characterLevelService, burstPosition);
+    }
+
+    private void Initialize(ExpDropperConfiguration configuration, ICharacterProvider characterProvider,
+        ICharacterLevelService characterLevelService, Vector3 burstPosition)
+    {
         _configuration = configuration;
         _characterProvider = characterProvider;
         _characterLevelService = characterLevelService;
         _attractionEnabledTime = Time.time + Mathf.Max(0.01f, configuration.BurstDuration) +
                                  Mathf.Max(0f, configuration.AttractionStartDelay);
         _flightStartDistance = -1f;
+        _isCollecting = false;
 
-        name = $"ExpRupee_{_amount}";
         PlayBurstAnimation(burstPosition);
     }
 
@@ -86,7 +108,10 @@ public sealed class ExpRupee : MonoBehaviour
         _isCollecting = true;
         Vector3 collectPosition = transform.position;
         transform.DOKill();
-        _characterLevelService.AddExp(_amount);
+        if (_usesLevelProgress)
+            _characterLevelService.AddLevelProgress(_levelProgress);
+        else
+            _characterLevelService.AddExp(_amount);
         SpawnPickupEffect(collectPosition);
         Destroy(gameObject);
     }

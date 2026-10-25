@@ -117,7 +117,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 
     private void UpdateExpView(int currentExp, int maxExp)
     {
-        float value = (float)currentExp / maxExp;
+        float value = _characterLevelService.GetLevelProgress;
         const float duration = 0.3f;
 
         _expTween?.Kill();
