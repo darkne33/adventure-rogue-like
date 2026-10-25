@@ -99,7 +99,8 @@ namespace Features.Bosses.Scripts
         private void ReactToDamage(float damage)
         {
             BossRadialAttackConfiguration attack = _radialAttack?.Configuration;
-            if (damage <= 0f || _configuration == null || attack == null || !attack.IsEnabled ||
+            if (damage <= 0f || _configuration == null || !_configuration.DamageReactionEnabled ||
+                attack == null || !attack.IsEnabled ||
                 attack.ProjectilePrefab == null || !CanContinue() || !_boss.CanAttack ||
                 _boss.HealthSystem.CurrentHealth <= 0f || !_character.isActiveAndEnabled ||
                 _character.IsCinematicPaused || Time.deltaTime <= 0f ||
