@@ -10520,7 +10520,7 @@ Transform:
   m_Children:
   - {fileID: 9049986051783176540}
   - {fileID: 9218452319124114720}
-  - {fileID: 9000000000000000102}
+  - {fileID: 9000000000000000322}
   - {fileID: 6542960616917225295}
   - {fileID: 6291907679597088466}
   - {fileID: 1009468393084446837}
@@ -10624,9 +10624,42 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDeathPresentation
   _bodyPivot: {fileID: 9000000000000000102}
+  _pumpPivot: {fileID: 9000000000000000322}
   _animator: {fileID: 7829137054795933118}
   _configuration: {fileID: 11400000, guid: e6dbc6f70eb54e3aaa620219c734d791, type: 2}
   _soulOrigin: {fileID: 9000000000000000312}
+--- !u!1 &9000000000000000321
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9000000000000000322}
+  m_Layer: 9
+  m_Name: CharacterDeathPumpPivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9000000000000000322
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9000000000000000321}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 9000000000000000102}
+  m_Father: {fileID: 5559070631443764953}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &9000000000000000311
 GameObject:
   m_ObjectHideFlags: 0
@@ -37103,7 +37136,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 625251018177489601}
-  m_Father: {fileID: 5559070631443764953}
+  m_Father: {fileID: 9000000000000000322}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &9065330092809901335
 GameObject:

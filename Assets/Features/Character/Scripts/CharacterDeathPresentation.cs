@@ -5,8 +5,14 @@ using UnityEngine;
 
 public sealed class CharacterDeathPresentation : MonoBehaviour
 {
+    private static readonly int JumpPoseState = Animator.StringToHash("Base Layer.Jump");
+    private static readonly int Jump = Animator.StringToHash("Jump");
+    private static readonly int IsGround = Animator.StringToHash("IsGround");
+    private static readonly int IsMove = Animator.StringToHash("IsMove");
+
     [SerializeField] private CharacterDeathConfiguration _configuration;
     [SerializeField] private Transform _bodyPivot;
+    [SerializeField] private Transform _pumpPivot;
     [SerializeField] private Animator _animator;
     [SerializeField] private Transform _soulOrigin;
 
@@ -21,7 +27,8 @@ public sealed class CharacterDeathPresentation : MonoBehaviour
 
     public void Initialize(CharacterFacade character, CharacterDeathSoulView soulView)
     {
-        if (_configuration == null || _bodyPivot == null || _animator == null || _soulOrigin == null)
+        if (_configuration == null || _bodyPivot == null || _pumpPivot == null ||
+            _animator == null || _soulOrigin == null)
             throw new InvalidOperationException($"{name} is missing prepared character death references.");
 
         _character = character;
@@ -48,36 +55,38 @@ public sealed class CharacterDeathPresentation : MonoBehaviour
         try
         {
             token.ThrowIfCancellationRequested();
-            // The Animator stays disabled for the corpse's remaining lifetime.
-            _animator.enabled = false;
+            FreezeJumpPose();
             foreach (ParticleSystem effect in _bodyEffects)
                 if (effect != null)
                     effect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
             Vector3 startPosition = _bodyPivot.position;
             Quaternion startRotation = _bodyPivot.rotation;
+            Vector3 startPumpScale = _pumpPivot.localScale;
             Vector3 right = Vector3.ProjectOnPlane(_character.CameraPivot.right, Vector3.up).normalized;
             if (right.sqrMagnitude < 0.0001f)
                 right = Vector3.right;
             Vector3 rotationAxis = Vector3.Cross(Vector3.up, right).normalized;
-            Vector3 landingPosition = startPosition;
-            landingPosition.y += groundHeight - _character.transform.position.y;
-            float bodyHeight = TryGetBodyBounds(out Bounds initialBounds)
+            bool hasInitialBounds = TryGetBodyBounds(out Bounds initialBounds);
+            float bodyHeight = hasInitialBounds
                 ? Mathf.Max(0.1f, initialBounds.size.y) : 1f;
-            float unitsPerPixel = bodyHeight / _configuration.PixelsPerBodyHeight;
+            float initialGroundGap = hasInitialBounds
+                ? Mathf.Max(0f, initialBounds.min.y - groundHeight - _configuration.BodyGroundClearance) : 0f;
+            float bodyUnitsPerPixel = bodyHeight / _configuration.BodyMotionPixelsPerHeight;
+            float soulUnitsPerPixel = bodyHeight / _configuration.PixelsPerBodyHeight;
             float elapsed = 0f;
-            bool landed = false;
+            bool bodySettled = false;
             bool soulStarted = false;
 
             while (elapsed < _configuration.Duration)
             {
                 token.ThrowIfCancellationRequested();
-                if (!landed)
+                if (!bodySettled)
                 {
-                    float progress = Mathf.Clamp01(elapsed / _configuration.FallDuration);
-                    SampleFall(progress, groundHeight, startPosition, landingPosition,
-                        startRotation, rotationAxis);
-                    landed = progress >= 1f;
+                    SampleBody(Mathf.Min(elapsed, _configuration.BodyMotionDuration), groundHeight,
+                        startPosition, startRotation, startPumpScale, right, rotationAxis,
+                        bodyUnitsPerPixel, initialGroundGap);
+                    bodySettled = elapsed >= _configuration.BodyMotionDuration;
                 }
 
                 if (elapsed >= _configuration.SoulDelay)
@@ -98,7 +107,7 @@ public sealed class CharacterDeathPresentation : MonoBehaviour
 
                     float soulElapsed = elapsed - _configuration.SoulDelay;
                     CharacterDeathConfiguration.SoulPose pose = _configuration.SampleSoul(soulElapsed);
-                    Vector3 offset = (right * pose.HorizontalPixels + Vector3.up * pose.RisePixels) * unitsPerPixel;
+                    Vector3 offset = (right * pose.HorizontalPixels + Vector3.up * pose.RisePixels) * soulUnitsPerPixel;
                     _soulView.Sample(soulElapsed, offset, pose);
                 }
 
@@ -107,8 +116,9 @@ public sealed class CharacterDeathPresentation : MonoBehaviour
             }
 
             token.ThrowIfCancellationRequested();
-            if (!landed)
-                SampleFall(1f, groundHeight, startPosition, landingPosition, startRotation, rotationAxis);
+            if (!bodySettled)
+                SampleBody(_configuration.BodyMotionDuration, groundHeight, startPosition,
+                    startRotation, startPumpScale, right, rotationAxis, bodyUnitsPerPixel, initialGroundGap);
         }
         finally
         {
@@ -117,20 +127,47 @@ public sealed class CharacterDeathPresentation : MonoBehaviour
         }
     }
 
-    private void SampleFall(float progress, float groundHeight, Vector3 startPosition,
-        Vector3 landingPosition, Quaternion startRotation, Vector3 rotationAxis)
+    private void FreezeJumpPose()
     {
-        float eased = Mathf.SmoothStep(0f, 1f, progress);
+        // Avoid Jump's immediate grounded exit and animation events before freezing frame zero.
+        _animator.enabled = true;
+        _animator.fireEvents = false;
+        _animator.speed = 1f;
+        _animator.SetBool(IsGround, false);
+        _animator.SetBool(IsMove, false);
+        _animator.ResetTrigger(Jump);
+        _animator.Play(JumpPoseState, 0, 0f);
+        _animator.Update(0f);
+        _animator.enabled = false;
+    }
+
+    private void SampleBody(float elapsed, float groundHeight, Vector3 startPosition,
+        Quaternion startRotation, Vector3 startPumpScale, Vector3 right, Vector3 rotationAxis,
+        float unitsPerPixel, float initialGroundGap)
+    {
+        float progress = Mathf.Clamp01((elapsed - _configuration.LaunchDelay) / _configuration.FallDuration);
+        float travelProgress = Mathf.SmoothStep(0f, 1f, progress);
+        float rotationProgress = Mathf.InverseLerp(
+            _configuration.LaunchDelay + _configuration.FallRotationDelay,
+            _configuration.LandingTime, elapsed);
+        float easedRotation = Mathf.SmoothStep(0f, 1f, rotationProgress);
+        Vector2 pump = _configuration.SamplePump(elapsed);
+        float shakePixels = _configuration.SampleShake(elapsed - _configuration.LandingTime);
+        float horizontalPixels = _configuration.BodyTravelPixels * travelProgress + shakePixels;
+
+        // The prepared outer pivot keeps squash/stretch vertical as the inner model falls sideways.
+        _pumpPivot.localScale = Vector3.Scale(startPumpScale, new Vector3(pump.x, pump.y, pump.x));
         _bodyPivot.SetPositionAndRotation(
-            Vector3.Lerp(startPosition, landingPosition, eased),
-            Quaternion.AngleAxis(_configuration.FallAngle * eased, rotationAxis) * startRotation);
+            startPosition + right * (horizontalPixels * unitsPerPixel),
+            Quaternion.AngleAxis(_configuration.FallAngle * easedRotation, rotationAxis) * startRotation);
 
         if (!TryGetBodyBounds(out Bounds bounds))
             return;
 
-        float correction = groundHeight + _configuration.BodyGroundClearance * eased - bounds.min.y;
-        if (correction > 0f || progress >= 1f)
-            _bodyPivot.position += Vector3.up * correction;
+        float hopHeight = _configuration.HopHeightPixels * unitsPerPixel * 4f * progress * (1f - progress);
+        float remainingGroundGap = initialGroundGap * (1f - travelProgress);
+        float targetBottom = groundHeight + _configuration.BodyGroundClearance + hopHeight + remainingGroundGap;
+        _bodyPivot.position += Vector3.up * (targetBottom - bounds.min.y);
     }
 
     private bool TryGetBodyBounds(out Bounds bounds)
