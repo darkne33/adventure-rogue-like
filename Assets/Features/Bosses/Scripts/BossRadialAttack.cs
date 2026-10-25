@@ -149,13 +149,17 @@ namespace Features.Bosses.Scripts
             body.angularVelocity = Vector3.zero;
         }
 
-        internal void LaunchAtCharacter()
+        internal void LaunchNearCharacter(float aimOffset)
         {
             Vector3 origin = _boss.RadialAttackOrigin.position;
             Vector3 aim = _character.transform.position - origin;
             aim.y = 0f;
             Vector3 direction = aim.sqrMagnitude > 0.0001f ? aim.normalized :
                 _boss.AttackRotation * Vector3.forward;
+            float side = UnityEngine.Random.value < 0.5f ? -1f : 1f;
+            aim += Vector3.Cross(Vector3.up, direction) * (Mathf.Max(0f, aimOffset) * side);
+            if (aim.sqrMagnitude > 0.0001f)
+                direction = aim.normalized;
             float radius = Mathf.Min(Mathf.Max(0f, Configuration.SpawnRadius), aim.magnitude * 0.5f);
             MushroomRadialProjectile projectile = CreateProjectile(origin + direction * radius, direction);
             projectile.Launch(_boss, _character, direction, Configuration.ProjectileSpeed,

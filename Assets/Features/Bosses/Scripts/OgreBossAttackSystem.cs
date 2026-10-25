@@ -107,7 +107,7 @@ namespace Features.Bosses.Scripts
                 return;
 
             _nextDamageReactionAt = _boss.RadialAttackClock + Mathf.Max(1f, _configuration.DamageReactionCooldown);
-            _radialAttack.LaunchAtCharacter();
+            _radialAttack.LaunchNearCharacter(_configuration.DamageReactionAimOffset);
         }
 
         public override async UniTask Execute(CancellationToken cancellationToken)

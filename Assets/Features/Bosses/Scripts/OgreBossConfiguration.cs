@@ -12,5 +12,6 @@ namespace Features.Bosses.Scripts
         [field: SerializeField, Min(0.01f)] public float GroundProbeHeight { get; private set; } = 4f;
         [field: SerializeField, Min(0.01f)] public float GroundProbeDistance { get; private set; } = 10f;
         [field: SerializeField, Min(1f)] public float DamageReactionCooldown { get; private set; } = 1f;
+        [field: SerializeField, Min(0f)] public float DamageReactionAimOffset { get; private set; } = 3f;
     }
 }
