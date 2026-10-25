@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Features.RunResults.Scripts
 {
@@ -11,10 +12,10 @@ namespace Features.RunResults.Scripts
         [Header("Presentation")]
         [SerializeField] private CanvasGroup _canvasGroup;
         [SerializeField] private RectTransform _contentRoot;
-        [SerializeField] private TMP_Text _statusText;
 
         [Header("Summary")]
-        [SerializeField] private TMP_Text _survivedText;
+        [FormerlySerializedAs("_survivedText")]
+        [SerializeField] private TMP_Text _roomsVisitedText;
         [SerializeField] private TMP_Text _levelText;
         [SerializeField] private TMP_Text _enemiesText;
         [SerializeField] private TMP_Text _goldText;
@@ -57,7 +58,7 @@ namespace Features.RunResults.Scripts
             if (data == null)
                 throw new ArgumentNullException(nameof(data));
 
-            _survivedText.text = FormatDuration(data.SurvivedSeconds);
+            _roomsVisitedText.text = data.RoomsVisited.ToString("N0", CultureInfo.InvariantCulture);
             _levelText.text = data.LevelReached.ToString(CultureInfo.InvariantCulture);
             _enemiesText.text = data.EnemiesDefeated.ToString("N0", CultureInfo.InvariantCulture);
             _goldText.text = data.GoldEarned.ToString("N0", CultureInfo.InvariantCulture);
@@ -84,11 +85,7 @@ namespace Features.RunResults.Scripts
             UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(_weaponRowsRoot);
             _weaponsScroll.StopMovement();
             _weaponsScroll.verticalNormalizedPosition = 1f;
-            SetStatus(string.Empty);
         }
-
-        public void SetStatus(string value) =>
-            _statusText.text = value ?? string.Empty;
 
         public void SetButtonsInteractable(bool interactable)
         {

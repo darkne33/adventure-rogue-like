@@ -65,7 +65,6 @@ namespace Features.RunResults.Scripts
             _pauseService.HandlePause();
             _cursorService.ShowUiCursor();
 
-            _panel.SetStatus(string.Empty);
             _panel.SetButtonsInteractable(false);
             _panel.gameObject.SetActive(true);
             _panel.transform.SetAsLastSibling();
@@ -130,7 +129,6 @@ namespace Features.RunResults.Scripts
             _sounds.Play(retry ? SoundId.UiStartClick : SoundId.UiBack);
             _isLeaving = true;
             _panel.SetButtonsInteractable(false);
-            _panel.SetStatus(retry ? "RESTARTING RUN..." : "RETURNING TO MAIN MENU...");
             // The scene transition releases the pause before unloading this controller.
             _ownsPause = false;
 
@@ -153,14 +151,14 @@ namespace Features.RunResults.Scripts
                 }
                 else
                 {
-                    RestoreAfterFailure(retry);
+                    RestoreAfterFailure();
                 }
             }
             catch (Exception exception)
             {
                 Debug.LogException(exception);
                 if (!_disposed && _panel != null)
-                    RestoreAfterFailure(retry);
+                    RestoreAfterFailure();
             }
             finally
             {
@@ -168,13 +166,12 @@ namespace Features.RunResults.Scripts
             }
         }
 
-        private void RestoreAfterFailure(bool retry)
+        private void RestoreAfterFailure()
         {
             _sounds.Play(SoundId.UiError);
             _pauseService.HandlePause();
             _ownsPause = true;
             _cursorService.ShowUiCursor();
-            _panel.SetStatus(retry ? "RESTART FAILED. PLEASE TRY AGAIN." : "RETURN FAILED. PLEASE TRY AGAIN.");
             _panel.SetButtonsInteractable(true);
             SelectRetry();
         }

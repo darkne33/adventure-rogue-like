@@ -21,12 +21,12 @@ namespace Features.RunResults.Scripts
         private readonly IRoomTransitionService _roomTransition;
         private readonly RunRestartService _runRestart;
         private readonly IPlayerSaveLoadService _playerSaveLoad;
+        private readonly IRogueLikeRuntimeDataService _runtimeData;
         private readonly List<WeaponStatistics> _weapons = new();
         private readonly Dictionary<AbilityName, WeaponStatistics> _weaponsById = new();
 
         private bool _isRunActive;
         private bool _isDisposed;
-        private float _survivedSeconds;
         private int _levelReached = 1;
         private int _enemiesDefeated;
         private int _goldEarned;
@@ -39,7 +39,7 @@ namespace Features.RunResults.Scripts
             ICharacterProvider characterProvider, ICharacterLevelService characterLevel,
             CharacterWallet wallet, UpgradeBuildService build, ITimeScaleService timeScale,
             IRoomTransitionService roomTransition, RunRestartService runRestart,
-            IPlayerSaveLoadService playerSaveLoad)
+            IPlayerSaveLoadService playerSaveLoad, IRogueLikeRuntimeDataService runtimeData)
         {
             _events = events;
             _enemies = enemies;
@@ -51,6 +51,7 @@ namespace Features.RunResults.Scripts
             _roomTransition = roomTransition;
             _runRestart = runRestart;
             _playerSaveLoad = playerSaveLoad;
+            _runtimeData = runtimeData;
 
             _events.Hit += HandleHit;
             _enemies.EnemyDefeated += HandleEnemyDefeated;
@@ -68,7 +69,6 @@ namespace Features.RunResults.Scripts
             _weapons.Clear();
             _weaponsById.Clear();
             _capturedResults = null;
-            _survivedSeconds = 0f;
             _levelReached = Math.Max(1, _characterLevel.GetLevel);
             _enemiesDefeated = 0;
             _goldEarned = 0;
@@ -99,7 +99,7 @@ namespace Features.RunResults.Scripts
                     weapon.Damage, weapon.ActiveSeconds));
             }
 
-            _capturedResults = new RunResultsData(_survivedSeconds, _levelReached,
+            _capturedResults = new RunResultsData(_runtimeData.VisitedRoomsCount, _levelReached,
                 _enemiesDefeated, _goldEarned, _silverEarned, weapons);
             return _capturedResults;
         }
@@ -120,7 +120,6 @@ namespace Features.RunResults.Scripts
                 return;
 
             float deltaTime = Time.deltaTime;
-            _survivedSeconds += deltaTime;
             foreach (WeaponStatistics weapon in _weapons)
             {
                 if (weapon.IsEquipped)

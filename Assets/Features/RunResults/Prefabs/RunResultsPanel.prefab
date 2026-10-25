@@ -65,8 +65,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.RunResults.Scripts.RunResultsPanel
   _canvasGroup: {fileID: 100002}
   _contentRoot: {fileID: 100201}
-  _statusText: {fileID: 105003}
-  _survivedText: {fileID: 101103}
+  _roomsVisitedText: {fileID: 101103}
   _levelText: {fileID: 101503}
   _enemiesText: {fileID: 101903}
   _goldText: {fileID: 102303}
@@ -135,7 +134,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.005, g: 0.035, b: 0.045, a: 0.93}
+  m_Color: {r: 0.035, g: 0.025, b: 0.02, a: 0.94}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -190,8 +189,6 @@ RectTransform:
   - {fileID: 102801}
   - {fileID: 102901}
   - {fileID: 103501}
-  - {fileID: 104901}
-  - {fileID: 105001}
   - {fileID: 105101}
   - {fileID: 105201}
   - {fileID: 105401}
@@ -200,7 +197,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 2800, y: 1840}
+  m_SizeDelta: {x: 1600, y: 1840}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &100202
 CanvasRenderer:
@@ -223,15 +220,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.99}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 482fba66f9cc4a7d82fd776f988d4f6c, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 6608156a970d498380e59b80c880f7fd, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -239,7 +236,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 13
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &100300
 GameObject:
   m_ObjectHideFlags: 0
@@ -272,10 +269,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 100201}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -64, y: -64}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -20}
+  m_SizeDelta: {x: 1300, y: 1600}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &100302
 CanvasRenderer:
@@ -292,13 +289,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 100300}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.055, g: 0.09, b: 0.085, a: 1}
+  m_Color: {r: 0.906, g: 0.89, b: 0.8196, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -327,7 +324,7 @@ GameObject:
   - component: {fileID: 100402}
   - component: {fileID: 100403}
   m_Layer: 5
-  m_Name: Eyebrow
+  m_Name: DiarySalutation
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -349,8 +346,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 830}
-  m_SizeDelta: {x: 1200, y: 68}
+  m_AnchoredPosition: {x: 12.837, y: 733.4055}
+  m_SizeDelta: {x: 1294.3, y: 112.811}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &100402
 CanvasRenderer:
@@ -373,24 +370,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "RUN RESULTS"
+  m_text: "Dear diary\u2026"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+    rgba: 4279969848
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -407,17 +404,17 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 40
-  m_fontSizeBase: 40
+  m_fontSize: 112
+  m_fontSizeBase: 112
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 29
-  m_fontSizeMax: 40
+  m_fontSizeMin: 82
+  m_fontSizeMax: 112
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
-  m_characterSpacing: 1
+  m_characterSpacing: 0
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
@@ -464,7 +461,7 @@ GameObject:
   - component: {fileID: 100502}
   - component: {fileID: 100503}
   m_Layer: 5
-  m_Name: GameOverTitle
+  m_Name: DiaryEntry
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -486,8 +483,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 710}
-  m_SizeDelta: {x: 2000, y: 178}
+  m_AnchoredPosition: {x: 25.373291, y: 615}
+  m_SizeDelta: {x: 1269.2534, y: 110}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &100502
 CanvasRenderer:
@@ -510,24 +507,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.43, b: 0.32, a: 1}
+  m_Color: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "GAME OVER"
+  m_text: Today I died.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 0.43, b: 0.32, a: 1}
+    rgba: 4281354851
+  m_fontColor: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -544,17 +541,17 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 132
-  m_fontSizeBase: 132
+  m_fontSize: 68
+  m_fontSizeBase: 68
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 95
-  m_fontSizeMax: 132
+  m_fontSizeMin: 50
+  m_fontSizeMax: 68
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
-  m_characterSpacing: 1
+  m_characterSpacing: 0
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
@@ -601,7 +598,7 @@ GameObject:
   - component: {fileID: 100602}
   - component: {fileID: 100603}
   m_Layer: 5
-  m_Name: TitleAccent
+  m_Name: PencilTitleRule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -623,8 +620,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 602}
-  m_SizeDelta: {x: 220, y: 7}
+  m_AnchoredPosition: {x: 0, y: 552}
+  m_SizeDelta: {x: 1360, y: 4}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &100602
 CanvasRenderer:
@@ -647,7 +644,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.89, b: 0, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0.38}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -701,8 +698,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 430}
-  m_SizeDelta: {x: 2560, y: 244}
+  m_AnchoredPosition: {x: 0, y: 310}
+  m_SizeDelta: {x: 1360, y: 360}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &100800
 GameObject:
@@ -716,7 +713,7 @@ GameObject:
   - component: {fileID: 100802}
   - component: {fileID: 100803}
   m_Layer: 5
-  m_Name: SurvivedValueCard
+  m_Name: RoomsVisitedValueCard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -741,8 +738,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1028, y: 0}
-  m_SizeDelta: {x: 480, y: 244}
+  m_AnchoredPosition: {x: -460, y: 90}
+  m_SizeDelta: {x: 440, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &100802
 CanvasRenderer:
@@ -765,7 +762,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.1, g: 0.15, b: 0.135, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -816,7 +813,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -2}
+  m_AnchoredPosition: {x: 0, y: -158}
   m_SizeDelta: {x: 0, y: 4}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &100902
@@ -840,7 +837,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.63, g: 0.63, b: 0.26, a: 0.55}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0.2}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -891,8 +888,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 52}
-  m_SizeDelta: {x: 440, y: 78}
+  m_AnchoredPosition: {x: 0, y: 40}
+  m_SizeDelta: {x: 400, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &101002
 CanvasRenderer:
@@ -915,24 +912,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_Color: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Survived"
+  m_text: Rooms visited
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+    rgba: 4281354851
+  m_fontColor: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -949,12 +946,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 40
-  m_fontSizeBase: 40
+  m_fontSize: 36
+  m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 29
-  m_fontSizeMax: 40
+  m_fontSizeMin: 26
+  m_fontSizeMax: 36
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -1006,7 +1003,7 @@ GameObject:
   - component: {fileID: 101102}
   - component: {fileID: 101103}
   m_Layer: 5
-  m_Name: SurvivedValue
+  m_Name: RoomsVisitedValue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1028,8 +1025,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -43}
-  m_SizeDelta: {x: 440, y: 110}
+  m_AnchoredPosition: {x: 0, y: -30}
+  m_SizeDelta: {x: 400, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &101102
 CanvasRenderer:
@@ -1052,24 +1049,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "00:00"
+  m_text: 0
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+    rgba: 4279969848
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -1086,12 +1083,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 82
-  m_fontSizeBase: 82
+  m_fontSize: 64
+  m_fontSizeBase: 64
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 59
-  m_fontSizeMax: 82
+  m_fontSizeMin: 46
+  m_fontSizeMax: 64
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -1168,8 +1165,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -514, y: 0}
-  m_SizeDelta: {x: 480, y: 244}
+  m_AnchoredPosition: {x: 0, y: 90}
+  m_SizeDelta: {x: 440, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &101202
 CanvasRenderer:
@@ -1192,7 +1189,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.1, g: 0.15, b: 0.135, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1243,7 +1240,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -2}
+  m_AnchoredPosition: {x: 0, y: -158}
   m_SizeDelta: {x: 0, y: 4}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &101302
@@ -1267,7 +1264,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.63, g: 0.63, b: 0.26, a: 0.55}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0.2}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1318,8 +1315,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 52}
-  m_SizeDelta: {x: 440, y: 78}
+  m_AnchoredPosition: {x: 0, y: 40}
+  m_SizeDelta: {x: 400, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &101402
 CanvasRenderer:
@@ -1342,24 +1339,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_Color: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Level reached"
+  m_text: My level
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+    rgba: 4281354851
+  m_fontColor: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -1376,12 +1373,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 40
-  m_fontSizeBase: 40
+  m_fontSize: 36
+  m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 29
-  m_fontSizeMax: 40
+  m_fontSizeMin: 26
+  m_fontSizeMax: 36
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -1455,8 +1452,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -43}
-  m_SizeDelta: {x: 440, y: 110}
+  m_AnchoredPosition: {x: 0, y: -30}
+  m_SizeDelta: {x: 400, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &101502
 CanvasRenderer:
@@ -1479,24 +1476,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "0"
+  m_text: 0
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+    rgba: 4279969848
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -1513,12 +1510,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 82
-  m_fontSizeBase: 82
+  m_fontSize: 64
+  m_fontSizeBase: 64
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 59
-  m_fontSizeMax: 82
+  m_fontSizeMin: 46
+  m_fontSizeMax: 64
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -1595,8 +1592,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 480, y: 244}
+  m_AnchoredPosition: {x: 460, y: 90}
+  m_SizeDelta: {x: 440, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &101602
 CanvasRenderer:
@@ -1619,7 +1616,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.1, g: 0.15, b: 0.135, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1670,7 +1667,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -2}
+  m_AnchoredPosition: {x: 0, y: -158}
   m_SizeDelta: {x: 0, y: 4}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &101702
@@ -1694,7 +1691,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.63, g: 0.63, b: 0.26, a: 0.55}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0.2}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1745,8 +1742,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 52}
-  m_SizeDelta: {x: 440, y: 78}
+  m_AnchoredPosition: {x: 0, y: 40}
+  m_SizeDelta: {x: 400, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &101802
 CanvasRenderer:
@@ -1769,24 +1766,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_Color: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Enemies defeated"
+  m_text: Enemies defeated
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+    rgba: 4281354851
+  m_fontColor: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -1803,12 +1800,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 40
-  m_fontSizeBase: 40
+  m_fontSize: 36
+  m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 29
-  m_fontSizeMax: 40
+  m_fontSizeMin: 26
+  m_fontSizeMax: 36
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -1882,8 +1879,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -43}
-  m_SizeDelta: {x: 440, y: 110}
+  m_AnchoredPosition: {x: 0, y: -30}
+  m_SizeDelta: {x: 400, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &101902
 CanvasRenderer:
@@ -1906,24 +1903,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "0"
+  m_text: 0
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+    rgba: 4279969848
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -1940,12 +1937,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 82
-  m_fontSizeBase: 82
+  m_fontSize: 64
+  m_fontSizeBase: 64
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 59
-  m_fontSizeMax: 82
+  m_fontSizeMin: 46
+  m_fontSizeMax: 64
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -2022,8 +2019,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 514, y: 0}
-  m_SizeDelta: {x: 480, y: 244}
+  m_AnchoredPosition: {x: -230, y: -90}
+  m_SizeDelta: {x: 440, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &102002
 CanvasRenderer:
@@ -2046,7 +2043,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.1, g: 0.15, b: 0.135, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2097,7 +2094,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -2}
+  m_AnchoredPosition: {x: 0, y: -158}
   m_SizeDelta: {x: 0, y: 4}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &102102
@@ -2121,7 +2118,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.63, g: 0.63, b: 0.26, a: 0.55}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0.2}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2172,8 +2169,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 52}
-  m_SizeDelta: {x: 440, y: 78}
+  m_AnchoredPosition: {x: 0, y: 40}
+  m_SizeDelta: {x: 400, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &102202
 CanvasRenderer:
@@ -2196,24 +2193,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_Color: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Gold earned"
+  m_text: Gold
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+    rgba: 4281354851
+  m_fontColor: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -2230,12 +2227,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 40
-  m_fontSizeBase: 40
+  m_fontSize: 36
+  m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 29
-  m_fontSizeMax: 40
+  m_fontSizeMin: 26
+  m_fontSizeMax: 36
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -2309,8 +2306,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -43}
-  m_SizeDelta: {x: 440, y: 110}
+  m_AnchoredPosition: {x: 0, y: -30}
+  m_SizeDelta: {x: 400, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &102302
 CanvasRenderer:
@@ -2333,24 +2330,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.89, b: 0, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "0"
+  m_text: 0
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 0.89, b: 0, a: 1}
+    rgba: 4279969848
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -2367,12 +2364,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 82
-  m_fontSizeBase: 82
+  m_fontSize: 64
+  m_fontSizeBase: 64
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 59
-  m_fontSizeMax: 82
+  m_fontSizeMin: 46
+  m_fontSizeMax: 64
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -2449,8 +2446,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1028, y: 0}
-  m_SizeDelta: {x: 480, y: 244}
+  m_AnchoredPosition: {x: 230, y: -90}
+  m_SizeDelta: {x: 440, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &102402
 CanvasRenderer:
@@ -2473,7 +2470,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.1, g: 0.15, b: 0.135, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2524,7 +2521,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -2}
+  m_AnchoredPosition: {x: 0, y: -158}
   m_SizeDelta: {x: 0, y: 4}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &102502
@@ -2548,7 +2545,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.63, g: 0.63, b: 0.26, a: 0.55}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0.2}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2599,8 +2596,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 52}
-  m_SizeDelta: {x: 440, y: 78}
+  m_AnchoredPosition: {x: 0, y: 40}
+  m_SizeDelta: {x: 400, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &102602
 CanvasRenderer:
@@ -2623,24 +2620,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_Color: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Silver earned"
+  m_text: Silver
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+    rgba: 4281354851
+  m_fontColor: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -2657,12 +2654,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 40
-  m_fontSizeBase: 40
+  m_fontSize: 36
+  m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 29
-  m_fontSizeMax: 40
+  m_fontSizeMin: 26
+  m_fontSizeMax: 36
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -2736,8 +2733,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -43}
-  m_SizeDelta: {x: 440, y: 110}
+  m_AnchoredPosition: {x: 0, y: -30}
+  m_SizeDelta: {x: 400, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &102702
 CanvasRenderer:
@@ -2760,24 +2757,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8, g: 0.87, b: 0.91, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "0"
+  m_text: 0
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.8, g: 0.87, b: 0.91, a: 1}
+    rgba: 4279969848
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -2794,12 +2791,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 82
-  m_fontSizeBase: 82
+  m_fontSize: 64
+  m_fontSizeBase: 64
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 59
-  m_fontSizeMax: 82
+  m_fontSizeMin: 46
+  m_fontSizeMax: 64
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -2873,8 +2870,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 232}
-  m_SizeDelta: {x: 2560, y: 72}
+  m_AnchoredPosition: {x: 22.836792, y: 0}
+  m_SizeDelta: {x: 1314.3264, y: 72}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &102802
 CanvasRenderer:
@@ -2897,24 +2894,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.89, b: 0, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "WEAPONS"
+  m_text: "I brought along\u2026"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 0.89, b: 0, a: 1}
+    rgba: 4279969848
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -3015,8 +3012,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -21, y: 122}
-  m_SizeDelta: {x: 2518, y: 86}
+  m_AnchoredPosition: {x: -21, y: -75}
+  m_SizeDelta: {x: 1318, y: 70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &102902
 CanvasRenderer:
@@ -3039,7 +3036,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.13, g: 0.24, b: 0.2, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0.07}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3114,24 +3111,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_Color: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Weapon"
+  m_text: Weapon
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+    rgba: 4281354851
+  m_fontColor: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -3251,24 +3248,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_Color: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Level"
+  m_text: Lv.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+    rgba: 4281354851
+  m_fontColor: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -3388,24 +3385,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_Color: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Damage"
+  m_text: Damage
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+    rgba: 4281354851
+  m_fontColor: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -3525,24 +3522,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_Color: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Time"
+  m_text: Time
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+    rgba: 4281354851
+  m_fontColor: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -3662,24 +3659,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_Color: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "DPS"
+  m_text: DPS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+    rgba: 4281354851
+  m_fontColor: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -3778,8 +3775,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -204}
-  m_SizeDelta: {x: 2560, y: 556}
+  m_AnchoredPosition: {x: 0, y: -361}
+  m_SizeDelta: {x: 1360, y: 410}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &103502
 CanvasRenderer:
@@ -3802,7 +3799,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.025, g: 0.06, b: 0.055, a: 0.7}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4083,7 +4080,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.1, g: 0.16, b: 0.15, a: 0.9}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0.035}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4119,8 +4116,8 @@ MonoBehaviour:
   _damageText: {fileID: 104203}
   _timeText: {fileID: 104303}
   _dpsText: {fileID: 104403}
-  _evenColor: {r: 0.1, g: 0.16, b: 0.15, a: 0.9}
-  _oddColor: {r: 0.07, g: 0.12, b: 0.12, a: 0.9}
+  _evenColor: {r: 0.22, g: 0.155, b: 0.105, a: 0.035}
+  _oddColor: {r: 0.22, g: 0.155, b: 0.105, a: 0.07}
 --- !u!1 &103900
 GameObject:
   m_ObjectHideFlags: 0
@@ -4254,24 +4251,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Weapon"
+  m_text: Weapon
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -4288,12 +4285,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 46
-  m_fontSizeBase: 46
+  m_fontSize: 38
+  m_fontSizeBase: 38
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 33
-  m_fontSizeMax: 46
+  m_fontSizeMin: 26
+  m_fontSizeMax: 38
   m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
@@ -4391,24 +4388,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "0"
+  m_text: 0
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -4425,12 +4422,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 46
-  m_fontSizeBase: 46
+  m_fontSize: 38
+  m_fontSizeBase: 38
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 33
-  m_fontSizeMax: 46
+  m_fontSizeMin: 26
+  m_fontSizeMax: 38
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -4528,24 +4525,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "0"
+  m_text: 0
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -4562,12 +4559,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 46
-  m_fontSizeBase: 46
+  m_fontSize: 38
+  m_fontSizeBase: 38
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 33
-  m_fontSizeMax: 46
+  m_fontSizeMin: 26
+  m_fontSizeMax: 38
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -4665,24 +4662,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "00:00"
+  m_text: 00:00
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -4699,12 +4696,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 46
-  m_fontSizeBase: 46
+  m_fontSize: 38
+  m_fontSizeBase: 38
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 33
-  m_fontSizeMax: 46
+  m_fontSizeMin: 26
+  m_fontSizeMax: 38
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -4802,24 +4799,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.89, b: 0, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "0"
+  m_text: 0
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 0.89, b: 0, a: 1}
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -4836,12 +4833,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 46
-  m_fontSizeBase: 46
+  m_fontSize: 38
+  m_fontSizeBase: 38
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 33
-  m_fontSizeMax: 46
+  m_fontSizeMin: 26
+  m_fontSizeMax: 38
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -4916,7 +4913,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 2100, y: 100}
+  m_SizeDelta: {x: 1200, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &104502
 CanvasRenderer:
@@ -4939,24 +4936,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_Color: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "No weapons equipped"
+  m_text: I had no weapons this time.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
+  m_fontColor: {r: 0.39, g: 0.29, b: 0.19, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -5079,7 +5076,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.18, g: 0.23, b: 0.19, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0.1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -5116,16 +5113,50 @@ MonoBehaviour:
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
   m_Transition: 0
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
   m_Interactable: 1
   m_TargetGraphic: {fileID: 104803}
   m_HandleRect: {fileID: 104801}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &700000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 104600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 132d0cdf19664d458212f987e449724d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Sounds.UiButtonClickSoundController
+  _sound: 0
+  _hoverSound: 6
+  _valueSound: 11
 --- !u!1 &104700
 GameObject:
   m_ObjectHideFlags: 0
@@ -5195,7 +5226,7 @@ RectTransform:
   m_Father: {fileID: 104701}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -5220,7 +5251,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.79, g: 0.71, b: 0.24, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0.6}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -5237,280 +5268,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!1 &104900
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 104901}
-  - component: {fileID: 104902}
-  - component: {fileID: 104903}
-  m_Layer: 5
-  m_Name: WeaponTimeCaption
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &104901
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 104900}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 100201}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -21, y: -535}
-  m_SizeDelta: {x: 2518, y: 58}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &104902
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 104900}
-  m_CullTransparentMesh: 1
---- !u!114 &104903
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 104900}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.68, g: 0.76, b: 0.71, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: "Time shows how long each weapon was equipped."
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.68, g: 0.76, b: 0.71, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 2
-  m_fontColorGradient:
-    topLeft: {r: 0.98, g: 0.98, b: 0.95, a: 1}
-    topRight: {r: 0.98, g: 0.98, b: 0.95, a: 1}
-    bottomLeft: {r: 0.98, g: 0.98, b: 0.95, a: 1}
-    bottomRight: {r: 0.98, g: 0.98, b: 0.95, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 32
-  m_fontSizeBase: 32
-  m_fontWeight: 400
-  m_enableAutoSizing: 1
-  m_fontSizeMin: 23
-  m_fontSizeMax: 32
-  m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
-  m_textAlignment: 65535
-  m_characterSpacing: 1
-  m_characterHorizontalScale: 1
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 0
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 1
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 0
-  m_EmojiFallbackSupport: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!1 &105000
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 105001}
-  - component: {fileID: 105002}
-  - component: {fileID: 105003}
-  m_Layer: 5
-  m_Name: Status
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &105001
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 105000}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 100201}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -613}
-  m_SizeDelta: {x: 2560, y: 68}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &105002
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 105000}
-  m_CullTransparentMesh: 1
---- !u!114 &105003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 105000}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.89, b: 0, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: ""
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 0.89, b: 0, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 2
-  m_fontColorGradient:
-    topLeft: {r: 0.98, g: 0.98, b: 0.95, a: 1}
-    topRight: {r: 0.98, g: 0.98, b: 0.95, a: 1}
-    bottomLeft: {r: 0.98, g: 0.98, b: 0.95, a: 1}
-    bottomRight: {r: 0.98, g: 0.98, b: 0.95, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 40
-  m_fontSizeBase: 40
-  m_fontWeight: 400
-  m_enableAutoSizing: 1
-  m_fontSizeMin: 29
-  m_fontSizeMax: 40
-  m_fontStyle: 0
-  m_HorizontalAlignment: 2
-  m_VerticalAlignment: 512
-  m_textAlignment: 65535
-  m_characterSpacing: 1
-  m_characterHorizontalScale: 1
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 0
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 1
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 0
-  m_EmojiFallbackSupport: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &105100
 GameObject:
   m_ObjectHideFlags: 0
@@ -5545,8 +5302,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -674}
-  m_SizeDelta: {x: 2560, y: 2}
+  m_AnchoredPosition: {x: 0, y: -622}
+  m_SizeDelta: {x: 1360, y: 2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &105102
 CanvasRenderer:
@@ -5569,7 +5326,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.36, g: 0.42, b: 0.3, a: 0.7}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 0.28}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -5624,8 +5381,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -572, y: -780}
-  m_SizeDelta: {x: 1040, y: 136}
+  m_AnchoredPosition: {x: -220, y: -704.70917}
+  m_SizeDelta: {x: 400, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &105202
 CanvasRenderer:
@@ -5648,15 +5405,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f07b4ae6da8a4baf8f3d6b2851bf64b3, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -5664,7 +5421,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 9.17
+  m_PixelsPerUnitMultiplier: 1
 --- !u!114 &105204
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5701,11 +5458,11 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 105405}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 1, g: 1, b: 0.7, a: 1}
-    m_PressedColor: {r: 0.75, g: 0.8, b: 0.55, a: 1}
-    m_SelectedColor: {r: 1, g: 1, b: 0.7, a: 1}
-    m_DisabledColor: {r: 0.4, g: 0.4, b: 0.4, a: 0.7}
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 0.6509804}
+    m_HighlightedColor: {r: 1, g: 1, b: 1, a: 0.18}
+    m_PressedColor: {r: 1, g: 1, b: 1, a: 0.28}
+    m_SelectedColor: {r: 1, g: 1, b: 1, a: 0.18}
+    m_DisabledColor: {r: 1, g: 1, b: 1, a: 0.015}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.08
   m_SpriteState:
@@ -5794,7 +5551,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -96, y: -34}
+  m_SizeDelta: {x: -48, y: -34}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &105302
 CanvasRenderer:
@@ -5817,24 +5574,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "TRY AGAIN"
+  m_text: TRY AGAIN
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+    rgba: 4279969848
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -5851,12 +5608,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 58
-  m_fontSizeBase: 58
+  m_fontSize: 46
+  m_fontSizeBase: 46
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 42
-  m_fontSizeMax: 58
+  m_fontSizeMin: 34
+  m_fontSizeMax: 46
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -5934,8 +5691,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 572, y: -780}
-  m_SizeDelta: {x: 1040, y: 136}
+  m_AnchoredPosition: {x: 283, y: -704.7092}
+  m_SizeDelta: {x: 400, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &105402
 CanvasRenderer:
@@ -5958,15 +5715,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f07b4ae6da8a4baf8f3d6b2851bf64b3, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -5974,7 +5731,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 9.17
+  m_PixelsPerUnitMultiplier: 1
 --- !u!114 &105404
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6011,11 +5768,11 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 105205}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 1, g: 1, b: 0.7, a: 1}
-    m_PressedColor: {r: 0.75, g: 0.8, b: 0.55, a: 1}
-    m_SelectedColor: {r: 1, g: 1, b: 0.7, a: 1}
-    m_DisabledColor: {r: 0.4, g: 0.4, b: 0.4, a: 0.7}
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 0.6509804}
+    m_HighlightedColor: {r: 1, g: 1, b: 1, a: 0.18}
+    m_PressedColor: {r: 1, g: 1, b: 1, a: 0.28}
+    m_SelectedColor: {r: 1, g: 1, b: 1, a: 0.18}
+    m_DisabledColor: {r: 1, g: 1, b: 1, a: 0.015}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.08
   m_SpriteState:
@@ -6104,7 +5861,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -96, y: -34}
+  m_SizeDelta: {x: -48, y: -34}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &105502
 CanvasRenderer:
@@ -6127,24 +5884,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
-  m_Color: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+  m_Color: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "MAIN MENU"
+  m_text: MAIN MENU
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 96317fa9e3fe18948ac10bfe0442bafb, type: 2}
+  m_sharedMaterial: {fileID: -8211624092759475195, guid: 56f85eba6c942c447ac1ec618368f537, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 0.98, g: 0.98, b: 0.95, a: 1}
+    rgba: 4279969848
+  m_fontColor: {r: 0.22, g: 0.155, b: 0.105, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 2
   m_fontColorGradient:
@@ -6161,12 +5918,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 58
-  m_fontSizeBase: 58
+  m_fontSize: 46
+  m_fontSizeBase: 46
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 42
-  m_fontSizeMax: 58
+  m_fontSizeMin: 34
+  m_fontSizeMax: 46
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -6206,18 +5963,3 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &700000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 104600}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 132d0cdf19664d458212f987e449724d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Sounds.UiButtonClickSoundController
-  _sound: 0
-  _hoverSound: 6
-  _valueSound: 11

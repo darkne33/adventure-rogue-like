@@ -1,22 +1,21 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Features.RunResults.Scripts
 {
     public sealed class RunResultsData
     {
-        public float SurvivedSeconds { get; }
+        public int RoomsVisited { get; }
         public int LevelReached { get; }
         public int EnemiesDefeated { get; }
         public int GoldEarned { get; }
         public int SilverEarned { get; }
         public IReadOnlyList<RunWeaponResult> Weapons { get; }
 
-        public RunResultsData(float survivedSeconds, int levelReached, int enemiesDefeated,
+        public RunResultsData(int roomsVisited, int levelReached, int enemiesDefeated,
             int goldEarned, int silverEarned, IReadOnlyList<RunWeaponResult> weapons)
         {
-            SurvivedSeconds = Mathf.Max(0f, survivedSeconds);
+            RoomsVisited = Math.Max(0, roomsVisited);
             LevelReached = Math.Max(1, levelReached);
             EnemiesDefeated = Math.Max(0, enemiesDefeated);
             GoldEarned = Math.Max(0, goldEarned);
