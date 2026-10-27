@@ -173,6 +173,7 @@ public sealed class PauseMenuController : ITickable, IDisposable
         _panel.RightPanel.DOScale(1f, ShowDuration).SetEase(Ease.OutBack).SetUpdate(true);
         _panel.MenuContent.DOScale(1f, ShowDuration).SetEase(Ease.OutBack).SetUpdate(true);
 
+        _sounds.Play(SoundId.UiOpen);
         Select(_panel.ResumeButton);
     }
 
@@ -204,11 +205,12 @@ public sealed class PauseMenuController : ITickable, IDisposable
 
     private void ShowSettings()
     {
-        if (!_isOpen || _isRestarting || _runRestartService.IsRestarting)
+        if (!_isOpen || _settingsOpen || _isRestarting || _runRestartService.IsRestarting)
             return;
 
         _settingsOpen = true;
         _panel.ShowSettings();
+        _sounds.Play(SoundId.UiOpen);
         Select(_panel.SettingsFirstSelectable);
     }
 

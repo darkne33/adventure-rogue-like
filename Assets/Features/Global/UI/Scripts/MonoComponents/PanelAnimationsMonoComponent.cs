@@ -15,6 +15,8 @@ namespace UI
 
         [SerializeField, ReadOnly] private CanvasGroup _canvasGroup;
         [SerializeField] private bool _playUiSounds;
+        [SerializeField] private SoundId _openSound = SoundId.UiOpen;
+        [SerializeField] private SoundId _closeSound = SoundId.UiClose;
 
         [Inject] private ISoundsService _soundsService;
         private bool _isShown;
@@ -57,8 +59,8 @@ namespace UI
                 return;
 
             _isShown = shown;
-            if (_playUiSounds && !shown)
-                _soundsService?.Play(SoundId.UiClose);
+            if (_playUiSounds)
+                _soundsService?.Play(shown ? _openSound : _closeSound);
         }
 
         public void SetInputState(bool interactable)

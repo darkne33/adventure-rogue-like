@@ -26,7 +26,7 @@ namespace Core
 
         private async UniTask<RogueLikeStateMachine> LoadGameScene(CancellationToken cancellationToken)
         {
-            _sounds.StopAllSfx();
+            _sounds.StopGameplaySfx();
             HeightFogRendererFeature.SetRenderingEnabled(false);
 
             if (_sceneLoader.HasActiveScene(SceneNames.GameScene))

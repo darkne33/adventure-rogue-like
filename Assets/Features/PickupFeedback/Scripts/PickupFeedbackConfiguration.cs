@@ -17,6 +17,7 @@ namespace Features.PickupFeedback
         [SerializeField, Min(0.1f)] private float _duration;
         [SerializeField, Min(1f)] private float _iconSize;
         [SerializeField] private Color _color;
+        [SerializeField] private Color[] _fountainPalette;
         [SerializeField, Range(0, 12)] private int _sparkCount;
         [SerializeField, Min(0f)] private float _spreadRadius;
 
@@ -25,6 +26,22 @@ namespace Features.PickupFeedback
         public Color Color => _color;
         public int SparkCount => _sparkCount;
         public float SpreadRadius => _spreadRadius;
+
+        public Color GetFountainColor(int index)
+        {
+            if (_fountainPalette != null && index >= 0 && index < _fountainPalette.Length)
+                return _fountainPalette[index];
+
+            Color color = index switch
+            {
+                0 => UnityEngine.Color.Lerp(UnityEngine.Color.black, _color, 0.3f),
+                1 => UnityEngine.Color.Lerp(UnityEngine.Color.black, _color, 0.65f),
+                2 => _color,
+                _ => UnityEngine.Color.Lerp(_color, UnityEngine.Color.white, 0.8f)
+            };
+            color.a = _color.a;
+            return color;
+        }
 
         public PickupFeedbackStyle(float duration, float iconSize, Color color, int sparkCount,
             float spreadRadius)
@@ -55,11 +72,11 @@ namespace Features.PickupFeedback
         [SerializeField, Min(0f)] private float _riseDistance = 18f;
         [SerializeField] private PickupFeedbackStyle _item = new(1.15f, 72f,
             new Color(1f, 0.855f, 0.561f, 1f), 12, 60f);
-        [SerializeField] private PickupFeedbackStyle _silver = new(0.72f, 54f,
+        [SerializeField] private PickupFeedbackStyle _silver = new(1f, 50f,
             new Color(0.871f, 0.949f, 1f, 1f), 7, 38f);
-        [SerializeField] private PickupFeedbackStyle _key = new(1.05f, 70f,
+        [SerializeField] private PickupFeedbackStyle _key = new(1f, 60f,
             new Color(1f, 0.863f, 0.533f, 1f), 12, 60f);
-        [SerializeField] private PickupFeedbackStyle _relic = new(1.4f, 76f,
+        [SerializeField] private PickupFeedbackStyle _relic = new(1f, 60f,
             new Color(0.914f, 0.725f, 1f, 1f), 12, 60f);
 
         public CharacterPickupFeedbackView ViewPrefab => _viewPrefab;

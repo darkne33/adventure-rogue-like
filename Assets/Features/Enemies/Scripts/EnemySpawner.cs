@@ -128,7 +128,7 @@ public class EnemySpawner
         _isSmallRoom = currentRoom.IsSmallEnemyRoom;
         _allEnemiesInCurrentRoom = _roomBalance.GetAllEnemyCount(_roomProgressIndex, _isSmallRoom);
         _roomExperienceBudget = _expDropper.CreateRoomExperienceBudget(
-            _allEnemiesInCurrentRoom, _characterStats.XPBonus);
+            _allEnemiesInCurrentRoom, _characterStats.XPBonus, _roomProgressIndex);
         _waveEnemyCounts = _roomBalance.CreateWaveEnemyCounts(_roomProgressIndex, _isSmallRoom);
         _waveIndex = 0;
         _waveSpawnTarget = _waveEnemyCounts[0];

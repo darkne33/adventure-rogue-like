@@ -17,6 +17,7 @@ namespace Features.Sounds
         void PlayLoop(SoundId soundId, Transform owner);
         void StopGameplayLoops();
         void PlaySfx(AudioClip clip, float volume = 1f);
+        void StopGameplaySfx();
         void StopAllSfx();
         void StopMusic();
         void RestartMusic(SoundId soundId);

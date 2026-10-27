@@ -73,6 +73,7 @@ namespace Features.RunResults.Scripts
             _panel.CanvasGroup.blocksRaycasts = true;
             _panel.ContentRoot.localScale = Vector3.one * 0.96f;
 
+            _sounds.Play(SoundId.UiOpen);
             _panel.ContentRoot.DOScale(1f, ShowDuration).SetEase(Ease.OutCubic).SetUpdate(true);
             _panel.CanvasGroup.DOFade(1f, ShowDuration).SetUpdate(true).OnComplete(() =>
             {
@@ -126,6 +127,8 @@ namespace Features.RunResults.Scripts
             if (_disposed || !_isOpen || _isLeaving || _runRestart.IsRestarting)
                 return;
 
+            if (!retry)
+                _sounds.Play(SoundId.UiClick);
             _sounds.Play(retry ? SoundId.UiStartClick : SoundId.UiBack);
             _isLeaving = true;
             _panel.SetButtonsInteractable(false);
@@ -179,7 +182,7 @@ namespace Features.RunResults.Scripts
         private void SelectRetry()
         {
             if (_panel.RetryButton != null && EventSystem.current != null)
-                EventSystem.current.SetSelectedGameObject(_panel.RetryButton.gameObject);
+                UiButtonClickSoundController.Select(_panel.RetryButton, false);
         }
     }
 }

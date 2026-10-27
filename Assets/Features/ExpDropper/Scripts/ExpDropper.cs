@@ -7,6 +7,8 @@ public sealed class ExpDropper
     private readonly ICharacterProvider _characterProvider;
     private readonly ICharacterLevelService _characterLevelService;
     private readonly DiContainer _container;
+    private int _combatRoomsPerUpgrade;
+    private int _remainingCombatRooms;
 
     public ExpDropper(ExpDropperConfiguration configuration, ICharacterProvider characterProvider,
         ICharacterLevelService characterLevelService, DiContainer container)
@@ -25,11 +27,24 @@ public sealed class ExpDropper
     public double BossLevelProgress =>
         Mathf.Max(0f, _configuration != null ? _configuration.BossLevelProgress : 1f);
 
-    internal RoomExperienceBudget CreateRoomExperienceBudget(int enemyCount, float xpBonus)
+    internal RoomExperienceBudget CreateRoomExperienceBudget(int enemyCount, float xpBonus,
+        int combatRoomIndex)
     {
-        double roomsPerUpgrade = Mathf.Clamp(
-            _configuration != null ? _configuration.CombatRoomsPerUpgrade : 2.5f, 2f, 3f);
-        double progress = (1d + Mathf.Max(0f, xpBonus) / 100d) / roomsPerUpgrade;
+        if (combatRoomIndex == 0)
+            return new RoomExperienceBudget(0d, enemyCount);
+
+        if (_remainingCombatRooms <= 0)
+        {
+            int minRooms = Mathf.Max(1,
+                _configuration != null ? _configuration.MinCombatRoomsPerUpgrade : 1);
+            int maxRooms = Mathf.Max(minRooms,
+                _configuration != null ? _configuration.MaxCombatRoomsPerUpgrade : 3);
+            _combatRoomsPerUpgrade = Random.Range(minRooms, maxRooms + 1);
+            _remainingCombatRooms = _combatRoomsPerUpgrade;
+        }
+
+        _remainingCombatRooms--;
+        double progress = (1d + Mathf.Max(0f, xpBonus) / 100d) / _combatRoomsPerUpgrade;
         return new RoomExperienceBudget(progress, enemyCount);
     }
 

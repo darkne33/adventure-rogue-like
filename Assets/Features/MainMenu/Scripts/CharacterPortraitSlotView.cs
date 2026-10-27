@@ -2,16 +2,20 @@ using DG.Tweening;
 using TMPro;
 using UI;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public sealed class CharacterPortraitSlotView : MonoBehaviour
+public sealed class CharacterPortraitSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private CharacterSelectionView _owner;
     [SerializeField] private Button _button;
     [SerializeField] private Image _portrait;
     [SerializeField] private Image _background;
+    [SerializeField] private UnityEngine.UI.Image _backgroundFrame;
     [SerializeField] private Sprite _normalBackgroundSprite;
-    [SerializeField] private Sprite _selectedBackgroundSprite;
+    [SerializeField] private Color _backgroundColor = new(0.62f, 0.65f, 0.72f);
+    [SerializeField] private Color _lockedBackgroundColor = new(0.28f, 0.29f, 0.32f);
+    [SerializeField] private Color _normalFrameColor = new(0.78f, 0.8f, 0.84f);
     [SerializeField] private RectTransform _rectTransform;
     [SerializeField] private UIButtonJuice _buttonJuice;
     [SerializeField] private RectTransform _selectionFrame;
@@ -21,6 +25,7 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
     [Header("Selection Style")]
     [SerializeField] private float _selectedScale = 1.22f;
     [SerializeField] private float _selectionScaleDuration = 0.22f;
+    [SerializeField] private float _selectedPortraitScale = 1.15f;
     [SerializeField] private float _portraitPumpScale = 1.12f;
     [SerializeField] private float _portraitPumpDuration = 0.24f;
 
@@ -37,11 +42,14 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
     private Tween _selectionPulseScaleTween;
     private Tween _selectionPulseAlphaTween;
     private Tween _portraitPumpTween;
+    private Vector3 _portraitBaseScale;
+    private bool _hasPortraitBaseScale;
     private bool _hasSelectionState;
     private bool _isSelected;
     private int _selectedCharacterIndex = -1;
     private bool _isLocked;
     private bool _isOwned = true;
+    private bool _isHovered;
 
     public RectTransform RectTransform => _rectTransform;
     public bool IsVisible => gameObject.activeSelf;
@@ -62,6 +70,7 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
         }
 
         SetLockedLabelVisible(!isOwned);
+        ApplyBackground();
         gameObject.SetActive(true);
     }
 
@@ -105,8 +114,25 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void SetInteractable(bool interactable) =>
+    public void SetInteractable(bool interactable)
+    {
         _button.interactable = interactable && !_isLocked;
+        if (!_button.interactable)
+            _isHovered = false;
+        ApplyFrameColor();
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        _isHovered = _button.IsInteractable();
+        ApplyFrameColor();
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        _isHovered = false;
+        ApplyFrameColor();
+    }
 
     public void SetSelected(bool selected, bool animate)
     {
@@ -116,7 +142,7 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
         _hasSelectionState = true;
         _isSelected = selected;
         _selectedCharacterIndex = selected ? _characterIndex : -1;
-        ApplyBackground(selected);
+        ApplyBackground();
 
         if (!selectionChanged)
             return;
@@ -127,10 +153,7 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
             _selectionScaleDuration,
             selected ? Ease.OutBack : Ease.OutCubic);
 
-        if (selected && animate && gameObject.activeInHierarchy)
-            PlayPortraitPump();
-        else
-            KillPortraitPump();
+        SetPortraitScale(selected, animate);
 
         if (selected)
             ShowSelectionFrame(animate);
@@ -153,35 +176,70 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
     private Color GetPortraitColor() =>
         _isOwned ? Color.white : new Color(0.42f, 0.42f, 0.48f, 1f);
 
-    private void ApplyBackground(bool selected)
+    private void ApplyBackground()
     {
-        Sprite sprite = selected ? _selectedBackgroundSprite : _normalBackgroundSprite;
-        if (_background != null && sprite != null)
-            _background.sprite = sprite;
+        if (_background != null)
+        {
+            _background.sprite = _normalBackgroundSprite;
+            _background.color = _isLocked || !_isOwned ? _lockedBackgroundColor : _backgroundColor;
+        }
+
+        ApplyFrameColor();
     }
 
-    private void PlayPortraitPump()
+    private void ApplyFrameColor()
     {
-        KillPortraitPump();
+        if (_backgroundFrame != null)
+            _backgroundFrame.color = _isHovered ? Color.white : _normalFrameColor;
+    }
+
+    private void SetPortraitScale(bool selected, bool animate)
+    {
+        KillPortraitPump(false);
         if (_portrait == null)
             return;
 
         RectTransform portraitTransform = _portrait.rectTransform;
+        Vector3 targetScale = _portraitBaseScale * (selected ? _selectedPortraitScale : 1f);
+        if (!animate || !gameObject.activeInHierarchy)
+        {
+            portraitTransform.localScale = targetScale;
+            return;
+        }
+
+        if (!selected)
+        {
+            _portraitPumpTween = portraitTransform.DOScale(targetScale, _selectionScaleDuration)
+                .SetEase(Ease.OutCubic)
+                .SetUpdate(true)
+                .SetLink(gameObject);
+            return;
+        }
+
         _portraitPumpTween = DOTween.Sequence()
-            .Append(portraitTransform.DOScale(Vector3.one * _portraitPumpScale,
+            .Append(portraitTransform.DOScale(targetScale * _portraitPumpScale,
                 _portraitPumpDuration * 0.32f).SetEase(Ease.OutCubic))
-            .Append(portraitTransform.DOScale(Vector3.one,
+            .Append(portraitTransform.DOScale(targetScale,
                 _portraitPumpDuration * 0.68f).SetEase(Ease.OutBack))
             .SetUpdate(true)
             .SetLink(gameObject);
     }
 
-    private void KillPortraitPump()
+    private void KillPortraitPump(bool resetScale = true)
     {
         _portraitPumpTween?.Kill();
         _portraitPumpTween = null;
-        if (_portrait != null)
-            _portrait.rectTransform.localScale = Vector3.one;
+        if (_portrait == null)
+            return;
+
+        if (!_hasPortraitBaseScale)
+        {
+            _portraitBaseScale = _portrait.rectTransform.localScale;
+            _hasPortraitBaseScale = true;
+        }
+
+        if (resetScale)
+            _portrait.rectTransform.localScale = _portraitBaseScale;
     }
 
     private void ShowSelectionFrame(bool animate)
@@ -269,11 +327,14 @@ public sealed class CharacterPortraitSlotView : MonoBehaviour
         _hasSelectionState = false;
         _isSelected = false;
         _selectedCharacterIndex = -1;
-        ApplyBackground(false);
+        ApplyBackground();
         _buttonJuice.SetBaseScaleMultiplier(1f, false, 0f, Ease.OutCubic);
         ResetSelectionFrame();
     }
 
-    private void OnDisable() =>
+    private void OnDisable()
+    {
+        _isHovered = false;
         KillAnimations();
+    }
 }

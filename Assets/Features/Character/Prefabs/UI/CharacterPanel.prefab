@@ -2191,7 +2191,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 132d0cdf19664d458212f987e449724d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Sounds.UiButtonClickSoundController
-  _sound: 7
+  _sound: 0
   _hoverSound: 6
   _valueSound: 11
 --- !u!114 &6650352416296440847
@@ -8739,7 +8739,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 132d0cdf19664d458212f987e449724d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Sounds.UiButtonClickSoundController
-  _sound: 12
+  _sound: 0
   _hoverSound: 6
   _valueSound: 11
 --- !u!114 &4650751597340359991
@@ -15662,6 +15662,8 @@ MonoBehaviour:
     rid: 3123737239936041546
   _canvasGroup: {fileID: 1868420373316889247}
   _playUiSounds: 1
+  _openSound: 8
+  _closeSound: 0
   references:
     version: 2
     RefIds:

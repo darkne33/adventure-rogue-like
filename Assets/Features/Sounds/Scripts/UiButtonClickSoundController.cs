@@ -72,7 +72,8 @@ namespace Features.Sounds
 
         public void OnSelect(BaseEventData eventData)
         {
-            if (!_suppressSelectionSound && CanInteract())
+            // Mouse hover is silent; only navigation selection gets this cue.
+            if (!_suppressSelectionSound && eventData is not PointerEventData && CanInteract())
                 _soundsService?.Play(_hoverSound);
         }
 

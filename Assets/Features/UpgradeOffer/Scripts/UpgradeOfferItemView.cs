@@ -1,9 +1,11 @@
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UpgradeOfferItemView : MonoBehaviour
+public class UpgradeOfferItemView : MonoBehaviour, ISelectHandler, IDeselectHandler,
+    IPointerEnterHandler, IPointerExitHandler
 {
     private const string UpgradeToValueColor = "#6CFF7A";
     private const float AppearanceStartScale = 0.82f;
@@ -21,10 +23,43 @@ public class UpgradeOfferItemView : MonoBehaviour
     [SerializeField] private TMP_Text _skillDescription_1;
     [SerializeField] private TMP_Text _skillDescription_2;
 
+    [Header("Icon Selection")]
+    [SerializeField, Min(1f)] private float _selectedIconScale = 1.15f;
+    [SerializeField, Min(0f)] private float _iconSelectionScaleDuration = 0.22f;
+
     private CanvasGroup _canvasGroup;
     private Vector3 _defaultScale;
+    private Vector3 _defaultIconScale;
     private Sequence _appearanceSequence;
+    private Tween _iconScaleTween;
     private bool _isAppearanceInitialized;
+    private bool _isIconScaleInitialized;
+    private bool _isIconHovered;
+    private bool _isIconSelected;
+
+    public void OnSelect(BaseEventData eventData)
+    {
+        _isIconSelected = true;
+        UpdateIconScale();
+    }
+
+    public void OnDeselect(BaseEventData eventData)
+    {
+        _isIconSelected = false;
+        UpdateIconScale();
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        _isIconHovered = true;
+        UpdateIconScale();
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        _isIconHovered = false;
+        UpdateIconScale();
+    }
 
     public void PlayAppearance()
     {
@@ -96,11 +131,46 @@ public class UpgradeOfferItemView : MonoBehaviour
 
     private void OnDisable()
     {
+        _iconScaleTween?.Kill();
+        _iconScaleTween = null;
+        _isIconHovered = false;
+        _isIconSelected = false;
+        if (_isIconScaleInitialized && _iconAbility != null)
+            _iconAbility.rectTransform.localScale = _defaultIconScale;
+
         if (!_isAppearanceInitialized)
             return;
 
         _appearanceSequence?.Kill();
         CompleteAppearance();
+    }
+
+    private void UpdateIconScale()
+    {
+        if (_iconAbility == null)
+            return;
+
+        RectTransform iconTransform = _iconAbility.rectTransform;
+        if (!_isIconScaleInitialized)
+        {
+            _defaultIconScale = iconTransform.localScale;
+            _isIconScaleInitialized = true;
+        }
+
+        _iconScaleTween?.Kill();
+        Vector3 targetScale = _defaultIconScale *
+            (_isIconHovered || _isIconSelected ? _selectedIconScale : 1f);
+        if (_iconSelectionScaleDuration <= 0f || !gameObject.activeInHierarchy)
+        {
+            iconTransform.localScale = targetScale;
+            _iconScaleTween = null;
+            return;
+        }
+
+        _iconScaleTween = iconTransform.DOScale(targetScale, _iconSelectionScaleDuration)
+            .SetEase(Ease.OutCubic)
+            .SetUpdate(true)
+            .SetLink(gameObject);
     }
 
     private void InitializeAppearance()

@@ -29,20 +29,35 @@ MonoBehaviour:
     _sparkCount: 12
     _spreadRadius: 60
   _silver:
-    _duration: 0.72
-    _iconSize: 54
+    _duration: 1
+    _iconSize: 50
     _color: {r: 0.871, g: 0.949, b: 1, a: 1}
+    _fountainPalette:
+    - {r: 0.21176471, g: 0.27843137, b: 0.38823529, a: 1}
+    - {r: 0.4, g: 0.56078431, b: 0.69803922, a: 1}
+    - {r: 0.71764706, g: 0.88627451, b: 0.95686275, a: 1}
+    - {r: 0.96078431, g: 0.99215686, b: 1, a: 1}
     _sparkCount: 7
     _spreadRadius: 38
   _key:
-    _duration: 1.05
-    _iconSize: 70
+    _duration: 1
+    _iconSize: 60
     _color: {r: 1, g: 0.863, b: 0.533, a: 1}
+    _fountainPalette:
+    - {r: 0.4745098, g: 0.25882353, b: 0.11372549, a: 1}
+    - {r: 0.86666667, g: 0.56862745, b: 0.1254902, a: 1}
+    - {r: 1, g: 0.82745098, b: 0.25490196, a: 1}
+    - {r: 1, g: 0.97647059, b: 0.78823529, a: 1}
     _sparkCount: 12
     _spreadRadius: 60
   _relic:
-    _duration: 1.4
-    _iconSize: 76
+    _duration: 1
+    _iconSize: 60
     _color: {r: 0.914, g: 0.725, b: 1, a: 1}
+    _fountainPalette:
+    - {r: 0.27, g: 0.16, b: 0.37, a: 1}
+    - {r: 0.57, g: 0.36, b: 0.73, a: 1}
+    - {r: 0.85, g: 0.66, b: 1, a: 1}
+    - {r: 0.98, g: 0.93, b: 1, a: 1}
     _sparkCount: 12
     _spreadRadius: 60

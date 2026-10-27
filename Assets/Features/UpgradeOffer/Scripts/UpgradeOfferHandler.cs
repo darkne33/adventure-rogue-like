@@ -66,12 +66,15 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         TryShowNextOffer();
     }
 
-    public void RefreshItems()
+    public void RefreshItems() => RefreshItems(true);
+
+    private void RefreshItems(bool playSound)
     {
         if (_isOpen == false || _isClosing)
             return;
 
-        _sounds.Play(SoundId.UiAdjust);
+        if (playSound)
+            _sounds.Play(SoundId.UiClick);
         RecordRejectedCurrentOffers();
         DestroyViews();
         GenerateUpgrades(UpgradesRoot, false);
@@ -83,7 +86,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         if (_isOpen == false || _isClosing)
             return;
 
-        _sounds.Play(SoundId.UiBack);
+        _sounds.Play(SoundId.UiUpgradeSkip);
         RecordRejectedCurrentOffers();
         _isClosing = true;
         CloseCurrentOffer().Forget();
@@ -96,7 +99,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         if (_upgradeBuildService.CanSelect(upgradeOffer.Ability) == false)
         {
             _sounds.Play(SoundId.UiError);
-            RefreshItems();
+            RefreshItems(false);
             return;
         }
 
@@ -106,7 +109,7 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
             upgradeOffer.PrimaryUpgrade, upgradeOffer.SecondaryUpgrade);
         _upgradeBuildService.RecordAppliedSelection(upgradeOffer.Ability);
         UpgradeOfferPanel.SetMoreUpgradeConditionVisible(_upgradeBuildService.HasAdditionalUpgradeOffer == false);
-        _sounds.Play(SoundId.UiConfirm);
+        _sounds.Play(SoundId.UiClick);
         _isClosing = true;
         CloseCurrentOffer(playLevelUpEffect: true).Forget();
     }
@@ -154,7 +157,10 @@ public class UpgradeOfferHandler : IUpgradeOfferHandler, IDisposable
         _isClosing = false;
 
         if (playLevelUpEffect)
+        {
+            _sounds.Play(SoundId.UiUpgradeConfirm);
             PlayLevelUpEffect(token).Forget();
+        }
 
         TryShowNextOffer();
     }

@@ -67,6 +67,7 @@ namespace Features.Quests.Scripts
             _portraitMaterial = portraitMaterial;
             _reveal = _container.InstantiatePrefabForComponent<UnlockRevealView>(_revealPrefab, transform);
             _reveal.HideImmediate();
+            _reveal.CardRevealed += OnRevealCardRevealed;
             _reveal.Dismissed += OnRevealDismissed;
             _closeButton.onClick.AddListener(RequestBack);
             _purchaseButton.onClick.AddListener(PurchaseSelected);
@@ -164,12 +165,15 @@ namespace Features.Quests.Scripts
             ApplyIcon(cell.Icon, cell.Unlock, owned || requirementMet);
             cell.RefreshState(owned, requirementMet, _service.IsNewUnlock(cell.Unlock),
                 !cell.Unlock.IsGrantedWithUnlock);
+            cell.SetSelected(cell.Unlock == _selected, false);
         }
 
         private void SelectUnlock(UnlockCellView cell)
         {
             _lastFocusedObject = cell.Button.gameObject;
             _selected = cell.Unlock;
+            foreach (UnlockCellView current in _cells)
+                current.SetSelected(current == cell, true);
             _service.MarkUnlockViewed(cell.Unlock);
             RefreshDetails();
             RefreshNavigation();
@@ -279,11 +283,17 @@ namespace Features.Quests.Scripts
                 _sounds.Play(SoundId.UiError);
                 return;
             }
-            _sounds.Play(SoundId.UiConfirm);
+            _sounds.Play(SoundId.UiClick);
             _scroll.StopMovement();
             SetContentInteractable(false);
             ApplyIcon(_reveal.Icon, purchased, true);
             _reveal.Show(purchased);
+        }
+
+        private void OnRevealCardRevealed()
+        {
+            if (_isOpen && _reveal.IsVisible)
+                _sounds.Play(SoundId.UiPurchase);
         }
 
         private void OnRevealDismissed()
@@ -398,9 +408,10 @@ namespace Features.Quests.Scripts
             else if (focusedObject == null)
             {
                 if (_lastFocusedObject != null && _lastFocusedObject.activeInHierarchy)
-                    eventSystem.SetSelectedGameObject(_lastFocusedObject);
+                    UiButtonClickSoundController.Select(
+                        _lastFocusedObject.GetComponent<UnityEngine.UI.Selectable>(), false);
                 else
-                    FocusSelectedUnlock();
+                    FocusSelectedUnlock(false);
             }
         }
 
@@ -418,7 +429,10 @@ namespace Features.Quests.Scripts
         private void OnDestroy()
         {
             if (_reveal != null)
+            {
+                _reveal.CardRevealed -= OnRevealCardRevealed;
                 _reveal.Dismissed -= OnRevealDismissed;
+            }
             if (_service != null)
                 _service.Changed -= Refresh;
             if (_closeButton != null)

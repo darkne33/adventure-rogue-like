@@ -28,6 +28,7 @@ namespace Features.Quests.Scripts
 
         public UnityEngine.UI.Image Icon => _icon;
         public bool IsVisible { get; private set; }
+        public event Action CardRevealed;
         public event Action Dismissed;
 
         private void Awake() => _continueButton.onClick.AddListener(Dismiss);
@@ -60,7 +61,8 @@ namespace Features.Quests.Scripts
 
             _appearance = DOTween.Sequence()
                 .Append(_canvasGroup.DOFade(1f, _appearanceDuration * 0.55f))
-                .Insert(0f, _card.DOScale(Vector3.one, _appearanceDuration).SetEase(Ease.OutBack))
+                .Insert(0f, _card.DOScale(Vector3.one, _appearanceDuration).SetEase(Ease.OutBack)
+                    .OnComplete(() => CardRevealed?.Invoke()))
                 .Insert(0.08f, _iconRoot.DOScale(Vector3.one, _appearanceDuration).SetEase(Ease.OutBack))
                 .AppendInterval(_inputDelay)
                 .SetUpdate(true)

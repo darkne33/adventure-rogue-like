@@ -205,6 +205,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         Panel.SetSilverBalanceVisible(false);
         _characterSelectionView.Show(_characterConfiguration.Characters,
             _characterConfiguration.SelectedCharacterIndex, previewAlreadyShown: true);
+        _soundsService.Play(SoundId.UiOpen);
         MoveToCharacterSelectionAsync().Forget();
     }
 
@@ -217,6 +218,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         Panel.SetButtonsInteractable(false);
         Panel.SetHomeVisible(false);
         _questsView.Show();
+        _soundsService.Play(SoundId.UiOpen);
         Panel.SetSilverBalanceVisible(true);
     }
 
@@ -231,7 +233,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         EnableInput();
         _soundsService.Play(SoundId.UiBack);
         if (EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(Panel.QuestsButton.gameObject);
+            UiButtonClickSoundController.Select(Panel.QuestsButton, false);
     }
 
     private void OpenUnlocks()
@@ -243,6 +245,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         Panel.SetButtonsInteractable(false);
         Panel.SetHomeVisible(false);
         _unlocksView.Show();
+        _soundsService.Play(SoundId.UiOpen);
         Panel.SetSilverBalanceVisible(true);
     }
 
@@ -258,7 +261,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         EnableInput();
         _soundsService.Play(SoundId.UiBack);
         if (EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(Panel.UnlocksButton.gameObject);
+            UiButtonClickSoundController.Select(Panel.UnlocksButton, false);
     }
 
     private async UniTask MoveToCharacterSelectionAsync()
@@ -284,6 +287,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         Panel.SetHomeVisible(false);
         Panel.SetSilverBalanceVisible(false);
         _settingsView.Show();
+        _soundsService.Play(SoundId.UiOpen);
     }
 
     private void CloseSettings()
@@ -298,7 +302,7 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         EnableInput();
         _soundsService.Play(SoundId.UiBack);
         if (EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(Panel.SettingsButton.gameObject);
+            UiButtonClickSoundController.Select(Panel.SettingsButton, false);
     }
 
     private void SelectCharacter(int index, int direction)
@@ -384,6 +388,6 @@ public sealed class MainMenuPanelPresenter : PanelPresenter<MainMenuPanel>
         Panel.SetButtonsInteractable(true);
 
         if (EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(Panel.PlayButton.gameObject);
+            UiButtonClickSoundController.Select(Panel.PlayButton, false);
     }
 }

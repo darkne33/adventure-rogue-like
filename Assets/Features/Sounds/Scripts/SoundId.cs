@@ -15,6 +15,13 @@ namespace Features.Sounds
         UiError = 10,
         UiAdjust = 11,
         UiConfirm = 12,
+        UiPurchase = 13,
+        UiClaimReward = 14,
+        UiUpgradeConfirm = 15,
+        UiRelicTake = 16,
+        UiRelicSkip = 17,
+        UiUpgradeOpen = 18,
+        UiUpgradeSkip = 19,
 
         FireballShot = 100,
         FireballImpact = 101,

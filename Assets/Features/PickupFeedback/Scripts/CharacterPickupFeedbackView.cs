@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Core;
-using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;
 using Zenject;
@@ -16,7 +15,30 @@ namespace Features.PickupFeedback
         [SerializeField] private UnityEngine.UI.Image _ring;
         [SerializeField] private UnityEngine.UI.Image _flash;
         [SerializeField] private UnityEngine.UI.Image[] _sparks;
-        [SerializeField] private TMP_Text _amount;
+        [Header("Pickup Fountain")]
+        [SerializeField] private ParticleSystem[] _currencyParticles;
+        [SerializeField] private Vector2 _currencyIconOffset;
+        [SerializeField, Min(0f)] private float _currencyDisappearTime = 23f / 24f;
+        [SerializeField, Min(0f)] private float _fountainDissolveStart = 0.75f;
+        [SerializeField] private AnimationCurve _currencyPopScale = AnimationCurve.Constant(0f, 1f, 1f);
+        [SerializeField] private AnimationCurve _currencyRise = AnimationCurve.Constant(0f, 1f, 0f);
+        [SerializeField] private FountainParticle[] _fountainPattern;
+        [SerializeField] private Vector2 _fountainAcceleration = new(0f, -241.92f);
+        [SerializeField, Min(0.01f)] private float _fountainParticleLifetime = 15f / 24f;
+        [SerializeField, Min(0.01f)] private float _fountainStarDuration = 13f / 24f;
+        [SerializeField, Min(0.01f)] private float _fountainStarSize = 10f;
+        [SerializeField] private AnimationCurve _fountainSquareSize;
+        [SerializeField, Min(0f)] private float _fountainTrailStart = 3f / 24f;
+        [SerializeField, Min(0f)] private float _fountainTrailEnd = 12f / 24f;
+        [SerializeField, Min(0.001f)] private float _fountainDetailFade = 1f / 24f;
+        [SerializeField, Min(0f)] private float _fountainTrailOffset = 1.2f / 24f;
+        [SerializeField, Min(0.01f)] private float _fountainDetailSize = 2f;
+        [SerializeField] private Vector2[] _fountainHaloPoints;
+        [SerializeField, Min(0.01f)] private float _fountainHaloStep = 4f / 24f;
+        [SerializeField, Min(0f)] private float _fountainHaloEnd = 19f / 24f;
+        [SerializeField] private Vector2 _fountainLaunchPosition = new(0f, -8f);
+        [SerializeField] private AnimationCurve _fountainLaunchWidth;
+        [SerializeField] private AnimationCurve _fountainLaunchHeight;
 
         [Inject] private ICameraService _cameraService;
         [Inject] private ITimeScaleService _timeScaleService;
@@ -29,19 +51,38 @@ namespace Features.PickupFeedback
         private PickupFeedbackKind _kind;
         private Transform _cameraTransform;
         private Vector2 _iconOrigin;
-        private Vector2 _amountOrigin;
         private float _elapsed;
         private float _sparkPhase;
         private int _pulseIndex;
         private bool _playing;
+        private ParticleSystemRenderer[] _currencyParticleRenderers;
+        private ParticleSystem.Particle[] _fountainSquares;
+        private ParticleSystem.Particle[] _fountainStars;
+        private Material _iconMaterial;
+
+        private static readonly int DissolveId = Shader.PropertyToID("_Dissolve");
+        private static readonly int BlockCountId = Shader.PropertyToID("_BlockCount");
+        private static readonly int SpriteUvRectId = Shader.PropertyToID("_SpriteUVRect");
 
         private bool IsPaused => _timeScaleService.IsPaused || _character.IsCinematicPaused;
+        private bool UsesFountainParticles => (IsCurrency(_kind) || _kind == PickupFeedbackKind.Relic) &&
+                                              _currencyParticles != null && _currencyParticles.Length >= 2 &&
+                                              _fountainPattern != null && _fountainPattern.Length > 0;
 
         private void Awake()
         {
             _iconOrigin = _icon.rectTransform.anchoredPosition;
-            _amountOrigin = _amount.rectTransform.anchoredPosition;
+            _iconMaterial = new Material(_icon.material);
+            _icon.material = _iconMaterial;
             _group.alpha = 0f;
+            int count = _currencyParticles?.Length ?? 0;
+            _currencyParticleRenderers = new ParticleSystemRenderer[count];
+            for (int i = 0; i < count; i++)
+                _currencyParticleRenderers[i] = _currencyParticles[i].GetComponent<ParticleSystemRenderer>();
+            int patternCount = _fountainPattern?.Length ?? 0;
+            _fountainSquares = new ParticleSystem.Particle[
+                Mathf.Max(1, patternCount * 2 + (_fountainHaloPoints?.Length ?? 0) + 1)];
+            _fountainStars = new ParticleSystem.Particle[Mathf.Max(1, patternCount)];
         }
 
         private void OnEnable() =>
@@ -70,7 +111,7 @@ namespace Features.PickupFeedback
             if (icon == null)
                 return;
 
-            var request = new PickupRequest(kind, icon, amount);
+            var request = new PickupRequest(kind, icon);
             // Repeated coins pulse immediately, as in the approved preview. Different
             // pickups wait their turn so an item or relic icon is not lost in a burst.
             bool refreshCurrency = _playing && IsCurrency(kind) && _kind == kind && _pending.Count == 0;
@@ -95,6 +136,7 @@ namespace Features.PickupFeedback
             if (IsPaused)
             {
                 _group.alpha = 0f;
+                SetFountainParticlesVisible(false);
                 return;
             }
 
@@ -110,6 +152,7 @@ namespace Features.PickupFeedback
             {
                 _playing = false;
                 _group.alpha = 0f;
+                StopFountainParticles();
                 if (_pending.Count > 0)
                     Begin(_pending.Dequeue());
                 else
@@ -137,8 +180,15 @@ namespace Features.PickupFeedback
             Clear();
         }
 
+        private void OnDestroy()
+        {
+            if (_iconMaterial != null)
+                Destroy(_iconMaterial);
+        }
+
         private void Begin(PickupRequest request)
         {
+            StopFountainParticles();
             _kind = request.Kind;
             _style = _configuration.GetStyle(_kind);
             _elapsed = 0f;
@@ -148,16 +198,37 @@ namespace Features.PickupFeedback
             _icon.sprite = request.Icon;
             _icon.rectTransform.sizeDelta = Vector2.one * _style.IconSize;
             _icon.color = Color.white;
-            _amount.gameObject.SetActive(IsCurrency(_kind) && request.Amount > 0);
-            if (request.Amount > 0)
-                _amount.text = $"+{request.Amount}";
-            _amount.color = _style.Color;
+            _icon.enabled = true;
+            _iconMaterial.SetFloat(DissolveId, 0f);
+            Vector4 spriteUv = UnityEngine.Sprites.DataUtility.GetOuterUV(request.Icon);
+            _iconMaterial.SetVector(SpriteUvRectId,
+                new Vector4(spriteUv.x, spriteUv.y, spriteUv.z - spriteUv.x, spriteUv.w - spriteUv.y));
+            _glow.enabled = !UsesFountainParticles;
+            _ring.enabled = !UsesFountainParticles;
+            _flash.enabled = !UsesFountainParticles;
+            if (UsesFountainParticles)
+            {
+                foreach (UnityEngine.UI.Image spark in _sparks)
+                    spark.enabled = false;
+                foreach (ParticleSystem particles in _currencyParticles)
+                {
+                    particles.gameObject.SetActive(true);
+                    particles.Play(false);
+                    particles.Pause(false);
+                }
+            }
             SyncTransform();
             RenderFrame();
         }
 
         private void RenderFrame()
         {
+            if (UsesFountainParticles)
+            {
+                RenderFountainFrame();
+                return;
+            }
+
             float duration = Mathf.Max(0.01f, _style.Duration);
             float fadeDuration = Mathf.Clamp(_configuration.FadeDuration, 0.01f, duration);
             float fadeProgress = Mathf.Clamp01((_elapsed - (duration - fadeDuration)) / fadeDuration);
@@ -173,7 +244,6 @@ namespace Features.PickupFeedback
             _icon.rectTransform.localScale = Vector3.one * iconScale;
             Vector2 rise = Vector2.up * (_configuration.RiseDistance * EaseOut(fadeProgress));
             _icon.rectTransform.anchoredPosition = _iconOrigin + rise;
-            _amount.rectTransform.anchoredPosition = _amountOrigin + rise;
 
             bool silver = _kind == PickupFeedbackKind.Silver;
             SetColor(_glow, _style.Color, silver ? 0.25f : 0.34f);
@@ -211,6 +281,129 @@ namespace Features.PickupFeedback
                 sparkTransform.localRotation = Quaternion.Euler(0f, 0f,
                     (angle + _elapsed * 0.25f) * Mathf.Rad2Deg);
                 SetColor(spark, _style.Color, 1f - sparkProgress);
+            }
+        }
+
+        private void RenderFountainFrame()
+        {
+            // The prefab stores the selected preview's trajectories and timing.
+            // Evaluate the real Particle Systems continuously without random emission.
+            float duration = Mathf.Max(0.01f, _style.Duration);
+            float sampleTime = Mathf.Clamp01(_elapsed / duration);
+            float rise = _currencyRise.Evaluate(sampleTime);
+            float size = Mathf.Max(0.01f, _style.IconSize * _currencyPopScale.Evaluate(sampleTime));
+
+            _group.alpha = 1f;
+            _visualRoot.localScale = Vector3.one;
+            _icon.rectTransform.localScale = Vector3.one;
+            _icon.rectTransform.sizeDelta = Vector2.one * size;
+            _icon.rectTransform.anchoredPosition = _iconOrigin + _currencyIconOffset + Vector2.up * rise;
+            _icon.enabled = sampleTime < _currencyDisappearTime;
+            _iconMaterial.SetFloat(DissolveId,
+                Mathf.InverseLerp(_fountainDissolveStart, _currencyDisappearTime, sampleTime));
+            Vector2 iconSize = Vector2.one * size;
+            Rect spriteRect = _icon.sprite.rect;
+            if (spriteRect.width > spriteRect.height)
+                iconSize.y *= spriteRect.height / spriteRect.width;
+            else
+                iconSize.x *= spriteRect.width / spriteRect.height;
+            _iconMaterial.SetVector(BlockCountId, new Vector4(iconSize.x / 4f, iconSize.y / 4f, 0f, 0f));
+
+            int squareCount = 0;
+            int starCount = 0;
+            foreach (FountainParticle particle in _fountainPattern)
+            {
+                float age = sampleTime - particle.Delay;
+                if (age < 0f || age >= _fountainParticleLifetime)
+                    continue;
+
+                Vector2 position = particle.Velocity * age + _fountainAcceleration * (0.5f * age * age);
+                bool star = particle.Star && age < _fountainStarDuration;
+                float particleSize = star
+                    ? Mathf.Lerp(_fountainStarSize, _fountainDetailSize,
+                        Mathf.InverseLerp(_fountainStarDuration - _fountainDetailFade, _fountainStarDuration, age))
+                    : _fountainSquareSize.Evaluate(age);
+                Color particleColor = _style.GetFountainColor(star ? 3 : particle.Shade);
+                if (star)
+                    _fountainStars[starCount++] = CreateFountainParticle(position,
+                        Vector2.one * particleSize, particleColor);
+                else
+                    WriteFountainSquare(ref squareCount, position, Vector2.one * particleSize, particleColor);
+
+                if (age > _fountainTrailStart && age < _fountainTrailEnd)
+                {
+                    Vector2 velocity = particle.Velocity + _fountainAcceleration * age;
+                    float trailFade = Mathf.InverseLerp(_fountainTrailStart,
+                                          _fountainTrailStart + _fountainDetailFade, age) *
+                                      (1f - Mathf.InverseLerp(_fountainTrailEnd - _fountainDetailFade,
+                                          _fountainTrailEnd, age));
+                    Color trailColor = Color.Lerp(_style.GetFountainColor(1), _style.GetFountainColor(0),
+                        Mathf.InverseLerp(8f / 24f, 9f / 24f, age));
+                    trailColor.a *= trailFade;
+                    WriteFountainSquare(ref squareCount, position - velocity * _fountainTrailOffset,
+                        Vector2.one * _fountainDetailSize, trailColor);
+                }
+            }
+
+            float haloPhase = sampleTime / Mathf.Max(0.01f, _fountainHaloStep);
+            int haloGroup = Mathf.FloorToInt(haloPhase);
+            float haloBlend = Mathf.SmoothStep(0f, 1f, haloPhase - haloGroup);
+            float haloFade = 1f - Mathf.InverseLerp(_fountainHaloEnd - _fountainDetailFade,
+                _fountainHaloEnd, sampleTime);
+            for (int i = 0; i < _fountainHaloPoints.Length && haloFade > 0f; i++)
+            {
+                float opacity = (i + haloGroup) % 3 == 0 ? 1f - haloBlend :
+                    (i + haloGroup + 1) % 3 == 0 ? haloBlend : 0f;
+                if (opacity <= 0f)
+                    continue;
+                Color haloColor = _style.GetFountainColor(0);
+                haloColor.a *= opacity * haloFade;
+                WriteFountainSquare(ref squareCount, _fountainHaloPoints[i],
+                    Vector2.one * _fountainDetailSize, haloColor);
+            }
+
+            float lineHeight = _fountainLaunchHeight.Evaluate(sampleTime);
+            if (lineHeight > 0f)
+                WriteFountainSquare(ref squareCount, _fountainLaunchPosition,
+                    new Vector2(_fountainLaunchWidth.Evaluate(sampleTime), lineHeight),
+                    _style.GetFountainColor(2));
+
+            _currencyParticles[0].SetParticles(_fountainSquares, squareCount);
+            _currencyParticles[1].SetParticles(_fountainStars, starCount);
+            SetFountainParticlesVisible(true);
+        }
+
+        private void WriteFountainSquare(ref int count, Vector2 position, Vector2 size, Color color) =>
+            _fountainSquares[count++] = CreateFountainParticle(position, size, color);
+
+        private static ParticleSystem.Particle CreateFountainParticle(Vector2 position, Vector2 size,
+            Color color) => new()
+        {
+            position = new Vector3(position.x, position.y, 0f),
+            startSize3D = new Vector3(size.x, size.y, 1f),
+            startColor = color,
+            startLifetime = 1f,
+            remainingLifetime = 1f
+        };
+
+        private void SetFountainParticlesVisible(bool visible)
+        {
+            if (_currencyParticleRenderers == null)
+                return;
+
+            foreach (ParticleSystemRenderer particleRenderer in _currencyParticleRenderers)
+                particleRenderer.enabled = visible;
+        }
+
+        private void StopFountainParticles()
+        {
+            if (_currencyParticles == null)
+                return;
+
+            foreach (ParticleSystem particles in _currencyParticles)
+            {
+                particles.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+                particles.gameObject.SetActive(false);
             }
         }
 
@@ -266,6 +459,7 @@ namespace Features.PickupFeedback
         {
             _pending.Clear();
             _playing = false;
+            StopFountainParticles();
             if (_group != null)
                 _group.alpha = 0f;
             if (_icon != null)
@@ -284,17 +478,24 @@ namespace Features.PickupFeedback
             image.color = color;
         }
 
+        [System.Serializable]
+        private struct FountainParticle
+        {
+            public float Delay;
+            public Vector2 Velocity;
+            public bool Star;
+            public int Shade;
+        }
+
         private readonly struct PickupRequest
         {
             public PickupFeedbackKind Kind { get; }
             public Sprite Icon { get; }
-            public int Amount { get; }
 
-            public PickupRequest(PickupFeedbackKind kind, Sprite icon, int amount)
+            public PickupRequest(PickupFeedbackKind kind, Sprite icon)
             {
                 Kind = kind;
                 Icon = icon;
-                Amount = amount;
             }
         }
     }

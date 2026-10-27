@@ -9,8 +9,10 @@ public sealed class ExpDropperConfiguration : ScriptableObject
     [field: SerializeField] public GameObject PickupEffectPrefab { get; private set; }
 
     [field: Header("Rewards")]
-    [field: Tooltip("Combat rooms per upgrade before XP bonuses. Independent of enemy types and level thresholds.")]
-    [field: SerializeField, Range(2f, 3f)] public float CombatRoomsPerUpgrade { get; private set; } = 2.5f;
+    [field: Tooltip("Minimum random combat rooms per upgrade after the first combat room, before XP bonuses.")]
+    [field: SerializeField, Min(1)] public int MinCombatRoomsPerUpgrade { get; private set; } = 1;
+    [field: Tooltip("Maximum random combat rooms per upgrade after the first combat room, before XP bonuses.")]
+    [field: SerializeField, Min(1)] public int MaxCombatRoomsPerUpgrade { get; private set; } = 3;
     [field: SerializeField, Min(0f)] public float BossLevelProgress { get; private set; } = 1f;
     [field: SerializeField, Min(1f)] public float EliteExperienceMultiplier { get; private set; } = 2f;
 

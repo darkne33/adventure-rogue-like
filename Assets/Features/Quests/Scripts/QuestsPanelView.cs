@@ -94,7 +94,7 @@ namespace Features.Quests.Scripts
             gameObject.SetActive(false);
         }
 
-        private void Refresh() => Refresh(true);
+        private void Refresh() => Refresh(false);
 
         private void Refresh(bool playSelectionSound)
         {
@@ -219,7 +219,7 @@ namespace Features.Quests.Scripts
         {
             if (_selected != null)
                 _sounds.Play(_service.TryClaimReward(_selected.Id)
-                    ? SoundId.UiConfirm : SoundId.UiError);
+                    ? SoundId.UiClaimReward : SoundId.UiError);
         }
 
         private void ToggleHideCompleted()

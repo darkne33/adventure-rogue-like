@@ -52,7 +52,7 @@ public sealed class RunRestartService
             await _panelService.HidePanelForce(PanelName.RoomTransitionPanel);
             await _panelService.HidePanelForce(PanelName.CharacterPanel);
 
-            _sounds.StopAllSfx();
+            _sounds.StopGameplaySfx();
             _pauseService.CancelPause();
             _gameModeService.Remove<RogueLikeStateMachine>();
             _characterLevelService.Reset();
@@ -117,7 +117,7 @@ public sealed class RunRestartService
             await _panelService.HidePanelForce(PanelName.RoomTransitionPanel);
             await _panelService.HidePanelForce(PanelName.CharacterPanel);
 
-            _sounds.StopAllSfx();
+            _sounds.StopGameplaySfx();
             _pauseService.CancelPause();
             _gameModeService.Remove<RogueLikeStateMachine>();
             _characterLevelService.Reset();

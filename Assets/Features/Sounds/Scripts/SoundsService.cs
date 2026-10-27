@@ -4,7 +4,7 @@ using Zenject;
 
 namespace Features.Sounds
 {
-    public sealed class SoundsService : ISoundsService, IInitializable, ITickable, System.IDisposable
+    public sealed class SoundsService : ISoundsService, IInitializable, ITickable, ILateTickable, System.IDisposable
     {
         public float SfxVolume => _settings.SfxVolume;
         public float MusicVolume => _settings.MusicVolume;
@@ -34,6 +34,8 @@ namespace Features.Sounds
         private bool _initialized;
         private float _nextUiHoverTime;
         private float _nextUiAdjustTime;
+        private SoundId _pendingUiFeedback;
+        private int _lastUiActionFrame = -1;
 
         [Inject]
         private void Construct(SoundsCatalog catalog, ISoundSettingsStorage settingsStorage)
@@ -82,6 +84,14 @@ namespace Features.Sounds
             UpdateGameplayPause();
             UpdateMusicFade();
             UpdatePauseFilter();
+        }
+
+        public void LateTick()
+        {
+            SoundId pending = _pendingUiFeedback;
+            _pendingUiFeedback = SoundId.None;
+            if (pending != SoundId.None && !_disposed && _playback != null)
+                PlayImmediate(pending);
         }
 
         public void Dispose()
@@ -139,6 +149,22 @@ namespace Features.Sounds
         {
             EnsureInitialized();
 
+            if (_disposed)
+                return;
+
+            // Resolve incidental focus/value feedback after this frame's UI actions.
+            if (soundId == SoundId.UiHover || soundId == SoundId.UiAdjust)
+            {
+                if (_lastUiActionFrame != Time.frameCount && _pendingUiFeedback != SoundId.UiAdjust)
+                    _pendingUiFeedback = soundId;
+                return;
+            }
+
+            PlayImmediate(soundId);
+        }
+
+        private void PlayImmediate(SoundId soundId)
+        {
             if (!AllowUiFeedback(soundId))
                 return;
 
@@ -166,17 +192,24 @@ namespace Features.Sounds
             }
         }
 
-        public void StopAllSfx()
+        public void StopGameplaySfx()
         {
             EnsureInitialized();
             if (_playback != null)
             {
                 _sfxSource.Stop();
-                _playback.Ui.Stop();
                 _playback.XpAndGold.Stop();
                 _playback.Ambience.Stop();
             }
             StopGameplayLoops();
+        }
+
+        public void StopAllSfx()
+        {
+            _pendingUiFeedback = SoundId.None;
+            StopGameplaySfx();
+            if (_playback != null)
+                _playback.Ui.Stop();
         }
 
         public void PlayLoop(SoundId soundId, Transform owner)
@@ -368,9 +401,15 @@ namespace Features.Sounds
             else if (soundId == SoundId.UiClick || soundId == SoundId.UiSelect ||
                      soundId == SoundId.UiStartClick || soundId == SoundId.UiBack ||
                      soundId == SoundId.UiOpen || soundId == SoundId.UiClose ||
-                     soundId == SoundId.UiError || soundId == SoundId.UiConfirm)
+                     soundId == SoundId.UiError || soundId == SoundId.UiConfirm ||
+                     soundId == SoundId.UiPurchase || soundId == SoundId.UiClaimReward ||
+                     soundId == SoundId.UiUpgradeConfirm || soundId == SoundId.UiRelicTake ||
+                     soundId == SoundId.UiRelicSkip || soundId == SoundId.UiUpgradeOpen ||
+                     soundId == SoundId.UiUpgradeSkip)
             {
                 // Suppress focus changes caused by the same click or by opening a window.
+                _pendingUiFeedback = SoundId.None;
+                _lastUiActionFrame = Time.frameCount;
                 _nextUiHoverTime = now + 0.1f;
             }
 

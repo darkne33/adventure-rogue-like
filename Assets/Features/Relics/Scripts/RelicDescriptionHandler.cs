@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Features.PickupFeedback;
+using Features.Sounds;
 using UI;
 
 namespace Features.Relics.Scripts
@@ -13,6 +14,7 @@ namespace Features.Relics.Scripts
         private readonly IPauseService _pauseService;
         private readonly RelicManager _relicManager;
         private readonly ICharacterProvider _characterProvider;
+        private readonly ISoundsService _sounds;
         private readonly Queue<RelicDefinition> _pendingRelics = new();
 
         private RelicDescriptionPanel _panel;
@@ -21,13 +23,15 @@ namespace Features.Relics.Scripts
         private bool _isClosing;
 
         public RelicDescriptionHandler(RelicEventBus eventBus, IPanelService panelService,
-            IPauseService pauseService, RelicManager relicManager, ICharacterProvider characterProvider)
+            IPauseService pauseService, RelicManager relicManager, ICharacterProvider characterProvider,
+            ISoundsService sounds)
         {
             _eventBus = eventBus;
             _panelService = panelService;
             _pauseService = pauseService;
             _relicManager = relicManager;
             _characterProvider = characterProvider;
+            _sounds = sounds;
 
             _eventBus.RelicOffered += HandleRelicOffered;
         }
@@ -89,6 +93,7 @@ namespace Features.Relics.Scripts
             {
                 if (_relicManager.AddRelic(_currentRelic) == false)
                 {
+                    _sounds.Play(SoundId.UiError);
                     _isClosing = false;
                     return;
                 }
@@ -97,6 +102,7 @@ namespace Features.Relics.Scripts
                 _eventBus.PublishRelicCollected(_currentRelic);
             }
 
+            _sounds.Play(takeRelic ? SoundId.UiRelicTake : SoundId.UiRelicSkip);
             _currentRelic = null;
             CloseCurrentRelic(collectedRelic).Forget();
         }
