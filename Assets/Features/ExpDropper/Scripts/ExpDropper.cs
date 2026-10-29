@@ -31,15 +31,27 @@ public sealed class ExpDropper
         int combatRoomIndex)
     {
         if (combatRoomIndex == 0)
-            return new RoomExperienceBudget(0d, enemyCount);
+        {
+            _remainingCombatRooms = 0;
+            return new RoomExperienceBudget(1d, enemyCount);
+        }
 
-        if (_remainingCombatRooms <= 0)
+        int earlyCombatRoomCount = Mathf.Max(1,
+            _configuration != null ? _configuration.EarlyCombatRoomCount : 10);
+        bool isEarlyCombatRoom = combatRoomIndex < earlyCombatRoomCount;
+
+        // The first room after the early phase starts a new cycle immediately.
+        if (_remainingCombatRooms <= 0 || combatRoomIndex == earlyCombatRoomCount)
         {
             int minRooms = Mathf.Max(1,
                 _configuration != null ? _configuration.MinCombatRoomsPerUpgrade : 1);
-            int maxRooms = Mathf.Max(minRooms,
-                _configuration != null ? _configuration.MaxCombatRoomsPerUpgrade : 3);
-            _combatRoomsPerUpgrade = Random.Range(minRooms, maxRooms + 1);
+            int maxRooms = isEarlyCombatRoom ? 2 : 3;
+            if (_configuration != null)
+                maxRooms = isEarlyCombatRoom
+                    ? _configuration.EarlyMaxCombatRoomsPerUpgrade
+                    : _configuration.MaxCombatRoomsPerUpgrade;
+
+            _combatRoomsPerUpgrade = Random.Range(minRooms, Mathf.Max(minRooms, maxRooms) + 1);
             _remainingCombatRooms = _combatRoomsPerUpgrade;
         }
 
