@@ -1892,6 +1892,7 @@ RectTransform:
   - {fileID: 6567067083099538209}
   - {fileID: 8800000000000004001}
   - {fileID: 9102297992498430010}
+  - {fileID: 8427000000000100001}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1950,6 +1951,7 @@ MonoBehaviour:
   <PlayerKilledEnemiesText>k__BackingField: {fileID: 4526523561923370087}
   <GameTimerText>k__BackingField: {fileID: 6137750223114429136}
   <MinimapView>k__BackingField: {fileID: 8800000000000004005}
+  <EnemyTargetingView>k__BackingField: {fileID: 8427000000000100002}
   <ExpProgressBar>k__BackingField: {fileID: 2871435926976799675}
   <ExpBarUpgradeMarquee>k__BackingField: {fileID: 9200000000000000103}
   <UpgradeOfferPanel>k__BackingField: {fileID: 150989477152094528}
@@ -16534,3 +16536,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61eac577908202e469653ab8a209953a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MinimapView
+--- !u!1001 &8427000000000000000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 480872011042158490}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 907b26618aee40c98487c3096ae008fc, type: 3}
+--- !u!224 &8427000000000100001 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: 907b26618aee40c98487c3096ae008fc, type: 3}
+  m_PrefabInstance: {fileID: 8427000000000000000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8427000000000100002 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100002, guid: 907b26618aee40c98487c3096ae008fc, type: 3}
+  m_PrefabInstance: {fileID: 8427000000000000000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f44f2da3c9414d01b145f1b730abf72b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.EnemyTargeting.EnemyTargetingView

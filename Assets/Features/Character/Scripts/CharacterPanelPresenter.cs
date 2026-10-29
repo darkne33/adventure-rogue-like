@@ -5,6 +5,7 @@ using Core;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Features.Enemies.Scripts;
+using Features.EnemyTargeting;
 using Features.Relics.Scripts;
 using UI;
 using UnityEngine;
@@ -18,6 +19,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
     private Tween _roomTween;
     private IRogueLikeRuntimeDataService _runtimeDataService;
     private MinimapController _minimapController;
+    private EnemyTargetingController _enemyTargetingController;
     private RelicInventoryViewService _relicInventoryViewService;
     private UpgradeBuildViewService _upgradeBuildViewService;
     private CharacterWallet _characterWallet;
@@ -55,12 +57,14 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
                               throw new InvalidOperationException(
                                   "Rogue-like runtime data service is not available.");
         _minimapController = stateMachine.Resolve<MinimapController>();
+        _enemyTargetingController = stateMachine.Resolve<EnemyTargetingController>();
         _relicInventoryViewService = stateMachine.Resolve<RelicInventoryViewService>();
         _upgradeBuildViewService = stateMachine.Resolve<UpgradeBuildViewService>();
         _characterWallet = stateMachine.Resolve<CharacterWallet>();
         _relicEventBus = stateMachine.Resolve<RelicEventBus>();
         _runtimeDataService.RoomChanged += HandleRoomChanged;
         _minimapController.Attach(Panel.MinimapView);
+        _enemyTargetingController.Attach(Panel.EnemyTargetingView);
         _relicInventoryViewService.Attach(Panel);
         _upgradeBuildViewService?.Attach(Panel);
         if (_characterWallet != null)
@@ -107,6 +111,7 @@ public class CharacterPanelPresenter : PanelPresenter<CharacterPanel>
 
         StopGameTimer();
         _minimapController?.Detach(Panel.MinimapView);
+        _enemyTargetingController?.Detach(Panel.EnemyTargetingView);
         _relicInventoryViewService?.Detach();
         _upgradeBuildViewService?.Detach();
         Panel.RoomTimerView?.HideImmediate();

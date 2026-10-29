@@ -3,6 +3,7 @@ using Core.Services;
 using Features.Bosses.Scripts;
 using Features.Bosses.UI;
 using Features.Enemies.Scripts;
+using Features.EnemyTargeting;
 using Features.Enemies.Scripts.Level.Scripts;
 using Features.Leaderboard;
 using Features.Quests.Scripts;
@@ -95,6 +96,7 @@ public class RogueLikeMonoInstaller : MonoInstaller
         Container.Bind<RelicChestRollService>().AsSingle();
         Container.BindInterfacesAndSelfTo<LevelProgressionService>().AsSingle();
         Container.BindInterfacesAndSelfTo<MinimapController>().AsSingle();
+        Container.BindInterfacesAndSelfTo<EnemyTargetingController>().AsSingle();
         Container.BindInterfacesAndSelfTo<BossHealthUIController>().AsSingle();
         Container.BindInterfacesAndSelfTo<BossIntroService>().AsSingle();
     }
