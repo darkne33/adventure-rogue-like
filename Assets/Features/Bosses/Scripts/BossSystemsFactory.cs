@@ -39,6 +39,8 @@ namespace Features.Bosses.Scripts
                 throw new InvalidOperationException($"MushroomBossConfiguration is missing on {facade.name}.");
             if (facade is OgreBossFacade ogreBoss && ogreBoss.MovementConfiguration == null)
                 throw new InvalidOperationException($"OgreBossConfiguration is missing on {facade.name}.");
+            if (facade is GolemBossFacade golemBoss && golemBoss.MovementConfiguration == null)
+                throw new InvalidOperationException($"GolemBossConfiguration is missing on {facade.name}.");
 
             CharacterFacade character = _characterProvider.CharacterFacade;
             if (character == null)
@@ -100,6 +102,7 @@ namespace Features.Bosses.Scripts
             {
                 MushroomBossFacade mushroom => new MushroomBossAttackSystem(mushroom, character),
                 OgreBossFacade ogre => new OgreBossAttackSystem(ogre, character),
+                GolemBossFacade golem => new GolemBossAttackSystem(golem, character),
                 _ => new BossAttackSystem(facade, character)
             };
             var combatSystem = new BossCombatSystem(facade, attackSystem, animationSystem);
@@ -116,6 +119,7 @@ namespace Features.Bosses.Scripts
                 MushroomBossFacade mushroom => new MushroomBossAnimation(
                     mushroom.Animator, mushroom.JumpClip, mushroom.HeadClip),
                 OgreBossFacade ogre => new OgreBossAnimation(ogre.Animator, ogre.AttackClip),
+                GolemBossFacade golem => new GolemBossAnimation(golem.Animator, golem.AttackClip),
                 _ => throw new ArgumentOutOfRangeException(nameof(facade), facade.GetType(),
                     "Boss animation type is not supported.")
             };

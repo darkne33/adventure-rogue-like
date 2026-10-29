@@ -11,5 +11,6 @@
     MushroomBoss = 8,
     Stone_Spikes = 9,
     OgreBoss = 10,
-    Skeleton = 11
+    Skeleton = 11,
+    GolemBoss = 12
 }

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 762359d5e12d437aa6c5809c8dca90f3, type: 3}
+  m_Name: GolemSlamAttackConfiguration
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Bosses.Scripts.GolemSlamAttackConfiguration
+  <IsEnabled>k__BackingField: 1
+  <Duration>k__BackingField: 2.0833333
+  <ImpactNormalized>k__BackingField: 0.633691569
+  <Radius>k__BackingField: 10
+  <Damage>k__BackingField: 1
+  <RecoveryDuration>k__BackingField: 0.083333335
+  <IndicatorPrefab>k__BackingField: {fileID: 100000, guid: 77c6f7d4fa5944e4bf6b664771fd32ba, type: 3}
+  <InitialIndicatorScale>k__BackingField: 0.05
+  <IndicatorGroundOffset>k__BackingField: 0.05
+  <EffectPrefab>k__BackingField: {fileID: 7916812593445680669, guid: 1feb8bdfa2ff3104b9773c131cffd8eb, type: 3}
+  <EffectLifetime>k__BackingField: 3
+  <KnockbackForce>k__BackingField: 10
+  <KnockbackUpwardForce>k__BackingField: 10
