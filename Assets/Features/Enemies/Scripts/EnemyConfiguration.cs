@@ -150,6 +150,8 @@ public class EnemyConfiguration : ScriptableObject
     [field: SerializeField] public float RandomRoomStuckTimeout { get; private set; } = 2.5f;
 
     [field: Header("AI Settings")]
+    [field: SerializeField, Min(0.1f)] public float IdleWanderRadius { get; private set; } = 5f;
+    [field: SerializeField] public Vector2 IdleWanderPause { get; private set; } = new(1f, 3f);
     [field: Tooltip("The enemy starts moving and attacking when the character enters this radius.")]
     [field: Min(0.1f)]
     [field: SerializeField] public float AggroRange { get; private set; } = 15f;

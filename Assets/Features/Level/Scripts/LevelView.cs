@@ -50,6 +50,26 @@ public class LevelView : MonoBehaviour
     private int _spawnedRewardBags;
     private int _guaranteedKeyRewardBagNumber;
 
+    private readonly List<Room> _debugRooms = new();
+    public Room CreateDebugRoom(Room prefab, EnemyRoomSettings settings)
+    {
+        if (!_isInitialized) throw new InvalidOperationException("Level is not initialized.");
+        var grid = new Vector2Int(_rooms.Max(n => n.GridPosition.x) + 3 + _debugRooms.Count * 2, 0);
+        Room room = MaterializeRoom(_container, prefab, (Room)null, grid, "debug room");
+        var doors = room.RoomData.RoomDoors;
+        if (doors == null || !doors.Any(d => d != null))
+        {
+            Destroy(room.gameObject);
+            throw new InvalidOperationException("The selected room has no entrance.");
+        }
+        if (room.RoomData is DefaultEnemiesRoomData enemies)
+            enemies.Configure(settings);
+        RoomDoor returnDoor = StartRoom.RoomData.RoomDoors.First(d => d != null);
+        foreach (var door in doors.Where(d => d != null)) door.Configure(StartRoom, returnDoor);
+        _debugRooms.Add(room);
+        return room;
+    }
+
     public void Configure(LevelRoomNode[] rooms, LevelRoomCatalog catalog = null)
     {
         _rooms = rooms;
@@ -171,9 +191,10 @@ public class LevelView : MonoBehaviour
             {
                 int roomIndex = combatProgressOffset +
                                 Mathf.Max(0, _combatDepths[roomNode.GridPosition] - 1);
+                // Small rooms keep larger encounters by splitting them into capped waves.
                 Room[] variants = roomBalance.UsesSmallRoom(roomIndex)
                     ? _smallEnemyRooms
-                    : _mediumEnemyRooms;
+                    : _mediumEnemyRooms.Concat(_smallEnemyRooms).ToArray();
                 source = SelectRoomVariant(source, variants, usedVariants,
                     requiredDirections);
             }
@@ -887,6 +908,7 @@ public class LevelView : MonoBehaviour
 
     public bool TrySpawnKeyRoom(Room room, RoomDoor entryDoor)
     {
+        if (_debugRooms.Contains(room)) return false;
         if (!_isInitialized || _container == null)
             throw new InvalidOperationException($"{name} is not initialized.");
         if (room == null)
@@ -1045,6 +1067,7 @@ public class LevelView : MonoBehaviour
         if (roomData == null)
             throw new ArgumentNullException(nameof(roomData));
 
+        if (_debugRooms.Any(room => ReferenceEquals(room.RoomData, roomData))) return 0;
         for (int i = 0; i < _rooms.Length; i++)
         {
             LevelRoomNode roomNode = _rooms[i];

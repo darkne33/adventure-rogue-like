@@ -13,8 +13,8 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
         { 2, 3, 4, 5, 7, 9, 12, 14, 16, 14, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16 };
     [Tooltip("Maximum living enemies at once, including survivors from earlier waves.")]
     [SerializeField, Min(1)] private int _maxAliveEnemies = 30;
-    [Tooltip("Maximum total enemies across all waves for a Low_Size (Small) room. Larger groups use Medium rooms.")]
-    [SerializeField, Min(1)] private int _maxEnemiesInSmallRoom = 8;
+    [Tooltip("Maximum enemies across all spawn groups in one Small-room wave. The room total is preserved by adding waves; the wave limit cannot exceed six.")]
+    [SerializeField, Range(1, 6)] private int _maxEnemiesInSmallRoom = 6;
     [Tooltip("Maximum total enemies across all waves for a Medium_Size room.")]
     [SerializeField, Min(1)] private int _maxEnemiesInMediumRoom = 16;
     [Header("Combat Waves")]
@@ -66,8 +66,7 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
         Mathf.Min(MaxEnemiesInMediumRoom,
             Mathf.Max(GetStartEnemyCount(roomIndex), GetCount(_totalEnemies, roomIndex, 3)));
     public int GetAllEnemyCount(int roomIndex, bool isSmallRoom) =>
-        Mathf.Min(isSmallRoom ? MaxEnemiesInSmallRoom : MaxEnemiesInMediumRoom,
-            GetAllEnemyCount(roomIndex));
+        GetAllEnemyCount(roomIndex);
     public bool UsesSmallRoom(int roomIndex) =>
         GetAllEnemyCount(roomIndex) <= MaxEnemiesInSmallRoom;
 
@@ -83,7 +82,7 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
         if (roomIndex < Mathf.Max(1, _firstWaveRoom) - 1 || totalEnemies < 3 ||
             _wavePatterns == null || _wavePatterns.Length == 0 || waveChance <= 0f ||
             (waveChance < 1f && UnityEngine.Random.value >= waveChance))
-            return new[] { totalEnemies };
+            return LimitSmallRoomWaveEnemyCounts(new[] { totalEnemies }, isSmallRoom);
 
         Vector3Int pattern = _wavePatterns[UnityEngine.Random.Range(0, _wavePatterns.Length)];
         float firstWeight = Mathf.Max(1, pattern.x);
@@ -94,7 +93,37 @@ public class EnemyRoomScalingConfiguration : ScriptableObject
             1, totalEnemies - 2);
         int lastWave = Mathf.Clamp(Mathf.RoundToInt(totalEnemies * lastWeight / totalWeight),
             1, totalEnemies - firstWave - 1);
-        return new[] { firstWave, totalEnemies - firstWave - lastWave, lastWave };
+        return LimitSmallRoomWaveEnemyCounts(
+            new[] { firstWave, totalEnemies - firstWave - lastWave, lastWave }, isSmallRoom);
+    }
+
+    private int[] LimitSmallRoomWaveEnemyCounts(int[] waveCounts, bool isSmallRoom)
+    {
+        if (!isSmallRoom)
+            return waveCounts;
+
+        int maximumWaveEnemies = Mathf.Min(6, MaxEnemiesInSmallRoom);
+        int limitedWaveCount = 0;
+        foreach (int waveEnemyCount in waveCounts)
+            limitedWaveCount += (waveEnemyCount + maximumWaveEnemies - 1) / maximumWaveEnemies;
+
+        if (limitedWaveCount == waveCounts.Length)
+            return waveCounts;
+
+        var limitedWaves = new int[limitedWaveCount];
+        int waveIndex = 0;
+        foreach (int waveEnemyCount in waveCounts)
+        {
+            int remainingEnemies = waveEnemyCount;
+            while (remainingEnemies > 0)
+            {
+                int count = Mathf.Min(remainingEnemies, maximumWaveEnemies);
+                limitedWaves[waveIndex++] = count;
+                remainingEnemies -= count;
+            }
+        }
+
+        return limitedWaves;
     }
 
     public int GetWaveReinforcementThreshold(int waveEnemyCount)

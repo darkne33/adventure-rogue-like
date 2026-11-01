@@ -6,6 +6,10 @@ namespace Features.Enemies.Scripts
     public abstract class EnemyMovementSystemBase : IEnemyMovementSystem
     {
         private const float NavMeshSampleDistance = 4f;
+        private readonly NavMeshPath _wanderPath = new();
+        private bool _isWandering;
+        private float _wanderPauseRemaining;
+        private float _wanderTravelRemaining;
 
         protected readonly EnemyFacade Enemy;
         protected readonly CharacterFacade Character;
@@ -48,7 +52,7 @@ namespace Features.Enemies.Scripts
             {
                 if (IsCharacterInsideAggroRange() == false)
                 {
-                    ApproachCharacter();
+                    WanderNearSpawn();
                     return false;
                 }
 
@@ -80,10 +84,80 @@ namespace Features.Enemies.Scripts
                 NavMeshAgent.ResetPath();
         }
 
-        private void ApproachCharacter()
+        private void WanderNearSpawn()
         {
-            AnimationSystem.RunAnimation();
-            MoveTo(Character.transform.position);
+            float delta = Time.fixedDeltaTime * Enemy.RelicTimeScale;
+            if (_isWandering)
+            {
+                _wanderTravelRemaining -= delta;
+                if (_wanderTravelRemaining > 0f && (NavMeshAgent.pathPending ||
+                    (NavMeshAgent.hasPath && NavMeshAgent.pathStatus == NavMeshPathStatus.PathComplete &&
+                     NavMeshAgent.remainingDistance > Mathf.Max(0.3f, NavMeshAgent.stoppingDistance))))
+                {
+                    AnimationSystem.RunAnimation();
+                    UpdateManualNavigationPosition();
+                    return;
+                }
+
+                _isWandering = false;
+                NavMeshAgent.ResetPath();
+                NavMeshAgent.velocity = Vector3.zero;
+                float minimumPause = Mathf.Max(0f, Configuration.IdleWanderPause.x);
+                _wanderPauseRemaining = Random.Range(minimumPause,
+                    Mathf.Max(minimumPause, Configuration.IdleWanderPause.y));
+            }
+
+            AnimationSystem.IdleAnimation();
+            StopPhysicsMovement();
+            _wanderPauseRemaining -= delta;
+            if (_wanderPauseRemaining > 0f)
+                return;
+
+            float radius = Mathf.Max(0.1f, Configuration.IdleWanderRadius);
+            Vector3 center = Enemy.SpawnNavigationPosition;
+            var filter = new NavMeshQueryFilter
+            {
+                agentTypeID = NavMeshAgent.agentTypeID,
+                areaMask = NavMeshAgent.areaMask
+            };
+            for (int attempt = 0; attempt < 16; attempt++)
+            {
+                Vector2 offset = Random.insideUnitCircle * radius;
+                Vector3 candidate = center + new Vector3(offset.x, 0f, offset.y);
+                if (!NavMesh.SamplePosition(candidate, out NavMeshHit hit, 1f, filter))
+                    continue;
+
+                Vector3 fromCenter = hit.position - center;
+                fromCenter.y = 0f;
+                if (fromCenter.sqrMagnitude > radius * radius ||
+                    Vector3.Distance(hit.position, Enemy.transform.position) <
+                    Mathf.Max(0.6f, NavMeshAgent.stoppingDistance + 0.3f) ||
+                    !NavMeshAgent.CalculatePath(hit.position, _wanderPath) ||
+                    _wanderPath.status != NavMeshPathStatus.PathComplete)
+                    continue;
+
+                bool insideRadius = true;
+                foreach (Vector3 corner in _wanderPath.corners)
+                {
+                    Vector3 relative = corner - center;
+                    relative.y = 0f;
+                    if (relative.sqrMagnitude > radius * radius)
+                    {
+                        insideRadius = false;
+                        break;
+                    }
+                }
+                if (!insideRadius || !NavMeshAgent.SetPath(_wanderPath))
+                    continue;
+
+                _isWandering = true;
+                _wanderTravelRemaining = 15f;
+                AnimationSystem.RunAnimation();
+                UpdateManualNavigationPosition();
+                return;
+            }
+
+            _wanderPauseRemaining = 1f;
         }
 
         protected void MoveTo(Vector3 desiredPosition)

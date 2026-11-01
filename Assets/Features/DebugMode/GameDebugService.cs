@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Core;
 using Cysharp.Threading.Tasks;
@@ -50,6 +52,9 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
     private readonly LevelProgressionService _levelProgressionService;
     private readonly ITransitToRoomService _transitToRoomService;
 
+    private GameDebugPanel _panel;
+    private readonly GameplayAssetService _gameplayAssets;
+    private readonly DiContainer _container;
     private bool _commandsRegistered;
     private bool _isUltyRunning;
     private bool _isBossTeleportRunning;
@@ -64,7 +69,7 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         RelicManager relicManager, RelicPool relicPool, CharacterWallet characterWallet,
         EnemySpawner enemySpawner, ICharacterProvider characterProvider,
         LevelsConfiguration levelsConfiguration, LevelProgressionService levelProgressionService,
-        ITransitToRoomService transitToRoomService)
+        ITransitToRoomService transitToRoomService, GameplayAssetService gameplayAssets, DiContainer container)
     {
         _characterLevelService = characterLevelService;
         _characterExpConfig = characterExpConfig;
@@ -85,6 +90,8 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         _levelsConfiguration = levelsConfiguration;
         _levelProgressionService = levelProgressionService;
         _transitToRoomService = transitToRoomService;
+        _gameplayAssets = gameplayAssets;
+        _container = container;
     }
 
     public void Initialize()
@@ -125,10 +132,26 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
             "Grants 10 levels with upgrade choices and teleports to the mushroom boss room", Ulty);
 
         _commandsRegistered = true;
+        _panel = _container.InstantiatePrefabForComponent<GameDebugPanel>(_gameplayAssets.DebugPanel);
+        _panel.Initialize(this);
+        _panel.gameObject.SetActive(false);
     }
 
     public void Tick()
     {
+        if (_commandsRegistered && Keyboard.current != null && _panel != null)
+        {
+            if (Keyboard.current.f2Key.wasPressedThisFrame ||
+                (_panel.gameObject.activeSelf && Keyboard.current.escapeKey.wasPressedThisFrame))
+            {
+                bool open = !_panel.gameObject.activeSelf;
+                _panel.gameObject.SetActive(open);
+                _characterProvider.CharacterFacade?.SetTransitionPaused(open);
+                if (open) _panel.Refresh();
+                return;
+            }
+            if (_panel.gameObject.activeSelf) return;
+        }
         if (_commandsRegistered == false || Keyboard.current == null ||
             DebugLogManager.Instance?.IsLogWindowVisible == true)
             return;
@@ -142,6 +165,7 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         if (_commandsRegistered == false)
             return;
 
+        if (_panel != null) UnityEngine.Object.Destroy(_panel.gameObject);
         DebugLogConsole.RemoveCommand(AddExpCommand);
         DebugLogConsole.RemoveCommand(AddLevelCommand);
         DebugLogConsole.RemoveCommand(CompleteRoomCommand);
@@ -158,6 +182,105 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
         DebugLogConsole.RemoveCommand(TeleportBossCommand);
         DebugLogConsole.RemoveCommand(UltyCommand);
         _commandsRegistered = false;
+    }
+
+    public string DebugStatus => GetStatus() +
+        $" HP {_characterProvider.CharacterFacade?.HealthSystem?.CurrentHealth}/{_characterProvider.CharacterFacade?.HealthSystem?.MaxHealth}";
+
+    public void PopulateDebugMenu(int tab, List<(string label, Func<string> action)> entries)
+    {
+        void Add(string label, Func<string> action) => entries.Add((label, action));
+        if (tab == 0)
+        {
+            Add("Level +1 (upgrade choice)", AddLevel);
+            Add("EXP +100", () => AddExperience(100));
+            Add("Heal fully", () => ChangeHealth(0));
+            Add("HP +1", () => ChangeHealth(1));
+            Add("HP -0.5 (can kill)", () => ChangeHealth(3));
+            Add("Max HP -1", () => ChangeHealth(4));
+            Add("Max HP +1", () => ChangeHealth(2));
+            Add("Gold +100", () => AddGold(100));
+            Add("Complete current room", CompleteRoom);
+            Add("Restart current room", RestartRoom);
+            Add("Restart run", RestartGame);
+            Add("Status", GetStatus);
+            Add("Active relics", PrintRelics);
+            Add("Ulty: mushroom +10 levels", Ulty);
+        }
+        else if (tab == 1)
+        {
+            Add("Random relic", GiveRandomRelic);
+            Add("Clear relics", ClearRelics);
+            foreach (var relic in _relicPool.AllRelics.Where(r => r != null).OrderBy(r => r.DisplayName))
+            {
+                var selected = relic;
+                Add($"{relic.DisplayName} [{relic.Id}]", () => GiveRelic(selected.Id));
+            }
+        }
+        else
+        {
+            var catalog = _levelsConfiguration.RoomCatalog;
+            if (catalog == null) return;
+            IEnumerable<Room> rooms = tab == 2
+                ? new[] { catalog.StartRoom }.Concat(catalog.SmallEnemyRooms).Concat(catalog.MediumEnemyRooms)
+                    .Concat(catalog.TreasureRooms).Concat(catalog.OnlyRelicRooms).Concat(catalog.BloodRooms).Concat(catalog.ShopRooms)
+                : catalog.BossCycle;
+            foreach (Room prefab in rooms.Where(r => r != null).Distinct())
+            {
+                Room selected = prefab;
+                Add(prefab.name, () => LaunchDebugRoom(selected));
+            }
+            if (tab == 3)
+                foreach (EnemyType type in _enemySpawner.GetAvailableEnemyTypes())
+                {
+                    EnemyType selected = type;
+                    Add("Spawn " + type, () => SpawnEnemies(selected, 1));
+                }
+        }
+    }
+
+    private string ChangeHealth(int mode)
+    {
+        HealthSystem health = _characterProvider.CharacterFacade?.HealthSystem;
+        if (health == null || health.IsDead) return "A living character is required.";
+        if (mode == 2) health.SetMaxHealth(health.MaxHealth + 1);
+        else if (mode == 3) health.SetCurrentHealth(health.CurrentHealth - 0.5f);
+        else if (mode == 4) health.SetMaxHealth(health.MaxHealth - 1);
+        else health.IncreaseCurrentHealth(mode == 0 ? health.MaxHealth : 1);
+        return $"HP {health.CurrentHealth}/{health.MaxHealth}";
+    }
+
+    private string LaunchDebugRoom(Room prefab)
+    {
+        if (_isBossTeleportRunning || _isUltyRunning || _runRestartService.IsRestarting ||
+            _roomTransitionService.IsPlaying || _timeScaleService.IsPaused)
+            return "Finish the current transition and resume the game first.";
+        var character = _characterProvider.CharacterFacade;
+        var level = _sceneService.GameSceneComponentsService?.CurrentLevel;
+        if (character?.HealthSystem == null || character.HealthSystem.IsDead || level == null)
+            return "An active run and a living character are required.";
+        _panel.gameObject.SetActive(false);
+        character.SetTransitionPaused(false);
+        _isBossTeleportRunning = true;
+        LaunchDebugRoomAsync(level, prefab, character.GetCancellationTokenOnDestroy()).Forget();
+        return "Launching " + prefab.name;
+    }
+
+    private async UniTask LaunchDebugRoomAsync(LevelView level, Room prefab, CancellationToken token)
+    {
+        try
+        {
+            token.ThrowIfCancellationRequested();
+            Room room = level.CreateDebugRoom(prefab, _levelsConfiguration.RoomCatalog.EnemySettings);
+            Physics.SyncTransforms();
+            _sceneService.GameSceneComponentsService.NavMeshSurface.BuildNavMesh();
+            _enemiesProvider.ClearEnemies();
+            await _transitToRoomService.TransitAsync(room, room.RoomData.RoomDoors.First(d => d != null));
+            token.ThrowIfCancellationRequested();
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception error) { Debug.LogException(error); }
+        finally { _isBossTeleportRunning = false; }
     }
 
     private string AddExperience(int amount)

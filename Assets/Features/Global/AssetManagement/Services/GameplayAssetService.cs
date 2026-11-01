@@ -23,6 +23,7 @@ namespace Core
         private bool _initialized;
         private bool _disposed;
 
+        public GameDebugPanel DebugPanel { get; private set; }
         public ProgressionConfiguration Progression { get; private set; }
         public QuestCompletionNotificationView QuestNotification { get; private set; }
         public RelicPoolConfiguration RelicPool { get; private set; }
@@ -73,6 +74,9 @@ namespace Core
                     "Assets/Features/Sounds/Configs/RetroArsenalSoundsCatalog.asset", token);
                 MusicSounds = await Load<SoundsCatalog>(
                     "Assets/Features/Sounds/Configs/MusicSoundsCatalog.asset", token);
+                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+                DebugPanel = await LoadPrefab<GameDebugPanel>("Assets/Features/DebugMode/GameDebugPanel.prefab", token);
+#endif
                 _initialized = true;
             }
             catch
@@ -98,6 +102,7 @@ namespace Core
             for (int i = _addresses.Count - 1; i >= 0; i--)
                 _assets.Release(_addresses[i]);
             _addresses.Clear();
+            DebugPanel = null;
             Progression = null;
             QuestNotification = null;
             RelicPool = null;

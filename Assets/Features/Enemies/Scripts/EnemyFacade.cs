@@ -538,6 +538,8 @@ namespace Features.Enemies.Scripts
             return transform;
         }
 
+        internal Vector3 SpawnNavigationPosition => _spawnNavigationPosition;
+
         internal void ActivateAggro()
         {
             if (IsAggro)
