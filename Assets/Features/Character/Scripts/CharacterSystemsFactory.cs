@@ -47,12 +47,14 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         CharacterFxSystem fxSystem = facade.CharacterModel.GetComponent<CharacterFxSystem>();
         Animator animator = facade.CharacterModel.GetComponent<Animator>();
         PauseEntity pauseEntity = _pauseEntityDistributor.EntityDistribute();
+        CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
+        var aimSystem = new CharacterAimSystem(facade, _cameraService, pauseEntity, characterPanel);
 
         var animationSystem = new CharacterAnimationSystem(animator);
         var cameraSystem = new CharacterCameraMoveSystem(
             facade.CameraPivot, _cameraSettings, _cameraService, pauseEntity, _runtimeDataService);
         var moveSystem = new CharacterMoveSystem(rigidbody, _cameraService, _characterStats, fxSystem,
-            facade.CharacterModel, animationSystem, cameraSystem, pauseEntity);
+            facade.CharacterModel, animationSystem, cameraSystem, pauseEntity, aimSystem);
         var proximityTransparencySystem =
             new CharacterProximityTransparencySystem(
                 facade.transform, _cameraService, _gameplayAssets.ProximityFadeShader);
@@ -60,7 +62,6 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
         var damageEffectSystem = new DealDamageEffectSystem(facade.MeshRenderers);
         IDamageView damageView = facade.GetComponent<CharacterDamageNumberView>();
 
-        CharacterPanel characterPanel = (CharacterPanel)_panelService.GetPanel(PanelName.CharacterPanel);
         Volume globalVolume = _sceneService.GameSceneComponentsService.GlobalVolume;
         if (globalVolume == null)
             throw new InvalidOperationException("Global Volume is not assigned in RogueLikeSceneProvider.");
@@ -81,7 +82,7 @@ public sealed class CharacterSystemsFactory : ICharacterSystemsFactory
             settings.DamageInvulnerabilitySecondsPerHalfHeart, settings.InvulnerabilityBlinkInterval);
 
         facade.Construct(rigidbody, collider, _characterStats, pauseEntity, healthSystem, shieldSystem, abilitySystem,
-            animationSystem, moveSystem, cameraSystem, proximityTransparencySystem, damageEffectSystem, damageView,
+            animationSystem, moveSystem, cameraSystem, aimSystem, proximityTransparencySystem, damageEffectSystem, damageView,
             invulnerabilitySystem);
     }
 }

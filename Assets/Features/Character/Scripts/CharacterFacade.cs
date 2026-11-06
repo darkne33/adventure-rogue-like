@@ -14,6 +14,7 @@ public class CharacterFacade : MonoBehaviour
     public Collider Collider => _collider;
     public CharacterAbilitySystem CharacterAbilitySystem => _abilitySystem;
     public CharacterMoveSystem MoveSystem => _moveSystem;
+    public CharacterAimSystem AimSystem => _aimSystem;
     public DealDamageEffectSystem DamageEffectSystem => _damageEffectSystem;
     public CharacterCameraMoveSystem CameraSystem => _cameraSystem;
     public Transform CameraPivot => _cameraPivot.transform;
@@ -62,6 +63,7 @@ public class CharacterFacade : MonoBehaviour
     private ShieldSystem _shieldSystem;
     private CharacterAbilitySystem _abilitySystem;
     private CharacterMoveSystem _moveSystem;
+    private CharacterAimSystem _aimSystem;
     private CharacterCameraMoveSystem _cameraSystem;
     private CharacterProximityTransparencySystem _proximityTransparencySystem;
     private DealDamageEffectSystem _damageEffectSystem;
@@ -108,6 +110,7 @@ public class CharacterFacade : MonoBehaviour
         UpdateHealth(Time.deltaTime);
         UpdateShield(Time.deltaTime);
         _moveSystem.CaptureJumpInput(Time.deltaTime);
+        _aimSystem.Tick();
         _moveSystem.Rotate(Time.deltaTime);
 
         if (_pauseEntity.IsPauseEntity == false)
@@ -117,8 +120,11 @@ public class CharacterFacade : MonoBehaviour
         _cameraSystem.Move();
     }
 
-    private void OnDisable() =>
+    private void OnDisable()
+    {
         _invulnerabilitySystem?.Reset();
+        _aimSystem?.Hide();
+    }
 
     private void OnDestroy()
     {
@@ -127,6 +133,7 @@ public class CharacterFacade : MonoBehaviour
         DisposeAbilities();
         _invulnerabilitySystem?.Dispose();
         _moveSystem?.Dispose();
+        _aimSystem?.Hide();
         _cameraSystem?.Dispose();
         _proximityTransparencySystem?.Dispose();
         _damageEffectSystem?.Dispose();
@@ -175,7 +182,7 @@ public class CharacterFacade : MonoBehaviour
     public void Construct(Rigidbody rigidbody, Collider collider, CharacterStats characterStats,
         PauseEntity pauseEntity, HealthSystem healthSystem, ShieldSystem shieldSystem,
         CharacterAbilitySystem abilitySystem, CharacterAnimationSystem animationSystem,
-        CharacterMoveSystem moveSystem, CharacterCameraMoveSystem cameraSystem,
+        CharacterMoveSystem moveSystem, CharacterCameraMoveSystem cameraSystem, CharacterAimSystem aimSystem,
         CharacterProximityTransparencySystem proximityTransparencySystem,
         DealDamageEffectSystem damageEffectSystem, IDamageView damageView,
         CharacterInvulnerabilitySystem invulnerabilitySystem)
@@ -191,6 +198,7 @@ public class CharacterFacade : MonoBehaviour
         _shieldSystem = shieldSystem;
         _abilitySystem = abilitySystem;
         _moveSystem = moveSystem;
+        _aimSystem = aimSystem;
         _cameraSystem = cameraSystem;
         _proximityTransparencySystem = proximityTransparencySystem;
         _damageEffectSystem = damageEffectSystem;

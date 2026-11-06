@@ -107,6 +107,9 @@ namespace Features.EnemyTargeting
                     continue;
                 }
 
+                if (!configuration.AutomaticTargetSelection)
+                    continue;
+
                 float squaredDistance = (target.transform.position - character.transform.position).sqrMagnitude;
                 if (squaredDistance > rangeSquared ||
                     !HasLineOfSight(camera.transform.position, aimPoint, character, target,

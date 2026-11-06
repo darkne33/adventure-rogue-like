@@ -4,8 +4,15 @@ using UnityEngine;
 public class Room : MonoBehaviour
 {
     [field: SerializeField]
-    [field: Tooltip("Uses the small combat room limit for the total number of enemies.")]
+    [field: Tooltip("Uses the Small room and wave limits.")]
     public bool IsSmallEnemyRoom { get; private set; }
+
+    [field: SerializeField]
+    [field: Tooltip("Uses the Large room and wave limits. Otherwise a non-Small room is Medium.")]
+    public bool IsLargeEnemyRoom { get; private set; }
+
+    public EnemyRoomSize EnemySize => IsSmallEnemyRoom ? EnemyRoomSize.Small :
+        IsLargeEnemyRoom ? EnemyRoomSize.Large : EnemyRoomSize.Medium;
 
     [field: SubclassSelector]
     [field: SerializeReference]
@@ -18,6 +25,13 @@ public class Room : MonoBehaviour
     public void SetEditorRoomData(RoomData roomData) =>
         SetRoomData(roomData);
 #endif
+}
+
+public enum EnemyRoomSize
+{
+    Small,
+    Medium,
+    Large
 }
 
 [Serializable]

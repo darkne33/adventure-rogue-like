@@ -9,6 +9,7 @@ public sealed class LevelRoomCatalog : ScriptableObject
     [SerializeField] private Room _startRoom;
     [SerializeField] private Room[] _smallEnemyRooms = Array.Empty<Room>();
     [SerializeField] private Room[] _mediumEnemyRooms = Array.Empty<Room>();
+    [SerializeField] private Room[] _largeEnemyRooms = Array.Empty<Room>();
     [SerializeField] private EnemyRoomSettings _enemySettings = new();
     [FormerlySerializedAs("_rewardRooms")]
     [SerializeField] private Room[] _treasureRooms = Array.Empty<Room>();
@@ -21,6 +22,7 @@ public sealed class LevelRoomCatalog : ScriptableObject
     public Room StartRoom => _startRoom;
     public IReadOnlyList<Room> SmallEnemyRooms => _smallEnemyRooms;
     public IReadOnlyList<Room> MediumEnemyRooms => _mediumEnemyRooms;
+    public IReadOnlyList<Room> LargeEnemyRooms => _largeEnemyRooms;
     public EnemyRoomSettings EnemySettings => _enemySettings;
     public IReadOnlyList<Room> TreasureRooms => _treasureRooms;
     public IReadOnlyList<Room> OnlyRelicRooms => _onlyRelicRooms;

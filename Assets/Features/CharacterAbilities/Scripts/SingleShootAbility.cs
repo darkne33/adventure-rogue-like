@@ -122,7 +122,8 @@ public abstract class SingleShootAbility : CharacterActiveAbility
         _isLaunchingProjectiles == false &&
         character != null &&
         base.IsReady(character) &&
-        FindProjectileTarget(character) is { CanBeAttacked: true };
+        (character.AimSystem?.IsAiming == true ||
+         FindProjectileTarget(character) is { CanBeAttacked: true });
 
     protected virtual CombatTarget FindProjectileTarget(CharacterFacade character) =>
         _enemiesProvider.GetClosestEnemyByCharacter(character.transform, AutoTargetingDistance);
@@ -300,15 +301,18 @@ public abstract class SingleShootAbility : CharacterActiveAbility
 
     private void ShootProjectile(CharacterFacade character, int projectileIndex, int projectileCount)
     {
-        CombatTarget targetEnemy = FindProjectileTarget(character);
+        bool isAiming = character.AimSystem?.IsAiming == true;
+        CombatTarget targetEnemy = isAiming ? null : FindProjectileTarget(character);
 
-        if (targetEnemy == null || !targetEnemy.CanBeAttacked || targetEnemy.IsDead)
+        if (!isAiming && (targetEnemy == null || !targetEnemy.CanBeAttacked || targetEnemy.IsDead))
             return;
 
-        Vector3 targetPosition = targetEnemy.GetNextProjectileTarget().position;
         Vector3 spawnPosition = character.ProjectileSpawnPosition +
                                 GetProjectileSpawnOffset(character.transform, projectileIndex, projectileCount);
-        Vector3 shootDirection = targetPosition - spawnPosition;
+        Vector3 targetPosition = isAiming
+            ? spawnPosition + character.AimSystem.Direction
+            : targetEnemy.GetNextProjectileTarget().position;
+        Vector3 shootDirection = isAiming ? character.AimSystem.Direction : targetPosition - spawnPosition;
         if (shootDirection.sqrMagnitude <= 0.001f)
             shootDirection = character.transform.forward;
         shootDirection.Normalize();

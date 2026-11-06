@@ -6,6 +6,7 @@ namespace Features.EnemyTargeting
     public sealed class EnemyTargetingConfiguration : ScriptableObject
     {
         [Header("Automatic target selection")]
+        [SerializeField] private bool _automaticTargetSelection = true;
         [SerializeField, Min(0.1f)] private float _targetingRange = 40f;
         [SerializeField, Min(0f)] private float _distanceWeight = 0.45f;
         [SerializeField, Min(0f)] private float _screenCenterWeight = 0.55f;
@@ -21,6 +22,7 @@ namespace Features.EnemyTargeting
         [SerializeField] private Vector2 _selectedSize = new(384f, 384f);
         [SerializeField] private Vector2 _offscreenSize = new(96f, 72f);
 
+        public bool AutomaticTargetSelection => _automaticTargetSelection;
         public float TargetingRange => Mathf.Max(0.1f, _targetingRange);
         public float DistanceWeight => Mathf.Max(0f, _distanceWeight);
         public float ScreenCenterWeight => Mathf.Max(0f, _screenCenterWeight);

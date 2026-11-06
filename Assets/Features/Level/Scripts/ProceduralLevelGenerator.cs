@@ -51,6 +51,7 @@ public static class ProceduralLevelGenerator
             AddPool(RoomType.Start, new[] { catalog.StartRoom });
             AddPool(RoomType.Enemy, catalog.SmallEnemyRooms);
             AddPool(RoomType.Enemy, catalog.MediumEnemyRooms);
+            AddPool(RoomType.Enemy, catalog.LargeEnemyRooms);
             AddPool(RoomType.Boss, new[] { bossRoom });
             foreach (RoomType type in specialRooms)
             {

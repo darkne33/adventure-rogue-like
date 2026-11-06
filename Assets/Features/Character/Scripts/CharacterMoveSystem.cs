@@ -14,6 +14,7 @@ public class CharacterMoveSystem
     private readonly GameObject _characterModel;
     private readonly CharacterAnimationSystem _characterAnimationSystem;
     private readonly CharacterCameraMoveSystem _cameraMoveSystem;
+    private readonly CharacterAimSystem _aimSystem;
     private readonly PauseEntity _pauseEntity;
 
     private readonly InputSystem_Actions _inputActions = new();
@@ -54,7 +55,7 @@ public class CharacterMoveSystem
         ICameraService cameraService, CharacterStats characterStats,
         CharacterFxSystem characterFxSystem, GameObject characterModel,
         CharacterAnimationSystem characterAnimationSystem,
-        CharacterCameraMoveSystem cameraMoveSystem, PauseEntity pauseEntity)
+        CharacterCameraMoveSystem cameraMoveSystem, PauseEntity pauseEntity, CharacterAimSystem aimSystem)
     {
         _rigidbody = rigidbody;
         _cameraService = cameraService;
@@ -64,6 +65,7 @@ public class CharacterMoveSystem
         _characterStats = characterStats;
         _characterAnimationSystem = characterAnimationSystem;
         _cameraMoveSystem = cameraMoveSystem;
+        _aimSystem = aimSystem;
         _pauseEntity = pauseEntity;
 
         _inputActions.Enable();
@@ -325,7 +327,7 @@ public class CharacterMoveSystem
             return;
 
         Vector3 modelUp = _groundNormal;
-        Vector3 modelForward = _direction.sqrMagnitude > 0.01f
+        Vector3 modelForward = _aimSystem.IsAiming ? _aimSystem.Direction : _direction.sqrMagnitude > 0.01f
             ? _direction
             : _characterModel.transform.forward;
 

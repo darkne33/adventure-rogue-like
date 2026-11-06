@@ -25,6 +25,7 @@ public class LevelView : MonoBehaviour
     [SerializeField] private Room[] _smallEnemyRooms = Array.Empty<Room>();
     [Tooltip("Medium layouts for larger enemy groups. Enemy Room Scaling Configuration controls the size threshold.")]
     [SerializeField] private Room[] _mediumEnemyRooms = Array.Empty<Room>();
+    [SerializeField] private Room[] _largeEnemyRooms = Array.Empty<Room>();
 
     [Header("Key Room Spawning")]
     [Tooltip("Prefab spawned at the point configured in DefaultEnemiesRoomData.")]
@@ -77,6 +78,7 @@ public class LevelView : MonoBehaviour
         {
             _smallEnemyRooms = catalog.SmallEnemyRooms.ToArray();
             _mediumEnemyRooms = catalog.MediumEnemyRooms.ToArray();
+            _largeEnemyRooms = catalog.LargeEnemyRooms.ToArray();
         }
         _combatDepths = null;
         _isInitialized = false;
@@ -191,10 +193,10 @@ public class LevelView : MonoBehaviour
             {
                 int roomIndex = combatProgressOffset +
                                 Mathf.Max(0, _combatDepths[roomNode.GridPosition] - 1);
-                // Small rooms keep larger encounters by splitting them into capped waves.
+                // Each layout applies its own room total and splits oversized waves.
                 Room[] variants = roomBalance.UsesSmallRoom(roomIndex)
                     ? _smallEnemyRooms
-                    : _mediumEnemyRooms.Concat(_smallEnemyRooms).ToArray();
+                    : _mediumEnemyRooms.Concat(_largeEnemyRooms).Concat(_smallEnemyRooms).ToArray();
                 source = SelectRoomVariant(source, variants, usedVariants,
                     requiredDirections);
             }

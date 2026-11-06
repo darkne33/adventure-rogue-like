@@ -223,6 +223,7 @@ public sealed class GameDebugService : IInitializable, ITickable, IDisposable
             if (catalog == null) return;
             IEnumerable<Room> rooms = tab == 2
                 ? new[] { catalog.StartRoom }.Concat(catalog.SmallEnemyRooms).Concat(catalog.MediumEnemyRooms)
+                    .Concat(catalog.LargeEnemyRooms)
                     .Concat(catalog.TreasureRooms).Concat(catalog.OnlyRelicRooms).Concat(catalog.BloodRooms).Concat(catalog.ShopRooms)
                 : catalog.BossCycle;
             foreach (Room prefab in rooms.Where(r => r != null).Distinct())

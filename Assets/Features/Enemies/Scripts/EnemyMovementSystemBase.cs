@@ -99,12 +99,15 @@ namespace Features.Enemies.Scripts
                     return;
                 }
 
-                _isWandering = false;
                 NavMeshAgent.ResetPath();
                 NavMeshAgent.velocity = Vector3.zero;
-                float minimumPause = Mathf.Max(0f, Configuration.IdleWanderPause.x);
-                _wanderPauseRemaining = Random.Range(minimumPause,
-                    Mathf.Max(minimumPause, Configuration.IdleWanderPause.y));
+                if (_wanderTravelRemaining <= 0f)
+                {
+                    _isWandering = false;
+                    float minimumPause = Mathf.Max(0f, Configuration.IdleWanderPause.x);
+                    _wanderPauseRemaining = Random.Range(minimumPause,
+                        Mathf.Max(minimumPause, Configuration.IdleWanderPause.y));
+                }
             }
 
             AnimationSystem.IdleAnimation();
@@ -150,13 +153,30 @@ namespace Features.Enemies.Scripts
                 if (!insideRadius || !NavMeshAgent.SetPath(_wanderPath))
                     continue;
 
-                _isWandering = true;
-                _wanderTravelRemaining = 15f;
+                if (!_isWandering)
+                {
+                    // Base the walking time on the original leg, then keep choosing
+                    // nearby destinations until the extended walking period ends.
+                    float distance = 0f;
+                    Vector3 previous = Enemy.transform.position;
+                    foreach (Vector3 corner in _wanderPath.corners)
+                    {
+                        distance += Vector3.Distance(previous, corner);
+                        previous = corner;
+                    }
+                    float originalDuration = Mathf.Min(15f,
+                        Mathf.Max(0.1f, distance - NavMeshAgent.stoppingDistance) /
+                        Mathf.Max(0.1f, Configuration.Speed));
+                    _wanderTravelRemaining = originalDuration *
+                        Mathf.Max(0.1f, Configuration.IdleWanderDurationMultiplier);
+                    _isWandering = true;
+                }
                 AnimationSystem.RunAnimation();
                 UpdateManualNavigationPosition();
                 return;
             }
 
+            _isWandering = false;
             _wanderPauseRemaining = 1f;
         }
 

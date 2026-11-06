@@ -152,9 +152,11 @@ public class EnemyConfiguration : ScriptableObject
     [field: Header("AI Settings")]
     [field: SerializeField, Min(0.1f)] public float IdleWanderRadius { get; private set; } = 5f;
     [field: SerializeField] public Vector2 IdleWanderPause { get; private set; } = new(1f, 3f);
+    [field: Tooltip("Multiplier for the time spent walking before an idle pause.")]
+    [field: SerializeField, Min(0.1f)] public float IdleWanderDurationMultiplier { get; private set; } = 2f;
     [field: Tooltip("The enemy starts moving and attacking when the character enters this radius.")]
     [field: Min(0.1f)]
-    [field: SerializeField] public float AggroRange { get; private set; } = 15f;
+    [field: SerializeField] public float AggroRange { get; private set; } = 30f;
     [field: Tooltip("How long the enemy shows its alert before it can move or attack.")]
     [field: Min(0f)]
     [field: SerializeField] public float AggroReactionDuration { get; private set; } = 0.65f;

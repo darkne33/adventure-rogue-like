@@ -94,6 +94,8 @@ namespace Features.Enemies.Scripts
 
         private void OnDestroy()
         {
+            if (_healthSystem != null)
+                _healthSystem.DamageReceived -= HandleDamageReceived;
             _effectsSystem?.Dispose();
             if (_runtimeConfiguration != null)
                 Destroy(_runtimeConfiguration);
@@ -232,7 +234,10 @@ namespace Features.Enemies.Scripts
             _animationSystem = animationSystem;
             _movementSystem = movementSystem;
             _damageSystem = damageSystem;
+            if (_healthSystem != null)
+                _healthSystem.DamageReceived -= HandleDamageReceived;
             _healthSystem = healthSystem;
+            _healthSystem.DamageReceived += HandleDamageReceived;
             _effectsSystem = effectsSystem;
             _aggroIndicatorView = aggroIndicatorView;
         }
@@ -539,6 +544,13 @@ namespace Features.Enemies.Scripts
         }
 
         internal Vector3 SpawnNavigationPosition => _spawnNavigationPosition;
+
+        private void HandleDamageReceived(float damage)
+        {
+            if (damage > 0f && isActiveAndEnabled && CanBeAttacked &&
+                _healthSystem.CurrentHealth > 0f && !IsDead)
+                ActivateAggro();
+        }
 
         internal void ActivateAggro()
         {

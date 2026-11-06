@@ -126,10 +126,10 @@ public class EnemySpawner
         _roomProgressIndex = _rogueLikeRuntimeDataService.GetCombatProgressIndex(currentRoomData);
         Room currentRoom = GetCurrentRoom(currentLevel, currentRoomData);
         _isSmallRoom = currentRoom.IsSmallEnemyRoom;
-        _allEnemiesInCurrentRoom = _roomBalance.GetAllEnemyCount(_roomProgressIndex, _isSmallRoom);
+        _allEnemiesInCurrentRoom = _roomBalance.GetAllEnemyCount(_roomProgressIndex, currentRoom.EnemySize);
         _roomExperienceBudget = _expDropper.CreateRoomExperienceBudget(
             _allEnemiesInCurrentRoom, _characterStats.XPBonus, _roomProgressIndex);
-        _waveEnemyCounts = _roomBalance.CreateWaveEnemyCounts(_roomProgressIndex, _isSmallRoom);
+        _waveEnemyCounts = _roomBalance.CreateWaveEnemyCounts(_roomProgressIndex, currentRoom.EnemySize);
         _waveIndex = 0;
         _waveSpawnTarget = _waveEnemyCounts[0];
         _waveReinforcementThreshold = _roomBalance.GetWaveReinforcementThreshold(_waveEnemyCounts[0]);
